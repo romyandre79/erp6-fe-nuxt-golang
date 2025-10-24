@@ -1,0 +1,52 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+import colors from 'tailwindcss/colors'
+import tailwindcss from "@tailwindcss/vite";
+
+export default defineNuxtConfig({
+  modules: [
+    '@pinia/nuxt',
+    '@vueuse/nuxt',
+    '@nuxt/image',
+    '@nuxtjs/i18n',
+  ],
+  ssr:true,
+  compatibilityDate: '2025-07-15',
+  css: ['assets/css/main.css'],
+  vite: {
+    plugins: [
+      tailwindcss(),
+    ],
+  },
+  pinia: {
+    storesDirs: ['./store/**'],
+  },
+  i18n: {
+    defaultLocale: 'en',
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'id', name: 'Indonesian', file: 'id.json' }
+    ],
+    strategy: 'prefix_except_default',
+    detectBrowserLanguage: false
+  },
+  runtimeConfig: {
+    // Variabel private (tidak dikirim ke client)
+    appName: process.env.APP_NAME,
+
+    // Variabel public (dikirim ke client & composables)
+    public: {
+      companyId: process.env.COMPANY_ID,
+      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
+      apiToken: process.env.PUBLIC_API_TOKEN || '',
+    },
+  },
+  app: {
+    head: {
+      title: process.env.APP_NAME || 'Nuxt ERP CMS',
+      meta: [
+        { name: 'description', content: 'CMS + Ecommerce ERP frontend SSR' },
+      ],
+    },
+  },
+  devtools: { enabled: true }
+})
