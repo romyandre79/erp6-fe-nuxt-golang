@@ -13,8 +13,7 @@
         </label>
         <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
           <li><a>Profile</a></li>
-          <li><a>Settings</a></li>
-          <li><a>Logout</a></li>
+          <li><a href="#" @click.prevent="handleLogout">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -23,4 +22,8 @@
 
 <script setup>
 import ThemeToggle from './ThemeToggle.vue'
+const { logout } = useAuth()
+const handleLogout = async () => {
+  await logout()
+}
 </script>

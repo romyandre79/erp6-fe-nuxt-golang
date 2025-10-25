@@ -35,6 +35,7 @@ export default defineNuxtConfig({
 
     // Variabel public (dikirim ke client & composables)
     public: {
+      appName: process.env.APP_NAME,
       companyId: process.env.COMPANY_ID,
       apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
       apiToken: process.env.PUBLIC_API_TOKEN || '',

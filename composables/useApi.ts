@@ -3,9 +3,11 @@ import { useUserStore } from '~/store/user'
 export const useApi = () => {
   const config = useRuntimeConfig()
   const userStore = useUserStore()
+  userStore.loadAuth()
+  const token = userStore.token
+
 
   const getHeaders = () => {
-    const token = userStore.token
     return {
       Authorization: token ? `Bearer ${token}` : undefined,
     }
