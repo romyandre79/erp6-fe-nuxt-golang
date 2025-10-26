@@ -2,6 +2,10 @@
 import { h } from 'vue'
 
 const props = defineProps({
+  formtype: {
+    type: String,
+    required: true
+  },
   schema: { type: Object, required: true }
 })
 

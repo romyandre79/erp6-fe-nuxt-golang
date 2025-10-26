@@ -46,7 +46,7 @@ export const useUserStore = defineStore('user', {
         if (userCookie.value && typeof userCookie.value === 'string') {
           this.user = JSON.parse(decodeURIComponent(userCookie.value))
         } else {
-          this.user = null
+          this.user = userCookie.value
         }
       } catch (err) {
         console.error('❌ Gagal parse cookie user:', err)

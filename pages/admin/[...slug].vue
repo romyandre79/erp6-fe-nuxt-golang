@@ -1,31 +1,39 @@
 <template>
-  <div>
-    <h1>General Admin Page</h1>
-    <FormRenderer :schema="formSchema" />
-  </div>
+    <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
+      <h1 class="text-xl font-bold tracking-tight">{{  $t(route.params.slug[0].replace(/\s+/g, '_').toUpperCase())  }}</h1>
+    </div>
+    <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
+            <FormRenderer  v-if="formSchema" :schema="formSchema" :formtype="formType"/>
+    </div>
 </template>
 
 <script setup lang="ts">
 import FormRenderer from '~/components/FormRenderer.vue'
-import { useUserStore } from '~/store/user'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const userStore = useUserStore()
+const route = useRoute()
+const { getMenuForm } = useAuth()
+const formSchema = ref<Record<string, any> | null>(null)
+const formType = ref(String)
 
 definePageMeta({
   layout: 'auth',                
   middleware: ['auth'] 
 })
 
-onMounted(() => {
-  const localUser = localStorage.getItem('user')
-  if (localUser) {
-    userStore.user = JSON.parse(localUser)
+onMounted(async() => {
+  try {
+    const res = await getMenuForm(route.params.slug)
+    if (res?.code === 200) {
+      formType.value = res.data.menutype
+      formSchema.value = JSON.parse(res.data.menuform)
+    } else {
+      console.error('Invalid response from /auth/me', res)
+    }
+  } catch (err) {
+    console.error('Error loading user info:', err)
   }
 })
-const route = useRoute()
-const menuForms = userStore.user?.menus.filter(m => m.menuname == route.params.slug)
-//const formSchema = ref(menuForms.menuform)
-console.log(menuForms.menuform)
+
 </script>

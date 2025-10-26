@@ -7,11 +7,13 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/image',
+    'nuxt-highcharts',
+    '@nuxt/ui',
     '@nuxtjs/i18n',
   ],
   ssr:true,
   compatibilityDate: '2025-07-15',
-  css: ['assets/css/main.css'],
+  css: ['assets/css/main.css','@fortawesome/fontawesome-free/css/all.min.css'],
   vite: {
     plugins: [
       tailwindcss(),

@@ -13,5 +13,11 @@ const userStore = useUserStore()
         to="/login"
         >{{$t('SIGN_IN')}}</NuxtLink
     >
+    <NuxtLink
+        v-if="userStore.token"
+        class="text-white p-2 hover:bg-gray-700"
+        to="/admin"
+        >{{$t('ADMIN')}}</NuxtLink
+    >
     </div>
 </template>
