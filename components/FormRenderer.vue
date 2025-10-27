@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { h } from 'vue'
+import TablePagination from './TablePagination.vue'
 
 const props = defineProps({
   formtype: {
@@ -77,32 +78,19 @@ function renderContainer(component: any) {
       ])
 
     case 'datagrid':
-      return h('div', { class: 'overflow-x-auto mb-4' }, [
-        h('table', { class: 'min-w-full border text-sm border-gray-300 bg-white' }, [
-          h('thead', [
-            h('tr', { class: 'bg-gray-100' },
-              component.components?.[0]?.columns?.map((col: any, i: number) =>
-                h('th', { key: i, class: 'border px-2 py-1 text-left font-medium' },
-                  col.components?.[0]?.label ?? ''
-                )
-              )
-            )
-          ]),
-          h('tbody', component.defaultValue?.map((_, rIdx: number) =>
-            h('tr', { key: rIdx },
-              component.components?.[0]?.columns?.map((col: any, cIdx: number) =>
-                h('td', { key: cIdx, class: 'border px-2 py-1' },
-                  h('input', {
-                    type: 'text',
-                    class: 'border rounded w-full px-2 py-1',
-                    placeholder: col.components?.[0]?.label
-                  })
-                )
-              )
-            )
-          ))
-        ])
-      ])
+     return h(TablePagination, {
+        title: component.label ?? 'Data Grid',
+        columns: component.components?.[0]?.columns?.map((col: any) => ({
+          label: col.components?.[0]?.label ?? '',
+          key: col.components?.[0]?.key ?? '',
+          type: col.components?.[0]?.type ?? 'textfield'
+        })),
+        data: component.defaultValue ?? [],
+        bordered: true,
+        striped: true,
+        hover: true,
+        perPage: 10
+      })
 
     default:
       return renderComponent(component)

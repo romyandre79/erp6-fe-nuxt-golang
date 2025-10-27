@@ -32,9 +32,9 @@ definePageMeta({
 })
 
 const columns = [
-  { key: 'languageid', label: 'ID' },
-  { key: 'languagename', label: 'Language Name' },
-  { key: 'recordstatus', label: 'Status' }
+  { key: 'languageid', label: 'ID', type: 'number' },
+  { key: 'languagename', label: 'Language Name', type:'string' },
+  { key: 'recordstatus', label: 'Status', type: 'boolean' }
 ]
 
 const actions = [

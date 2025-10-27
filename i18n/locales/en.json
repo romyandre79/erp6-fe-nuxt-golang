@@ -247,5 +247,14 @@
   "WORK_TIME": "Work Time",
   "WORKFLOW": "Workflow",
   "YOU_ARE_NOT_AUTHORIZED": "You are not authorized",
-  "YOUR_PROFILE": "Profile"
+  "YOUR_PROFILE": "Profile",
+  "USERNAME": "User Name",
+  "ENTER_AN_USERNAME": "Enter an user name",
+  "REALNAME": "Real Name",
+  "ENTER_AN_EMAIL": "Enter an email",
+  "PHONE_NO": "Phone No",
+  "ENTER_A_PASSWORD": "Enter a Password",
+  "ENTER_A_REALNAME": "Enter a real name",
+  "ENTER_A_PHONE": "Enter a phone",
+  "SAVE": "Save"
 }

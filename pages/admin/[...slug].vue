@@ -3,7 +3,7 @@
       <h1 class="text-xl font-bold tracking-tight">{{  $t(route.params.slug[0].replace(/\s+/g, '_').toUpperCase())  }}</h1>
     </div>
     <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-            <FormRenderer  v-if="formSchema" :schema="formSchema" :formtype="formType"/>
+      <FormRenderer  v-if="formSchema" :schema="formSchema" :formtype="formType"/>
     </div>
 </template>
 

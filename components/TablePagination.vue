@@ -80,7 +80,7 @@
               :key="col.key || col"
               class="px-4 py-3 text-sm"
             >
-              {{ row[col.key || col] }}
+              <span v-html="formatCellValue(col, row[col.key || col])"></span>
             </td>
 
             <!-- Row Actions -->
@@ -160,6 +160,28 @@ const props = defineProps({
   enablePaging: { type: Boolean, default: true },
   enablePageSize: { type: Boolean, default: true },
 })
+
+const formatCellValue = (col: any, value: any) => {
+  if (col.type === 'boolean') {
+    return value
+      ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm" />'
+      : '<input type="checkbox" disabled class="checkbox checkbox-sm" />'
+  }
+
+  if (col.type === 'currency') {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 2
+    }).format(value || 0)
+  }
+
+  if (col.type === 'number') {
+    return new Intl.NumberFormat('id-ID').format(value || 0)
+  }
+
+  return value ?? ''
+}
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params'])
 

@@ -7,7 +7,6 @@ interface User {
   email: string
   languageid?: number
   themeid?: number
-  menus?: any
 }
 
 interface AuthState {
