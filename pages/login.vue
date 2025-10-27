@@ -16,10 +16,7 @@ const error = ref('')
 const handleLogin = async () => {
   try {
     loading.value = true
-    const res = await login(form)
-    if (res.code == 200) {
-      navigateTo('/admin')
-    }
+    await login(form)
   } catch (err: any) {
     console.log(err)
     error.value = err?.data?.message || $t('INVALID_CREDENTIAL')

@@ -1,16 +1,14 @@
 export default defineNuxtRouteMiddleware((to) => {
-  const getToken = () => {
-    if (process.client) {
-      return localStorage.getItem('token')
-    }
-    return null
+  const userStore = useUserStore()
+  userStore.loadAuth()
+
+  // Kalau belum login dan bukan di halaman login → redirect
+  if (!userStore.token && to.path !== '/login') {
+    return navigateTo('/')
   }
 
-  let token = getToken();
-
-  // Belum login → arahkan ke login, tapi jangan loop di login sendiri
-  if (!token && to.path !== '/login') {
-    return navigateTo('/login')
+  // Kalau sudah login dan coba ke /login → arahkan ke halaman utama
+  if (userStore.token && to.path === '/login') {
+    return navigateTo('/')
   }
-
 })
