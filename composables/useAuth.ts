@@ -11,7 +11,7 @@ export const useAuth = () => {
       const res = await post('/auth/login', payload)
       if (res.code == 200) {
         userStore.setAuth(res.data?.token, res.data.user)
-        navigateTo('/admin')
+        navigateTo('/admin/dashboard')
       } else {
         throw new Error(res.message || $t('INVALID_CREDENTIAL'))
       }
