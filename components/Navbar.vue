@@ -16,7 +16,7 @@ const userStore = useUserStore()
     <NuxtLink
         v-if="userStore.token"
         class="text-white p-2 hover:bg-gray-700"
-        to="/admin"
+        to="/admin/dashboard"
         >{{$t('ADMIN')}}</NuxtLink
     >
     </div>
