@@ -256,5 +256,7 @@
   "ENTER_A_PASSWORD": "Enter a Password",
   "ENTER_A_REALNAME": "Enter a real name",
   "ENTER_A_PHONE": "Enter a phone",
-  "SAVE": "Save"
+  "SAVE": "Save",
+  "USER_PROFILE": "User Profile",
+  "USER_TO_DO": "User To Do"
 }

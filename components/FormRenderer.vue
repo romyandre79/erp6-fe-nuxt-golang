@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, reactive, watch } from 'vue'
+import { h, reactive, watch, onMounted } from 'vue'
 import TablePagination from './TablePagination.vue'
 
 const props = defineProps({
@@ -13,7 +13,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['onRead', 'onCreate', 'onUpdate', 'onPurge', 'onClear'])
+const emit = defineEmits([])
 
 /* 🧩 Parsing schema JSON string jika perlu */
 const parsedSchema = reactive(
@@ -22,8 +22,9 @@ const parsedSchema = reactive(
     : props.schema
 )
 
-/* 🧠 State untuk menyimpan input form */
-const formData = reactive({})
+/* 🧠 State untuk menyimpan input form dan data tabel */
+let formData = ref<Record<string,any>>({})
+const tableDataMap = reactive<Record<string, any[]>>({}) // untuk menyimpan data tiap table
 
 /* 🎯 Render komponen dasar */
 function renderComponent(component: any) {
@@ -32,10 +33,16 @@ function renderComponent(component: any) {
       return h('div', { class: 'mb-2 text-gray-800 font-medium' }, component.text)
 
     case 'text':
+    case 'password':
     case 'number':
+      if (!(component.key in formData.value)) formData.value[component.key] = ''
+      const model = computed({
+        get: () => formData.value[component.key],
+        set: (val) => (formData.value[component.key] = val)
+      })
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.text
-          ? h('label', { class: 'text-sm mb-1 font-medium text-gray-700' }, component.text)
+          ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, component.text)
           : null,
         h('input', {
           type: component.type,
@@ -43,28 +50,27 @@ function renderComponent(component: any) {
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: component.place || '',
-          value: formData[component.key] ?? '',
-          onInput: (e: any) => (formData[component.key] = e.target.value)
+          value: model.value,
+          onInput: (e: any) => (model.value = e.target.value)
         })
       ])
 
     case 'button':
-    case 'save':
-    case 'clear':
-    case 'action':
-      const color =
-        component.color ||
-        (component.type === 'clear' ? 'gray' : 'blue')
+      const color = component.color || (component.type === 'clear' ? 'gray' : 'blue')
       return h(
         'button',
         {
           class: `px-4 py-2 rounded mr-2 text-white bg-${color}-600 hover:bg-${color}-700 transition`,
           onClick: () => {
-            const eventName = component.event || component.type
-            emit(eventName, { ...formData })
-            if (component.type === 'clear') {
-              Object.keys(formData).forEach(k => (formData[k] = ''))
-              emit('onClear')
+            const eventName = (component.event || component.type).toUpperCase()
+            if (eventName == "ONCREATE") {
+              CreateHandler({ ...formData })
+            } else if (eventName == "ONUPDATE") {
+              UpdateHandler({ ...formData })
+            } else if (eventName == "ONDELETE") {
+              DeleteHandler({ ...formData })
+            } else {
+              emit(eventName, { ...formData })
             }
           }
         },
@@ -77,76 +83,125 @@ function renderComponent(component: any) {
 }
 
 /* 🧱 Render kontainer seperti form, table, details */
-function renderContainer(components: any) {
-    console.log(components.components)
-  for (let index = 0; index < components.components.length; index++) {
-    const component = components.components[index];
-    console.log(component)
+function renderContainer(container: any) {
+  if (!container?.components) return null
+
+  return h('div', {},
+    container.components.map((component: any, index: number) => {
       switch (component.type) {
-      case 'form':
-        const sorted = component.components?.sort((a: any, b: any) => (a.row ?? 0) - (b.row ?? 0)) || []
-        return h(
-          'form',
-          {
-            class: 'p-4 border rounded bg-white shadow-sm',
-            onSubmit: (e: Event) => e.preventDefault()
-          },
-          sorted.map((child: any) =>
-            ['table', 'details'].includes(child.type)
-              ? renderContainer(child)
-              : renderComponent(child)
-          )
-        )
+        case 'table':
+          // Ambil data dari tableDataMap berdasarkan key unik (misal key atau text)
+          const key = component.key || component.text || `table-${index}`
+          const currentData = tableDataMap[key] ?? component.defaultValue ?? []
 
-      case 'table':
-        return h('div', { class: 'my-4' }, [
-          h('h2', { class: 'text-lg font-semibold mb-2' }, component.text || 'Table'),
-          h(TablePagination, {
-            title: component.text ?? 'Data',
-            columns:
-              component.columns?.map((col: any, i: number) => ({
-                label: col.text || `Column ${i + 1}`,
-                key: col.key || `col${i + 1}`,
-                type: col.type || 'text'
-              })) ?? [],
-            data: component.defaultValue ?? [],
-            bordered: true,
-            striped: true,
-            hover: true,
-            perPage: 10
-          })
-        ])
+          return h('div', { key: index, class: 'my-4' }, [
+            h('h2', { class: 'text-lg font-semibold mb-2' }, component.text || 'Table'),
+            h(TablePagination, {
+              title: component.text ?? 'Data',
+              columns:
+                component.columns?.map((col: any, i: number) => ({
+                  label: col.text || `Column ${i + 1}`,
+                  key: col.key || `col${i + 1}`,
+                  type: col.type || 'text'
+                })) ?? [],
+              data: currentData,
+              bordered: true,
+              striped: true,
+              hover: true,
+              perPage: 10
+            })
+          ])
 
-      case 'details':
-        return h('div', { class: 'border rounded p-4 bg-gray-50 mt-4' }, [
-          h('h3', { class: 'text-md font-semibold mb-2' }, component.text || 'Details'),
-          component.details?.map((detail: any, idx: number) =>
-            h('div', { key: idx, class: 'mb-3' }, [
-              detail.text ? h('div', { class: 'font-medium' }, detail.text) : null,
-              detail.components?.map((child: any) =>
-                ['table', 'details'].includes(child.type)
-                  ? renderContainer(child)
-                  : renderComponent(child)
-              )
-            ])
-          )
-        ])
+        case 'details':
+          return h('div', { key: index, class: 'border rounded p-4 bg-gray-50 mt-4' }, [
+            h('h3', { class: 'text-md font-semibold mb-2' }, component.text || 'Details'),
+            component.details?.map((detail: any, idx: number) =>
+              h('div', { key: idx, class: 'mb-3' }, [
+                detail.text ? h('div', { class: 'font-medium' }, detail.text) : null,
+                detail.components?.map((child: any) =>
+                  ['table', 'details'].includes(child.type)
+                    ? renderContainer(child)
+                    : renderComponent(child)
+                )
+              ])
+            )
+          ])
 
-      default:
-        return renderComponent(component)
-    }
+        default:
+          return renderComponent(component)
+      }
+    })
+  )
+}
+
+/* 🧠 API Handler */
+const Api = useApi()
+let res: any
+
+const CreateHandler = async (data: any) => {
+  console.log('CreateHandler:', data)
+}
+
+const UpdateHandler = async (data: any) => {
+  const flow = parsedSchema.action?.onUpdate
+  if (flow) {
+    res = await Api.post('admin/execute-flow', {
+      flow,
+      menu: 'admin',
+      ...data
+    })
+    console.log('Update result:', res)
+  } else {
+    alert('Invalid Flow ' + flow)
   }
 }
 
-/* 🔁 Jika schema berubah, update parsedSchema */
-watch(
-  () => props.schema,
-  newVal => {
-    const parsed = typeof newVal === 'string' ? JSON.parse(newVal) : newVal
-    Object.assign(parsedSchema, parsed)
-  },
-  { deep: true }
-)
+const ReadHandler = async () => {
+  const flow = parsedSchema.action?.onRead
+  if (flow) {
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    formData.value = {} // reset
+
+    // ✅ Setelah data diterima, langsung assign ke reactive state
+    if (res?.data?.data) {
+      const tableData = res?.data?.data // biasanya array
+
+        // 🧠 Reset dan assign dengan cara reactive
+        const firstRow = tableData
+        for (const key in firstRow) {
+          formData.value[key] = firstRow[key]
+        }
+
+      // Kalau ada komponen table di schema → isi tableDataMap
+      const tableComponent = parsedSchema.components?.find(
+        (x: any) => x.type === 'table'
+      )
+      if (tableComponent) {
+        const key = tableComponent.key || tableComponent.text || 'table'
+        tableDataMap[key] = tableData
+      }
+    } else {
+      console.warn('Empty Data or Invalid structure: ', res)
+    }
+  } else {
+    console.warn('No onRead flow defined.')
+  }
+}
+
+
+const DeleteHandler = async (data: any) => {
+  console.log('DeleteHandler:', data)
+}
+
+/* 🚀 Lifecycle */
+onMounted(() => {
+  ReadHandler()
+})
 </script>
 
 <template>
