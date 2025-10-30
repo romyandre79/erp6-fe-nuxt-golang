@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, reactive, watch, onMounted } from 'vue'
+import { h, reactive, ref, computed, onMounted, toRaw } from 'vue'
 import TablePagination from './TablePagination.vue'
 
 const props = defineProps({
@@ -23,8 +23,99 @@ const parsedSchema = reactive(
 )
 
 /* 🧠 State untuk menyimpan input form dan data tabel */
-let formData = ref<Record<string,any>>({})
-const tableDataMap = reactive<Record<string, any[]>>({}) // untuk menyimpan data tiap table
+let formData = ref<Record<string, any>>({})
+const tableDataMap = reactive<Record<string, any[]>>({})
+const validationErrors = reactive<Record<string, string>>({})
+
+/* 🧩 Fungsi validasi */
+function validateField(component: any, value: any) {
+  if (!component.validated || !Array.isArray(component.validated)) return null
+  let message = ''
+
+  for (const rule of component.validated) {
+    const [ruleName, ruleValue] = rule.split(':')
+
+    switch (ruleName.toLowerCase()) {
+      case 'empty':
+        if (value === null || value === undefined || value === '')
+          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.text || component.key })
+        break
+
+      case 'number':
+        if (value !== '' && isNaN(Number(value)))
+          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.text || component.key })
+        break
+
+      case 'email':
+        if (
+          value &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase())
+        )
+          message = $t(`INVALID_ENTRY_EMAIL`, { entry : component.text || component.key })
+        break
+
+      // 🧩 min / max
+      case 'min':
+        if (value !== undefined && value !== null && value !== '') {
+          if (!isNaN(Number(value))) {
+            if (Number(value) < Number(ruleValue))
+              message = $t(`INVALID_ENTRY_MIN`, {entry : component.text || component.key, value: ruleValue})          
+            } else if (String(value).length < Number(ruleValue))
+              message = $t(`INVALID_ENTRY_MIN_CHAR`, {entry : component.text || component.key, value: ruleValue})          
+        }
+        break
+
+      case 'max':
+        if (value !== undefined && value !== null && value !== '') {
+          if (!isNaN(Number(value))) {
+            if (Number(value) > Number(ruleValue))
+              message = $t(`INVALID_ENTRY_MAX`, {entry : component.text || component.key, value: ruleValue})          
+            } else if (String(value).length < Number(ruleValue))
+              message = $t(`INVALID_ENTRY_MAX_CHAR`, {entry : component.text || component.key, value: ruleValue})          
+        }
+        break
+
+      // 🧩 regex
+      case 'regex':
+        try {
+          const pattern = new RegExp(ruleValue)
+          if (!pattern.test(String(value || '')))
+            message = $t(`INVALID_ENTRY_FORMAT`, {entry : component.text || component.key})
+        } catch (e) {
+          console.warn('Invalid regex:', ruleValue)
+        }
+        break
+
+      // 🧩 match:<field> → nilai harus sama dengan field lain
+      case 'match':
+        const otherField = ruleValue
+        const otherValue = formData.value[otherField]
+        if (value !== otherValue)
+          message = $t(`INVALID_ENTRY_MATCH`, {entry : component.text || component.key, field: otherField})
+        break
+    }
+
+    if (message) break
+  }
+
+  validationErrors[component.key] = message
+  return !message
+}
+
+/* 🧩 Validasi semua field */
+function validateAllFields() {
+  let valid = true
+  if (!parsedSchema.components) return true
+
+  parsedSchema.components.forEach((comp: any) => {
+    if (['text', 'password', 'number'].includes(comp.type)) {
+      const value = formData.value[comp.key]
+      const result = validateField(comp, value)
+      if (!result) valid = false
+    }
+  })
+  return valid
+}
 
 /* 🎯 Render komponen dasar */
 function renderComponent(component: any) {
@@ -38,7 +129,10 @@ function renderComponent(component: any) {
       if (!(component.key in formData.value)) formData.value[component.key] = ''
       const model = computed({
         get: () => formData.value[component.key],
-        set: (val) => (formData.value[component.key] = val)
+        set: (val) => {
+          formData.value[component.key] = val
+          validateField(component, val)
+        }
       })
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.text
@@ -48,11 +142,16 @@ function renderComponent(component: any) {
           type: component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            ' ' +
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: component.place || '',
           value: model.value,
           onInput: (e: any) => (model.value = e.target.value)
-        })
+        }),
+        validationErrors[component.key]
+          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+          : null
       ])
 
     case 'button':
@@ -61,14 +160,16 @@ function renderComponent(component: any) {
         'button',
         {
           class: `px-4 py-2 rounded mr-2 text-white bg-${color}-600 hover:bg-${color}-700 transition`,
-          onClick: () => {
+          onClick: async () => {
             const eventName = (component.event || component.type).toUpperCase()
-            if (eventName == "ONCREATE") {
-              CreateHandler()
-            } else if (eventName == "ONUPDATE") {
-              UpdateHandler()
-            } else if (eventName == "ONDELETE") {
-              DeleteHandler()
+            if (eventName === 'ONCREATE') {
+              if (validateAllFields()) await CreateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONUPDATE') {
+              if (validateAllFields()) await UpdateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONDELETE') {
+              await DeleteHandler()
             } else {
               emit(eventName, { ...formData })
             }
@@ -85,15 +186,12 @@ function renderComponent(component: any) {
 /* 🧱 Render kontainer seperti form, table, details */
 function renderContainer(container: any) {
   if (!container?.components) return null
-
   return h('div', {},
     container.components.map((component: any, index: number) => {
       switch (component.type) {
         case 'table':
-          // Ambil data dari tableDataMap berdasarkan key unik (misal key atau text)
           const key = component.key || component.text || `table-${index}`
           const currentData = tableDataMap[key] ?? component.defaultValue ?? []
-
           return h('div', { key: index, class: 'my-4' }, [
             h('h2', { class: 'text-lg font-semibold mb-2' }, component.text || 'Table'),
             h(TablePagination, {
@@ -139,27 +237,26 @@ const Api = useApi()
 let res: any
 
 const CreateHandler = async () => {
+  console.log('Create triggered', toRaw(formData.value))
 }
 
 const UpdateHandler = async () => {
-   const flow = parsedSchema.action?.onUpdate
+  const flow = parsedSchema.action?.onUpdate
   if (flow) {
-    const payload = { ...toRaw(formData.value) } // 🔥 hilangkan proxy/computed
+    const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
     dataForm.append('flow', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
-    const rawData = toRaw(formData.value)
-    for (const key in rawData) {
-    if (rawData[key] !== undefined && rawData[key] !== null) {
-      // Jika field berupa object atau array, ubah ke JSON string
-      if (typeof rawData[key] === 'object') {
-        dataForm.append(key, JSON.stringify(rawData[key]))
-      } else {
-        dataForm.append(key, rawData[key])
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
       }
     }
-  }
+
     res = await Api.post('admin/execute-flow', dataForm)
     console.log('Update result:', res)
   } else {
@@ -176,36 +273,22 @@ const ReadHandler = async () => {
     dataForm.append('search', 'true')
 
     const res = await Api.post('admin/execute-flow', dataForm)
-    formData.value = {} // reset
-
-    // ✅ Setelah data diterima, langsung assign ke reactive state
+    formData.value = {}
     if (res?.data?.data) {
-      const tableData = res?.data?.data // biasanya array
-
-        // 🧠 Reset dan assign dengan cara reactive
-        const firstRow = tableData
-        for (const key in firstRow) {
-          formData.value[key] = firstRow[key]
-        }
-
-      // Kalau ada komponen table di schema → isi tableDataMap
-      const tableComponent = parsedSchema.components?.find(
-        (x: any) => x.type === 'table'
-      )
+      const tableData = res?.data?.data
+      const firstRow = tableData
+      for (const key in firstRow) formData.value[key] = firstRow[key]
+      const tableComponent = parsedSchema.components?.find((x: any) => x.type === 'table')
       if (tableComponent) {
         const key = tableComponent.key || tableComponent.text || 'table'
         tableDataMap[key] = tableData
       }
-    } else {
-      console.warn('Empty Data or Invalid structure: ', res)
     }
-  } else {
-    console.warn('No onRead flow defined.')
   }
 }
 
-
 const DeleteHandler = async () => {
+  console.log('Delete triggered')
 }
 
 /* 🚀 Lifecycle */
