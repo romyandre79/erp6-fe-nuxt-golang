@@ -64,11 +64,11 @@ function renderComponent(component: any) {
           onClick: () => {
             const eventName = (component.event || component.type).toUpperCase()
             if (eventName == "ONCREATE") {
-              CreateHandler({ ...formData })
+              CreateHandler()
             } else if (eventName == "ONUPDATE") {
-              UpdateHandler({ ...formData })
+              UpdateHandler()
             } else if (eventName == "ONDELETE") {
-              DeleteHandler({ ...formData })
+              DeleteHandler()
             } else {
               emit(eventName, { ...formData })
             }
@@ -138,18 +138,29 @@ function renderContainer(container: any) {
 const Api = useApi()
 let res: any
 
-const CreateHandler = async (data: any) => {
-  console.log('CreateHandler:', data)
+const CreateHandler = async () => {
 }
 
-const UpdateHandler = async (data: any) => {
-  const flow = parsedSchema.action?.onUpdate
+const UpdateHandler = async () => {
+   const flow = parsedSchema.action?.onUpdate
   if (flow) {
-    res = await Api.post('admin/execute-flow', {
-      flow,
-      menu: 'admin',
-      ...data
-    })
+    const payload = { ...toRaw(formData.value) } // 🔥 hilangkan proxy/computed
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+    const rawData = toRaw(formData.value)
+    for (const key in rawData) {
+    if (rawData[key] !== undefined && rawData[key] !== null) {
+      // Jika field berupa object atau array, ubah ke JSON string
+      if (typeof rawData[key] === 'object') {
+        dataForm.append(key, JSON.stringify(rawData[key]))
+      } else {
+        dataForm.append(key, rawData[key])
+      }
+    }
+  }
+    res = await Api.post('admin/execute-flow', dataForm)
     console.log('Update result:', res)
   } else {
     alert('Invalid Flow ' + flow)
@@ -194,8 +205,7 @@ const ReadHandler = async () => {
 }
 
 
-const DeleteHandler = async (data: any) => {
-  console.log('DeleteHandler:', data)
+const DeleteHandler = async () => {
 }
 
 /* 🚀 Lifecycle */
