@@ -1,10 +1,10 @@
 <template>
   <div class="p-6 space-y-10">
-    <section>
-      <div v-for="(value,i) in recordWidget">
+      <div v-for="(value,i) in recordWidget" class="p-5 w-full rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 
+             bg-white dark:bg-gray-900 hover:shadow-xl transition-all duration-300">
+             <h1 class="text-xl font-bold tracking-tight">{{ $t(value.description.replace(/\s+/g, '_').toUpperCase()) }}</h1>
         <FormRenderer  v-if="fetchForm(i)" :schema="fetchForm(i)" formtype="MASTER"/>
       </div>
-    </section>
   </div>
 </template>
 
@@ -40,6 +40,6 @@ const fetchForm = (rec : any) => {
 }
 
 onMounted(async() => {
-  await fetchData()
+  fetchData()
 })
 </script>

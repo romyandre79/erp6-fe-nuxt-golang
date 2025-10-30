@@ -245,5 +245,14 @@
   "WORK_TIME": "Work Time",
   "WORKFLOW": "Workflow",
   "YOU_ARE_NOT_AUTHORIZED": "You are not authorized",
-  "YOUR_PROFILE": "Profile"
+  "YOUR_PROFILE": "Profile",
+    "INVALID_ENTRY_EMPTY": "{entry} is required",
+  "INVALID_ENTRY_MIN": "{entry} is min {value}",
+  "INVALID_ENTRY_MIN_CHAR": "{entry} is min {value} character",
+  "INVALID_ENTRY_MAX": "{entry} is max {value}",
+  "INVALID_ENTRY_MAX_CHAR": "{entry} is max {value} character",
+  "INVALID_ENTRY_NUMBER": "{entry} only number accepted",
+  "INVALID_ENTRY_EMAIL": "{entry} only email accepted",
+  "INVALID_ENTRY_FORMAT": "{entry} not match with current format",
+  "INVALID_ENTRY_MATCH": "{entry} not match with {field}"
 }
