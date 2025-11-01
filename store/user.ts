@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { jwtDecode } from 'jwt-decode'
 
 interface User {
   userid: number
@@ -25,22 +26,38 @@ export const useUserStore = defineStore('user', {
       this.token = token
       this.user = user
 
-      // Simpan cookie (harus string)
       const tokenCookie = useCookie('token', { path: '/', maxAge: 60 * 60 * 24 * 7 })
       const userCookie = useCookie('user', { path: '/', maxAge: 60 * 60 * 24 * 7 })
-
       tokenCookie.value = token
-      userCookie.value = JSON.stringify(user)  // ✅ penting
+      userCookie.value = JSON.stringify(user)
     },
 
     loadAuth() {
       const tokenCookie = useCookie<string | null>('token')
       const userCookie = useCookie<string | null>('user')
 
-      // Ambil token
-      this.token = tokenCookie.value ?? null
+      const token = tokenCookie.value
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token)
+          const now = Date.now() / 1000
 
-      // Parse user jika valid string JSON
+          if (decoded.exp && decoded.exp < now) {
+            console.warn('⚠️ Token expired, logout otomatis')
+            this.logout()
+            return
+          }
+
+          this.token = token
+        } catch (err) {
+          console.error('❌ Token invalid:', err)
+          this.logout()
+          return
+        }
+      } else {
+        this.token = null
+      }
+
       try {
         if (userCookie.value && typeof userCookie.value === 'string') {
           this.user = JSON.parse(decodeURIComponent(userCookie.value))
@@ -53,17 +70,13 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-
     logout() {
       const tokenCookie = useCookie('token')
       const userCookie = useCookie('user')
-
       tokenCookie.value = null
       userCookie.value = null
-
       this.token = null
       this.user = null
-
       navigateTo('/login')
     }
   }
