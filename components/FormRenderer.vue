@@ -2,6 +2,8 @@
 import { h, reactive, ref, computed, onMounted, toRaw } from 'vue'
 import TablePagination from './TablePagination.vue'
 
+const toast = useToast()
+
 const props = defineProps({
   schema: {
     type: [Object, String],
@@ -29,7 +31,7 @@ const validationErrors = reactive<Record<string, string>>({})
 
 /* 🧩 Fungsi validasi */
 function validateField(component: any, value: any) {
-  if (!component.validated || !Array.isArray(component.validated)) return null
+  if (!component.validated || !Array.isArray(component.validated)) return true
   let message = ''
 
   for (const rule of component.validated) {
@@ -95,7 +97,7 @@ function validateField(component: any, value: any) {
         break
     }
 
-    if (message) break
+    if (message != '') break
   }
 
   validationErrors[component.key] = message
@@ -108,10 +110,10 @@ function validateAllFields() {
   if (!parsedSchema.components) return true
 
   parsedSchema.components.forEach((comp: any) => {
-    if (['text', 'password', 'number'].includes(comp.type)) {
+    if (['text', 'password', 'number', 'email'].includes(comp.type)) {
       const value = formData.value[comp.key]
       const result = validateField(comp, value)
-      if (!result) valid = false
+      if (!result) valid = false  // ✅ perbaikan: dibalik
     }
   })
   return valid
@@ -146,6 +148,7 @@ function renderComponent(component: any) {
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: component.place || '',
+          maxlength: component.length,
           value: model.value,
           onInput: (e: any) => (model.value = e.target.value)
         }),
@@ -237,7 +240,30 @@ const Api = useApi()
 let res: any
 
 const CreateHandler = async () => {
-  console.log('Create triggered', toRaw(formData.value))
+  const flow = parsedSchema.action?.onCreate
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {
+      ReadHandler()
+    }
+    console.log('Update result:', res)
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
 }
 
 const UpdateHandler = async () => {
@@ -258,7 +284,13 @@ const UpdateHandler = async () => {
     }
 
     res = await Api.post('admin/execute-flow', dataForm)
-    console.log('Update result:', res)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE_UPDATE'),
+        description: $t(res.message)
+      }) 
+      //ReadHandler()
+    }
   } else {
     alert('Invalid Flow ' + flow)
   }

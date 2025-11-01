@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '~/store/theme'
 import { useAuth } from '~/composables/useAuth'
 import { useColorMode } from '@vueuse/core'
-import { watchEffect } from 'vue'
 
 const themeStore = useThemeStore()
 const { t } = useI18n()
@@ -68,6 +67,8 @@ const toggleExpand = (id: number) => {
 </script>
 
 <template>
+  <ClientOnly>
+  <UApp>
   <div
     :class="[
       'flex min-h-screen transition-colors duration-300',
@@ -196,6 +197,8 @@ const toggleExpand = (id: number) => {
       </div>
     </main>
   </div>
+  </UApp>
+  </ClientOnly>
 </template>
 
 <style scoped>

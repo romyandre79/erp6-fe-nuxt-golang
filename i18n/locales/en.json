@@ -267,5 +267,7 @@
   "INVALID_ENTRY_NUMBER": "{entry} only number accepted",
   "INVALID_ENTRY_EMAIL": "{entry} only email accepted",
   "INVALID_ENTRY_FORMAT": "{entry} not match with current format",
-  "INVALID_ENTRY_MATCH": "{entry} not match with {field}"
+  "INVALID_ENTRY_MATCH": "{entry} not match with {field}",
+  "TITLE_UPDATE": "Update Process",
+  "DATA_RETRIEVED": "Data Retrieved"
 }
