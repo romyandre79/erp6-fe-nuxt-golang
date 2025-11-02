@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { h, reactive, ref, computed, onMounted, toRaw } from 'vue'
 import TablePagination from './TablePagination.vue'
+import FormSelect from '~/components/FormSelect.vue'
 
 const toast = useToast()
 
@@ -129,7 +130,7 @@ function renderComponent(component: any) {
     case 'password':
     case 'number':
       if (!(component.key in formData.value)) formData.value[component.key] = ''
-      const model = computed({
+      const modelInput = computed({
         get: () => formData.value[component.key],
         set: (val) => {
           formData.value[component.key] = val
@@ -149,13 +150,22 @@ function renderComponent(component: any) {
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: component.place || '',
           maxlength: component.length,
-          value: model.value,
-          onInput: (e: any) => (model.value = e.target.value)
+          value: modelInput.value,
+          onInput: (e: any) => (modelInput.value = e.target.value)
         }),
         validationErrors[component.key]
           ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
           : null
       ])
+    case 'select':
+      if (!(component.key in formData.value)) formData.value[component.key] = ''
+      return h(FormSelect, {
+        key: component.key,
+        component,
+        formData,
+        validationErrors,
+        validateField
+      })
 
     case 'button':
       const color = component.color || (component.type === 'clear' ? 'gray' : 'blue')
@@ -320,12 +330,38 @@ const ReadHandler = async () => {
 }
 
 const DeleteHandler = async () => {
-  console.log('Delete triggered')
+  const flow = parsedSchema.action?.onPurge
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE_DELETE'),
+        description: $t(res.message)
+      }) 
+      //ReadHandler()
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
 }
 
 /* 🚀 Lifecycle */
-onMounted(() => {
-  ReadHandler()
+onMounted(async () => {
+  await ReadHandler()
 })
 </script>
 

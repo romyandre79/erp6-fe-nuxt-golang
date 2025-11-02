@@ -269,5 +269,6 @@
   "INVALID_ENTRY_FORMAT": "{entry} not match with current format",
   "INVALID_ENTRY_MATCH": "{entry} not match with {field}",
   "TITLE_UPDATE": "Update Process",
-  "DATA_RETRIEVED": "Data Retrieved"
+  "DATA_RETRIEVED": "Data Retrieved",
+  "CHOOSE": "Choose"
 }
