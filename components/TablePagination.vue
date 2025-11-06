@@ -6,11 +6,20 @@
 
       <div class="flex items-center gap-2">
         <!-- Search -->
-        <div v-if="enableSearch">
+        <div v-if="enableSearch && simpleSearch == true">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search..."
+            class="border rounded px-2 py-1 text-sm"
+            @keyup.enter="fetchData"
+          />
+          </div>
+        <div v-if="simpleSearch == false" v-for="(col,index) in searchColumn">
+<input v-if="col.type == 'text' || col.type == 'number' || col.type == 'email'"
+            v-model="searchComplexQuery[col.key]"
+            :type="`${col.type}`"
+            :placeholder="`${$t(col.place.toUpperCase())}...`"
             class="border rounded px-2 py-1 text-sm"
             @keyup.enter="fetchData"
           />
@@ -46,6 +55,15 @@
           ]"
         >
           <tr>
+             <!-- Checkbox select all -->
+    <th class="px-4 py-3">
+  <input
+    type="checkbox"
+    class="checkbox checkbox-sm"
+    :checked="rowsData.length > 0 && rowsData.every(r => isSelected(r))"
+    @change="toggleSelectAll"
+  />
+</th>
             <th
               v-for="col in columns"
               :key="col.key || col"
@@ -75,6 +93,14 @@
               isDark ? 'hover:bg-gray-700/60 text-gray-100' : 'hover:bg-gray-100 text-gray-800'
             ]"
           >
+          <td class="px-4 py-3">
+  <input
+    type="checkbox"
+    class="checkbox checkbox-sm"
+    :checked="isSelected(row)"
+    @click.stop="toggleRowSelection(row)"
+  />
+</td>
             <td
               v-for="col in columns"
               :key="col.key || col"
@@ -125,18 +151,32 @@
         </select>
 
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 disabled:opacity-50"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          :disabled="currentPage === 1 || loading"
+          @click="firstPage"
+        >
+        <<
+        </button>
+        <button
+          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
           :disabled="currentPage === 1 || loading"
           @click="prevPage"
         >
-          Prev
+          <
         </button>
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 disabled:opacity-50"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
           :disabled="currentPage === totalPages || loading"
           @click="nextPage"
         >
-          Next
+          >
+        </button>
+        <button
+          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          :disabled="currentPage === totalPages || loading"
+          @click="lastPage"
+        >
+          >>
         </button>
       </div>
     </div>
@@ -157,12 +197,34 @@ const props = defineProps({
   pageSize: { type: Number, default: 5 },
   pageSizeOptions: { type: Array, default: () => [5, 10, 20, 50] },
   enableSearch: { type: Boolean, default: true },
+  simpleSearch: { type: Boolean, default: true },
+  searchColumn: { type: Array, required: false },
   enablePaging: { type: Boolean, default: true },
   enablePageSize: { type: Boolean, default: true },
+  method: { type: String, default: 'GET' }, // NEW — bisa GET / POST
+  rowKey: { type: String, default: 'id' },
 })
 
+const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change'])
+
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.theme === 'dark')
+
+const Api = useApi()
+
+// States
+const currentPage = ref(1)
+const totalPages = ref(1)
+const searchQuery = ref('')
+const searchComplexQuery = ref<Record<string, string>>({})
+const pageSize = ref(props.pageSize)
+const totalRecords = ref(0)
+const rowsData = ref<any[]>([])
+const loading = ref(false)
+
+// Formatter
 const formatCellValue = (col: any, value: any) => {
-  if (col.type === 'boolean') {
+  if (col.type === 'boolean' || col.type === 'bool') {
     return value
       ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm" />'
       : '<input type="checkbox" disabled class="checkbox checkbox-sm" />'
@@ -183,45 +245,44 @@ const formatCellValue = (col: any, value: any) => {
   return value ?? ''
 }
 
-const emit = defineEmits(['action', 'row-action', 'fetch-params'])
-
-const themeStore = useThemeStore()
-const isDark = computed(() => themeStore.theme === 'dark')
-
-const Api = useApi()
-
-// states
-const currentPage = ref(1)
-const totalPages = ref(1)
-const searchQuery = ref('')
-const pageSize = ref(props.pageSize)
-const totalRecords = ref(0)
-const rowsData = ref<any[]>([])
-const loading = ref(false)
 
 // Fetch data
 const fetchData = async () => {
   loading.value = true
-
   try {
     let res
-    const params = {
-      page: currentPage.value,
-      limit: pageSize.value,
-      search: searchQuery.value
+    if (props.method.toUpperCase() === 'POST') {
+      const dataForm = new FormData()
+      // --- POST request ---
+      dataForm.append('flow', props.endPoint || '')
+      dataForm.append('menu', 'admin')
+      dataForm.append('search', 'true')
+      dataForm.append('page', currentPage.value || 1)
+      dataForm.append('rows', pageSize.value || 5)
+      for (let index = 0; index < props.columns.length; index++) {
+        const element = props.columns[index];
+        dataForm.append(element.key, searchComplexQuery.value[element.key] || '')
+      }
+
+      res = await Api.post("/admin/execute-flow", dataForm)
+    } else {
+      const params = {
+        page: currentPage.value,
+        limit: pageSize.value,
+        search: searchQuery.value,
+      }
+
+      emit('fetch-params', params)
+      // --- GET request ---
+      const queryString = new URLSearchParams(params as any).toString()
+      res = await Api.get(`${props.endPoint}?${queryString}`)
     }
-
-    emit('fetch-params', params) // bisa override di parent
-
-    let url = props.endPoint + "?page=" + currentPage.value + "&limit=" + pageSize.value + "&search="+searchQuery.value  
-
-    res = await Api.get(url)
 
     if (res.code === 200) {
       rowsData.value = res.data.data || []
       totalRecords.value = res.data.total || res.data.data?.length || 0
-      currentPage.value = res.data.meta.page
-      totalPages.value = res.data.meta.totalPages
+      currentPage.value = res.data.meta?.page || res.data.page || 0
+      totalPages.value = res.data.meta?.totalPages || Math.ceil(totalRecords.value / res.data.rows) || 0
     } else {
       rowsData.value = []
       totalRecords.value = 0
@@ -236,14 +297,21 @@ const fetchData = async () => {
 
 onMounted(fetchData)
 
-watch([searchQuery], () => {
+watch([searchQuery, () => props.formData], () => {
   currentPage.value = 1
   fetchData()
-})
+}, { deep: true })
 
 const handlePageSizeChange = () => {
   currentPage.value = 1
   fetchData()
+}
+
+const firstPage = () => {
+  if (currentPage.value > 0) {
+    currentPage.value = 1
+    fetchData()
+  }
 }
 
 const nextPage = () => {
@@ -259,4 +327,47 @@ const prevPage = () => {
     fetchData()
   }
 }
+
+const lastPage = () => {
+  if (totalPages.value > 0) {
+    currentPage.value = totalPages.value
+    fetchData()
+  }
+}
+
+const selectedKeys = ref<any[]>([]) // hanya simpan ID/Key
+
+const toggleRowSelection = (row: any) => {
+  const key = row[props.rowKey]
+  const index = selectedKeys.value.indexOf(key)
+  if (index === -1) selectedKeys.value.push(key)
+  else selectedKeys.value.splice(index, 1)
+}
+
+const isSelected = (row: any) => selectedKeys.value.includes(row[props.rowKey])
+
+const toggleSelectAll = () => {
+  const currentPageKeys = rowsData.value.map(r => r[props.rowKey])
+  const allSelected = currentPageKeys.every(key => selectedKeys.value.includes(key))
+  
+  if (allSelected) {
+    // hapus semua key halaman ini
+    selectedKeys.value = selectedKeys.value.filter(k => !currentPageKeys.includes(k))
+  } else {
+    // tambahkan key halaman ini
+    const merged = new Set([...selectedKeys.value, ...currentPageKeys])
+    selectedKeys.value = Array.from(merged)
+  }
+}
+
+watch(selectedKeys, (val) => {
+  // emit ke parent (opsional)
+  const selectedRows = rowsData.value.filter(r => val.includes(r[props.rowKey]))
+  emit('selection-change', selectedRows)
+},
+{ deep: true })
+
+defineExpose({
+  refreshTable: fetchData
+})
 </script>

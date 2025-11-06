@@ -117,7 +117,7 @@ const toggleExpand = (id: number) => {
           >
             <div class="flex items-center gap-2">
               <span v-if="!isCollapsed" class="capitalize truncate">
-                {{ t(parent.description.replace(/\s+/g, '_').toUpperCase()) }}
+                {{ t(parent.description.toUpperCase()) }}
               </span>
             </div>
             <i
@@ -147,7 +147,7 @@ const toggleExpand = (id: number) => {
                 active-class="font-semibold"
               >
                 <span class="text-sm truncate">
-                  {{ t(child.description.replace(/\s+/g, '_').toUpperCase()) }}
+                  {{ t(child.description.toUpperCase()) }}
                 </span>
               </NuxtLink>
             </div>

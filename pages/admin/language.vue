@@ -3,6 +3,7 @@
         <TablePagination 
       title="Language"
       endPoint="/admin/language"
+      method="GET"
       :columns="columns"
       :actions="actions"
       :rowActions="rowActions"
@@ -17,14 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui';
 import TablePagination from '~/components/TablePagination.vue';
-
-type Language = {
-    languageid: number
-    languagename: string
-    recordstatus: boolean    
-}
 
 definePageMeta({
   layout: 'auth',                
@@ -42,7 +36,6 @@ const actions = [
 ]
 
 const rowActions = [
-  { label: 'View', icon: 'fa fa-eye', class: 'btn-info' },
   { label: 'Edit', icon: 'fa fa-edit', class: 'btn-warning' },
   { label: 'Delete', icon: 'fa fa-trash', class: 'btn-error' }
 ]
