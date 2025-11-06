@@ -34,6 +34,32 @@ export const useApi = () => {
       }
   )
 
+  const donlotFile = async (body: any, fileName: any) => {
+    try {
+      const res = await fetch(config.public.apiBase+'/admin/execute-flow', {
+        method: 'POST',
+        body: body,
+        headers: getHeaders(body),
+      })
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      // ambil nama file dari header
+      const cd = res.headers.get('Content-Disposition')
+
+      // buat elemen <a> untuk trigger download
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      } catch (err) {
+      console.error('Error saat download file:', err)
+    }
+  }
+
   const put = (url: string, body: any) =>
     $fetch(url, 
       { 
@@ -47,5 +73,5 @@ export const useApi = () => {
   const del = (url: string) =>
     $fetch(url, { method: 'DELETE', baseURL: config.public.apiBase, headers: getHeaders() })
 
-  return { get, post, put, del }
+  return { get, post, put, del, donlotFile }
 }

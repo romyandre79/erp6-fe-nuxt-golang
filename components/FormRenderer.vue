@@ -3,6 +3,7 @@ import { h, reactive, ref, computed, onMounted, toRaw } from 'vue'
 import TablePagination from './TablePagination.vue'
 import FormSelect from '~/components/FormSelect.vue'
 import { UModal } from '#components'
+import UploadModal from './UploadModal.vue'
 
 const toast = useToast()
 
@@ -434,8 +435,14 @@ async function saveData() {
     for (const key in payload) {
       const val = payload[key]
       if (val !== undefined && val !== null) {
-        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
-        else dataForm.append(key, val)
+        if (typeof val === 'object') {
+          dataForm.append(key, JSON.stringify(val))
+        } else if (typeof val === 'boolean') {
+          // 🟢 ubah boolean ke 1 / 0 agar MySQL bisa terima
+          dataForm.append(key, val ? 1 : 0)
+        } else {
+          dataForm.append(key, val)
+        }
       }
     }
     res = await Api.post('admin/execute-flow', dataForm)
@@ -503,7 +510,7 @@ async function deleteForm() {
       try {
         res = await Api.post('admin/execute-flow', dataForm)
         if (res.code == 200) {
-          ReadHandler()
+          tableRef.value.refreshTable()
         } else
       if (res.code == 401 && res.error == 'INVALID_TOKEN') {
         navigateTo('/login')
@@ -512,6 +519,101 @@ async function deleteForm() {
         console.error('Gagal hapus data:', err)
       }      
     }
+  }
+}
+
+async function downForm(mode: any) {
+  let flow = ''
+  if (mode = 'pdf') {
+    flow = parsedSchema.action?.onPdf
+  } else
+  if (mode = 'xls') {
+    flow = parsedSchema.action?.onXls
+  } 
+  if (flow) {  
+    let dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+    for (let index = 0; index < selectedRows?.length; index++) {
+      dataForm.append(parsedSchema.primary+ "["+index+"]",selectedRows[index][parsedSchema.primary])
+    }
+    await Api.donlotFile(dataForm,flow)
+  }
+}
+
+// 🔹 Upload state
+const uploadProgress = ref(0)
+const selectedFile = ref<File | null>(null)
+const isUploading = ref(false)
+
+// 🔹 Trigger input file
+const fileInput = ref<HTMLInputElement | null>(null)
+function triggerFileSelect() {
+   console.log('Trigger select file')
+  fileInput.value?.click()
+}
+
+async function handleFileChange(e: Event) {
+  console.log('File selected:', e)
+  const target = e.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+
+  const file = target.files?.[0]
+  if (!file) return
+
+  // ✅ Validasi MIME type (opsional)
+  const validTypes = [
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
+  ]
+
+  if (!validTypes.includes(file.type)) {
+    toast.add({ title: 'Error', description: 'Hanya file Excel yang diizinkan (.xls / .xlsx)', color: 'red' })
+    target.value = '' // reset input
+    return
+  }
+
+  selectedFile.value = file
+
+  const flow = parsedSchema.action?.onUpload
+  if (!flow) {
+    toast.add({ title: 'Error', description: 'Upload flow not defined.' })
+    return
+  }
+
+  const form = new FormData()
+  form.append('flow', flow)
+  form.append('menu', 'admin')
+  form.append('search', false)
+  form.append('file-modules', file)
+
+  try {
+    isUploading.value = true
+    uploadProgress.value = 0
+
+    const res = await Api.post('admin/execute-flow', form)
+
+    if (res.code === 200) {
+      toast.add({
+        title: 'Upload Success',
+        description: res.message || 'File uploaded successfully.'
+      })
+      uploadProgress.value = 0
+      selectedFile.value = null
+      tableRef.value?.refreshTable?.()
+    } else {
+      toast.add({
+        title: 'Upload Failed',
+        description: res.message || 'Unknown error.'
+      })
+    }
+  } catch (err) {
+    console.error('Upload error:', err)
+    toast.add({ title: 'Error', description: 'Failed to upload file.' })
+  } finally {
+    isUploading.value = false
+    target.value = ''
   }
 }
 
@@ -561,16 +663,38 @@ async function deleteForm() {
 
       </UModal>
 
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition">
+      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('pdf')">
         <Icon name="heroicons:document-text" /> PDF
       </button>
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition">
+      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('xls')">
         <Icon name="heroicons:table-cells" /> XLS
       </button>
       
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition">
-        <Icon name="heroicons:arrow-up-tray" /> Upload
-      </button>
+      <button
+  class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
+  @click="triggerFileSelect"
+  :disabled="isUploading"
+>
+  <Icon name="heroicons:arrow-up-tray" />
+  <span v-if="!isUploading">Upload</span>
+  <span v-else>Uploading...</span>
+</button>
+
+<!-- Input file hidden -->
+<input
+  ref="fileInput"
+  type="file"
+  class="hidden"
+  accept=".xls,.xlsx"
+  @change="handleFileChange"
+/>
+
+<div v-if="isUploading" class="w-64 bg-gray-200 rounded-full h-2 mt-2">
+  <div
+    class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+    :style="{ width: uploadProgress + '%' }"
+  ></div>
+</div>
 
       <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition">
         <Icon name="heroicons:arrow-down-tray" /> Download Template

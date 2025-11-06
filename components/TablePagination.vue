@@ -261,7 +261,6 @@ const fetchData = async () => {
       dataForm.append('rows', pageSize.value || 5)
       for (let index = 0; index < props.columns.length; index++) {
         const element = props.columns[index];
-        console.log(element)
         dataForm.append(element.key, searchComplexQuery.value[element.key] || '')
       }
 
