@@ -1,7 +1,7 @@
 <template>
 
     <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-      <FormRenderer  v-if="formSchema" :schema="formSchema" :formType="formType" :title="formTitle"/>
+      <FormRenderer  v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle"/>
     </div>
 </template>
 
@@ -15,6 +15,7 @@ const { getMenuForm } = useAuth()
 const formSchema = ref<Record<string, any> | null>(null)
 const formType = ref(String)
 const formTitle = ref(String)
+const menuName = ref(String)
 
 definePageMeta({
   layout: 'auth',                
@@ -23,6 +24,7 @@ definePageMeta({
 
 onMounted(async() => {
   try {
+    menuName.value = route.params.slug
     const res = await getMenuForm(route.params.slug)
     if (res?.code == 200) {
       formTitle.value = res.data.description

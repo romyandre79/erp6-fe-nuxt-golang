@@ -34,9 +34,9 @@ export const useApi = () => {
       }
   )
 
-  const donlotFile = async (body: any, fileName: any) => {
+  const donlotFile = async (urlFile: any, body: any, fileName: any) => {
     try {
-      const res = await fetch(config.public.apiBase+'/admin/execute-flow', {
+      const res = await fetch(config.public.apiBase+urlFile, {
         method: 'POST',
         body: body,
         headers: getHeaders(body),
