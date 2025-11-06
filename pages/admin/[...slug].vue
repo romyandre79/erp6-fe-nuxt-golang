@@ -1,9 +1,7 @@
 <template>
+
     <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-      <h1 class="text-xl font-bold tracking-tight">{{  $t(route.params.slug[0].replace(/\s+/g, '_').toUpperCase())  }}</h1>
-    </div>
-    <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-      <FormRenderer  v-if="formSchema" :schema="formSchema" :formtype="formType"/>
+      <FormRenderer  v-if="formSchema" :schema="formSchema" :formType="formType" :title="formTitle"/>
     </div>
 </template>
 
@@ -16,6 +14,7 @@ const route = useRoute()
 const { getMenuForm } = useAuth()
 const formSchema = ref<Record<string, any> | null>(null)
 const formType = ref(String)
+const formTitle = ref(String)
 
 definePageMeta({
   layout: 'auth',                
@@ -25,7 +24,8 @@ definePageMeta({
 onMounted(async() => {
   try {
     const res = await getMenuForm(route.params.slug)
-    if (res?.code === 200) {
+    if (res?.code == 200) {
+      formTitle.value = res.data.description
       formType.value = res.data.menutype
       formSchema.value = JSON.parse(res.data.menuform)
     } else {
