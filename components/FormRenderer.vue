@@ -3,13 +3,17 @@ import { h, reactive, ref, computed, onMounted, toRaw } from 'vue'
 import TablePagination from './TablePagination.vue'
 import FormSelect from '~/components/FormSelect.vue'
 import { UModal } from '#components'
-import UploadModal from './UploadModal.vue'
 
 const toast = useToast()
 
 const props = defineProps({
   title: {
     type: String,
+    default: ''
+  },
+  menuName: {
+    type: String,
+    required: true,
     default: ''
   },
   schema: {
@@ -524,10 +528,10 @@ async function deleteForm() {
 
 async function downForm(mode: any) {
   let flow = ''
-  if (mode = 'pdf') {
+  if (mode == 'pdf') {
     flow = parsedSchema.action?.onPdf
   } else
-  if (mode = 'xls') {
+  if (mode == 'xlsx') {
     flow = parsedSchema.action?.onXls
   } 
   if (flow) {  
@@ -538,8 +542,14 @@ async function downForm(mode: any) {
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(parsedSchema.primary+ "["+index+"]",selectedRows[index][parsedSchema.primary])
     }
-    await Api.donlotFile(dataForm,flow)
+    await Api.donlotFile('/admin/execute-flow',dataForm,props.menuName[0]+'.'+mode)
   }
+}
+
+async function downTemplate() {
+  let dataForm = new FormData()
+  dataForm.append('menu', props.menuName[0])
+  await Api.donlotFile('/admin/down-template',dataForm,props.menuName[0]+'.xlsx')
 }
 
 // 🔹 Upload state
@@ -666,7 +676,7 @@ async function handleFileChange(e: Event) {
       <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('pdf')">
         <Icon name="heroicons:document-text" /> PDF
       </button>
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('xls')">
+      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('xlsx')">
         <Icon name="heroicons:table-cells" /> XLS
       </button>
       
@@ -696,7 +706,7 @@ async function handleFileChange(e: Event) {
   ></div>
 </div>
 
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition">
+      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downTemplate()">
         <Icon name="heroicons:arrow-down-tray" /> Download Template
       </button>
 
