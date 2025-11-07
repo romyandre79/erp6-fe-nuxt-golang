@@ -144,7 +144,7 @@
         <select
           v-if="enablePageSize"
           v-model.number="pageSize"
-          class="border rounded px-2 py-1 text-sm"
+          class="border rounded px-2 py-1 text-sm dark:text-gray-800 dark:bg-white "
           @change="handlePageSizeChange"
         >
           <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
