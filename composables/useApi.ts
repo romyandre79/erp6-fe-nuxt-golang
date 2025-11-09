@@ -21,11 +21,11 @@ export const useApi = () => {
   }
   
 
-  const get = (url: string) => 
-    $fetch(url, { baseURL: config.public.apiBase, headers: getHeaders() })
+  const get = async (url: string) => 
+    await $fetch(url, { baseURL: config.public.apiBase, headers: getHeaders() })
 
-  const post = (url: string, body: any) =>
-    $fetch(url, 
+  const post = async (url: string, body: any) =>
+    await $fetch(url, 
       { 
         method: 'POST', 
         baseURL: config.public.apiBase, 
@@ -34,34 +34,39 @@ export const useApi = () => {
       }
   )
 
-  const donlotFile = async (urlFile: any, body: any, fileName: any) => {
+  const donlotFile = async (urlFile: string, body: any, fileName: string) => {
     try {
-      const res = await fetch(config.public.apiBase+urlFile, {
+      const response = await fetch(`${config.public.apiBase}${urlFile}`, {
         method: 'POST',
-        body: body,
         headers: getHeaders(body),
+        body: body instanceof FormData ? body : JSON.stringify(body),
       })
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
 
-      // ambil nama file dari header
-      const cd = res.headers.get('Content-Disposition')
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
-      // buat elemen <a> untuk trigger download
+      const arrayBuffer = await response.arrayBuffer()
+      const blob = new Blob([arrayBuffer])
+      const url = URL.createObjectURL(blob)
+
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const suggestedName =
+        contentDisposition?.split('filename=')[1]?.replace(/["']/g, '') || fileName
+
       const a = document.createElement('a')
       a.href = url
-      a.download = fileName
+      a.download = suggestedName
       document.body.appendChild(a)
       a.click()
       a.remove()
-      window.URL.revokeObjectURL(url)
-      } catch (err) {
+      URL.revokeObjectURL(url)
+    } catch (err) {
       console.error('Error saat download file:', err)
     }
   }
 
-  const put = (url: string, body: any) =>
-    $fetch(url, 
+
+  const put = async (url: string, body: any) =>
+    await $fetch(url, 
       { 
         method: 'PUT', 
         baseURL: config.public.apiBase, 
@@ -70,8 +75,8 @@ export const useApi = () => {
       }
   )
 
-  const del = (url: string) =>
-    $fetch(url, { method: 'DELETE', baseURL: config.public.apiBase, headers: getHeaders() })
+  const del = async (url: string) =>
+    await $fetch(url, { method: 'DELETE', baseURL: config.public.apiBase, headers: getHeaders() })
 
   return { get, post, put, del, donlotFile }
 }
