@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import FormRenderer from '~/components/FormRenderer.vue'
+import FormRenderer from '~/components/WidgetRenderer.vue'
 
 definePageMeta({
   layout: 'auth',

@@ -289,5 +289,14 @@
   "ENTER DESCRIPTION": "Enter Description",
   "ENTER CREATED BY":"Enter Created By",
   "ENTER THEME VERSION":"Enter Theme Version",
-  "CLOSE": "Close"
+  "CLOSE": "Close",
+  "":"",
+  "SEARCH A MENUNAME": "Search Menu Name",
+  "SEARCH A MENUCODE": "Search Menu Code",
+  "SEARCH A MODULE": "Search Module",
+  "SEARCH A MENUURL": "Search Menu Url",
+  "SEARCH A SORTORDER": "Search Order",
+  "SEARCH A MENUICON": "Search Icon",
+  "SEARCH A MENUTYPE": "Search Menu Type",
+  "MANAGE USER ACCESS PERMISSIONS AND CONTROL WHO CAN VIEW OR MODIFY SPECIFIC MODULES OR FEATURES WITHIN THE SYSTEM": "Manage user access permissions and control who can view or modify specific modules or features within the system."
 }

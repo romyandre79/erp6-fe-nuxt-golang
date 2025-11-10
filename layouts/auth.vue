@@ -139,7 +139,7 @@ const toggleExpand = (id: number) => {
               <NuxtLink
                 v-for="child in getChildren(parent.menuaccessid)"
                 :key="child.menuaccessid"
-                :to="`/admin/${child.description.toLowerCase()}`"
+                :to="`/admin/${child.menuname.toLowerCase()}`"
                 class="flex items-center gap-2 p-2 rounded-md transition-colors"
                 :class="themeStore.theme === 'dark'
                   ? 'hover:bg-gray-800 active:bg-gray-700'

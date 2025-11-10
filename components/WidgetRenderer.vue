@@ -322,7 +322,6 @@ const CreateHandler = async () => {
       }) 
       ReadHandler()
     }
-    console.log('Update result:', res)
   } else {
     alert('Invalid Flow ' + flow)
   }
@@ -560,12 +559,10 @@ const isUploading = ref(false)
 // 🔹 Trigger input file
 const fileInput = ref<HTMLInputElement | null>(null)
 function triggerFileSelect() {
-   console.log('Trigger select file')
   fileInput.value?.click()
 }
 
 async function handleFileChange(e: Event) {
-  console.log('File selected:', e)
   const target = e.target as HTMLInputElement
   if (!target.files || target.files.length === 0) return
 
@@ -627,6 +624,16 @@ async function handleFileChange(e: Event) {
   }
 }
 
+function isButtonExist(mode: any) {
+  for (let index = 0; index < parsedSchema.buttons.length; index++) {
+    const element = parsedSchema.buttons[index];
+    console.log(element)
+    if (element.toLowerCase() == mode) {
+      return true
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -636,22 +643,22 @@ async function handleFileChange(e: Event) {
       {{ $t(props.title.toUpperCase()) }}
     </h1>
 
-<div class="flex flex-wrap gap-2 mb-3" v-if="formType.toUpperCase() == 'MASTER' || formType.toUpperCase() == 'MASTER-DETAIL'">
-      <button        
+    <div class="flex flex-wrap gap-2 mb-3" v-if="formType.toUpperCase() == 'MASTER' || formType.toUpperCase() == 'MASTER-DETAIL'">
+      <button v-if="isButtonExist('new')"       
         class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
         @click="openNewModal()"
       >
         <Icon name="heroicons:plus" /> New
       </button>
 
-                    <button
+                    <button v-if="isButtonExist('edit')"
         class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
         @click="openEditModal()"
       >
         <Icon name="heroicons:pencil-square" /> Edit
       </button>
       
-                    <button
+                    <button v-if="isButtonExist('delete')"
         class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
         @click="deleteForm()"
       >
@@ -673,20 +680,20 @@ async function handleFileChange(e: Event) {
 
       </UModal>
 
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('pdf')">
+      <button v-if="isButtonExist('pdf')" class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('pdf')">
         <Icon name="heroicons:document-text" /> PDF
       </button>
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('xlsx')">
+      <button v-if="isButtonExist('xls')" class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downForm('xlsx')">
         <Icon name="heroicons:table-cells" /> XLS
       </button>
       
-      <button
+      <button v-if="isButtonExist('upload')"
   class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
   @click="triggerFileSelect"
   :disabled="isUploading"
 >
   <Icon name="heroicons:arrow-up-tray" />
-  <span v-if="!isUploading">Upload</span>
+  <span v-if="!isUploading && isButtonExist('upload')">Upload</span>
   <span v-else>Uploading...</span>
 </button>
 
@@ -706,14 +713,14 @@ async function handleFileChange(e: Event) {
   ></div>
 </div>
 
-      <button class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downTemplate()">
+      <button v-if="isButtonExist('download template')" class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition" @click="downTemplate()">
         <Icon name="heroicons:arrow-down-tray" /> Download Template
       </button>
 
     </div>
     <!-- Komponen utama -->
     <component :is="renderContainer(parsedSchema)" />
-  </div>
+    </div>
 </template>
 
 <style scoped>
