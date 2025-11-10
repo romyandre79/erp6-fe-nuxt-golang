@@ -8,7 +8,7 @@
       <div
         v-for="(comp, idx) in availableComponents"
         :key="idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-50"
+        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
         draggable="true"
         @dragstart="onDragStart(comp)"
       >
@@ -16,11 +16,11 @@
       </div>
 
       <!-- Kontainer layout -->
-      <h3 class="mt-4 font-semibold text-gray-600 text-sm uppercase">Containers</h3>
+      <h3 class="font-bold text-lg mb-3">Containers</h3>
       <div
         v-for="(group, idx) in layoutContainers"
         :key="'grp-'+idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-50"
+        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
         draggable="true"
         @dragstart="onDragStart(group)"
       >
@@ -42,7 +42,11 @@
 
     <!-- 🔹 Canvas Tengah -->
     <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
-      <div
+      <div v-if="previewMode" class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
+        <FormRender  v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle"/>
+
+      </div>
+      <div v-if="!previewMode"
         class="min-h-[80vh] rounded-xl shadow-inner p-6"
         @dragover.prevent
         @drop="onDropRoot"
@@ -51,27 +55,29 @@
           Drag components or containers here
         </div>
 
-        <draggable
-          v-model="canvasComponents"
-          group="components"
-          item-key="id"
-          class="space-y-3"
-        >
-          <template #item="{ element }">
-            <div
-              class="border rounded p-3 bg-gray-50 hover:border-blue-500 cursor-pointer"
-              :class="{ 'border-blue-600': selected?.id === element.id }"
-              @click.stop="selectComponent(element)"
-            >
-              <RenderNode
-                :node="element"
-                :preview="previewMode"
-                @select="selectComponent"
-                @drop-child="onDropChild"
-              />
-            </div>
-          </template>
-        </draggable>
+<draggable
+  v-model="canvasComponents"
+  group="components"
+  item-key="id"
+  class="space-y-3"
+>
+  <template #item="{ element }">
+    <div
+      class="border rounded p-3 bg-gray-50 hover:border-blue-500 cursor-pointer relative group"
+      :class="{ 'border-blue-600': selected?.id === element.id }"
+      @click.stop="selectComponent(element)"
+    >
+      <RenderNode
+        :node="element"
+        :preview="previewMode"
+        :selected="selected"
+        @select="selectComponent"
+        @drop-child="onDropChild"
+        @delete="deleteNode"
+      />
+    </div>
+  </template>
+</draggable>
       </div>
     </main>
 
@@ -117,6 +123,7 @@ import draggable from 'vuedraggable'
 import RenderNode from '~/components/RenderNode.vue'
 import TreeView from '~/components/TreeView.vue'
 const route = useRoute()
+const toast = useToast()
 
 interface NodeSchema {
   id: string
@@ -128,8 +135,8 @@ interface NodeSchema {
 
 const availableComponents = [
   { type: 'button', label: 'Button', props: { label: 'Button', placeholder: 'Button', required: false } },
-  { type: 'input', label: 'Short Text', props: { label: 'Short Text', placeholder: 'Enter text', required: false } },
-  { type: 'textarea', label: 'Long Text', props: { label: 'Long Text', placeholder: 'Enter long text', required: false } },
+  { type: 'shorttext', label: 'Short Text', props: { label: 'Short Text', placeholder: 'Enter text', required: false } },
+  { type: 'longtext', label: 'Long Text', props: { label: 'Long Text', placeholder: 'Enter long text', required: false } },
   { type: 'number', label: 'Number', props: { label: 'Number', placeholder: '0', required: false } },
   { type: 'email', label: 'Email', props: { label: 'Email', placeholder: 'example@mail.com', required: false } }
 ]
@@ -143,11 +150,13 @@ const layoutContainers = [
 
 const canvasComponents = ref<NodeSchema[]>([])
 const selected = ref<NodeSchema | null>(null)
+const formSchema = ref<Record<string, any> | null>(null)
 const previewMode = ref(false)
 const { getMenuForm } = useAuth()
 
 const onDragStart = (comp: any) => {
   event?.dataTransfer?.setData('component', JSON.stringify(comp))
+  window.draggingComponent = comp // ✅ simpan global
 }
 
 const onDropRoot = (event: DragEvent) => {
@@ -159,6 +168,7 @@ const onDropRoot = (event: DragEvent) => {
     ...comp
   }
   canvasComponents.value.push(newComp)
+  window.draggingComponent = null // ✅ reset
 }
 
 const onDropChild = (parentId: string, comp: NodeSchema) => {
@@ -180,6 +190,25 @@ const onDropChild = (parentId: string, comp: NodeSchema) => {
   }
 }
 
+const deleteNode = (target: NodeSchema) => {
+  if (!confirm(`Are you sure you want to delete "${target.label}"?`)) return
+
+  const removeFrom = (nodes: NodeSchema[]): boolean => {
+    const index = nodes.findIndex((n) => n.id === target.id)
+    if (index !== -1) {
+      nodes.splice(index, 1)
+      return true
+    }
+    for (const node of nodes) {
+      if (node.children && removeFrom(node.children)) return true
+    }
+    return false
+  }
+
+  removeFrom(canvasComponents.value)
+  selected.value = null
+}
+
 const selectComponent = (node: NodeSchema) => {
   selected.value = node
 }
@@ -191,7 +220,7 @@ const togglePreview = () => {
 
 const saveSchema = () => {
   localStorage.setItem(route.params.slug, JSON.stringify(canvasComponents.value))
-  alert('Schema saved!')
+  toast.add({ title: 'Success', description: 'Schema already saved' })
 }
 
 const loadSchema = () => {
@@ -208,10 +237,11 @@ onMounted(async() => {
   try {
     const res = await getMenuForm(route.params.slug)
     if (res?.code == 200 && res?.data.menuform != '') {
+      formSchema.value = res?.data?.menuform
       localStorage.setItem('form'+route.params.slug, res.data.menuform)
       loadSchema()
     } else {
-      console.error('Invalid response from /auth/me', res)
+      console.error('Invalid response from ', res)
     }
   } catch (err) {
     console.error('Error loading user info:', err)
