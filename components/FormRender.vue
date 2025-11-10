@@ -133,7 +133,20 @@ async function downTemplate() {
   await Api.donlotFile('/admin/down-template',dataForm,props.menuName[0]+'.xlsx')
 }
 
-const actions = { open, close, edit, downForm, deleteData, downTemplate }
+function navigate(key:any) {
+  console.log(key)
+  if (key.includes('form-designer') && !selectedRows) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
+    return
+  } else
+  if (key.includes('form-designer') && selectedRows.length > 0) {
+    navigateTo(key+'/'+selectedRows[0]['menuname'])
+  } else {
+    navigateTo(key)
+  }
+}
+
+const actions = { open, close, edit, downForm, deleteData, downTemplate, navigate }
 
 function runAction(code: string) {
   const match = code.match(/^(\w+)\((.*)\)$/)
