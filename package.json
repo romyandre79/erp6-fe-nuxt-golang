@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@iconify-json/fluent": "^1.2.34",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.71",
     "highcharts": "^12.4.0",

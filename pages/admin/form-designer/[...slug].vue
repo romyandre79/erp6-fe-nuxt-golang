@@ -28,14 +28,17 @@
       </div>
 
       <div class="mt-5">
-        <button class="bg-green-600 text-white w-full py-1 rounded" @click="saveSchema">
+        <button class="bg-green-600 text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
           💾 Save Schema
         </button>
-        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2" @click="loadSchema">
+        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="loadSchema">
           📂 Load Schema
         </button>
-        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2" @click="togglePreview">
+        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="togglePreview">
           {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
+        </button>
+        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="toggleJson">
+          {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
         </button>
       </div>
     </aside>
@@ -70,6 +73,7 @@
       <RenderNode
         :node="element"
         :preview="previewMode"
+        :showJson="showJson"
         :selected="selected"
         @select="selectComponent"
         @drop-child="onDropChild"
@@ -79,6 +83,12 @@
   </template>
 </draggable>
       </div>
+       <!-- 🔍 JSON Debug View -->
+  <div v-if="showJson && !previewMode" class="bg-gray-900 text-green-400 font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
+    <h1>Debug</h1>
+    <pre>{{ formattedJson }}</pre>
+  </div>
+
     </main>
 
     <!-- 🔹 Tree View + Property Panel -->
@@ -105,6 +115,19 @@ import PropertyEditor from '~/components/PropertyEditor.vue'
 const route = useRoute()
 const toast = useToast()
 
+const items = [
+  {
+    label: 'Menu Data',
+    icon: 'i-ep-menu',
+    slot: 'data'
+  },
+  {
+    label: 'Form Designer',
+    icon: 'fluent:form-multiple-20-filled',
+    slot: 'form'
+  }
+]
+
 interface NodeSchema {
   id: string
   type: string
@@ -113,25 +136,7 @@ interface NodeSchema {
   children?: NodeSchema[]
 }
 
-const availableComponents = [  
-  { 
-    type: 'title', 
-    label: 'Title', 
-    props: 
-      { 
-        text: 'Title', 
-        class: 'text-2xl font-bold tracking-tight mb-4'
-      } 
-  },
-  { 
-    type: 'subtitle', 
-    label: 'Sub Title', 
-    props: 
-      { 
-        text: 'Sub Title', 
-        class: 'text-2xl font-bold tracking-tight mb-4'
-      } 
-  },
+const availableComponents = [    
   {     
     type: 'button', 
     label: 'Button', 
@@ -144,14 +149,14 @@ const availableComponents = [
       }
   },
   { 
-    type: 'column', 
-    label: 'Column', 
+    type: 'hidden', 
+    label: 'Hidden', 
     props: 
     { 
-      type: 'Column', 
-      key: 'Column', 
-      text: '', 
-      primary: true
+      text: 'Hidden Text', 
+      place: 'Enter text', 
+      enabled: true,
+      required: false 
     } 
   },
   { 
@@ -159,8 +164,19 @@ const availableComponents = [
     label: 'Text', 
     props: 
     { 
-      label: 'Text', 
+      text: 'Text', 
       place: 'Enter text', 
+      enabled: true,
+      required: false 
+    } 
+  },
+   { 
+    type: 'bool', 
+    label: 'Boolean', 
+    props: 
+    { 
+      label: '', 
+      place: '', 
       required: false 
     } 
   },
@@ -196,16 +212,37 @@ const availableComponents = [
   }
 ]
 
+
+const formattedJson = ref('')
+
 const layoutContainers = [
   { 
     type: 'master', 
     label: 'Master', 
-    props: { 
-      class: 'w-full',
-      layout: "standard",
-      primary:'',
-    }, 
-    children: []
+    props: 
+      { 
+        class: 'w-full',
+        layout: 'standard',
+        primary: '',
+        title: {
+          text: '',
+          class: 'text-2xl font-bold tracking-tight mb-4'
+        },
+         subtitle: {
+          text: '',
+          class: 'text-1xl tracking-tight mb-4'
+        },
+        action: {
+          "onNew": "",
+          "onGet": "",
+          "onCreate": "",
+          "onUpdate": "",
+          "onUpload": "",
+          "onPurge": "",
+          "onPdf": "",
+          "onXls": ""
+        }
+      } 
   },
   { 
     type: 'buttons', 
@@ -227,16 +264,15 @@ const layoutContainers = [
       }, 
       children: [] 
   },
-    
   { 
     type: 'tables', 
     label: 'Tables', 
     props: 
       { 
-        key:'',
-        class: ''
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
       }, 
-    children: [] 
+      children: [] 
   },
   { 
     type: 'search', 
@@ -258,13 +294,13 @@ const layoutContainers = [
       }, 
       children: [] 
   },
-  { 
+    { 
     type: 'modals', 
     label: 'Modals', 
     props: 
       { 
-        key: '',
-        class: ''
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
       }, 
       children: [] 
   },
@@ -293,7 +329,9 @@ const canvasComponents = ref<NodeSchema[]>([])
 const selected = ref<NodeSchema | null>(null)
 const formSchema = ref<Record<string, any> | null>(null)
 const previewMode = ref(false)
+const showJson = ref(true)
 const { getMenuForm } = useAuth()
+const Api = useApi()
 
 const onDragStart = (comp: any) => {
   event?.dataTransfer?.setData('component', JSON.stringify(comp))
@@ -359,24 +397,60 @@ const togglePreview = () => {
   selected.value = null
 }
 
+const toggleJson = () => {
+  showJson.value = !showJson.value
+}
+
 const saveSchema = () => {
   const designJson = canvasComponents.value
   const runtimeJson = designerToDbSchema(designJson)
-  console.log(runtimeJson)
+
+  const dataForm = new FormData()
+  dataForm.append('flow', 'modifmenuaccess')
+  dataForm.append('menu', 'admin')
+  dataForm.append('search', 'true')
+  dataForm.append('menuform', runtimeJson)
   toast.add({ title: 'Success', description: 'Runtime schema saved successfully' })
 }
+
+const dataMenu = reactive({
+  menuAccessId : Number,
+  menuName: String,
+  description: String,
+  menuCode: String,
+  menuUrl: String,
+  menuIcon: String,
+  moduleId: Number,
+  sortOrder: Number,
+  menuVersion: String,
+  menuType: String,
+  recordStatus: Number
+})
 
 const loadSchema = async() => {
   try {
     const res = await getMenuForm(route.params.slug)
-    if (res?.code == 200 && res?.data.menuform != '') {
-      formSchema.value = res?.data?.menuform
-      canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+    if (res?.code == 200) {
+      dataMenu.menuAccessId = res?.data.menuaccessid
+      dataMenu.menuName = res?.data.menuname
+      dataMenu.description = res?.data.description,
+      dataMenu.menuCode = res?.data.menucode,
+      dataMenu.menuUrl = res?.data.menuurl,
+      dataMenu.menuIcon = res?.data.menuicon,
+      dataMenu.moduleId = res?.data.moduleid,
+      dataMenu.sortOrder = res?.data.sortorder,
+      dataMenu.menuVersion = res?.data.menuversion,
+      dataMenu.menuType = res?.data.menutype
+      dataMenu.recordStatus = res?.data.recordstatus
+      if (res?.data.menuform != '') {
+        formSchema.value = res?.data?.menuform
+        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+      }
     } else {
       console.error('Invalid response from ', res)
     }
   } catch (err) {
-    console.error('Error loading user info:', err)
+    console.error('Error loading :', err)
   }
 }
 
@@ -507,26 +581,46 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
 
 
 function designerToDbSchema(designer: any[]): any {
-  const master = designer.find(x => x.type === 'master')
-  const buttons = designer.find(x => x.type === 'buttons')
-  const tables = designer.find(x => x.type === 'tables')
-  const modals = designer.find(x => x.type === 'modals')
+  if (designer.length == 0) { 
+    return
+  }
+  const master = designer.find((x: any) => x.type === 'master')
+  console.log(master)
+  const buttons = master.children.find((x: any) => x.type === 'buttons')
+  const tables = master.children.find((x: any) => x.type === 'tables')
+  const modals = master.children.find((x: any) => x.type === 'modals')
+
+  if (master == undefined) 
+    return
 
   return {
-    type: 'master',
-    class: master?.props?.class,
-    layout: master?.props?.layout,
-    title: master?.props?.title,
-    subtitle: master?.props?.subtitle,
-    primary: master?.props?.primary,
+    type: master.type || 'master',
+    class: master.props?.class || '',
+    layout: master.props?.layout || 'standard',
+    title: master.props?.title,
+    subtitle: master.props?.subtitle,
+    primary: master.props?.primary,
     buttons: buttons
       ? {
           class: buttons.props.class,
           components: buttons.children.map((c: any) => c.props)
         }
-      : undefined,
+      : [],
     tables: tables
-      ? tables.children.map((t: any) => t.props)
+      ? tables.children.map((t: any) => {
+          const searchNode = t.children?.find((c: any) => c.type === 'search')
+          const columnsNode = t.children?.find((c: any) => c.type === 'columns')
+
+          return {
+            ...t.props,
+            search: searchNode
+              ? searchNode.children.map((s: any) => s.props)
+              : [],
+            columns: columnsNode
+              ? columnsNode.children.map((c: any) => c.props)
+              : [],
+          }
+        })
       : [],
     modals: modals
       ? modals.children.map((m: any) => ({
@@ -534,8 +628,28 @@ function designerToDbSchema(designer: any[]): any {
           components: m.children.map((cmp: any) => cmp.props)
         }))
       : [],
-    action: master?.props?.action || {}
+    action: master.props?.action || {
+        "onNew": "",
+        "onGet": "",
+        "onCreate": "",
+        "onUpdate": "",
+        "onUpload": "",
+        "onPurge": "",
+        "onPdf": "",
+        "onXls": ""
+    }
   }
 }
+
+
+watch(
+  canvasComponents,
+  (newVal) => {
+    const runtimeSchema = designerToDbSchema(newVal)
+    formattedJson.value = JSON.stringify(runtimeSchema, null, 2)
+    formSchema.value = runtimeSchema
+  },
+  { deep: true, immediate: true }
+)
 
 </script>
