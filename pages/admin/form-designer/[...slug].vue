@@ -89,30 +89,9 @@
       <hr class="my-4" />
 
       <div v-if="selected && !previewMode">
-        <h3 class="font-semibold mb-3">Properties</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium">Label</label>
-            <input
-              v-model="selected.props.label"
-              type="text"
-              class="border rounded w-full p-1"
-            />
-          </div>
-          <div v-if="selected.props.placeholder !== undefined">
-            <label class="block text-sm font-medium">Placeholder</label>
-            <input
-              v-model="selected.props.placeholder"
-              type="text"
-              class="border rounded w-full p-1"
-            />
-          </div>
-          <div v-if="selected.props.required !== undefined">
-            <label class="block text-sm font-medium">Required</label>
-            <input type="checkbox" v-model="selected.props.required" class="mr-2" /> Required
-          </div>
-        </div>
-      </div>
+  <h3 class="font-semibold mb-3">Properties</h3>
+  <PropertyEditor v-model="selected.props" />
+</div>
     </aside>
   </div>
 </template>
@@ -122,6 +101,7 @@ import { ref } from 'vue'
 import draggable from 'vuedraggable'
 import RenderNode from '~/components/RenderNode.vue'
 import TreeView from '~/components/TreeView.vue'
+import PropertyEditor from '~/components/PropertyEditor.vue'
 const route = useRoute()
 const toast = useToast()
 
@@ -133,19 +113,180 @@ interface NodeSchema {
   children?: NodeSchema[]
 }
 
-const availableComponents = [
-  { type: 'button', label: 'Button', props: { label: 'Button', placeholder: 'Button', required: false } },
-  { type: 'shorttext', label: 'Short Text', props: { label: 'Short Text', placeholder: 'Enter text', required: false } },
-  { type: 'longtext', label: 'Long Text', props: { label: 'Long Text', placeholder: 'Enter long text', required: false } },
-  { type: 'number', label: 'Number', props: { label: 'Number', placeholder: '0', required: false } },
-  { type: 'email', label: 'Email', props: { label: 'Email', placeholder: 'example@mail.com', required: false } }
+const availableComponents = [  
+  { 
+    type: 'title', 
+    label: 'Title', 
+    props: 
+      { 
+        text: 'Title', 
+        class: 'text-2xl font-bold tracking-tight mb-4'
+      } 
+  },
+  { 
+    type: 'subtitle', 
+    label: 'Sub Title', 
+    props: 
+      { 
+        text: 'Sub Title', 
+        class: 'text-2xl font-bold tracking-tight mb-4'
+      } 
+  },
+  {     
+    type: 'button', 
+    label: 'Button', 
+    props: 
+      { 
+        text: 'Button', 
+        class: 'px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition',
+        icon: 'heroicons:plus',
+        onClick: "open('modalForm')"
+      }
+  },
+  { 
+    type: 'column', 
+    label: 'Column', 
+    props: 
+    { 
+      type: 'Column', 
+      key: 'Column', 
+      text: '', 
+      primary: true
+    } 
+  },
+  { 
+    type: 'text', 
+    label: 'Text', 
+    props: 
+    { 
+      label: 'Text', 
+      place: 'Enter text', 
+      required: false 
+    } 
+  },
+  { 
+    type: 'longtext', 
+    label: 'Long Text', 
+    props: 
+      { 
+        label: 'Long Text', 
+        place: 'Enter long text', 
+        required: false 
+      } 
+  },
+  { 
+    type: 'number', 
+    label: 'Number', 
+    props: 
+      { 
+        label: 'Number', 
+        place: '0', 
+        required: false 
+      } 
+  },
+  { 
+    type: 'email', 
+    label: 'Email', 
+    props: 
+    { 
+      label: 'Email', 
+      place: 'example@mail.com', 
+      required: false 
+    } 
+  }
 ]
 
 const layoutContainers = [
-  { type: 'buttons', label: 'Buttons', props: { label: 'Buttons' }, children: [] },
-  { type: 'tables', label: 'Tables', props: { label: 'Tables' }, children: [] },
-  { type: 'modals', label: 'Modals', props: { label: 'Modals' }, children: [] },
-  { type: 'action', label: 'Action', props: { label: 'Actions' }, children: [] },
+  { 
+    type: 'master', 
+    label: 'Master', 
+    props: { 
+      class: 'w-full',
+      layout: "standard",
+      primary:'',
+    }, 
+    children: []
+  },
+  { 
+    type: 'buttons', 
+    label: 'Buttons', 
+    props: 
+      { 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
+      }, 
+      children: [] 
+  },
+  { 
+    type: 'table', 
+    label: 'Table', 
+    props: 
+      { 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
+      }, 
+      children: [] 
+  },
+    
+  { 
+    type: 'tables', 
+    label: 'Tables', 
+    props: 
+      { 
+        key:'',
+        class: ''
+      }, 
+    children: [] 
+  },
+  { 
+    type: 'search', 
+    label: 'Search', 
+    props: 
+      { 
+        key:'',
+        class:''
+      }, 
+    children: [] 
+  },
+  { 
+    type: 'columns', 
+    label: 'Columns', 
+    props: 
+      { 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
+      }, 
+      children: [] 
+  },
+  { 
+    type: 'modals', 
+    label: 'Modals', 
+    props: 
+      { 
+        key: '',
+        class: ''
+      }, 
+      children: [] 
+  },
+    { 
+    type: 'modal', 
+    label: 'Modal', 
+    props: 
+      { 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
+      }, 
+      children: [] 
+  },
+  { 
+    type: 'action', 
+    label: 'Action', 
+    props: 
+      { 
+        key: '' 
+      }, 
+      children: [] 
+  },
 ]
 
 const canvasComponents = ref<NodeSchema[]>([])
@@ -219,32 +360,182 @@ const togglePreview = () => {
 }
 
 const saveSchema = () => {
-  localStorage.setItem(route.params.slug, JSON.stringify(canvasComponents.value))
-  toast.add({ title: 'Success', description: 'Schema already saved' })
+  const designJson = canvasComponents.value
+  const runtimeJson = designerToDbSchema(designJson)
+  console.log(runtimeJson)
+  toast.add({ title: 'Success', description: 'Runtime schema saved successfully' })
 }
 
-const loadSchema = () => {
-  const saved = localStorage.getItem('form'+route.params.slug)
-  if (saved) {
-    canvasComponents.value = JSON.parse(saved)
-    alert('Schema loaded!')
-  } else {
-    alert('No schema found.')
-  }
-}
-
-onMounted(async() => {
+const loadSchema = async() => {
   try {
     const res = await getMenuForm(route.params.slug)
     if (res?.code == 200 && res?.data.menuform != '') {
       formSchema.value = res?.data?.menuform
-      localStorage.setItem('form'+route.params.slug, res.data.menuform)
-      loadSchema()
+      canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
     } else {
       console.error('Invalid response from ', res)
     }
   } catch (err) {
     console.error('Error loading user info:', err)
   }
+}
+
+onMounted(async() => {
+  loadSchema()
 })
+
+function dbSchemaToDesigner(dbSchema: any): any[] {
+  const randomId = () => crypto.randomUUID()
+
+  const masterContainer: any = {
+    id: randomId(),
+    type: 'master',
+    label: dbSchema.title?.text || 'Master',
+    props: {
+      class: dbSchema.class,
+      layout: dbSchema.layout,
+      primary: dbSchema.primary,
+      title: dbSchema.title,
+      subtitle: dbSchema.subtitle,
+      action: dbSchema.action || {},
+    },
+    children: [],
+  }
+
+  // === BUTTONS ===
+  if (dbSchema.buttons?.components?.length) {
+    const buttonsContainer = {
+      id: randomId(),
+      type: 'buttons',
+      label: 'Buttons',
+      props: { class: dbSchema.buttons.class },
+      children: dbSchema.buttons.components.map((btn: any) => ({
+        id: randomId(),
+        type: 'button',
+        label: btn.text,
+        props: btn,
+        children: [],
+      })),
+    }
+    masterContainer.children.push(buttonsContainer)
+  }
+
+  // === TABLES ===
+  if (Array.isArray(dbSchema.tables) && dbSchema.tables.length) {
+    const tablesContainer = {
+      id: randomId(),
+      type: 'tables',
+      label: 'Tables',
+      props: {},
+      children: dbSchema.tables.map((tbl: any) => {
+        const tableNode = {
+          id: randomId(),
+          type: 'table',
+          label: tbl.text || tbl.name || 'Table',
+          props: tbl,
+          children: [],
+        }
+
+         if (Array.isArray(tbl.search) && tbl.search.length) {
+          const searchContainer = {
+            id: randomId(),
+            type: 'search',
+            label: 'Search',
+            props: {},
+            children: tbl.search.map((s: any) => ({
+              id: randomId(),
+              type: s.type || 'field',
+              label: s.label || s.name,
+              props: s,
+              children: [],
+            })),
+          }
+          tableNode.children.push(searchContainer)
+        }
+
+        // 🧩 Tambahkan kolom jika ada
+        if (Array.isArray(tbl.columns) && tbl.columns.length) {
+           const columnsContainer = {
+            id: randomId(),
+            type: 'columns',
+            label: 'Columns',
+            props: {},
+            children: tbl.columns.map((col: any) => ({
+              id: randomId(),
+              type: 'column',
+              label: col.label || col.name,
+              props: col,
+              children: [],
+            })),
+          }
+          tableNode.children.push(columnsContainer)
+        }
+
+        return tableNode
+      }),
+    }
+    masterContainer.children.push(tablesContainer)
+  }
+
+  // === MODALS ===
+  if (Array.isArray(dbSchema.modals) && dbSchema.modals.length) {
+    const modalsContainer = {
+      id: randomId(),
+      type: 'modals',
+      label: 'Modals',
+      props: {},
+      children: dbSchema.modals.map((mdl: any) => ({
+        id: randomId(),
+        type: 'modal',
+        label: mdl.key,
+        props: { key: mdl.key },
+        children: mdl.components.map((cmp: any) => ({
+          id: randomId(),
+          type: cmp.type,
+          label: cmp.text,
+          props: cmp,
+          children: [],
+        })),
+      })),
+    }
+    masterContainer.children.push(modalsContainer)
+  }
+
+  return [masterContainer]
+}
+
+
+
+function designerToDbSchema(designer: any[]): any {
+  const master = designer.find(x => x.type === 'master')
+  const buttons = designer.find(x => x.type === 'buttons')
+  const tables = designer.find(x => x.type === 'tables')
+  const modals = designer.find(x => x.type === 'modals')
+
+  return {
+    type: 'master',
+    class: master?.props?.class,
+    layout: master?.props?.layout,
+    title: master?.props?.title,
+    subtitle: master?.props?.subtitle,
+    primary: master?.props?.primary,
+    buttons: buttons
+      ? {
+          class: buttons.props.class,
+          components: buttons.children.map((c: any) => c.props)
+        }
+      : undefined,
+    tables: tables
+      ? tables.children.map((t: any) => t.props)
+      : [],
+    modals: modals
+      ? modals.children.map((m: any) => ({
+          key: m.label,
+          components: m.children.map((cmp: any) => cmp.props)
+        }))
+      : [],
+    action: master?.props?.action || {}
+  }
+}
+
 </script>

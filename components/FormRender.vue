@@ -240,6 +240,35 @@ function renderComponent(component: any) {
         case 'label':
       return h('div', { class: 'mb-2 text-gray-800 font-medium' }, $t(component.text.toUpperCase()))
 
+    case 'longtext':
+      if (!(component.key in formData.value)) formData.value[component.key] = ''
+      const modelInputArea = computed({
+        get: () => formData.value[component.key],
+        set: (val) => {
+          formData.value[component.key] = val
+          //validateField(component, val)
+        }
+      })
+      return h('div', { class: 'flex flex-col mb-3' }, [
+        component.type != 'hidden' ? component.text
+          ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
+          : null : "",
+        h('textarea', {
+          type: component.type,
+          class:
+            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            ' ' +
+            (component.type === 'number' ? 'text-right' : ''),
+          placeholder: $t(component.place?.toUpperCase()) || '',
+          maxlength: component.length,
+          value: modelInputArea.value,
+          onInput: (e: any) => (modelInputArea.value = e.target.value)
+        }),
+        validationErrors[component.key]
+          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+          : null
+      ])
     case 'text':
     case 'hidden':
     case 'password':

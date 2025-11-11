@@ -8,7 +8,7 @@
     <!-- ❌ Tombol Delete -->
     <button
       v-if="!preview"
-      class="absolute top-1 right-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
+      class="absolute top-1 right-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10"
       @click.stop="confirmDelete"
     >
       ✖
@@ -26,10 +26,10 @@
       @click.stop="emitSelect"
     >
       <h4
-        v-if="node.props?.label"
+        v-if="node.label"
         class="text-gray-700 font-semibold text-sm mb-2 select-none dark:text-black"
       >
-        {{ node.props.label }}
+        {{ node.type + ': '+ node.label }}
       </h4>
 
       <!-- 🔹 Anak-anak draggable -->
@@ -74,12 +74,12 @@
       draggable="false"
     >
       <component
-        :is="resolveComponent(node.type)"
-        v-bind="node.props"
-        :disabled="preview"
-      >
-        {{ node.props?.label }}
-      </component>
+    :is="resolveComponent(node.type)"
+    v-bind="getComponentProps(node)"
+    :disabled="preview"
+  >
+    {{ node.props?.text }}
+  </component>
     </div>
   </div>
 </template>
@@ -95,8 +95,10 @@ const props = defineProps({
 const emit = defineEmits(['select', 'drop-child', 'delete'])
 
 const isDragOver = ref(false)
-const isContainer = computed(() => Array.isArray(props.node.children))
-
+const containerTypes = ['buttons', 'modals', 'form', 'master', 'tables', 'columns' ,'search', 'modal']
+const isContainer = computed(() =>
+  Array.isArray(props.node.children) && containerTypes.includes(props.node.type)
+)
 const emitSelect = () => emit('select', props.node)
 
 // 🔹 Drag events
@@ -118,19 +120,6 @@ const onDrop = (event: DragEvent) => {
     const containerType = props.node.type
     const componentType = comp.type
 
-    const allowedTypes: Record<string, string[]> = {
-      buttons: ['button'],
-      modals: ['shorttext', 'longtext', 'number', 'email', 'button'],
-      // jika ada container lain, bisa tambahkan di sini
-      // e.g. form: ['shorttext', 'longtext', 'number', 'email', 'button', 'checkbox']
-    }
-
-    // Jika container punya batasan dan tidak sesuai
-    if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
-      alert(`❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`)
-      return
-    }
-
     // ✅ Komponen valid → tambahkan
     const newComp = {
       id: Math.random().toString(36).substr(2, 9),
@@ -143,6 +132,8 @@ const onDrop = (event: DragEvent) => {
   }
 }
 
+const isHover = ref(false)
+
 const onAdd = (event: any) => {
   const containerType = props.node.type
   const item = event.item.__vue__?.element || event.clone?.__vue__?.element || event.item.__vue__ || {}
@@ -151,7 +142,11 @@ const onAdd = (event: any) => {
   // 🧩 Validasi tipe komponen
   const allowedTypes: Record<string, string[]> = {
     buttons: ['button'],
-    modals: ['shorttext', 'longtext', 'number', 'email', 'button']
+    modals: ['title','text', 'longtext', 'number', 'email', 'button'],
+    master: ['title','button','text', 'longtext', 'number', 'email'],
+    columns: ['column'],
+    search:['text', 'longtext', 'number', 'email', 'button'],
+    table: ['column']
   }
 
   if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
@@ -178,13 +173,43 @@ const resolveComponent = (type: string) => {
     case 'input':
     case 'number':
     case 'email':
-    case 'shorttext':
-    case 'longtext':
+    case 'text':
       return 'input'
-    case 'textarea':
+    case 'longtext':
       return 'textarea'
     default:
       return 'div'
+  }
+}
+
+const getComponentProps = (node: any) => {
+  const base = node.props || {}
+  if (node.type == 'button'){
+  console.log(node.props)
+  }
+  switch (node.type) {
+    case 'shorttext':
+    case 'text':
+      return { ...base, type: 'text', placeholder: base.place || 'Enter text...' }
+
+    case 'number':
+      return { ...base,placeholder: base.place || 'Enter number...' }
+
+    case 'email':
+      return { ...base, placeholder: base.place || 'Enter email...' }
+
+    case 'longtext':
+      return { ...base, rows: 3, placeholder: base.place || 'Enter long text...' }
+
+    case 'button':
+      const { label, ...rest } = base
+      return { ...rest, type: 'button' }
+
+    case 'title':
+      return { ...base }
+
+    default:
+      return base
   }
 }
 </script>
