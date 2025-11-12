@@ -469,7 +469,7 @@ function renderTable(component: any) {
       ref: tableRef,
       columns:
         component.columns?.map((col: any, i: number) => ({
-          label: col.text || `Column ${i + 1}`,
+          label: col.text ||  `Column ${i + 1}`,
           key: col.key || `col${i + 1}`,
           type: col.type || 'text'
         })) ?? [],
