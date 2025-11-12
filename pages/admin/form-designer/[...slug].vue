@@ -34,6 +34,9 @@
         <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="loadSchema">
           📂 Load Schema
         </button>
+        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="copySchema">
+          📂 Copy From ...
+        </button>
         <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="togglePreview">
           {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
         </button>
@@ -112,21 +115,8 @@ import draggable from 'vuedraggable'
 import RenderNode from '~/components/RenderNode.vue'
 import TreeView from '~/components/TreeView.vue'
 import PropertyEditor from '~/components/PropertyEditor.vue'
-const route = useRoute()
-const toast = useToast()
 
-const items = [
-  {
-    label: 'Menu Data',
-    icon: 'i-ep-menu',
-    slot: 'data'
-  },
-  {
-    label: 'Form Designer',
-    icon: 'fluent:form-multiple-20-filled',
-    slot: 'form'
-  }
-]
+const route = useRoute()
 
 interface NodeSchema {
   id: string
@@ -491,6 +481,27 @@ const loadSchema = async() => {
     }
   } catch (err) {
     console.error('Error loading :', err)
+  }
+}
+
+const copySchema = async() => {
+  const name = window.prompt('Copy Schema From ? ')
+  if (name) {
+    try {
+      const res = await getMenuForm(name)
+      if (res?.code == 200) {
+        if (res?.data.menuform != '') {
+          formSchema.value = res?.data?.menuform
+          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+        }
+      } else {
+        console.error('Invalid response from ', res)
+      }
+    } catch (err) {
+      console.error('Error loading :', err)
+    }
+  } else {
+    console.log('Empty')
   }
 }
 
