@@ -49,7 +49,7 @@
             :node="element"
             :preview="preview"
             @select="emit('select', $event)"
-            @drop-child="emit('drop-child', $event[0], $event[1])"
+            @drop-child="emit('drop-child', $event)"
             @delete="emit('delete', $event)"
           />
         </template>
@@ -78,7 +78,7 @@
     v-bind="getComponentProps(node)"
     :disabled="preview"
   >
-    {{ node.props?.text }}
+    {{ node.props?.text || node.label }}
   </component>
     </div>
   </div>
@@ -90,15 +90,17 @@ import { ref, computed } from 'vue'
 
 const props = defineProps({
   node: { type: Object, required: true },
-  preview: { type: Boolean, default: false }
+  preview: { type: Boolean, default: false },
+  showJson: { type: Boolean, default: false },
 })
 const emit = defineEmits(['select', 'drop-child', 'delete'])
 
 const isDragOver = ref(false)
-const containerTypes = ['buttons', 'modals', 'form', 'master', 'tables', 'columns' ,'search', 'modal']
-const isContainer = computed(() =>
-  Array.isArray(props.node.children) && containerTypes.includes(props.node.type)
-)
+const containerTypes = ['master','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
+const isContainer = computed(() => {
+  if (!props.node.children) props.node.children = []
+  return containerTypes.includes(props.node.type)
+})
 const emitSelect = () => emit('select', props.node)
 
 // 🔹 Drag events
@@ -109,6 +111,7 @@ const onDragOver = (e: DragEvent) => e.preventDefault()
 // 🔹 Drop handler dengan filter tipe
 const onDrop = (event: DragEvent) => {
    event.stopPropagation() 
+
   isDragOver.value = false
   const data = event.dataTransfer?.getData('component')
   if (!data) return
@@ -126,7 +129,7 @@ const onDrop = (event: DragEvent) => {
       ...comp,
       children: comp.children || []
     }
-    emit('drop-child', props.node.id, newComp)
+    emit('drop-child', [props.node.id, newComp])
   } catch (err) {
     console.error('Invalid drop data', err) 
   }
@@ -136,30 +139,26 @@ const isHover = ref(false)
 
 const onAdd = (event: any) => {
   const containerType = props.node.type
-  const item = event.item.__vue__?.element || event.clone?.__vue__?.element || event.item.__vue__ || {}
-  const componentType = item?.type || event?.item?.dataset?.type
+  const newItem = event.added?.element
+  if (!newItem) return
 
-  // 🧩 Validasi tipe komponen
+  const componentType = newItem.type
+
   const allowedTypes: Record<string, string[]> = {
-    buttons: ['button'],
-    modals: ['title','text', 'longtext', 'number', 'email', 'button'],
-    master: ['title','button','text', 'longtext', 'number', 'email'],
-    columns: ['column'],
-    search:['text', 'longtext', 'number', 'email', 'button'],
-    table: ['column']
+    'master': ['button'],
+    'buttons': ['button'],
+    'tables': ['text'],
+    'table': ['text']
   }
 
   if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
     alert(`❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`)
-
-    // 🧹 Hapus item yang baru ditambahkan (batalkan drop)
-    props.node.children.splice(event.newIndex, 1)
+    props.node.children.splice(event.added.newIndex, 1)
     return
   }
 
-  // ✅ Jika valid, biarkan tetap
+  emit('drop-child', props.node.id, newItem)
 }
-
 // 🔹 Delete confirmation
 const confirmDelete = () => emit('delete', props.node)
 
@@ -173,6 +172,9 @@ const resolveComponent = (type: string) => {
     case 'input':
     case 'number':
     case 'email':
+    case 'hidden':
+    case 'bool':
+    case 'boolean':
     case 'text':
       return 'input'
     case 'longtext':
@@ -184,22 +186,16 @@ const resolveComponent = (type: string) => {
 
 const getComponentProps = (node: any) => {
   const base = node.props || {}
-  if (node.type == 'button'){
-  console.log(node.props)
-  }
   switch (node.type) {
     case 'shorttext':
-    case 'text':
-      return { ...base, type: 'text', placeholder: base.place || 'Enter text...' }
-
     case 'number':
-      return { ...base,placeholder: base.place || 'Enter number...' }
-
+    case 'hidden':
     case 'email':
-      return { ...base, placeholder: base.place || 'Enter email...' }
+    case 'text':
+      return { ...base, type: 'text', disabled: true, placeholder: base.key|| 'Enter text...' }
 
     case 'longtext':
-      return { ...base, rows: 3, placeholder: base.place || 'Enter long text...' }
+      return { ...base, rows: 3, placeholder: base.key || 'Enter long text...' }
 
     case 'button':
       const { label, ...rest } = base
@@ -207,6 +203,10 @@ const getComponentProps = (node: any) => {
 
     case 'title':
       return { ...base }
+
+    case 'boolean':
+    case 'bool':
+      return { ...base, type: 'checkbox'  }
 
     default:
       return base

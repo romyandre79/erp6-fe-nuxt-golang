@@ -28,14 +28,17 @@
       </div>
 
       <div class="mt-5">
-        <button class="bg-green-600 text-white w-full py-1 rounded" @click="saveSchema">
+        <button class="bg-green-600 text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
           💾 Save Schema
         </button>
-        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2" @click="loadSchema">
+        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="loadSchema">
           📂 Load Schema
         </button>
-        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2" @click="togglePreview">
+        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="togglePreview">
           {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
+        </button>
+        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="toggleJson">
+          {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
         </button>
       </div>
     </aside>
@@ -43,7 +46,7 @@
     <!-- 🔹 Canvas Tengah -->
     <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
       <div v-if="previewMode" class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-        <FormRender  v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle"/>
+        <FormRender  v-if="formSchema" :schema="formSchema" :menuName="dataMenu.menuName" :formType="dataMenu.menuType" :title="dataMenu.description"/>
 
       </div>
       <div v-if="!previewMode"
@@ -70,6 +73,7 @@
       <RenderNode
         :node="element"
         :preview="previewMode"
+        :showJson="showJson"
         :selected="selected"
         @select="selectComponent"
         @drop-child="onDropChild"
@@ -79,6 +83,12 @@
   </template>
 </draggable>
       </div>
+       <!-- 🔍 JSON Debug View -->
+  <div v-if="showJson && !previewMode" class="bg-gray-900 text-green-400 font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
+    <h1>Debug</h1>
+    <pre>{{ formattedJson }}</pre>
+  </div>
+
     </main>
 
     <!-- 🔹 Tree View + Property Panel -->
@@ -105,6 +115,19 @@ import PropertyEditor from '~/components/PropertyEditor.vue'
 const route = useRoute()
 const toast = useToast()
 
+const items = [
+  {
+    label: 'Menu Data',
+    icon: 'i-ep-menu',
+    slot: 'data'
+  },
+  {
+    label: 'Form Designer',
+    icon: 'fluent:form-multiple-20-filled',
+    slot: 'form'
+  }
+]
+
 interface NodeSchema {
   id: string
   type: string
@@ -113,45 +136,30 @@ interface NodeSchema {
   children?: NodeSchema[]
 }
 
-const availableComponents = [  
-  { 
-    type: 'title', 
-    label: 'Title', 
-    props: 
-      { 
-        text: 'Title', 
-        class: 'text-2xl font-bold tracking-tight mb-4'
-      } 
-  },
-  { 
-    type: 'subtitle', 
-    label: 'Sub Title', 
-    props: 
-      { 
-        text: 'Sub Title', 
-        class: 'text-2xl font-bold tracking-tight mb-4'
-      } 
-  },
+const availableComponents = [    
   {     
     type: 'button', 
     label: 'Button', 
     props: 
       { 
+        type: 'button', 
         text: 'Button', 
         class: 'px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition',
         icon: 'heroicons:plus',
-        onClick: "open('modalForm')"
+        onClick: ""
       }
   },
   { 
-    type: 'column', 
-    label: 'Column', 
+    type: 'hidden', 
+    label: 'Hidden', 
     props: 
     { 
-      type: 'Column', 
-      key: 'Column', 
-      text: '', 
-      primary: true
+      type: 'hidden', 
+      text: 'Hidden Text', 
+      place: 'Enter a text', 
+      key:'',
+      enabled: true,
+      required: false 
     } 
   },
   { 
@@ -159,8 +167,24 @@ const availableComponents = [
     label: 'Text', 
     props: 
     { 
-      label: 'Text', 
-      place: 'Enter text', 
+      type: 'text', 
+      key:'',
+      text: 'Text', 
+      place: 'Enter a text', 
+      enabled: true,
+      required: false 
+    } 
+  },
+   { 
+    type: 'bool', 
+    label: 'Boolean', 
+    props: 
+    { 
+      type: 'bool', 
+      key:'',
+      label: '', 
+      place: '', 
+      enabled: true,
       required: false 
     } 
   },
@@ -169,8 +193,11 @@ const availableComponents = [
     label: 'Long Text', 
     props: 
       { 
+        type: 'longtext', 
+        key:'',
         label: 'Long Text', 
         place: 'Enter long text', 
+        enabled: true,
         required: false 
       } 
   },
@@ -179,8 +206,10 @@ const availableComponents = [
     label: 'Number', 
     props: 
       { 
+        type: 'number', 
+        key:'',
         label: 'Number', 
-        place: '0', 
+        place: 'enter a number', 
         required: false 
       } 
   },
@@ -189,6 +218,8 @@ const availableComponents = [
     label: 'Email', 
     props: 
     { 
+    type: 'email', 
+      key:'',
       label: 'Email', 
       place: 'example@mail.com', 
       required: false 
@@ -196,53 +227,84 @@ const availableComponents = [
   }
 ]
 
+
+const formattedJson = ref('')
+
 const layoutContainers = [
   { 
     type: 'master', 
     label: 'Master', 
-    props: { 
-      class: 'w-full',
-      layout: "standard",
-      primary:'',
-    }, 
-    children: []
+    props: 
+      { 
+    type: 'master', 
+        class: 'w-full',
+        layout: 'standard',
+        primary: '',
+        title: {
+          text: '',
+          class: 'text-2xl font-bold tracking-tight mb-4'
+        },
+         subtitle: {
+          text: '',
+          class: 'text-1xl tracking-tight mb-4'
+        },
+        action: {
+          "onNew": "",
+          "onGet": "",
+          "onCreate": "",
+          "onUpdate": "",
+          "onUpload": "",
+          "onPurge": "",
+          "onPdf": "",
+          "onXls": ""
+        }
+      },
+      children:[]
   },
   { 
     type: 'buttons', 
     label: 'Buttons', 
     props: 
       { 
+        type: 'buttons', 
         key: '', 
         class:'flex flex-wrap gap-2 mb-3' 
       }, 
-      children: [] 
+    children: [] 
   },
   { 
     type: 'table', 
     label: 'Table', 
     props: 
       { 
-        key: '', 
+        type: 'table', 
+        key: 'table0', 
+        primary: '',
+        text: '',
+        source: '',
         class:'flex flex-wrap gap-2 mb-3' 
       }, 
-      children: [] 
+      search: [], 
+      columns: [] 
   },
-    
   { 
     type: 'tables', 
     label: 'Tables', 
     props: 
       { 
-        key:'',
-        class: ''
+    type: 'tables', 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3',
       }, 
-    children: [] 
+      tables: [],
+      search: [] 
   },
   { 
     type: 'search', 
     label: 'Search', 
     props: 
       { 
+    type: 'search', 
         key:'',
         class:''
       }, 
@@ -253,18 +315,20 @@ const layoutContainers = [
     label: 'Columns', 
     props: 
       { 
+    type: 'columns', 
         key: '', 
         class:'flex flex-wrap gap-2 mb-3' 
       }, 
       children: [] 
   },
-  { 
+    { 
     type: 'modals', 
     label: 'Modals', 
     props: 
       { 
-        key: '',
-        class: ''
+    type: 'modals', 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
       }, 
       children: [] 
   },
@@ -273,27 +337,21 @@ const layoutContainers = [
     label: 'Modal', 
     props: 
       { 
+    type: 'modal', 
         key: '', 
         class:'flex flex-wrap gap-2 mb-3' 
       }, 
       children: [] 
-  },
-  { 
-    type: 'action', 
-    label: 'Action', 
-    props: 
-      { 
-        key: '' 
-      }, 
-      children: [] 
-  },
+  }
 ]
 
 const canvasComponents = ref<NodeSchema[]>([])
 const selected = ref<NodeSchema | null>(null)
 const formSchema = ref<Record<string, any> | null>(null)
 const previewMode = ref(false)
+const showJson = ref(true)
 const { getMenuForm } = useAuth()
+const Api = useApi()
 
 const onDragStart = (comp: any) => {
   event?.dataTransfer?.setData('component', JSON.stringify(comp))
@@ -312,24 +370,21 @@ const onDropRoot = (event: DragEvent) => {
   window.draggingComponent = null // ✅ reset
 }
 
-const onDropChild = (parentId: string, comp: NodeSchema) => {
-  const findNode = (nodes: NodeSchema[]): NodeSchema | null => {
-    for (const node of nodes) {
-      if (node.id === parentId) return node
-      if (node.children) {
-        const child = findNode(node.children)
-        if (child) return child
+const onDropChild = ([parentId, newComp]) => {
+  const findAndInsert = (nodes) => {
+    for (const node of nodes) {   
+      if (node.id === parentId) {
+        if (!Array.isArray(node.children)) node.children = []
+        node.children.push(newComp)
+        return true
       }
+      if (node.children && findAndInsert(node.children)) return true
     }
-    return null
+    return false
   }
-
-  const parent = findNode(canvasComponents.value)
-  if (parent) {
-    if (!parent.children) parent.children = []
-    parent.children.push(comp)
-  }
+  findAndInsert(canvasComponents.value)
 }
+
 
 const deleteNode = (target: NodeSchema) => {
   if (!confirm(`Are you sure you want to delete "${target.label}"?`)) return
@@ -357,26 +412,85 @@ const selectComponent = (node: NodeSchema) => {
 const togglePreview = () => {
   previewMode.value = !previewMode.value
   selected.value = null
-}
-
-const saveSchema = () => {
   const designJson = canvasComponents.value
   const runtimeJson = designerToDbSchema(designJson)
-  console.log(runtimeJson)
-  toast.add({ title: 'Success', description: 'Runtime schema saved successfully' })
+  formSchema.value = runtimeJson
 }
+
+const toggleJson = () => {
+  showJson.value = !showJson.value
+}
+
+const saveSchema = async () => {
+  const designJson = canvasComponents.value
+  const runtimeJson = designerToDbSchema(designJson)
+
+  const dataForm = new FormData()
+  dataForm.append('flow', 'modifmenuaccess')
+  dataForm.append('menu', 'admin')
+  dataForm.append('search', 'true')
+  dataForm.append('menuaccessid', dataMenu.menuAccessId)
+  dataForm.append('menuname', dataMenu.menuName)
+  dataForm.append('description', dataMenu.description)
+  dataForm.append('menucode', dataMenu.menuCode)
+  dataForm.append('menuurl', dataMenu.menuUrl)
+  dataForm.append('menuicon', dataMenu.menuIcon)
+  dataForm.append('moduleiId', dataMenu.moduleId)
+  dataForm.append('sortorder', dataMenu.sortOrder)
+  dataForm.append('menuversion', dataMenu.menuVersion)
+  dataForm.append('menutype', dataMenu.menuType)
+  dataForm.append('recordstatus', dataMenu.recordStatus)
+  dataForm.append('menuform', JSON.stringify(runtimeJson))
+  try {
+    const res = await Api.post('admin/execute-flow', dataForm)
+    if (res?.code == 200) {
+      alert('Runtime schema saved successfully')
+    } else {
+      alert(res.message)
+    }
+  } catch (err) {
+          alert(err)
+  }
+}
+
+const dataMenu = reactive({
+  menuAccessId : Number,
+  menuName: String,
+  description: String,
+  menuCode: String,
+  menuUrl: String,
+  menuIcon: String,
+  moduleId: Number,
+  sortOrder: Number,
+  menuVersion: String,
+  menuType: String,
+  recordStatus: Number
+})
 
 const loadSchema = async() => {
   try {
     const res = await getMenuForm(route.params.slug)
-    if (res?.code == 200 && res?.data.menuform != '') {
-      formSchema.value = res?.data?.menuform
-      canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+    if (res?.code == 200) {
+      dataMenu.menuAccessId = res?.data.menuaccessid
+      dataMenu.menuName = res?.data.menuname
+      dataMenu.description = res?.data.description,
+      dataMenu.menuCode = res?.data.menucode,
+      dataMenu.menuUrl = res?.data.menuurl,
+      dataMenu.menuIcon = res?.data.menuicon,
+      dataMenu.moduleId = res?.data.moduleid,
+      dataMenu.sortOrder = res?.data.sortorder,
+      dataMenu.menuVersion = res?.data.menuversion,
+      dataMenu.menuType = res?.data.menutype
+      dataMenu.recordStatus = res?.data.recordstatus
+      if (res?.data.menuform != '') {
+        formSchema.value = res?.data?.menuform
+        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+      }
     } else {
       console.error('Invalid response from ', res)
     }
   } catch (err) {
-    console.error('Error loading user info:', err)
+    console.error('Error loading :', err)
   }
 }
 
@@ -504,38 +618,119 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
   return [masterContainer]
 }
 
-
-
-function designerToDbSchema(designer: any[]): any {
-  const master = designer.find(x => x.type === 'master')
-  const buttons = designer.find(x => x.type === 'buttons')
-  const tables = designer.find(x => x.type === 'tables')
-  const modals = designer.find(x => x.type === 'modals')
-
-  return {
-    type: 'master',
-    class: master?.props?.class,
-    layout: master?.props?.layout,
-    title: master?.props?.title,
-    subtitle: master?.props?.subtitle,
-    primary: master?.props?.primary,
-    buttons: buttons
-      ? {
-          class: buttons.props.class,
-          components: buttons.children.map((c: any) => c.props)
-        }
-      : undefined,
-    tables: tables
-      ? tables.children.map((t: any) => t.props)
-      : [],
-    modals: modals
-      ? modals.children.map((m: any) => ({
-          key: m.label,
-          components: m.children.map((cmp: any) => cmp.props)
-        }))
-      : [],
-    action: master?.props?.action || {}
-  }
+function getSearch(node: any) {
+  let result : []
+  (node || []).forEach((child) => {
+    if (child.props.type == 'search') {
+      result = (child.children || []).map((nodeChild) => ({
+        type: nodeChild.props.type || 'text',
+        key: nodeChild.props.key || '',
+        place: nodeChild.props.place || '',
+        enabled: nodeChild.props.enabled || true,
+        required: nodeChild.props.required || false,
+      })) 
+    }
+  })
+  return result
 }
+
+function getColumns(node: any) {
+  let result : []
+  (node || []).forEach((child) => {
+    if (child.props.type == 'search') {
+      result = (child.children || []).map((nodeChild) => ({
+        type: nodeChild.props.type || 'text',
+        key: nodeChild.props.key || '',
+        text: nodeChild.props.place || '',
+        primary: nodeChild.props.primary || true
+      })) 
+    }
+  })
+  return result
+}
+
+function recursiveDesignerToDbSchema(node: any, result:any): any {
+  (node.children || []).forEach((child) => {
+    console.log('anak ', child)
+    switch (child.type) {
+      case "buttons":
+        result.buttons = {
+          class: child.class || "flex flex-wrap gap-2 mb-3",
+          components: (child.children || []).map((nextchild) => ({
+            text : nextchild.props.text || '',
+            class : nextchild.props.class || '',
+            icon : nextchild.props.icon || '',
+            onClick : nextchild.props.onClick || '',
+          }))
+        };
+        break;
+
+      case "tables":
+        console.log(child.children)
+        result.tables = (child.children || []).map((tbl) => ({
+          type: "table",
+          text: tbl.props.text || '',
+          key: tbl.props.key || '',
+          primary: tbl.props.primary,
+          source: tbl.props.source,
+          search: getSearch(tbl.children),
+          columns: getColumns(tbl.children)
+        }));
+        break;
+
+      case "modals":
+        result.modals = (child.children || []).map((modal) => ({
+          type: modal.type || 'modal',
+          key: modal.key || 'modalForm',
+          components: (modal.children || []).map((nextchild) => ({
+            type: nextchild.props.type || 'text',
+            key: nextchild.props.key || '',
+            text: nextchild.props.text || '',
+            length: nextchild.props.length || 0,
+            place: nextchild.props.place || '',
+            enable: nextchild.props.enable || true,
+            validated: nextchild.props.validated
+          })),
+        }));
+        break;
+    }
+  });
+  return result
+}
+
+
+function designerToDbSchema(designer: NodeSchema[]): any {
+  if (!designer?.length) return
+  const master = designer[0]
+
+  const result = {
+    type: master.type || "master",
+    class: master.props.class || "",
+    layout: master.props.layout || "",
+    primary: master.props.primary || "",
+    title: master.props.title || null,
+    subtitle: master.props.subtitle || null,
+    action: master.props.action || {},
+    buttons: [],
+    tables: [],
+    modals: [],
+  };
+
+  // Loop semua children level pertama
+
+  return recursiveDesignerToDbSchema(master, result);
+}
+
+
+
+watch(
+  canvasComponents,
+  (newVal) => {
+    const runtimeSchema = designerToDbSchema(newVal)
+    formattedJson.value = JSON.stringify(runtimeSchema, null, 2)
+    formSchema.value = runtimeSchema
+  },
+  { deep: true, immediate: true }
+)
 
 </script>

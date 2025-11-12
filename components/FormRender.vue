@@ -341,16 +341,34 @@ function renderComponent(component: any) {
 
 function renderContainer(container: any) {
   if (!container) return null
-          console.log(container)
 
-   return h('div', { },
-    container.map((component: any, index: number) => {
-      switch (component.type) {         
-        default:
-          return renderComponent(component)
+  const children = Array.isArray(container)
+    ? container
+    : container.components || []
+
+  return h(
+    'div',
+    {
+      class: 'border border-gray-200 rounded-md p-3 mb-3 bg-white shadow-sm'
+    },
+    children.map((component: any, index: number) => {
+      // 🧩 Jika komponen adalah container, render secara rekursif
+      if (component.type === 'masters' || 
+        component.type === 'buttons' || component.type === 'tables' || 
+        component.type === 'search' || component.type === 'columns' || 
+        component.type === 'modals' || component.type === 'modal') {
+        return h('div', { class: 'ml-4 mt-2' }, [
+          component.text
+            ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text)
+            : null,
+          renderContainer(component)
+        ])
       }
-    }
-  ))
+
+      // 🧩 Jika bukan container, render biasa
+      return renderComponent(component)
+    })
+  )
 }
 
 function validateField(component: any, value: any) {
@@ -444,7 +462,7 @@ function validateAllFields() {
 
 function renderTable(component: any) {
   if (!component) return null
-  const key = component.key || component.text || `table-${index}`
+  const key = component.key || component.text || `table0`
 
   return h('div', { key: key}, [
     h(TablePagination, {
@@ -524,7 +542,7 @@ async function saveData(key:any) {
 
     <!-- 🔹 Buttons -->
     <div
-      :class="parsedSchema.buttons.class"
+      :class="parsedSchema.buttons?.class"
       v-if="buttons && (parsedSchema.type == 'master' || parsedSchema.type == 'master-detail' || parsedSchema.type == 'report')"
     >
       <div v-for="(value, index) in buttons.components" :key="index">
