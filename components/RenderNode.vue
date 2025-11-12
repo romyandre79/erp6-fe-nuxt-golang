@@ -49,7 +49,7 @@
             :node="element"
             :preview="preview"
             @select="emit('select', $event)"
-            @drop-child="emit('drop-child', $event[0], $event[1])"
+            @drop-child="emit('drop-child', $event)"
             @delete="emit('delete', $event)"
           />
         </template>
@@ -97,9 +97,10 @@ const emit = defineEmits(['select', 'drop-child', 'delete'])
 
 const isDragOver = ref(false)
 const containerTypes = ['master','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
-const isContainer = computed(() =>
-  Array.isArray(props.node.children) && containerTypes.includes(props.node.type)
-)
+const isContainer = computed(() => {
+  if (!props.node.children) props.node.children = []
+  return containerTypes.includes(props.node.type)
+})
 const emitSelect = () => emit('select', props.node)
 
 // 🔹 Drag events
@@ -128,7 +129,7 @@ const onDrop = (event: DragEvent) => {
       ...comp,
       children: comp.children || []
     }
-    emit('drop-child', props.node.id, newComp)
+    emit('drop-child', [props.node.id, newComp])
   } catch (err) {
     console.error('Invalid drop data', err) 
   }
@@ -144,6 +145,10 @@ const onAdd = (event: any) => {
   const componentType = newItem.type
 
   const allowedTypes: Record<string, string[]> = {
+    'master': ['button'],
+    'buttons': ['button'],
+    'tables': ['text'],
+    'table': ['text']
   }
 
   if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
