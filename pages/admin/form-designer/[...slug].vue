@@ -618,35 +618,42 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
   return [masterContainer]
 }
 
-function getSearch(node: any) {
-  let result : []
-  (node || []).forEach((child) => {
-    if (child.props.type == 'search') {
-      result = (child.children || []).map((nodeChild) => ({
-        type: nodeChild.props.type || 'text',
-        key: nodeChild.props.key || '',
-        place: nodeChild.props.place || '',
-        enabled: nodeChild.props.enabled || true,
-        required: nodeChild.props.required || false,
-      })) 
-    }
-  })
-  return result
+function getSearch(node: any): any[] {
+  if (!Array.isArray(node)) return [];
+
+  const res = node
+    .filter((child) => child?.type === 'search')
+    .flatMap((child) =>
+      (child.children || []).map((nodeChild: any) => ({
+        type: nodeChild.props?.type || 'text',
+        key: nodeChild.props?.key || '',
+        text: nodeChild.props?.text || '',
+        place: nodeChild.props?.place || '',
+        enabled: nodeChild.props?.enabled ?? true,
+        required: nodeChild.props?.required ?? false,
+      }))
+    );
+
+  console.log('getSearch →', res);
+  return res;
 }
 
-function getColumns(node: any) {
-  let result : []
-  (node || []).forEach((child) => {
-    if (child.props.type == 'search') {
-      result = (child.children || []).map((nodeChild) => ({
-        type: nodeChild.props.type || 'text',
-        key: nodeChild.props.key || '',
-        text: nodeChild.props.place || '',
-        primary: nodeChild.props.primary || true
-      })) 
-    }
-  })
-  return result
+function getColumns(node: any): any[] {
+  if (!Array.isArray(node)) return [];
+
+  const res = node
+    .filter((child) => child?.type === 'columns')
+    .flatMap((child) =>
+      (child.children || []).map((nodeChild: any) => ({
+        type: nodeChild.props?.type || 'text',
+        key: nodeChild.props?.key || '',
+        text: nodeChild.props?.text || '',
+        primary: nodeChild.props?.primary ?? false,
+      }))
+    );
+
+  console.log('getColumns →', res);
+  return res;
 }
 
 function recursiveDesignerToDbSchema(node: any, result:any): any {
@@ -666,7 +673,6 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
         break;
 
       case "tables":
-        console.log(child.children)
         result.tables = (child.children || []).map((tbl) => ({
           type: "table",
           text: tbl.props.text || '',
