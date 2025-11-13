@@ -175,6 +175,22 @@ const resolveComponent = (type: string) => {
     case 'hidden':
     case 'bool':
     case 'boolean':
+    case 'password':
+    case 'date':
+    case 'time':
+    case 'datetime':
+    case 'month':
+    case 'checkbox':
+    case 'radio':
+    case 'file':
+    case 'image':
+    case 'range':
+    case 'reset':
+    case 'search':
+    case 'tel':
+    case 'url':
+    case 'week':
+    case 'color':
     case 'text':
       return 'input'
     case 'longtext':

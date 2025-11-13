@@ -349,7 +349,7 @@ function renderContainer(container: any) {
   return h(
     'div',
     {
-      class: 'border border-gray-200 rounded-md p-3 mb-3 bg-white shadow-sm'
+      class: ''
     },
     children.map((component: any, index: number) => {
       // 🧩 Jika komponen adalah container, render secara rekursif

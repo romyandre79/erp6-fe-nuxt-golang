@@ -1,5 +1,23 @@
 <template>
+      <div class="flex">
+        <button class="text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
+          💾 Save Schema
+        </button>
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
+          📂 Load Schema
+        </button>
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
+          📂 Copy From ...
+        </button>
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
+          {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
+        </button>
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
+          {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
+        </button>
+      </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
+
     <!-- 🔹 Sidebar kiri -->
     <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
       <h2 class="font-bold text-lg mb-3">Elements</h2>
@@ -27,23 +45,6 @@
         {{ group.label }}
       </div>
 
-      <div class="mt-5">
-        <button class="bg-green-600 text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
-          💾 Save Schema
-        </button>
-        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="loadSchema">
-          📂 Load Schema
-        </button>
-        <button class="bg-blue-600 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="copySchema">
-          📂 Copy From ...
-        </button>
-        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="togglePreview">
-          {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
-        </button>
-        <button class="bg-gray-700 text-white w-full py-1 rounded mt-2 cursor-pointer" @click="toggleJson">
-          {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
-        </button>
-      </div>
     </aside>
 
     <!-- 🔹 Canvas Tengah -->
@@ -53,7 +54,7 @@
 
       </div>
       <div v-if="!previewMode"
-        class="min-h-[80vh] rounded-xl shadow-inner p-6"
+        class="min-h-[80vh] rounded-xl shadow-inner"
         @dragover.prevent
         @drop="onDropRoot"
       >
@@ -161,6 +162,177 @@ const availableComponents = [
       key:'',
       text: 'Text', 
       place: 'Enter a text', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'date', 
+    label: 'Date', 
+    props: 
+    { 
+      type: 'date', 
+      key:'',
+      text: 'Date', 
+      place: 'Enter a date', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'time', 
+    label: 'Time', 
+    props: 
+    { 
+      type: 'time', 
+      key:'',
+      text: 'Time', 
+      place: 'Enter a time', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'datetime', 
+    label: 'Date Time', 
+    props: 
+    { 
+      type: 'datetime', 
+      key:'',
+      text: 'Date Time', 
+      place: 'Enter a date time', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'color', 
+    label: 'Color', 
+    props: 
+    { 
+      type: 'color', 
+      key:'',
+      text: 'Color', 
+      place: 'Enter a color', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'file', 
+    label: 'File', 
+    props: 
+    { 
+      type: 'file', 
+      key:'',
+      text: 'File', 
+      place: 'Enter a file', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'radio', 
+    label: 'Radio', 
+    props: 
+    { 
+      type: 'radio', 
+      key:'',
+      text: 'Radio', 
+      place: 'Enter a radio', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'range', 
+    label: 'Range', 
+    props: 
+    { 
+      type: 'range', 
+      key:'',
+      text: 'Range', 
+      place: 'Enter a range', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'image', 
+    label: 'Image', 
+    props: 
+    { 
+      type: 'image', 
+      key:'',
+      text: 'Image', 
+      place: 'Enter a image', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'month', 
+    label: 'Month', 
+    props: 
+    { 
+      type: 'month', 
+      key:'',
+      text: 'Month', 
+      place: 'Enter a month', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'select', 
+    label: 'Select', 
+    props: 
+    { 
+      type: 'select', 
+      key:'',
+      text: '', 
+      source: '',
+      label: '',
+      place: 'Choose a data', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'reset', 
+    label: 'Reset', 
+    props: 
+    { 
+      type: 'reset', 
+      key:'',
+      text: 'Reset', 
+      place: 'Enter a reset', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'tel', 
+    label: 'Tel', 
+    props: 
+    { 
+      type: 'tel', 
+      key:'',
+      text: 'Tel', 
+      place: 'Enter a tel', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'url', 
+    label: 'Url', 
+    props: 
+    { 
+      type: 'url', 
+      key:'',
+      text: 'Url', 
+      place: 'Enter a url', 
       enabled: true,
       required: false 
     } 
@@ -705,6 +877,8 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
             text: nextchild.props.text || '',
             length: nextchild.props.length || 0,
             place: nextchild.props.place || '',
+            source: nextchild.props.source || '',
+            label: nextchild.props.label || '',
             enable: nextchild.props.enable || true,
             validated: nextchild.props.validated
           })),
