@@ -8,7 +8,7 @@
     <!-- ❌ Tombol Delete -->
     <button
       v-if="!preview"
-      class="absolute top-1 right-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10"
+      class="absolute top-1 right-1 text-xs bg-red-500 cursor-pointer text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10"
       @click.stop="confirmDelete"
     >
       ✖
@@ -17,7 +17,7 @@
     <!-- 🔹 Container node -->
     <div
       v-if="isContainer"
-      class="relative border-2 border-dashed rounded p-3 mb-2 bg-white transition-colors duration-150"
+      class="flex relative border-2 border-dashed rounded p-3 mb-2 bg-white dark:bg-black dark:text-white transition-colors duration-150"
       :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'"
       @dragover.prevent="onDragOver"
       @dragenter.prevent="onDragEnter"
@@ -27,7 +27,7 @@
     >
       <h4
         v-if="node.label"
-        class="text-gray-700 font-semibold text-sm mb-2 select-none dark:text-black"
+        class="text-gray-700 font-semibold text-sm mb-2 select-none  dark:text-white"
       >
         {{ node.type + ': '+ node.label }}
       </h4>
@@ -38,7 +38,7 @@
         group="components"
         item-key="id"
         :disabled="preview"
-        class="space-y-2 min-h-[50px]"
+        class="space-y-2"
         ghost-class="draggable-ghost"
         chosen-class="hover-highlight"
         @change="onChildChange"
@@ -69,7 +69,7 @@
     <!-- 🔹 Leaf node -->
     <div
       v-else
-      class="p-2 border rounded bg-white cursor-pointer hover:border-blue-400"
+      class="p-2 border rounded bg-white cursor-pointer hover:border-blue-400 dark:bg-black"
       @click.stop="emitSelect"
       draggable="false"
     >

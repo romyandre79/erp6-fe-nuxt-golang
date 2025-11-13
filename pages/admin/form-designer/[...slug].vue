@@ -104,7 +104,7 @@
 
       <div v-if="selected && !previewMode">
   <h3 class="font-semibold mb-3">Properties</h3>
-  <PropertyEditor v-model="selected.props" />
+  <PropertyEditor v-model="selected.props" :availableComponents="availableComponents" />
 </div>
     </aside>
   </div>
@@ -816,8 +816,6 @@ function getSearch(node: any): any[] {
         required: nodeChild.props?.required ?? false,
       }))
     );
-
-  console.log('getSearch →', res);
   return res;
 }
 
@@ -834,14 +832,11 @@ function getColumns(node: any): any[] {
         primary: nodeChild.props?.primary ?? false,
       }))
     );
-
-  console.log('getColumns →', res);
   return res;
 }
 
 function recursiveDesignerToDbSchema(node: any, result:any): any {
   (node.children || []).forEach((child) => {
-    console.log('anak ', child)
     switch (child.type) {
       case "buttons":
         result.buttons = {
