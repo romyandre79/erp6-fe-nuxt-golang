@@ -6,7 +6,6 @@ export const useApi = () => {
   userStore.loadAuth()
   const token = userStore.token
 
-
   const getHeaders = (body?: any) => {
     const headers: Record<string, string> = {}
 
@@ -19,7 +18,6 @@ export const useApi = () => {
 
     return headers
   }
-  
 
   const get = async (url: string) => 
     await $fetch(url, { baseURL: config.public.apiBase, headers: getHeaders() })

@@ -128,7 +128,19 @@ interface NodeSchema {
 }
 
 const availableComponents = [    
-  {     
+   { 
+    type: 'bool', 
+    label: 'Boolean', 
+    props: 
+    { 
+      type: 'bool', 
+      key:'',
+      label: '', 
+      place: '', 
+      enabled: true,
+      required: false 
+    } 
+  },  {     
     type: 'button', 
     label: 'Button', 
     props: 
@@ -139,6 +151,70 @@ const availableComponents = [
         icon: 'heroicons:plus',
         onClick: ""
       }
+  },
+    { 
+    type: 'color', 
+    label: 'Color', 
+    props: 
+    { 
+      type: 'color', 
+      key:'',
+      text: 'Color', 
+      place: 'Enter a color', 
+      enabled: true,
+      required: false 
+    } 
+  },
+    { 
+    type: 'date', 
+    label: 'Date', 
+    props: 
+    { 
+      type: 'date', 
+      key:'',
+      text: 'Date', 
+      place: 'Enter a date', 
+      enabled: true,
+      required: false 
+    } 
+  },
+    { 
+    type: 'datetime', 
+    label: 'Date Time', 
+    props: 
+    { 
+      type: 'datetime', 
+      key:'',
+      text: 'Date Time', 
+      place: 'Enter a date time', 
+      enabled: true,
+      required: false 
+    } 
+  },
+    { 
+    type: 'email', 
+    label: 'Email', 
+    props: 
+    { 
+    type: 'email', 
+      key:'',
+      label: 'Email', 
+      place: 'example@mail.com', 
+      required: false 
+    } 
+  },
+    { 
+    type: 'file', 
+    label: 'File', 
+    props: 
+    { 
+      type: 'file', 
+      key:'',
+      text: 'File', 
+      place: 'Enter a file', 
+      enabled: true,
+      required: false 
+    } 
   },
   { 
     type: 'hidden', 
@@ -153,85 +229,58 @@ const availableComponents = [
       required: false 
     } 
   },
-  { 
-    type: 'text', 
-    label: 'Text', 
+    { 
+    type: 'image', 
+    label: 'Image', 
     props: 
     { 
-      type: 'text', 
+      type: 'image', 
       key:'',
-      text: 'Text', 
-      place: 'Enter a text', 
+      text: 'Image', 
+      place: 'Enter a image', 
       enabled: true,
       required: false 
     } 
   },
-  { 
-    type: 'date', 
-    label: 'Date', 
+    { 
+    type: 'longtext', 
+    label: 'Long Text', 
+    props: 
+      { 
+        type: 'longtext', 
+        key:'',
+        label: 'Long Text', 
+        place: 'Enter long text', 
+        enabled: true,
+        required: false 
+      } 
+  },
+    { 
+    type: 'month', 
+    label: 'Month', 
     props: 
     { 
-      type: 'date', 
+      type: 'month', 
       key:'',
-      text: 'Date', 
-      place: 'Enter a date', 
+      text: 'Month', 
+      place: 'Enter a month', 
       enabled: true,
       required: false 
     } 
   },
-  { 
-    type: 'time', 
-    label: 'Time', 
-    props: 
     { 
-      type: 'time', 
-      key:'',
-      text: 'Time', 
-      place: 'Enter a time', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
-    type: 'datetime', 
-    label: 'Date Time', 
+    type: 'number', 
+    label: 'Number', 
     props: 
-    { 
-      type: 'datetime', 
-      key:'',
-      text: 'Date Time', 
-      place: 'Enter a date time', 
-      enabled: true,
-      required: false 
-    } 
+      { 
+        type: 'number', 
+        key:'',
+        label: 'Number', 
+        place: 'enter a number', 
+        required: false 
+      } 
   },
-  { 
-    type: 'color', 
-    label: 'Color', 
-    props: 
     { 
-      type: 'color', 
-      key:'',
-      text: 'Color', 
-      place: 'Enter a color', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
-    type: 'file', 
-    label: 'File', 
-    props: 
-    { 
-      type: 'file', 
-      key:'',
-      text: 'File', 
-      place: 'Enter a file', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
     type: 'radio', 
     label: 'Radio', 
     props: 
@@ -257,33 +306,20 @@ const availableComponents = [
       required: false 
     } 
   },
-  { 
-    type: 'image', 
-    label: 'Image', 
+    { 
+    type: 'reset', 
+    label: 'Reset', 
     props: 
     { 
-      type: 'image', 
+      type: 'reset', 
       key:'',
-      text: 'Image', 
-      place: 'Enter a image', 
+      text: 'Reset', 
+      place: 'Enter a reset', 
       enabled: true,
       required: false 
     } 
   },
-  { 
-    type: 'month', 
-    label: 'Month', 
-    props: 
     { 
-      type: 'month', 
-      key:'',
-      text: 'Month', 
-      place: 'Enter a month', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
     type: 'select', 
     label: 'Select', 
     props: 
@@ -294,19 +330,6 @@ const availableComponents = [
       source: '',
       label: '',
       place: 'Choose a data', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
-    type: 'reset', 
-    label: 'Reset', 
-    props: 
-    { 
-      type: 'reset', 
-      key:'',
-      text: 'Reset', 
-      place: 'Enter a reset', 
       enabled: true,
       required: false 
     } 
@@ -325,6 +348,32 @@ const availableComponents = [
     } 
   },
   { 
+    type: 'text', 
+    label: 'Text', 
+    props: 
+    { 
+      type: 'text', 
+      key:'',
+      text: 'Text', 
+      place: 'Enter a text', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
+    type: 'time', 
+    label: 'Time', 
+    props: 
+    { 
+      type: 'time', 
+      key:'',
+      text: 'Time', 
+      place: 'Enter a time', 
+      enabled: true,
+      required: false 
+    } 
+  },
+  { 
     type: 'url', 
     label: 'Url', 
     props: 
@@ -334,56 +383,6 @@ const availableComponents = [
       text: 'Url', 
       place: 'Enter a url', 
       enabled: true,
-      required: false 
-    } 
-  },
-   { 
-    type: 'bool', 
-    label: 'Boolean', 
-    props: 
-    { 
-      type: 'bool', 
-      key:'',
-      label: '', 
-      place: '', 
-      enabled: true,
-      required: false 
-    } 
-  },
-  { 
-    type: 'longtext', 
-    label: 'Long Text', 
-    props: 
-      { 
-        type: 'longtext', 
-        key:'',
-        label: 'Long Text', 
-        place: 'Enter long text', 
-        enabled: true,
-        required: false 
-      } 
-  },
-  { 
-    type: 'number', 
-    label: 'Number', 
-    props: 
-      { 
-        type: 'number', 
-        key:'',
-        label: 'Number', 
-        place: 'enter a number', 
-        required: false 
-      } 
-  },
-  { 
-    type: 'email', 
-    label: 'Email', 
-    props: 
-    { 
-    type: 'email', 
-      key:'',
-      label: 'Email', 
-      place: 'example@mail.com', 
       required: false 
     } 
   }
