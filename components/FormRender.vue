@@ -6,7 +6,7 @@ import { UModal } from '#components'
 
 const props = defineProps({
   title: { type: String, default: '' },
-  menuName: { type: String, required: true, default: '' },
+  menuName: { type: String, default: '' },
   schema: { type: [Object, String], required: true },
   formType: { type: String, default: 'form' }
 })
@@ -19,7 +19,7 @@ const toast = useToast()
 let selectedRows: any
 
 // 🧩 Parse schema
-const parsedSchema = computed(() =>
+const parsedSchema = computed(() => 
   typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema
 )
 
@@ -336,6 +336,29 @@ function renderComponent(component: any) {
           $t(component.text.toUpperCase()) || ''
         )
       ])
+
+      case 'button':
+      return h(
+        'button',
+        {
+          class: `px-4 py-2 rounded mr-2 text-white bg-gray-600 hover:bg-gray-700 transition mb-3`,
+          onClick: async () => {
+            const eventName = (component.event || component.type).toUpperCase()
+            if (eventName === 'ONCREATE') {
+              if (validateAllFields()) await CreateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONUPDATE') {
+              if (validateAllFields()) await UpdateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONDELETE') {
+              await DeleteHandler()
+            } else {
+              emit(eventName, { ...formData })
+            }
+          }
+        },
+        component.text || component.type
+      )  
   }
 }
 
@@ -490,6 +513,85 @@ function renderTable(component: any) {
   ])
 }
 
+const ReadHandler = async () => {
+  const flow = parsedSchema.value.action?.onRead
+  if (flow) {
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    formData.value = {}
+    if (res?.data?.data) {
+      const firstRow = res?.data?.data
+      for (const key in firstRow) formData.value[key] = firstRow[key]
+      const tableComponent = parsedSchema.components?.find((x: any) => x.type === 'table')
+    }
+  }
+}
+
+const UpdateHandler = async () => {
+  const flow = parsedSchema.value.action?.onUpdate
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
+}
+
+const DeleteHandler = async () => {
+  const flow = parsedSchema.value.action?.onPurge
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE DELETE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+      //ReadHandler()
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
+}
+
+onMounted(ReadHandler)
+
 async function saveData(key:any) {
   try {
     let flow = ""
@@ -536,7 +638,7 @@ async function saveData(key:any) {
 </script>
 
 <template>
-  <div v-if="parsedSchema.layout == 'standard'" :class="parsedSchema.class">
+  <div v-if="parsedSchema?.layout == 'standard'" :class="parsedSchema.class">
     <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
     <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
@@ -579,5 +681,17 @@ async function saveData(key:any) {
     <div v-for="(value, index) in tables" :key="index">
         <component :is="renderTable(value)" />
     </div>
+  </div>
+  <div v-else-if="parsedSchema?.type == 'widget'" :class="parsedSchema.class">
+ <div class="w-full">
+    <!-- Judul di atas komponen -->
+    <h1 class="text-2xl font-bold tracking-tight mb-4">
+      {{ $t(props.title.toUpperCase()) }}
+    </h1>
+    
+    <!-- Komponen utama -->
+    <component :is="renderContainer(parsedSchema)" />
+    </div>
+
   </div>
 </template>

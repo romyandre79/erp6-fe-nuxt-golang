@@ -3,13 +3,13 @@
       <div v-for="(value,i) in recordWidget" class="p-5 w-full rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 
              bg-white dark:bg-gray-900 hover:shadow-xl transition-all duration-300">
              <h1 class="text-xl font-bold tracking-tight">{{ $t(value.description.toUpperCase()) }}</h1>
-        <FormRenderer  v-if="fetchForm(i)" :schema="fetchForm(i)" formtype="MASTER"/>
+        <FormRender  v-if="fetchForm(i)" :schema="fetchForm(i)" formtype="widget"/>
       </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import FormRenderer from '~/components/WidgetRenderer.vue'
+import FormRender from '~/components/FormRender.vue'
 
 definePageMeta({
   layout: 'auth',
