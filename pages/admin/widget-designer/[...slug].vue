@@ -153,6 +153,19 @@ const availableComponents = [
         onClick: ""
       }
   },
+  { 
+    type: 'chart', 
+    label: 'Chart', 
+    props: 
+    { 
+      type: 'chart', 
+      key:'',
+      label: '', 
+      place: '', 
+      enabled: true,
+      required: false 
+    } 
+  },
     { 
     type: 'color', 
     label: 'Color', 
@@ -412,6 +425,7 @@ const layoutContainers = [
         },
         action: {
           "onNew": "",
+          "onRead": "",
           "onGet": "",
           "onCreate": "",
           "onUpdate": "",
@@ -882,12 +896,16 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
         break;
 
       case "components":
-        result.components = (child.children || []).map((tbl) => ({
-          type: "components",
-          text: tbl.props.text || '',
-          key: tbl.props.key || '',
-          primary: tbl.props.primary,
-          source: tbl.props.source
+        result.components = (child.children || []).map((nextchild) => ({
+            type: nextchild.props.type || 'text',
+            key: nextchild.props.key || '',
+            text: nextchild.props.text || '',
+            length: nextchild.props.length || 0,
+            place: nextchild.props.place || '',
+            source: nextchild.props.source || '',
+            label: nextchild.props.label || '',
+            enable: nextchild.props.enable || true,
+            validated: nextchild.props.validated
         }));
         break;
 
@@ -919,7 +937,7 @@ function designerToDbSchema(designer: NodeSchema[]): any {
   const master = designer[0]
 
   const result = {
-    type: master.type || "master",
+    type: master.type || "widget",
     class: master.props.class || "",
     layout: master.props.layout || "",
     primary: master.props.primary || "",
