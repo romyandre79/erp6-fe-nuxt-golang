@@ -350,7 +350,7 @@ function renderComponent(component: any) {
         {
           class: `px-4 py-2 rounded mr-2 text-white bg-gray-600 hover:bg-gray-700 transition mb-3`,
           onClick: async () => {
-            const eventName = (component.event || component.type).toUpperCase()
+            const eventName = (component.event || component.onClick).toUpperCase()
             if (eventName === 'ONCREATE') {
               if (validateAllFields()) await CreateHandler()
               else alert('⚠️ Validasi gagal! Periksa input Anda.')
@@ -374,7 +374,7 @@ function renderContainer(container: any) {
 
   console.log('contain ',container)
 
-  const children = Array.isArray(container)
+  let children = Array.isArray(container)
     ? container
     : container.components || []
 
@@ -384,22 +384,30 @@ function renderContainer(container: any) {
       class: ''
     },
     children.map((component: any, index: number) => {
-      // 🧩 Jika komponen adalah container, render secara rekursif
-      console.log(component)
-      if (component.type === 'masters' || component.type === 'widget' ||
-        component.type === 'buttons' || component.type === 'tables' || 
-        component.type === 'search' || component.type === 'columns' || 
-        component.type === 'modals' || component.type === 'modal') {
-        return h('div', { class: 'ml-4 mt-2' }, [
-          component.text
-            ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text)
-            : null,
-          renderContainer(component)
-        ])
+      switch (component.type) {
+        case 'table':
+          renderTable(component)
+          break;
+        
+        case 'master':
+        case 'masters':
+        case 'buttons':
+        case 'tables':
+        case 'columns':
+        case 'search':
+        case 'modals':
+        case 'modals':
+        case 'components':
+          return h('div', { class: 'ml-4 mt-2' }, [
+            component.text
+              ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text)
+              : null,
+            renderContainer(component)
+          ])
+      
+        default:
+          return renderComponent(component)
       }
-
-      // 🧩 Jika bukan container, render biasa
-      return renderComponent(component)
     })
   )
 }
@@ -678,7 +686,7 @@ async function saveData(key:any) {
 </script>
 
 <template>
-  <div v-if="parsedSchema?.layout == 'standard'" :class="parsedSchema.class">
+  <div v-if="parsedSchema?.type != 'widget'" :class="parsedSchema.class">
     <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
     <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
@@ -722,16 +730,17 @@ async function saveData(key:any) {
         <component :is="renderTable(value)" />
     </div>
   </div>
-  <div v-else-if="parsedSchema?.type == 'widget'" :class="parsedSchema.class">
+  <div v-else :class="parsedSchema.class">
  <div class="w-full">
-    <!-- Judul di atas komponen -->
-    <h1 class="text-2xl font-bold tracking-tight mb-4">
-      {{ $t(props.title.toUpperCase()) }}
-    </h1>
-    
+       <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
+    <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
+
     <!-- Komponen utama -->
     <component :is="renderContainer(parsedSchema)" />
-    </div>
 
+    <div v-for="(value, index) in tables" :key="index">
+        <component :is="renderTable(value)" />
+    </div>
+    </div>
   </div>
 </template>

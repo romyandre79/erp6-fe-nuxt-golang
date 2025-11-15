@@ -28,9 +28,9 @@ onMounted(async() => {
     menuName.value = route.params.slug
     const res = await getMenuForm(route.params.slug)
     if (res?.code == 200) {
-      formTitle.value = res.data.description
-      formType.value = res.data.menutype
-      formSchema.value = JSON.parse(res.data.menuform)
+      formTitle.value = res.data.data.description
+      formType.value = res.data.data.menutype
+      formSchema.value = JSON.parse(res.data.data.menuform)
     } else {
       console.error('Invalid response from /auth/me', res)
     }

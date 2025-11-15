@@ -7,7 +7,6 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/image',
-    'nuxt-highcharts',
     '@nuxt/ui',
     '@nuxtjs/i18n',
   ],

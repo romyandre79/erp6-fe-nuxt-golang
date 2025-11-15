@@ -207,6 +207,7 @@ const getComponentProps = (node: any) => {
     case 'shorttext':
     case 'number':
     case 'hidden':
+    case 'password':
     case 'email':
     case 'text':
       return { ...base, type: 'text', disabled: true, placeholder: base.key|| 'Enter text...' }

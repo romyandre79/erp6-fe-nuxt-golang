@@ -152,14 +152,14 @@
 
         <button
           class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
-          :disabled="currentPage === 1 || loading"
+          :disabled="currentPage === 1 || loading || totalPages == 0"
           @click="firstPage"
         >
         <<
         </button>
         <button
           class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
-          :disabled="currentPage === 1 || loading"
+          :disabled="currentPage === 1 || loading || totalPages == 0"
           @click="prevPage"
         >
           <

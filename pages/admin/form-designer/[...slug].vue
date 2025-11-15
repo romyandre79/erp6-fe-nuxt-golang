@@ -632,20 +632,20 @@ const loadSchema = async() => {
   try {
     const res = await getMenuForm(route.params.slug)
     if (res?.code == 200) {
-      dataMenu.menuAccessId = res?.data.menuaccessid
-      dataMenu.menuName = res?.data.menuname
-      dataMenu.description = res?.data.description,
-      dataMenu.menuCode = res?.data.menucode,
-      dataMenu.menuUrl = res?.data.menuurl,
-      dataMenu.menuIcon = res?.data.menuicon,
-      dataMenu.moduleId = res?.data.moduleid,
-      dataMenu.sortOrder = res?.data.sortorder,
-      dataMenu.menuVersion = res?.data.menuversion,
-      dataMenu.menuType = res?.data.menutype
-      dataMenu.recordStatus = res?.data.recordstatus
-      if (res?.data.menuform != '') {
-        formSchema.value = res?.data?.menuform
-        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+      dataMenu.menuAccessId = res?.data.data.menuaccessid
+      dataMenu.menuName = res?.data.data.menuname
+      dataMenu.description = res?.data.data.description,
+      dataMenu.menuCode = res?.data.data.menucode,
+      dataMenu.menuUrl = res?.data.data.menuurl,
+      dataMenu.menuIcon = res?.data.data.menuicon,
+      dataMenu.moduleId = res?.data.data.moduleid,
+      dataMenu.sortOrder = res?.data.data.sortorder,
+      dataMenu.menuVersion = res?.data.data.menuversion,
+      dataMenu.menuType = res?.data.data.menutype
+      dataMenu.recordStatus = res?.data.data.recordstatus
+      if (res?.data.data.menuform != '') {
+        formSchema.value = res?.data?.data.menuform
+        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.menuform))
       }
     } else {
       console.error('Invalid response from ', res)
@@ -661,9 +661,9 @@ const copySchema = async() => {
     try {
       const res = await getMenuForm(name)
       if (res?.code == 200) {
-        if (res?.data.menuform != '') {
-          formSchema.value = res?.data?.menuform
-          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+        if (res?.data.data.menuform != '') {
+          formSchema.value = res?.data?.data.menuform
+          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.menuform))
         }
       } else {
         console.error('Invalid response from ', res)
