@@ -18,6 +18,8 @@ const Api = useApi()
 const toast = useToast()
 let selectedRows: any
 
+const emit = defineEmits([])
+
 // 🧩 Parse schema
 const parsedSchema = computed(() => 
   typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema
@@ -134,13 +136,18 @@ async function downTemplate() {
 }
 
 function navigate(key:any) {
-  console.log(key)
   if (key.includes('form-designer') && !selectedRows) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
+    return
+  } else
+  if (key.includes('widget-designer') && !selectedRows) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
   if (key.includes('form-designer') && selectedRows.length > 0) {
     navigateTo(key+'/'+selectedRows[0]['menuname'])
+  } else if (key.includes('widget-designer') && selectedRows.length > 0) {
+    navigateTo(key+'/'+selectedRows[0]['widgetname'])
   } else {
     navigateTo(key)
   }
@@ -262,8 +269,8 @@ function renderComponent(component: any) {
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: $t(component.place?.toUpperCase()) || '',
           maxlength: component.length,
-          value: modelInputArea.value,
-          onInput: (e: any) => (modelInputArea.value = e.target.value)
+          onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
+          value: modelInputArea.value
         }),
         validationErrors[component.key]
           ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
@@ -365,6 +372,8 @@ function renderComponent(component: any) {
 function renderContainer(container: any) {
   if (!container) return null
 
+  console.log('contain ',container)
+
   const children = Array.isArray(container)
     ? container
     : container.components || []
@@ -376,7 +385,8 @@ function renderContainer(container: any) {
     },
     children.map((component: any, index: number) => {
       // 🧩 Jika komponen adalah container, render secara rekursif
-      if (component.type === 'masters' || 
+      console.log(component)
+      if (component.type === 'masters' || component.type === 'widget' ||
         component.type === 'buttons' || component.type === 'tables' || 
         component.type === 'search' || component.type === 'columns' || 
         component.type === 'modals' || component.type === 'modal') {
@@ -471,9 +481,9 @@ function validateField(component: any, value: any) {
 /* 🧩 Validasi semua field */
 function validateAllFields() {
   let valid = true
-  if (!parsedSchema.components) return true
+  if (!parsedSchema.value.components) return true
 
-  parsedSchema.components.forEach((comp: any) => {
+  parsedSchema.value.components.forEach((comp: any) => {
     if (['text', 'password', 'number', 'email'].includes(comp.type)) {
       const value = formData.value[comp.key]
       const result = validateField(comp, value)
@@ -528,6 +538,36 @@ const ReadHandler = async () => {
       for (const key in firstRow) formData.value[key] = firstRow[key]
       const tableComponent = parsedSchema.components?.find((x: any) => x.type === 'table')
     }
+  }
+}
+
+const CreateHandler = async () => {
+  const flow = parsedSchema.action?.onCreate
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {
+      toast.add({
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+      ReadHandler()
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
   }
 }
 

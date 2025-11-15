@@ -96,7 +96,7 @@ const props = defineProps({
 const emit = defineEmits(['select', 'drop-child', 'delete'])
 
 const isDragOver = ref(false)
-const containerTypes = ['master','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
+const containerTypes = ['master','widget','components','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
 const isContainer = computed(() => {
   if (!props.node.children) props.node.children = []
   return containerTypes.includes(props.node.type)
@@ -146,6 +146,7 @@ const onAdd = (event: any) => {
 
   const allowedTypes: Record<string, string[]> = {
     'master': ['button'],
+    'components': ['text','button'],
     'buttons': ['button'],
     'tables': ['text'],
     'table': ['text']

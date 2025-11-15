@@ -61,28 +61,13 @@
         />
       </div>
 
-       <div v-else-if="key === 'type'" class="flex items-center justify-between">
-        <label class="text-sm font-medium text-gray-700">{{ key }}</label>
-        <select
-          v-model="modelValue[key]"
-          class="border rounded p-1 text-sm w-2/3 dark:bg-black dark:text-white "
-        >
-         <option
-            v-for="comp in props.availableComponents"
-            :key="comp.type"
-            :value="comp.type"
-          >
-            {{ comp.label }}
-          </option>
-        </select>
-      </div>
-
       <!-- Jika string -->
       <div v-else class="flex items-center justify-between">
         <label class="text-sm font-medium text-gray-700">{{ key }}</label>
         <input
           type="text"
           v-model="modelValue[key]"
+          :disabled = "key == 'type'"
           class="border rounded p-1 text-sm w-2/3"
         />
       </div>
@@ -94,8 +79,7 @@
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  modelValue: { type: Object, required: true },
-  availableComponents: { type: Array, default: () => [] }
+  modelValue: { type: Object, required: true }
 })
 
 const emit = defineEmits(['update:modelValue'])

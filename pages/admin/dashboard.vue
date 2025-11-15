@@ -2,7 +2,6 @@
   <div class="p-6 space-y-10">
       <div v-for="(value,i) in recordWidget" class="p-5 w-full rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 
              bg-white dark:bg-gray-900 hover:shadow-xl transition-all duration-300">
-             <h1 class="text-xl font-bold tracking-tight">{{ $t(value.description.toUpperCase()) }}</h1>
         <FormRender  v-if="fetchForm(i)" :schema="fetchForm(i)" formtype="widget"/>
       </div>
   </div>
@@ -24,7 +23,7 @@ const fetchData = async() => {
  try {
     res = await fetchWidgets("admin")
     if (res?.code === 200) { 
-      recordWidget.value = res?.data
+      recordWidget.value = res?.data.data
     } else {
       console.error('Invalid response from /auth/me', res)
     }
@@ -34,8 +33,8 @@ const fetchData = async() => {
 }
 
 const fetchForm = (rec : any) => {
-  if (res.data[rec].widgetform != '') {
-    return JSON.parse(res.data[rec].widgetform)
+  if (res.data.data[rec].widgetform != '') {
+    return JSON.parse(res.data.data[rec].widgetform)
   }
 }
 

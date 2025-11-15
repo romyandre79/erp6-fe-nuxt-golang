@@ -1,18 +1,18 @@
 <template>
       <div class="flex">
-        <button class="text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
+        <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
           💾 Save Schema
         </button>
-        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
+        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
           📂 Load Schema
         </button>
-        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
+        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
           📂 Copy From ...
         </button>
-        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
+        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
           {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
         </button>
-        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
+        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
           {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
         </button>
       </div>
@@ -50,7 +50,7 @@
     <!-- 🔹 Canvas Tengah -->
     <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
       <div v-if="previewMode" class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-        <FormRenderer  v-if="formSchema" :schema="formSchema" :menuName="dataMenu.menuName" :formType="dataMenu.menuType" :title="dataMenu.description"/>
+        <FormRender  v-if="formSchema" :schema="formSchema" :menuName="dataWidget.menuName" :formType="dataWidget.menuType" :title="dataWidget.description"/>
 
       </div>
       <div v-if="!previewMode"
@@ -116,7 +116,7 @@ import draggable from 'vuedraggable'
 import RenderNode from '~/components/RenderNode.vue'
 import TreeView from '~/components/TreeView.vue'
 import PropertyEditor from '~/components/PropertyEditor.vue'
-import FormRenderer from '~/components/WidgetRenderer.vue'
+import FormRender from '~/components/FormRender.vue'
 
 const route = useRoute()
 
@@ -394,11 +394,11 @@ const formattedJson = ref('')
 
 const layoutContainers = [
   { 
-    type: 'master', 
-    label: 'Master', 
+    type: 'widget', 
+    label: 'Widget', 
     props: 
       { 
-    type: 'master', 
+    type: 'widget', 
         class: 'w-full',
         layout: 'standard',
         primary: '',
@@ -429,6 +429,17 @@ const layoutContainers = [
     props: 
       { 
         type: 'buttons', 
+        key: '', 
+        class:'flex flex-wrap gap-2 mb-3' 
+      }, 
+    children: [] 
+  },
+  { 
+    type: 'components', 
+    label: 'Components', 
+    props: 
+      { 
+        type: 'components', 
         key: '', 
         class:'flex flex-wrap gap-2 mb-3' 
       }, 
@@ -512,7 +523,7 @@ const selected = ref<NodeSchema | null>(null)
 const formSchema = ref<Record<string, any> | null>(null)
 const previewMode = ref(false)
 const showJson = ref(true)
-const { getMenuForm } = useAuth()
+const { getWidgetForm } = useWidgets()
 const Api = useApi()
 
 const onDragStart = (comp: any) => {
@@ -588,21 +599,18 @@ const saveSchema = async () => {
   const runtimeJson = designerToDbSchema(designJson)
 
   const dataForm = new FormData()
-  dataForm.append('flow', 'modifmenuaccess')
+  dataForm.append('flow', 'modifwidget')
   dataForm.append('menu', 'admin')
   dataForm.append('search', 'true')
-  dataForm.append('menuaccessid', dataMenu.menuAccessId)
-  dataForm.append('menuname', dataMenu.menuName)
-  dataForm.append('description', dataMenu.description)
-  dataForm.append('menucode', dataMenu.menuCode)
-  dataForm.append('menuurl', dataMenu.menuUrl)
-  dataForm.append('menuicon', dataMenu.menuIcon)
-  dataForm.append('moduleiId', dataMenu.moduleId)
-  dataForm.append('sortorder', dataMenu.sortOrder)
-  dataForm.append('menuversion', dataMenu.menuVersion)
-  dataForm.append('menutype', dataMenu.menuType)
-  dataForm.append('recordstatus', dataMenu.recordStatus)
-  dataForm.append('menuform', JSON.stringify(runtimeJson))
+  dataForm.append('widgetid', dataWidget.widgetid)
+  dataForm.append('widgetname', dataWidget.widgetname)
+  dataForm.append('description', dataWidget.description)
+  dataForm.append('widgettitle', dataWidget.widgettitle)
+  dataForm.append('widgetversion', dataWidget.widgetversion)
+  dataForm.append('widgetby', dataWidget.widgetby)
+  dataForm.append('moduleid', dataWidget.moduleid)
+  dataForm.append('recordstatus', dataWidget.recordStatus)
+  dataForm.append('widgetform', JSON.stringify(runtimeJson))
   try {
     const res = await Api.post('admin/execute-flow', dataForm)
     if (res?.code == 200) {
@@ -615,38 +623,33 @@ const saveSchema = async () => {
   }
 }
 
-const dataMenu = reactive({
-  menuAccessId : Number,
-  menuName: String,
+const dataWidget = reactive({
+  widgetid : Number,
+  widgetname: String,
+  widgettitle: String,
+  widgetversion: String,
+  widgetby: String,
   description: String,
-  menuCode: String,
-  menuUrl: String,
-  menuIcon: String,
-  moduleId: Number,
-  sortOrder: Number,
-  menuVersion: String,
-  menuType: String,
+  moduleid: Number,
   recordStatus: Number
 })
 
 const loadSchema = async() => {
   try {
-    const res = await getMenuForm(route.params.slug)
+    const res = await getWidgetForm(route.params.slug)
     if (res?.code == 200) {
-      dataMenu.menuAccessId = res?.data.menuaccessid
-      dataMenu.menuName = res?.data.menuname
-      dataMenu.description = res?.data.description,
-      dataMenu.menuCode = res?.data.menucode,
-      dataMenu.menuUrl = res?.data.menuurl,
-      dataMenu.menuIcon = res?.data.menuicon,
-      dataMenu.moduleId = res?.data.moduleid,
-      dataMenu.sortOrder = res?.data.sortorder,
-      dataMenu.menuVersion = res?.data.menuversion,
-      dataMenu.menuType = res?.data.menutype
-      dataMenu.recordStatus = res?.data.recordstatus
-      if (res?.data.menuform != '') {
-        formSchema.value = res?.data?.menuform
-        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+      dataWidget.widgetid = res?.data.data.widgetid
+      dataWidget.widgetname = res?.data.data.widgetname
+      dataWidget.description = res?.data.data.description,
+      dataWidget.widgettitle = res?.data.data.widgettitle,
+      dataWidget.widgetversion = res?.data.data.widgetversion,
+      dataWidget.widgetby = res?.data.data.widgetby,
+      dataWidget.description = res?.data.data.description,
+      dataWidget.moduleid = res?.data.data.moduleid,
+      dataWidget.recordStatus = res?.data.data.recordstatus
+      if (res?.data.data.widgetform != '') {
+        formSchema.value = res?.data?.data.menuform
+        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.widgetform))
       }
     } else {
       console.error('Invalid response from ', res)
@@ -660,11 +663,11 @@ const copySchema = async() => {
   const name = window.prompt('Copy Schema From ? ')
   if (name) {
     try {
-      const res = await getMenuForm(name)
+      const res = await getWidgetForm(name)
       if (res?.code == 200) {
-        if (res?.data.menuform != '') {
-          formSchema.value = res?.data?.menuform
-          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.menuform))
+        if (res?.data.widgetform != '') {
+          formSchema.value = res?.data?.widgetform
+          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.widgetform))
         }
       } else {
         console.error('Invalid response from ', res)
@@ -686,8 +689,8 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
 
   const masterContainer: any = {
     id: randomId(),
-    type: 'master',
-    label: dbSchema.title?.text || 'Master',
+    type: 'widget',
+    label: dbSchema.title?.text || 'Widget',
     props: {
       class: dbSchema.class,
       layout: dbSchema.layout,
@@ -715,6 +718,22 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
       })),
     }
     masterContainer.children.push(buttonsContainer)
+  }
+
+   if (dbSchema.components?.length) {
+    const componentContainer = {
+      id: randomId(),
+      type: 'components',
+      label: 'Components',
+      props: { class: dbSchema.class },
+      children: dbSchema.components.map((cmp: any)=> ({
+        id: randomId(),
+        type: cmp.type,
+        label: cmp.text,
+        props: cmp,
+      }))
+    }
+    masterContainer.children.push(componentContainer)
   }
 
   // === TABLES ===
@@ -862,6 +881,16 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
         }));
         break;
 
+      case "components":
+        result.components = (child.children || []).map((tbl) => ({
+          type: "components",
+          text: tbl.props.text || '',
+          key: tbl.props.key || '',
+          primary: tbl.props.primary,
+          source: tbl.props.source
+        }));
+        break;
+
       case "modals":
         result.modals = (child.children || []).map((modal) => ({
           type: modal.type || 'modal',
@@ -900,6 +929,7 @@ function designerToDbSchema(designer: NodeSchema[]): any {
     buttons: [],
     tables: [],
     modals: [],
+    components: []
   };
 
   // Loop semua children level pertama
