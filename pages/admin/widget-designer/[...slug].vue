@@ -289,7 +289,7 @@ const availableComponents = [
       { 
         type: 'number', 
         key:'',
-        label: 'Number', 
+        text:'Number',
         place: 'enter a number', 
         required: false 
       } 
