@@ -627,7 +627,6 @@ async function handleFileChange(e: Event) {
 function isButtonExist(mode: any) {
   for (let index = 0; index < parsedSchema.buttons.length; index++) {
     const element = parsedSchema.buttons[index];
-    console.log(element)
     if (element.toLowerCase() == mode) {
       return true
     }

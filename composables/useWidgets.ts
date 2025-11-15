@@ -22,7 +22,13 @@ export function useWidgets() {
   const fetchWidgets = async (modulename: string) => {
     try {
       isLoading.value = true
-      const res = await Api.get('/admin/getwidget?module='+modulename)
+      const dataForm = new FormData()
+      dataForm.append('flow', 'getwidgetbymodule')
+      dataForm.append('menu', 'admin')
+      dataForm.append('search', 'true')
+      dataForm.append('modulename', modulename)
+      const res = await Api.post('admin/execute-flow',dataForm)
+      //const res = await Api.get('/admin/getwidgets?module='+modulename)
       if (res.code === 200) return res
     } catch (e) {
       console.error('Error fetching widgets', e)
@@ -30,7 +36,28 @@ export function useWidgets() {
       isLoading.value = false
     }
   }
+  
+  const getWidgetForm = async (slug: string) => {
+    try {
+      isLoading.value = true
+      const dataForm = new FormData()
+      dataForm.append('flow', 'getwidgetname')
+      dataForm.append('menu', 'admin')
+      dataForm.append('search', 'true')
+      dataForm.append('widgetname', slug)
+      const res = await Api.post('admin/execute-flow',dataForm)
+      if (res.code == 200) {
+        return res
+      } else {
+        throw new Error(res.message || $t('INVALID_CREDENTIAL'))
+      }
+    } catch (err) {
+        console.error(err)
+        throw new Error($t('INVALID_CREDENTIAL'))
+    } finally {
+      isLoading.value = false
+    }
+  }
 
-
-  return { isLoading, fetchWidgets}
+  return { isLoading, fetchWidgets, getWidgetForm}
 }

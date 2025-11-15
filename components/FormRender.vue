@@ -6,7 +6,7 @@ import { UModal } from '#components'
 
 const props = defineProps({
   title: { type: String, default: '' },
-  menuName: { type: String, required: true, default: '' },
+  menuName: { type: String, default: '' },
   schema: { type: [Object, String], required: true },
   formType: { type: String, default: 'form' }
 })
@@ -18,8 +18,10 @@ const Api = useApi()
 const toast = useToast()
 let selectedRows: any
 
+const emit = defineEmits([])
+
 // 🧩 Parse schema
-const parsedSchema = computed(() =>
+const parsedSchema = computed(() => 
   typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema
 )
 
@@ -134,13 +136,18 @@ async function downTemplate() {
 }
 
 function navigate(key:any) {
-  console.log(key)
   if (key.includes('form-designer') && !selectedRows) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
+    return
+  } else
+  if (key.includes('widget-designer') && !selectedRows) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
   if (key.includes('form-designer') && selectedRows.length > 0) {
     navigateTo(key+'/'+selectedRows[0]['menuname'])
+  } else if (key.includes('widget-designer') && selectedRows.length > 0) {
+    navigateTo(key+'/'+selectedRows[0]['widgetname'])
   } else {
     navigateTo(key)
   }
@@ -262,8 +269,8 @@ function renderComponent(component: any) {
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: $t(component.place?.toUpperCase()) || '',
           maxlength: component.length,
-          value: modelInputArea.value,
-          onInput: (e: any) => (modelInputArea.value = e.target.value)
+          onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
+          value: modelInputArea.value
         }),
         validationErrors[component.key]
           ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
@@ -336,11 +343,36 @@ function renderComponent(component: any) {
           $t(component.text.toUpperCase()) || ''
         )
       ])
+
+      case 'button':
+      return h(
+        'button',
+        {
+          class: `px-4 py-2 rounded mr-2 text-white bg-gray-600 hover:bg-gray-700 transition mb-3`,
+          onClick: async () => {
+            const eventName = (component.event || component.type).toUpperCase()
+            if (eventName === 'ONCREATE') {
+              if (validateAllFields()) await CreateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONUPDATE') {
+              if (validateAllFields()) await UpdateHandler()
+              else alert('⚠️ Validasi gagal! Periksa input Anda.')
+            } else if (eventName === 'ONDELETE') {
+              await DeleteHandler()
+            } else {
+              emit(eventName, { ...formData })
+            }
+          }
+        },
+        component.text || component.type
+      )  
   }
 }
 
 function renderContainer(container: any) {
   if (!container) return null
+
+  console.log('contain ',container)
 
   const children = Array.isArray(container)
     ? container
@@ -349,11 +381,12 @@ function renderContainer(container: any) {
   return h(
     'div',
     {
-      class: 'border border-gray-200 rounded-md p-3 mb-3 bg-white shadow-sm'
+      class: ''
     },
     children.map((component: any, index: number) => {
       // 🧩 Jika komponen adalah container, render secara rekursif
-      if (component.type === 'masters' || 
+      console.log(component)
+      if (component.type === 'masters' || component.type === 'widget' ||
         component.type === 'buttons' || component.type === 'tables' || 
         component.type === 'search' || component.type === 'columns' || 
         component.type === 'modals' || component.type === 'modal') {
@@ -448,9 +481,9 @@ function validateField(component: any, value: any) {
 /* 🧩 Validasi semua field */
 function validateAllFields() {
   let valid = true
-  if (!parsedSchema.components) return true
+  if (!parsedSchema.value.components) return true
 
-  parsedSchema.components.forEach((comp: any) => {
+  parsedSchema.value.components.forEach((comp: any) => {
     if (['text', 'password', 'number', 'email'].includes(comp.type)) {
       const value = formData.value[comp.key]
       const result = validateField(comp, value)
@@ -489,6 +522,115 @@ function renderTable(component: any) {
     })
   ])
 }
+
+const ReadHandler = async () => {
+  const flow = parsedSchema.value.action?.onRead
+  if (flow) {
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    formData.value = {}
+    if (res?.data?.data) {
+      const firstRow = res?.data?.data
+      for (const key in firstRow) formData.value[key] = firstRow[key]
+      const tableComponent = parsedSchema.components?.find((x: any) => x.type === 'table')
+    }
+  }
+}
+
+const CreateHandler = async () => {
+  const flow = parsedSchema.action?.onCreate
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {
+      toast.add({
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+      ReadHandler()
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
+}
+
+const UpdateHandler = async () => {
+  const flow = parsedSchema.value.action?.onUpdate
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    const res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
+}
+
+const DeleteHandler = async () => {
+  const flow = parsedSchema.value.action?.onPurge
+  if (flow) {
+    const payload = { ...toRaw(formData.value) }
+    const dataForm = new FormData()
+    dataForm.append('flow', flow)
+    dataForm.append('menu', 'admin')
+    dataForm.append('search', 'true')
+
+    for (const key in payload) {
+      const val = payload[key]
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val))
+        else dataForm.append(key, val)
+      }
+    }
+
+    res = await Api.post('admin/execute-flow', dataForm)
+    if (res.code == 200) {     
+      toast.add({
+        title: $t('TITLE DELETE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+      //ReadHandler()
+    }
+  } else {
+    alert('Invalid Flow ' + flow)
+  }
+}
+
+onMounted(ReadHandler)
 
 async function saveData(key:any) {
   try {
@@ -536,7 +678,7 @@ async function saveData(key:any) {
 </script>
 
 <template>
-  <div v-if="parsedSchema.layout == 'standard'" :class="parsedSchema.class">
+  <div v-if="parsedSchema?.layout == 'standard'" :class="parsedSchema.class">
     <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
     <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
@@ -579,5 +721,17 @@ async function saveData(key:any) {
     <div v-for="(value, index) in tables" :key="index">
         <component :is="renderTable(value)" />
     </div>
+  </div>
+  <div v-else-if="parsedSchema?.type == 'widget'" :class="parsedSchema.class">
+ <div class="w-full">
+    <!-- Judul di atas komponen -->
+    <h1 class="text-2xl font-bold tracking-tight mb-4">
+      {{ $t(props.title.toUpperCase()) }}
+    </h1>
+    
+    <!-- Komponen utama -->
+    <component :is="renderContainer(parsedSchema)" />
+    </div>
+
   </div>
 </template>

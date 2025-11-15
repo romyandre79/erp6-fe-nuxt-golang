@@ -53,7 +53,6 @@ onMounted(async () => {
         value: item[valueField]
       }))
 
-      console.log('✅ Options loaded:', options.value)
     } else {
       console.error('Gagal ambil data untuk select:', res?.message)
     }

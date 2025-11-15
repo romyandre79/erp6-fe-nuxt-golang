@@ -1,18 +1,18 @@
 <template>
       <div class="flex">
-        <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
+        <button class="text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
           💾 Save Schema
         </button>
-        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
           📂 Load Schema
         </button>
-        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
           📂 Copy From ...
         </button>
-        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
           {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
         </button>
-        <button class=" text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
+        <button class=" text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
           {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
         </button>
       </div>
