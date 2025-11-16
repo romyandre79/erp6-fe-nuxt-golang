@@ -137,6 +137,7 @@ const availableComponents = [
       key:'',
       label: '', 
       place: '', 
+      text: '',
       enabled: true,
       required: false 
     } 
