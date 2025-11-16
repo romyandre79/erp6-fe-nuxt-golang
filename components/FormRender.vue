@@ -144,11 +144,17 @@ function navigate(key:any) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
+  if (key.includes('workflow-designer') && !selectedRows) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
+    return
+  } else
   if (key.includes('form-designer') && selectedRows.length > 0) {
     navigateTo(key+'/'+selectedRows[0]['menuname'])
   } else if (key.includes('widget-designer') && selectedRows.length > 0) {
     navigateTo(key+'/'+selectedRows[0]['widgetname'])
-  } else {
+  } else   if (key.includes('workflow-designer') && selectedRows.length > 0) {
+    navigateTo(key+'/'+selectedRows[0]['wfname'])
+  }else {
     navigateTo(key)
   }
 }
