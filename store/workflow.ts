@@ -6,7 +6,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const workflow = ref<any>(null)
   const categories = ref<any[]>([])
   const components = ref<any[]>([])
-  const componentProperties = ref<Record<string, any>>({})
+  const componentDetails = ref<any[]>([])
+  const componentProperties = ref<Record<string, any>>([])
   const selectedNode = ref<any>(null)
   const parameters = ref<any[]>([])
   const loading = ref(false)
@@ -68,6 +69,18 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f4.append('workflowid', id)
       const r4 = await api.post('/admin/execute-flow', f4)
       parameters.value = r4.data?.data ?? []
+
+      // 5. component propertie
+      const f5 = new FormData()
+    f5.append('flow', 'searchwfdetailbywfname')
+    f5.append('menu', 'admin')
+    f5.append('search', 'true')
+    f5.append('workflowid', workflow.value?.workflowid ?? '')
+    const r5 = await api.post('/admin/execute-flow', f5)
+      componentDetails.value = r5.data?.data ?? []
+
+      console.log('details ',componentDetails.value)
+
     } finally {
       loading.value = false
     }
@@ -80,31 +93,31 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   async function loadComponentProperties(name: string) {
-    const dataForm = new FormData()
-    dataForm.append('flow', 'searchwfdetailbywfname')
-    dataForm.append('menu', 'admin')
-    dataForm.append('search', 'true')
-    dataForm.append('workflowid', workflow.value?.workflowid ?? '')
-    dataForm.append('wfname', workflow.value?.wfname ?? '')
-
-    const res = await api.post('/admin/execute-flow', dataForm)
     // backend may return an array - try find by component name
-    const items = res.data?.data ?? []
-    const found = items.find((x: any) => x.componentname === name) ?? items[0] ?? {}
+    const items = componentDetails.value ?? []
+    const found = items.filter((x: any) => x.componentname === name) ?? []
     // normalize format to property map expected by PropertyForm
-    componentProperties.value = found.properties ? found : {}
+    componentProperties.value = found
     return componentProperties.value
   }
 
   async function saveFlow(flow: any) {
-    const df = new FormData()
-    df.append('flow', 'saveflow')
-    df.append('menu', 'admin')
-    df.append('workflowid', workflow.value?.workflowid ?? '')
-    df.append('flow', JSON.stringify(flow))
-    await api.post('/admin/execute-flow', df)
-    // update local copy
-    workflow.value = { ...(workflow.value || {}), flow }
+    loading.value = true
+    try {
+      const df = new FormData()
+      df.append('flow', 'saveflow')
+      df.append('menu', 'admin')
+      df.append('search', 'false')
+      df.append('workflowid', workflow.value?.workflowid ?? '')
+      df.append('workflow', JSON.stringify(flow))
+      const res = await api.post('/admin/execute-flow', df)
+      // update local copy
+      workflow.value = { ...(workflow.value || {}), flow }
+      return res
+    } 
+    finally {
+      loading.value = false
+    }
   }
 
   function setSelectedNode(node: any) {

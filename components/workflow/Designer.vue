@@ -25,6 +25,7 @@ import { useWorkflowStore } from "~/store/workflow";
 import html2canvas from "html2canvas";
 
 const store = useWorkflowStore();
+const toast = useToast()
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -58,7 +59,8 @@ function initEditor(container: HTMLElement) {
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      await store.loadComponentProperties(node.name);
+      const res = await store.loadComponentProperties(node.name);
+console.log(res)
       store.setSelectedNode(node);
     }
   });
@@ -80,9 +82,15 @@ function scheduleSave() {
   }, 500);
 }
 
-function Save() {
+async function Save() {
     try {
-        store.saveFlow(editor.export());
+        const res = await store.saveFlow(editor.export());
+        if (res.code == 200) {
+            toast.add({
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll("_"," "))
+      }) 
+        }
     } catch (e) {
         console.error("❌ saveFlow error", e);
     }
