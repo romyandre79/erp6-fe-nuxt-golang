@@ -301,7 +301,7 @@ function renderComponent(component: any) {
         h('input', {
           type: component.type,
           class:
-            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none dark:text-white text-black ' +
             (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),

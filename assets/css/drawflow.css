@@ -33,10 +33,3 @@ button * {
   font-weight: 600;
 }
 
-/* ===== MAKE INPUT VISIBLE ===== */
-input,
-select,
-textarea {
-  color: #111 !important;
-  opacity: 1 !important;
-}
