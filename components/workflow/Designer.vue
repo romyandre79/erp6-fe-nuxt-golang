@@ -55,12 +55,13 @@ function initEditor(container: HTMLElement) {
   ed.on("connectionRemoved", () => scheduleSave());
 
   ed.on("nodeSelected", async (id: string) => {
+    console.log('node sele ',id)
     const cleanId = id.replace("node-", "");
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      const res = await store.loadComponentProperties(node.name);
-console.log(res)
+      const res = await store.loadComponentProperties(node.name,cleanId.toString());
+console.log('node ',res)
       store.setSelectedNode(node);
     }
   });

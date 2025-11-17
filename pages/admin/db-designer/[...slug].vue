@@ -587,7 +587,7 @@ const saveSchema = async () => {
   const runtimeJson = designerToDbSchema(designJson)
 
   const dataForm = new FormData()
-  dataForm.append('flow', 'modifmenuaccess')
+  dataForm.append('flowname', 'modifmenuaccess')
   dataForm.append('menu', 'admin')
   dataForm.append('search', 'true')
   dataForm.append('menuaccessid', dataMenu.menuAccessId)

@@ -23,7 +23,7 @@ export function useWidgets() {
     try {
       isLoading.value = true
       const dataForm = new FormData()
-      dataForm.append('flow', 'getwidgetbymodule')
+      dataForm.append('flowname', 'getwidgetbymodule')
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append('modulename', modulename)
@@ -41,7 +41,7 @@ export function useWidgets() {
     try {
       isLoading.value = true
       const dataForm = new FormData()
-      dataForm.append('flow', 'getwidgetname')
+      dataForm.append('flowname', 'getwidgetname')
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append('widgetname', slug)

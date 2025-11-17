@@ -30,7 +30,11 @@
       </div>
 
       <div v-if="tab === 'property'">
-        <PropertyForm v-if="store.selectedNode" :componentName="store.selectedNode.name" />
+<PropertyForm
+  v-if="store.selectedNode"
+  :componentName="store.selectedNode.name"
+  :nodeId="store.selectedNode.nodeid ?? store.selectedNode.id ?? store.selectedNode.data?.nodeid"
+/>
         <div v-else class="text-gray-500">Select a node to edit properties</div>
       </div>
     </div>

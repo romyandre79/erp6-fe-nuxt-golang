@@ -254,7 +254,7 @@ const fetchData = async () => {
     if (props.method.toUpperCase() === 'POST') {
       const dataForm = new FormData()
       // --- POST request ---
-      dataForm.append('flow', props.endPoint || '')
+      dataForm.append('flowname', props.endPoint || '')
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append('page', currentPage.value || 1)

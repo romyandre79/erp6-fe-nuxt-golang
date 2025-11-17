@@ -117,9 +117,23 @@ function getOptions(f:any): string[] {
 // Initialize form from fields (use componentvalue or node.data if exists)
 function initFormFromFields() {
   fields.value.sort((a:any,b:any) => (Number(a.order)||0) - (Number(b.order)||0))
+
+  // ambil node data dari editor
+  let nodeData = {}
+  const editor = (window as any).editor
+  if (editor) {
+    const home = editor.drawflow?.drawflow?.Home?.data
+    const node = store.selectedNode
+    if (home && node) {
+      const nodeKey = Object.keys(home).find(k => Number(home[k].id) === Number(node.id))
+      if (nodeKey && home[nodeKey]?.data) {
+        nodeData = home[nodeKey].data
+      }
+    }
+  }
+
+  // isi form
   fields.value.forEach((f:any) => {
-    // prefer node data if present
-    const nodeData = store.selectedNode?.data ?? {}
     const key = f.inputname
     if (nodeData && Object.prototype.hasOwnProperty.call(nodeData, key)) {
       form[key] = nodeData[key]
@@ -128,6 +142,7 @@ function initFormFromFields() {
     }
   })
 }
+
 
 // UPDATE selected node data (debounced)
 const updateNodeDataDebounced = debounce(() => {
@@ -168,40 +183,21 @@ function resetToDefaults(){
    and when store.selectedNode changes -> reinit
    ===================================================== */
 
-watch(() => props.componentName, async (name) => {
+watch([() => props.componentName, () => props.nodeId], async ([name, nodeId]) => {
   if (!name) {
     fields.value = []
     Object.keys(form).forEach(k => delete form[k])
     return
   }
-  // load properties for this component from store (store.loadComponentProperties already maps)
-  await store.loadComponentProperties(name)
-  // store.componentProperties may be object or array depending on backend shape
-  const cp = store.componentProperties
 
-  // normalize to array of property items
-  let arr:any[] = []
-  if (Array.isArray(cp)) {
-    arr = cp
-  } else if (cp && typeof cp === 'object') {
-    // if cp has properties as map, attempt to convert
-    // but according to your backend cp is likely an array (data.data)
-    arr = (cp.data ?? cp) as any[]
-    if (!Array.isArray(arr)) {
-      // try to detect if cp itself is the array
-      arr = []
-    }
-  }
+  // load properties dari store
+  const merged = await store.loadComponentProperties(name, nodeId)
 
-  // filter properties for selected node id if nodeId provided
-  if (props.nodeId) {
-    arr = arr.filter(p => String(p.nodeid) === String(props.nodeId))
-  }
-
-  // set fields and init
-  fields.value = arr
+  // gunakan hasil merge langsung
+  fields.value = merged
   initFormFromFields()
 }, { immediate: true })
+
 
 
 /* Also watch store.selectedNode: if user selects different node, re-init form from node.data */
