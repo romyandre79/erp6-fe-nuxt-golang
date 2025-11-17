@@ -55,11 +55,6 @@
         </div>
       </template>
 
-      <!-- optional manual save (kept for UX) -->
-      <div class="flex gap-2">
-        <button type="button" @click="saveNow" class="px-3 py-1 bg-green-600 text-white rounded text-sm">Save</button>
-        <button type="button" @click="resetToDefaults" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm">Reset</button>
-      </div>
     </form>
   </div>
 </template>
@@ -158,23 +153,6 @@ const updateNodeDataDebounced = debounce(() => {
 // event handlers
 function onInput(field:any){
   // live update (debounced)
-  updateNodeDataDebounced()
-}
-
-// manual save
-function saveNow(){
-  // immediate update
-  const payload:any = {}
-  fields.value.forEach((f:any) => payload[f.inputname] = form[f.inputname])
-  store.updateSelectedNodeData(payload)
-  // store.saveFlow is called inside updateSelectedNodeData (store implementation persists)
-  // UX feedback:
-  console.log('Property saved', payload)
-}
-
-// reset to defaults (componentvalue)
-function resetToDefaults(){
-  fields.value.forEach((f:any) => form[f.inputname] = f.componentvalue ?? '')
   updateNodeDataDebounced()
 }
 

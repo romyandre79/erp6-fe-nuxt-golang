@@ -96,7 +96,7 @@ const props = defineProps({
 const emit = defineEmits(['select', 'drop-child', 'delete'])
 
 const isDragOver = ref(false)
-const containerTypes = ['master','widget','components','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
+const containerTypes = ['master','detail','widget','components','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
 const isContainer = computed(() => {
   if (!props.node.children) props.node.children = []
   return containerTypes.includes(props.node.type)

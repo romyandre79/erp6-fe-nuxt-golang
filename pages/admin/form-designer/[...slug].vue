@@ -417,6 +417,38 @@ const layoutContainers = [
         action: {
           "onNew": "",
           "onGet": "",
+          "onGetDetail": [],
+          "onCreate": "",
+          "onUpdate": "",
+          "onUpload": "",
+          "onPurge": "",
+          "onPdf": "",
+          "onXls": ""
+        }
+      },
+      children:[]
+  },
+  { 
+    type: 'detail', 
+    label: 'Detail', 
+    props: 
+      { 
+    type: 'detail', 
+        class: 'w-full',
+        layout: 'standard',
+        primary: '',
+        title: {
+          text: '',
+          class: 'text-2xl font-bold tracking-tight mb-4'
+        },
+         subtitle: {
+          text: '',
+          class: 'text-1xl tracking-tight mb-4'
+        },
+        action: {
+          "onNew": "",
+          "onGet": "",
+          "onGetDetail": [],
           "onCreate": "",
           "onUpdate": "",
           "onUpload": "",
@@ -869,6 +901,24 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
       case "modals":
         result.modals = (child.children || []).map((modal) => ({
           type: modal.type || 'modal',
+          key: modal.key || 'modalForm',
+          components: (modal.children || []).map((nextchild) => ({
+            type: nextchild.props.type || 'text',
+            key: nextchild.props.key || '',
+            text: nextchild.props.text || '',
+            length: nextchild.props.length || 0,
+            place: nextchild.props.place || '',
+            source: nextchild.props.source || '',
+            label: nextchild.props.label || '',
+            enable: nextchild.props.enable || true,
+            validated: nextchild.props.validated
+          })),
+        }));
+        break;
+
+      case "detail":
+        result.modals = (child.children || []).map((modal) => ({
+          type: modal.type || 'detail',
           key: modal.key || 'modalForm',
           components: (modal.children || []).map((nextchild) => ({
             type: nextchild.props.type || 'text',

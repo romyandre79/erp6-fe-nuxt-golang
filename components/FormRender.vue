@@ -402,6 +402,7 @@ function renderContainer(container: any) {
         case 'columns':
         case 'search':
         case 'modals':
+        case 'detail':
         case 'modals':
         case 'components':
           return h('div', { class: 'ml-4 mt-2' }, [
