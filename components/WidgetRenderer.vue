@@ -302,7 +302,7 @@ const CreateHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -332,7 +332,7 @@ const UpdateHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -363,7 +363,7 @@ const ReadHandler = async () => {
   const flow = parsedSchema.action?.onRead
   if (flow) {
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -387,7 +387,7 @@ const DeleteHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -431,7 +431,7 @@ async function saveData() {
       flow = parsedSchema.action?.onUpdate
     }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     const payload = { ...toRaw(formData.value) }
@@ -480,7 +480,7 @@ async function openEditModal() {
     modalTitle.value = 'Edit Data'
     openNew.value = true
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     dataForm.append(parsedSchema.primary,selectedRows[0][parsedSchema.primary])
@@ -506,7 +506,7 @@ async function deleteForm() {
   if (flow && selectedRows.length > 0) {  
     let dataForm = new FormData()
     for (let index = 0; index < selectedRows.length; index++) {
-      dataForm.append('flow', flow)
+      dataForm.append('flowname', flow)
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append(parsedSchema.primary,selectedRows[index][parsedSchema.primary])
@@ -535,7 +535,7 @@ async function downForm(mode: any) {
   } 
   if (flow) {  
     let dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     for (let index = 0; index < selectedRows?.length; index++) {
@@ -590,7 +590,7 @@ async function handleFileChange(e: Event) {
   }
 
   const form = new FormData()
-  form.append('flow', flow)
+  form.append('flowname', flow)
   form.append('menu', 'admin')
   form.append('search', false)
   form.append('file-modules', file)

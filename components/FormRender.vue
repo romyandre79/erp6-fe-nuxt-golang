@@ -59,7 +59,7 @@ async function edit(key: string) {
     modalTitle.value = 'Edit Data'
     modalRefs[key].value = true
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     dataForm.append(parsedSchema.value.primary,selectedRows[0][parsedSchema.value.primary])
@@ -90,7 +90,7 @@ async function deleteData(table: any) {
   if (flow && selectedRows.length > 0) {  
     let dataForm = new FormData()
     for (let index = 0; index < selectedRows.length; index++) {
-      dataForm.append('flow', flow)
+      dataForm.append('flowname', flow)
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append(parsedSchema.value.primary,selectedRows[index][parsedSchema.value.primary])
@@ -119,7 +119,7 @@ async function downForm(mode: any) {
   } 
   if (flow) {  
     let dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     for (let index = 0; index < selectedRows?.length; index++) {
@@ -211,7 +211,7 @@ async function handleFileChange(e: Event) {
   }
 
   const form = new FormData()
-  form.append('flow', flow)
+  form.append('flowname', flow)
   form.append('menu', 'admin')
   form.append('search', false)
   form.append('file-modules', file)
@@ -541,7 +541,7 @@ const ReadHandler = async () => {
   const flow = parsedSchema.value.action?.onRead
   if (flow) {
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -560,7 +560,7 @@ const CreateHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -590,7 +590,7 @@ const UpdateHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -619,7 +619,7 @@ const DeleteHandler = async () => {
   if (flow) {
     const payload = { ...toRaw(formData.value) }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
@@ -656,7 +656,7 @@ async function saveData(key:any) {
       flow = parsedSchema.value.action?.onUpdate
     }
     const dataForm = new FormData()
-    dataForm.append('flow', flow)
+    dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
     const payload = { ...toRaw(formData.value) }

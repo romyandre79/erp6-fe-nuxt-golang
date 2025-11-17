@@ -38,7 +38,7 @@ export const useAuth = () => {
   const getMenuForm = async (slug: string) => {
     try {
             const dataForm = new FormData()
-      dataForm.append('flow', 'getmenubyname')
+      dataForm.append('flowname', 'getmenubyname')
       dataForm.append('menu', 'admin')
       dataForm.append('search', 'true')
       dataForm.append('menuname', slug)

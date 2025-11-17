@@ -14,6 +14,8 @@ onMounted(async () => {
 </script>
 
 <template>
+  <ClientOnly>
+  <UApp>
   <div class="min-h-screen flex flex-col">
     <!-- Optional Navbar -->
     <header class="bg-base-100 dark:bg-gray-900 shadow-md p-4">
@@ -31,4 +33,6 @@ onMounted(async () => {
       &copy; Prisma Data Abadi 2025 {{ config.public.title }}
     </footer>
   </div>
+  </UApp>
+  </ClientOnly>
 </template>

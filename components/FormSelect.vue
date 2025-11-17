@@ -38,7 +38,7 @@ onMounted(async () => {
 
   try {
     const dataForm = new FormData()
-    dataForm.append('flow', props.component.source)
+    dataForm.append('flowname', props.component.source)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
 
