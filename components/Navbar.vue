@@ -11,12 +11,12 @@ const userStore = useUserStore()
         v-if="!userStore.token"
         class="text-white p-2 hover:bg-gray-700"
         to="/login"
-        >{{$t('SIGN_IN')}}</NuxtLink
+        >{{$t('SIGN IN')}}</NuxtLink
     >
     <NuxtLink
         v-if="userStore.token"
         class="text-white p-2 hover:bg-gray-700"
-        to="/admin"
+        to="/admin/dashboard"
         >{{$t('ADMIN')}}</NuxtLink
     >
     </div>

@@ -19,7 +19,7 @@ const res = await getAllArticle()
           <h2 :v-html="article.title" class="card-title">{{ article.title }}</h2>
           <p class="text-sm text-gray-500">By {{ article.author?.realname }} | {{ article.category }}</p>
           <div class="card-actions justify-end">
-            <NuxtLink :to="`/articles/${article.slug}`" class="btn btn-primary btn-sm">{{ $t('READ_MORE') }}</NuxtLink>
+            <NuxtLink :to="`/articles/${article.slug}`" class="btn btn-primary btn-sm">{{ $t('READ MORE') }}</NuxtLink>
           </div>
         </div>
       </div>

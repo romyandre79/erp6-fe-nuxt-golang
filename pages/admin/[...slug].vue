@@ -1,14 +1,13 @@
 <template>
+
     <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-      <h1 class="text-xl font-bold tracking-tight">{{  $t(route.params.slug[0].replace(/\s+/g, '_').toUpperCase())  }}</h1>
-    </div>
-    <div class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md">
-      <FormRenderer  v-if="formSchema" :schema="formSchema" :formtype="formType"/>
+      <FormRender  v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle"/>
     </div>
 </template>
 
 <script setup lang="ts">
-import FormRenderer from '~/components/FormRenderer.vue'
+//import FormRenderer from '~/components/FormRenderer.vue'
+import FormRender from '~/components/FormRender.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -16,6 +15,8 @@ const route = useRoute()
 const { getMenuForm } = useAuth()
 const formSchema = ref<Record<string, any> | null>(null)
 const formType = ref(String)
+const formTitle = ref(String)
+const menuName = ref(String)
 
 definePageMeta({
   layout: 'auth',                
@@ -24,10 +25,12 @@ definePageMeta({
 
 onMounted(async() => {
   try {
+    menuName.value = route.params.slug
     const res = await getMenuForm(route.params.slug)
-    if (res?.code === 200) {
-      formType.value = res.data.menutype
-      formSchema.value = JSON.parse(res.data.menuform)
+    if (res?.code == 200) {
+      formTitle.value = res.data.data.description
+      formType.value = res.data.data.menutype
+      formSchema.value = JSON.parse(res.data.data.menuform)
     } else {
       console.error('Invalid response from /auth/me', res)
     }

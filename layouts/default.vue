@@ -1,7 +1,16 @@
 <script setup>
 import { useRuntimeConfig } from '#app';
+import { useThemeStore } from '~/store/theme'
 
 const config = useRuntimeConfig();
+const themeStore = useThemeStore()
+
+onMounted(async () => {
+  // Apply initial theme
+  if (process.client) {
+    document.documentElement.classList.toggle('dark', themeStore.theme === 'dark')
+  }
+})
 </script>
 
 <template>

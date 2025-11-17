@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '~/store/theme'
 import { useAuth } from '~/composables/useAuth'
 import { useColorMode } from '@vueuse/core'
-import { watchEffect } from 'vue'
 
 const themeStore = useThemeStore()
 const { t } = useI18n()
@@ -68,6 +67,8 @@ const toggleExpand = (id: number) => {
 </script>
 
 <template>
+  <ClientOnly>
+  <UApp>
   <div
     :class="[
       'flex min-h-screen transition-colors duration-300',
@@ -116,7 +117,7 @@ const toggleExpand = (id: number) => {
           >
             <div class="flex items-center gap-2">
               <span v-if="!isCollapsed" class="capitalize truncate">
-                {{ t(parent.description.replace(/\s+/g, '_').toUpperCase()) }}
+                {{ t(parent.description.toUpperCase()) }}
               </span>
             </div>
             <i
@@ -138,7 +139,7 @@ const toggleExpand = (id: number) => {
               <NuxtLink
                 v-for="child in getChildren(parent.menuaccessid)"
                 :key="child.menuaccessid"
-                :to="`/admin/${child.description.toLowerCase()}`"
+                :to="`/admin/${child.menuname.toLowerCase()}`"
                 class="flex items-center gap-2 p-2 rounded-md transition-colors"
                 :class="themeStore.theme === 'dark'
                   ? 'hover:bg-gray-800 active:bg-gray-700'
@@ -146,7 +147,7 @@ const toggleExpand = (id: number) => {
                 active-class="font-semibold"
               >
                 <span class="text-sm truncate">
-                  {{ t(child.description.replace(/\s+/g, '_').toUpperCase()) }}
+                  {{ t(child.description.toUpperCase()) }}
                 </span>
               </NuxtLink>
             </div>
@@ -196,6 +197,8 @@ const toggleExpand = (id: number) => {
       </div>
     </main>
   </div>
+  </UApp>
+  </ClientOnly>
 </template>
 
 <style scoped>

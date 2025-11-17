@@ -37,7 +37,12 @@ export const useAuth = () => {
 
   const getMenuForm = async (slug: string) => {
     try {
-      const res = await get('admin/getmenu?menuname='+slug)
+            const dataForm = new FormData()
+      dataForm.append('flow', 'getmenubyname')
+      dataForm.append('menu', 'admin')
+      dataForm.append('search', 'true')
+      dataForm.append('menuname', slug)
+      const res = await post('admin/execute-flow',dataForm)
       if (res.code == 200) {
         return res
       } else {

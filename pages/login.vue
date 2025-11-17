@@ -34,8 +34,8 @@ const handleLogin = async () => {
         <img src="/images/logo_small.png" alt="Logo" class="w-16 h-16 rounded-full shadow-md" />
       </div>
 
-      <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2">{{ t('WELCOME_BACK') }}</h2>
-      <p class="text-center text-gray-500 dark:text-gray-400 mb-8">{{ t('LOGIN_TO_ACCOUNT') }}</p>
+      <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2">{{ t('WELCOME BACK') }}</h2>
+      <p class="text-center text-gray-500 dark:text-gray-400 mb-8">{{ t('LOGIN TO ACCOUNT') }}</p>
 
       <!-- User -->
       <div class="form-control mb-5">
@@ -46,9 +46,9 @@ const handleLogin = async () => {
           type="text"
           v-model="form.username"
           class="input input-bordered w-full px-4 py-2.5 text-gray-600"
-          :placeholder="$t('ENTER_USER')"
+          :placeholder="$t('ENTER USER')"
         />
-        <p v-if="!form.username" class="text-red-500 text-sm mt-1">{{ t('INVALID_USER') }}</p>
+        <p v-if="!form.username" class="text-red-500 text-sm mt-1">{{ t('INVALID USER') }}</p>
       </div>
 
       <!-- Password -->
@@ -62,7 +62,7 @@ const handleLogin = async () => {
           class="input input-bordered w-full px-4 py-2.5" 
           placeholder="••••••••"
         />
-        <p v-if="!form.password " class="text-red-500 text-sm mt-1">{{ t('INVALID_PASSWORD') }}</p>
+        <p v-if="!form.password " class="text-red-500 text-sm mt-1">{{ t('INVALID PASSWORD') }}</p>
       </div>
 
       <!-- Login Button -->

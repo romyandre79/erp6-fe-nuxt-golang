@@ -7,13 +7,17 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/image',
-    'nuxt-highcharts',
     '@nuxt/ui',
     '@nuxtjs/i18n',
   ],
   ssr:true,
   compatibilityDate: '2025-07-15',
-  css: ['assets/css/main.css','@fortawesome/fontawesome-free/css/all.min.css'],
+  css: [
+    'assets/css/main.css',
+    '@fortawesome/fontawesome-free/css/all.min.css',
+    "drawflow/dist/drawflow.min.css",
+    "assets/css/drawflow.css"
+  ],
   vite: {
     plugins: [
       tailwindcss(),
@@ -51,5 +55,8 @@ export default defineNuxtConfig({
       ],
     },
   },
+    components: [
+    { path: '~/components', extensions: ['vue'], pathPrefix: false },
+  ],
   devtools: { enabled: true }
 })
