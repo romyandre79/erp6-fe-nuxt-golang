@@ -118,6 +118,10 @@ import TreeView from '~/components/TreeView.vue'
 import PropertyEditor from '~/components/PropertyEditor.vue'
 import FormRender from '~/components/FormRender.vue'
 
+definePageMeta({
+  middleware: ['auth'] 
+})
+
 const route = useRoute()
 
 interface NodeSchema {
@@ -138,6 +142,7 @@ const availableComponents = [
       key:'',
       label: '', 
       place: '', 
+      text: '',
       enabled: true,
       required: false 
     } 

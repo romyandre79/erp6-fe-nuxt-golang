@@ -1,0 +1,42 @@
+/* ===== FIX SIDEBAR TEXT FADE ===== */
+.sidebar *,
+.toolbox *,
+.toolbox button,
+.toolbox input {
+  opacity: 1 !important;
+  color: #111 !important;
+  filter: none !important;
+}
+
+/* ===== FIX NODE TITLE ===== */
+.drawflow-node,
+.drawflow-node * {
+  color: #111 !important;
+  opacity: 1 !important;
+}
+
+/* ===== FIX BUTTON DISABLED LOOK ===== */
+button,
+button * {
+  opacity: 1 !important;
+}
+
+/* ===== FIX TAB ACTIVE/INACTIVE ===== */
+.tab-inactive {
+  opacity: 1 !important;
+  color: #666 !important;
+}
+
+.tab-active {
+  opacity: 1 !important;
+  color: #000 !important;
+  font-weight: 600;
+}
+
+/* ===== MAKE INPUT VISIBLE ===== */
+input,
+select,
+textarea {
+  color: #111 !important;
+  opacity: 1 !important;
+}
