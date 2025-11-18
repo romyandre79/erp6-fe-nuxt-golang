@@ -142,56 +142,53 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   function findSavedDetailId(componentName: string, key: string, nodeId: number) {
-  return componentDetails.value.find(
-    x =>
-      x.componentid === componentName &&
-      x.componentdetailid === key &&
-      Number(x.nodeid) === Number(nodeId)
-  )?.workflowdetailid ?? ''
-}
+    return componentDetails.value.find(
+      x =>
+        x.componentid === componentName &&
+        x.componentdetailid === key &&
+        Number(x.nodeid) === Number(nodeId)
+    )?.workflowdetailid ?? ''
+  }
 
 
-async function saveFlowDetails(flow: any) {
-  const home = flow?.drawflow?.Home?.data ?? {}
+  async function saveFlowDetails(flow: any) {
+    const home = flow?.drawflow?.Home?.data ?? {}
 
-  for (const node of Object.values<any>(home)) {
+    for (const node of Object.values<any>(home)) {
 
-    const componentName = node?.name
-    const props = node?.data ?? {}
+      const componentName = node?.name
+      const props = node?.data ?? {}
 
-    for (const key of Object.keys(props)) {
+      for (const key of Object.keys(props)) {
 
-      const meta = findDetailMeta(componentName, key)
-      if (!meta) {
-        console.warn("Meta not found:", componentName, key)
-        continue
+        const meta = findDetailMeta(componentName, key)
+        if (!meta) {
+          console.warn("Meta not found:", componentName, key)
+          continue
+        }
+
+        // cari workflowdetailid lama
+        const oldDetailId = findSavedDetailId(meta.componentid, meta.componentdetailid, node.id)
+
+        const df = new FormData()
+        df.append('flowname', 'modifworkflowdetail')
+        df.append('menu', 'admin')
+        df.append('search', 'false')
+        df.append('workflowid', workflow.value?.workflowid ?? '')
+
+        // 🟦 ID penting
+        df.append('componentid', meta.componentid)
+        df.append('componentdetailid', meta.componentdetailid)
+        df.append('workflowdetailid', oldDetailId || '') // kosong jika insert baru
+
+        // properties
+        df.append('componentvalue', props[key])
+        df.append('nodeid', node.id)
+
+        await api.post('/admin/execute-flow', df)
       }
-
-      // cari workflowdetailid lama
-      const oldDetailId = findSavedDetailId(meta.componentid, meta.componentdetailid, node.id)
-
-      const df = new FormData()
-      df.append('flowname', 'modifworkflowdetail')
-      df.append('menu', 'admin')
-      df.append('search', 'false')
-      df.append('workflowid', workflow.value?.workflowid ?? '')
-
-      // 🟦 ID penting
-      df.append('componentid', meta.componentid)
-      df.append('componentdetailid', meta.componentdetailid)
-      df.append('workflowdetailid', oldDetailId || '') // kosong jika insert baru
-
-      // properties
-      df.append('componentvalue', props[key])
-      df.append('nodeid', node.id)
-
-      await api.post('/admin/execute-flow', df)
     }
   }
-}
-
-
-
 
   async function saveFlow(flow: any) {
     loading.value = true
