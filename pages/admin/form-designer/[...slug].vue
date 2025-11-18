@@ -892,8 +892,10 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
           type: "table",
           text: tbl.props.text || '',
           key: tbl.props.key || '',
+          relationkey: tbl.props.relationkey || '',
           primary: tbl.props.primary,
           source: tbl.props.source,
+          class: tbl.props.class,
           search: getSearch(tbl.children),
           columns: getColumns(tbl.children)
         }));
@@ -910,6 +912,7 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
             length: nextchild.props.length || 0,
             place: nextchild.props.place || '',
             source: nextchild.props.source || '',
+            class: nextchild.props.class || '',
             label: nextchild.props.label || '',
             enable: nextchild.props.enable || true,
             validated: nextchild.props.validated
@@ -929,6 +932,7 @@ function recursiveDesignerToDbSchema(node: any, result:any): any {
             place: nextchild.props.place || '',
             source: nextchild.props.source || '',
             label: nextchild.props.label || '',
+             class: nextchild.props.class || '',
             enable: nextchild.props.enable || true,
             validated: nextchild.props.validated
           })),

@@ -34,17 +34,10 @@ watch(
   () => selectedRows.value,
   (newVal) => {
     if (!newVal || newVal.length === 0) return
-    console.log('new val', newVal)
-    
- 
     // 🔄 Loop semua tabel di schema
     tables.value.forEach((tbl) => {
       if (tbl.key !== 'table0') {
         // update relation key untuk table child
-        console.log('tbl ',tbl)
-        console.log('rel key ', tbl.relationkey)
-        console.log('new val key ', newVal[0][tbl.relationkey])
-
         tbl.selectionKeyData = newVal[0][tbl.relationkey] + ''
       }
     })
@@ -558,6 +551,8 @@ function renderTable(component: any) {
       method:"POST",
       endPoint: component.source,
       simpleSearch: false,
+      title: component.text || '',
+      class: component.class || 'mb-4',
       rowKey: component.primary,
       isDetail: (key == `table0`) ? false : true,
       relationKey: component.relationkey,
