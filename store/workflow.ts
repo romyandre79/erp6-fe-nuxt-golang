@@ -124,10 +124,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     return {
       ...d,
+      workflowdetailid: savedItem?.workflowdetailid ?? 0,
+      workflowid: savedItem?.workflowid ?? 0,
       componentvalue: savedItem?.componentvalue ?? "" // merge value
     }
   })
-
   componentProperties.value = merged
   return merged
 }
@@ -143,8 +144,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function findSavedDetailId(componentName: string, key: string, nodeId: number) {
   return componentDetails.value.find(
     x =>
-      x.componentname === componentName &&
-      x.propertykey === key &&
+      x.componentid === componentName &&
+      x.componentdetailid === key &&
       Number(x.nodeid) === Number(nodeId)
   )?.workflowdetailid ?? ''
 }
@@ -167,7 +168,7 @@ async function saveFlowDetails(flow: any) {
       }
 
       // cari workflowdetailid lama
-      const oldDetailId = findSavedDetailId(componentName, key, node.id)
+      const oldDetailId = findSavedDetailId(meta.componentid, meta.componentdetailid, node.id)
 
       const df = new FormData()
       df.append('flowname', 'modifworkflowdetail')
@@ -202,10 +203,8 @@ async function saveFlowDetails(flow: any) {
       df.append('workflowid', workflow.value?.workflowid ?? '')
       df.append('flow', JSON.stringify(flow))
       const res = await api.post('/admin/execute-flow', df)
-      // update local copy
       await saveFlowDetails(flow)
-
-      workflow.value = { ...(workflow.value || {}), flow }
+      await loadWorkflow(workflow.value?.wfname)
       return res
     } 
     finally {
