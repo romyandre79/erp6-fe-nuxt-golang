@@ -478,6 +478,7 @@ const layoutContainers = [
         type: 'table', 
         key: 'table0', 
         primary: '',
+        relationkey: '',
         text: '',
         source: '',
         class:'flex flex-wrap gap-2 mb-3' 

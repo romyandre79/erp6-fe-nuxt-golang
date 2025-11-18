@@ -203,6 +203,9 @@ const props = defineProps({
   enablePageSize: { type: Boolean, default: true },
   method: { type: String, default: 'GET' }, // NEW — bisa GET / POST
   rowKey: { type: String, default: 'id' },
+  isDetail: { type: Boolean, default: false },
+  relationKey: { type: String, default: '' },
+  selectionKeyData: { type: Array, default: '' }
 })
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change'])
@@ -247,7 +250,7 @@ const formatCellValue = (col: any, value: any) => {
 
 
 // Fetch data
-const fetchData = async () => {
+async function fetchData() {
   loading.value = true
   try {
     let res
@@ -262,6 +265,11 @@ const fetchData = async () => {
       for (let index = 0; index < props.columns.length; index++) {
         const element = props.columns[index];
         dataForm.append(element.key, searchComplexQuery.value[element.key] || '')
+      }
+      const newVal = props.selectionKeyData.length > 0 ? props.selectionKeyData[0] : ''
+      console.log('key data ', newVal)
+      if (props.isDetail) {
+        dataForm.append(props.relationKey, newVal[props.relationKey])
       }
 
       res = await Api.post("/admin/execute-flow", dataForm)
@@ -297,10 +305,15 @@ const fetchData = async () => {
 
 onMounted(fetchData)
 
-watch([searchQuery, () => props.formData], () => {
-  currentPage.value = 1
-  fetchData()
-}, { deep: true })
+watch(
+  () => props.selectionKeyData,
+  (n, o) => {
+    console.log("WATCH selectionKeyData", { new: n, old: o })
+    fetchData()
+  },
+  { deep: true, immediate: true }
+)
+
 
 const handlePageSizeChange = () => {
   currentPage.value = 1

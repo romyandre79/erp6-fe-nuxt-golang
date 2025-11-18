@@ -16,7 +16,7 @@ const modalRefs = shallowReactive<Record<string, any>>({})
 const tableRef = ref()
 const Api = useApi()
 const toast = useToast()
-let selectedRows: any
+let selectedRows = ref<any[]>([])
 
 const emit = defineEmits([])
 
@@ -28,6 +28,34 @@ const parsedSchema = computed(() =>
 const buttons = computed(() => parsedSchema.value?.buttons || {})
 const modals = computed(() => parsedSchema.value?.modals || [])
 const tables = computed(() => parsedSchema.value?.tables || [])
+
+// 🔥 Ketika selectedRows berubah
+watch(
+  () => selectedRows.value,
+  (newVal) => {
+    if (!newVal || newVal.length === 0) return
+    console.log('new val', newVal)
+    
+ 
+    // 🔄 Loop semua tabel di schema
+    tables.value.forEach((tbl) => {
+      if (tbl.key !== 'table0') {
+        // update relation key untuk table child
+        console.log('tbl ',tbl)
+        console.log('rel key ', tbl.relationkey)
+        console.log('new val key ', newVal[0][tbl.relationkey])
+
+        tbl.selectionKeyData = newVal[0][tbl.relationkey] + ''
+      }
+    })
+
+    if (tableRef.value?.refreshTable) {
+      tableRef.value.refreshTable()
+    }
+  },
+  { deep: true }
+)
+
 
 // 🧩 Rebuild modalRefs setiap kali modals berubah
 watch(
@@ -62,7 +90,7 @@ async function edit(key: string) {
     dataForm.append('flowname', flow)
     dataForm.append('menu', 'admin')
     dataForm.append('search', 'true')
-    dataForm.append(parsedSchema.value.primary,selectedRows[0][parsedSchema.value.primary])
+    dataForm.append(parsedSchema.value.primary,selectedRows.value[0][parsedSchema.value.primary])
     try {
       const res = await Api.post('admin/execute-flow', dataForm)
       if (res.code == 200) {
@@ -136,24 +164,24 @@ async function downTemplate() {
 }
 
 function navigate(key:any) {
-  if (key.includes('form-designer') && !selectedRows) {
+  if (key.includes('form-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
-  if (key.includes('widget-designer') && !selectedRows) {
+  if (key.includes('widget-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
-  if (key.includes('workflow-designer') && !selectedRows) {
+  if (key.includes('workflow-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' })
     return
   } else
-  if (key.includes('form-designer') && selectedRows.length > 0) {
-    navigateTo(key+'/'+selectedRows[0]['menuname'])
-  } else if (key.includes('widget-designer') && selectedRows.length > 0) {
-    navigateTo(key+'/'+selectedRows[0]['widgetname'])
-  } else   if (key.includes('workflow-designer') && selectedRows.length > 0) {
-    navigateTo(key+'/'+selectedRows[0]['wfname'])
+  if (key.includes('form-designer') && selectedRows.value.length > 0) {
+    navigateTo(key+'/'+selectedRows.value[0]['menuname'])
+  } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
+    navigateTo(key+'/'+selectedRows.value[0]['widgetname'])
+  } else   if (key.includes('workflow-designer') && selectedRows.value.length > 0) {
+    navigateTo(key+'/'+selectedRows.value[0]['wfname'])
   }else {
     navigateTo(key)
   }
@@ -392,7 +420,7 @@ function renderContainer(container: any) {
     children.map((component: any, index: number) => {
       switch (component.type) {
         case 'table':
-          renderTable(component)
+          return renderTable(component)
           break;
         
         case 'master':
@@ -531,8 +559,11 @@ function renderTable(component: any) {
       endPoint: component.source,
       simpleSearch: false,
       rowKey: component.primary,
+      isDetail: (key == `table0`) ? false : true,
+      relationKey: component.relationkey,
+      selectionKeyData: selectedRows.value,
       onSelectionChange: (selRows: any) => {
-        selectedRows = selRows
+        selectedRows.value = selRows
       },
     })
   ])
@@ -685,7 +716,7 @@ async function saveData(key:any) {
     if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login')
     }
-    modalRefs[key].value = false
+    modalRefs[key] = false
   } catch (err) {
     console.error('Gagal simpan data:', err)
   }
