@@ -1,10 +1,5 @@
 <template>
-  <div
-    :class="[
-      'relative group transition-all duration-150',
-      preview ? '' : 'hover:border-blue-400 hover:shadow-sm',
-    ]"
-  >
+  <div :class="['relative group transition-all duration-150', preview ? '' : 'hover:border-blue-400 hover:shadow-sm']">
     <!-- ❌ Tombol Delete -->
     <button
       v-if="!preview"
@@ -25,11 +20,8 @@
       @drop="onDrop"
       @click.stop="emitSelect"
     >
-      <h4
-        v-if="node.label"
-        class="text-gray-700 font-semibold text-sm mb-2 select-none  dark:text-white"
-      >
-        {{ node.type + ': '+ node.label }}
+      <h4 v-if="node.label" class="text-gray-700 font-semibold text-sm mb-2 select-none dark:text-white">
+        {{ node.type + ': ' + node.label }}
       </h4>
 
       <!-- 🔹 Anak-anak draggable -->
@@ -73,103 +65,113 @@
       @click.stop="emitSelect"
       draggable="false"
     >
-      <component
-    :is="resolveComponent(node.type)"
-    v-bind="getComponentProps(node)"
-    :disabled="preview"
-  >
-    {{ node.props?.text || node.label }}
-  </component>
+      <component :is="resolveComponent(node.type)" v-bind="getComponentProps(node)" :disabled="preview">
+        {{ node.props?.text || node.label }}
+      </component>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import draggable from 'vuedraggable'
-import { ref, computed } from 'vue'
+import draggable from 'vuedraggable';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
   node: { type: Object, required: true },
   preview: { type: Boolean, default: false },
   showJson: { type: Boolean, default: false },
-})
-const emit = defineEmits(['select', 'drop-child', 'delete'])
+});
+const emit = defineEmits(['select', 'drop-child', 'delete']);
 
-const isDragOver = ref(false)
-const containerTypes = ['master','widget','components','buttons', 'form', 'table', 'search', 'modal','tables','columns','modals']
+const isDragOver = ref(false);
+const containerTypes = [
+  'master',
+  'detail',
+  'widget',
+  'components',
+  'buttons',
+  'form',
+  'table',
+  'search',
+  'modal',
+  'tables',
+  'columns',
+  'modals',
+];
 const isContainer = computed(() => {
-  if (!props.node.children) props.node.children = []
-  return containerTypes.includes(props.node.type)
-})
-const emitSelect = () => emit('select', props.node)
+  if (!props.node.children) props.node.children = [];
+  return containerTypes.includes(props.node.type);
+});
+const emitSelect = () => emit('select', props.node);
 
 // 🔹 Drag events
-const onDragEnter = () => (isDragOver.value = true)
-const onDragLeave = () => (isDragOver.value = false)
-const onDragOver = (e: DragEvent) => e.preventDefault()
+const onDragEnter = () => (isDragOver.value = true);
+const onDragLeave = () => (isDragOver.value = false);
+const onDragOver = (e: DragEvent) => e.preventDefault();
 
 // 🔹 Drop handler dengan filter tipe
 const onDrop = (event: DragEvent) => {
-   event.stopPropagation() 
+  event.stopPropagation();
 
-  isDragOver.value = false
-  const data = event.dataTransfer?.getData('component')
-  if (!data) return
+  isDragOver.value = false;
+  const data = event.dataTransfer?.getData('component');
+  if (!data) return;
 
   try {
-    const comp = JSON.parse(data)
+    const comp = JSON.parse(data);
 
     // 🧩 Validasi jenis komponen berdasarkan container
-    const containerType = props.node.type
-    const componentType = comp.type
+    const containerType = props.node.type;
+    const componentType = comp.type;
 
     // ✅ Komponen valid → tambahkan
     const newComp = {
       id: Math.random().toString(36).substr(2, 9),
       ...comp,
-      children: comp.children || []
-    }
-    emit('drop-child', [props.node.id, newComp])
+      children: comp.children || [],
+    };
+    emit('drop-child', [props.node.id, newComp]);
   } catch (err) {
-    console.error('Invalid drop data', err) 
+    console.error('Invalid drop data', err);
   }
-}
+};
 
-const isHover = ref(false)
+const isHover = ref(false);
 
 const onAdd = (event: any) => {
-  const containerType = props.node.type
-  const newItem = event.added?.element
-  if (!newItem) return
+  const containerType = props.node.type;
+  const newItem = event.added?.element;
+  if (!newItem) return;
 
-  const componentType = newItem.type
+  const componentType = newItem.type;
 
   const allowedTypes: Record<string, string[]> = {
-    'master': ['button'],
-    'components': ['text','button'],
-    'buttons': ['button'],
-    'tables': ['text'],
-    'table': ['text']
-  }
+    master: ['button'],
+    detail: [''],
+    components: ['text', 'button'],
+    buttons: ['button'],
+    tables: ['text'],
+    table: ['text'],
+  };
 
   if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
-    alert(`❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`)
-    props.node.children.splice(event.added.newIndex, 1)
-    return
+    alert(`❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`);
+    props.node.children.splice(event.added.newIndex, 1);
+    return;
   }
 
-  emit('drop-child', props.node.id, newItem)
-}
+  emit('drop-child', props.node.id, newItem);
+};
 // 🔹 Delete confirmation
-const confirmDelete = () => emit('delete', props.node)
+const confirmDelete = () => emit('delete', props.node);
 
-const onChildChange = () => emit('select', props.node)
+const onChildChange = () => emit('select', props.node);
 
 // 🔹 Component resolver
 const resolveComponent = (type: string) => {
   switch (type) {
     case 'button':
-      return 'button'
+      return 'button';
     case 'input':
     case 'number':
     case 'email':
@@ -193,16 +195,16 @@ const resolveComponent = (type: string) => {
     case 'week':
     case 'color':
     case 'text':
-      return 'input'
+      return 'input';
     case 'longtext':
-      return 'textarea'
+      return 'textarea';
     default:
-      return 'div'
+      return 'div';
   }
-}
+};
 
 const getComponentProps = (node: any) => {
-  const base = node.props || {}
+  const base = node.props || {};
   switch (node.type) {
     case 'shorttext':
     case 'number':
@@ -210,25 +212,24 @@ const getComponentProps = (node: any) => {
     case 'password':
     case 'email':
     case 'text':
-      return { ...base, type: 'text', disabled: true, placeholder: base.key|| 'Enter text...' }
+      return { ...base, type: 'text', disabled: true, placeholder: base.key || 'Enter text...' };
 
     case 'longtext':
-      return { ...base, rows: 3, placeholder: base.key || 'Enter long text...' }
+      return { ...base, rows: 3, placeholder: base.key || 'Enter long text...' };
 
     case 'button':
-      const { label, ...rest } = base
-      return { ...rest, type: 'button' }
+      const { label, ...rest } = base;
+      return { ...rest, type: 'button' };
 
     case 'title':
-      return { ...base }
+      return { ...base };
 
     case 'boolean':
     case 'bool':
-      return { ...base, type: 'checkbox'  }
+      return { ...base, type: 'checkbox' };
 
     default:
-      return base
+      return base;
   }
-}
+};
 </script>
-

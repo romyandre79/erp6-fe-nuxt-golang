@@ -1,11 +1,6 @@
 <template>
   <div class="relative h-full">
-<div
-  id="drawflow"
-  class="absolute inset-0"
-  @drop="drop"
-  @dragover.prevent
-></div>
+    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
     <div class="absolute right-6 top-6 flex flex-row gap-2 z-50">
@@ -14,18 +9,17 @@
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black">+</button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
-import { useWorkflowStore } from "~/store/workflow";
-import html2canvas from "html2canvas";
+import { onMounted, onBeforeUnmount } from 'vue';
+import { useWorkflowStore } from '~/store/workflow';
+import html2canvas from 'html2canvas';
 
 const store = useWorkflowStore();
-const toast = useToast()
+const toast = useToast();
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -37,7 +31,7 @@ function initEditor(container: HTMLElement) {
   const { $drawflow } = useNuxtApp();
 
   if (!$drawflow) {
-    console.error("❌ Drawflow plugin not available");
+    console.error('❌ Drawflow plugin not available');
     return null;
   }
 
@@ -49,18 +43,19 @@ function initEditor(container: HTMLElement) {
   ed.start();
 
   /* -------- Register events --------*/
-  ed.on("nodeCreated", () => scheduleSave());
-  ed.on("nodeRemoved", () => scheduleSave());
-  ed.on("connectionCreated", () => scheduleSave());
-  ed.on("connectionRemoved", () => scheduleSave());
+  ed.on('nodeCreated', () => scheduleSave());
+  ed.on('nodeRemoved', () => scheduleSave());
+  ed.on('connectionCreated', () => scheduleSave());
+  ed.on('connectionRemoved', () => scheduleSave());
 
-  ed.on("nodeSelected", async (id: string) => {
-    const cleanId = id.replace("node-", "");
+  ed.on('nodeSelected', async (id: string) => {
+    console.log('node sele ', id);
+    const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      const res = await store.loadComponentProperties(node.name);
-console.log(res)
+      const res = await store.loadComponentProperties(node.name, cleanId.toString());
+      console.log('node ', res);
       store.setSelectedNode(node);
     }
   });
@@ -77,33 +72,33 @@ function scheduleSave() {
     try {
       store.saveFlow(editor.export());
     } catch (e) {
-      console.error("❌ saveFlow error", e);
+      console.error('❌ saveFlow error', e);
     }
   }, 500);
 }
 
 async function Save() {
-    try {
-        const res = await store.saveFlow(editor.export());
-        if (res.code == 200) {
-            toast.add({
+  try {
+    const res = await store.saveFlow(editor.export());
+    if (res.code == 200) {
+      toast.add({
         title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll("_"," "))
-      }) 
-        }
-    } catch (e) {
-        console.error("❌ saveFlow error", e);
+        description: $t(res.message.replaceAll('_', ' ')),
+      });
     }
+  } catch (e) {
+    console.error('❌ saveFlow error', e);
+  }
 }
 
 /* ======================================================
    Mounted
    ======================================================*/
-onMounted(async() => {
-  const el = document.getElementById("drawflow") as HTMLElement;
+onMounted(async () => {
+  const el = document.getElementById('drawflow') as HTMLElement;
 
   if (!el) {
-    console.error("❌ drawflow element not found");
+    console.error('❌ drawflow element not found');
     return;
   }
 
@@ -115,9 +110,9 @@ onMounted(async() => {
   if (flowObj && editor) {
     try {
       editor.import(flowObj);
-      console.log("✅ DRAWFLOW IMPORTED");
+      console.log('✅ DRAWFLOW IMPORTED');
     } catch (e) {
-      console.error("❌ ERROR IMPORT DRAWFLOW", e);
+      console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
   }
 });
@@ -128,19 +123,17 @@ watch(
     if (!wf || !wf.flow || !editor) return;
 
     try {
-      const parsed =
-        typeof wf.flow === "string" ? JSON.parse(wf.flow) : wf.flow;
+      const parsed = typeof wf.flow === 'string' ? JSON.parse(wf.flow) : wf.flow;
 
-      console.log("📥 Importing workflow after load…");
+      console.log('📥 Importing workflow after load…');
 
       editor.import(parsed.drawflow ? parsed : parsed.flow);
     } catch (e) {
-      console.error("❌ Failed to import workflow", e);
+      console.error('❌ Failed to import workflow', e);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
-
 
 /* ======================================================
    Destroy
@@ -154,28 +147,34 @@ onBeforeUnmount(() => {
 /* ======================================================
    Zoom Buttons
    ======================================================*/
-function zoomIn() { editor?.zoom_in(); }
-function zoomOut() { editor?.zoom_out(); }
-function zoomReset() { editor?.zoom_reset(); }
+function zoomIn() {
+  editor?.zoom_in();
+}
+function zoomOut() {
+  editor?.zoom_out();
+}
+function zoomReset() {
+  editor?.zoom_reset();
+}
 
 function drop(ev: DragEvent) {
   ev.preventDefault();
   if (!editor) return;
 
-  const data = ev.dataTransfer?.getData("node");
+  const data = ev.dataTransfer?.getData('node');
   if (!data) {
-    console.warn("⚠️ drop: no data received");
+    console.warn('⚠️ drop: no data received');
     return;
   }
 
   const cmp = JSON.parse(data);
 
   // posisi mouse → posisi canvas
-  const rect = (document.getElementById("drawflow") as HTMLElement).getBoundingClientRect();
+  const rect = (document.getElementById('drawflow') as HTMLElement).getBoundingClientRect();
   const x = ev.clientX - rect.left;
   const y = ev.clientY - rect.top;
 
-  console.log("📌 Dropping node:", cmp);
+  console.log('📌 Dropping node:', cmp);
 
   editor.addNode(
     cmp.componentname ?? cmp.name ?? cmp.code,
@@ -185,7 +184,7 @@ function drop(ev: DragEvent) {
     y,
     cmp.componentname ?? cmp.name,
     {},
-    `<div class='title-box'>${cmp.componenttitle ?? cmp.label ?? cmp.name}</div>`
+    `<div class='title-box'>${cmp.componenttitle ?? cmp.label ?? cmp.name}</div>`,
   );
 
   // auto save
@@ -193,34 +192,33 @@ function drop(ev: DragEvent) {
 }
 
 function fixColors(container: HTMLElement) {
-  const elements = container.querySelectorAll("*");
+  const elements = container.querySelectorAll('*');
 
   elements.forEach((el: any) => {
     const style = window.getComputedStyle(el);
 
-    if (style.color.includes("oklch")) el.style.color = "#222";
-    if (style.backgroundColor.includes("oklch")) el.style.backgroundColor = "#fff";
-    if (style.borderColor.includes("oklch")) el.style.borderColor = "#ccc";
+    if (style.color.includes('oklch')) el.style.color = '#222';
+    if (style.backgroundColor.includes('oklch')) el.style.backgroundColor = '#fff';
+    if (style.borderColor.includes('oklch')) el.style.borderColor = '#ccc';
   });
 }
 
 async function exportImage() {
-  const container = document.getElementById("drawflow");
+  const container = document.getElementById('drawflow');
   if (!container) return;
 
   fixColors(container);
 
   const canvas = await html2canvas(container, {
-    backgroundColor: "#ffffff",
-    scale: 2      // resolusi tinggi
+    backgroundColor: '#ffffff',
+    scale: 2, // resolusi tinggi
   });
 
-  const link = document.createElement("a");
-  link.download = "workflow.png";
-  link.href = canvas.toDataURL("image/png");
+  const link = document.createElement('a');
+  link.download = 'workflow.png';
+  link.href = canvas.toDataURL('image/png');
   link.click();
 
-  console.log("📤 Workflow exported as PNG");
+  console.log('📤 Workflow exported as PNG');
 }
-
 </script>

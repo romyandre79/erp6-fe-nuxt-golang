@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import MediaManager from '~/components/MediaManager.vue'
+import MediaManager from '~/components/MediaManager.vue';
 definePageMeta({
-  layout: 'auth'
-})
+  layout: 'auth',
+});
 </script>
