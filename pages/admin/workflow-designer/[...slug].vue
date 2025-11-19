@@ -11,23 +11,23 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useWorkflowStore } from '~/store/workflow'
-import Designer from '~/components/workflow/Designer.vue'
-import Sidebar from '~/components/workflow/Sidebar.vue'
+import { onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { useWorkflowStore } from '~/store/workflow';
+import Designer from '~/components/workflow/Designer.vue';
+import Sidebar from '~/components/workflow/Sidebar.vue';
 
 definePageMeta({
-  middleware: ['auth'] 
-})
+  middleware: ['auth'],
+});
 
-const route = useRoute()
-const store = useWorkflowStore()
+const route = useRoute();
+const store = useWorkflowStore();
 
 onMounted(async () => {
-  const id = (route.params.slug ?? route.params.id ?? route.query.id) as string
-  if (!id) return
-  await store.loadWorkflow(id)
-  console.log('AFTER LOAD workflow =>', store.workflow)
-})
+  const id = (route.params.slug ?? route.params.id ?? route.query.id) as string;
+  if (!id) return;
+  await store.loadWorkflow(id);
+  console.log('AFTER LOAD workflow =>', store.workflow);
+});
 </script>

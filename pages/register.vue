@@ -1,20 +1,20 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'guest' })
-const { register } = useAuth()
-const form = reactive({ username: '', email: '', password: '' })
-const error = ref('')
-const loading = ref(false)
+definePageMeta({ middleware: 'guest' });
+const { register } = useAuth();
+const form = reactive({ username: '', email: '', password: '' });
+const error = ref('');
+const loading = ref(false);
 
 const submit = async () => {
   try {
-    loading.value = true
-    await register(form)
+    loading.value = true;
+    await register(form);
   } catch (err: any) {
-    error.value = err?.data?.message || 'Register gagal'
+    error.value = err?.data?.message || 'Register gagal';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <template>

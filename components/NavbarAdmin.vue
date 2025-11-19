@@ -4,12 +4,11 @@
     :class="[
       theme === 'dark'
         ? 'bg-gray-900/80 border-b border-gray-700 text-gray-100'
-        : 'bg-white/80 border-b border-gray-200 text-gray-900'
+        : 'bg-white/80 border-b border-gray-200 text-gray-900',
     ]"
   >
     <!-- LEFT: Title -->
-    <div class="flex items-center gap-3">
-    </div>
+    <div class="flex items-center gap-3"></div>
 
     <!-- RIGHT: Theme + User -->
     <div class="flex items-center gap-4 relative">
@@ -44,11 +43,7 @@
           <div
             v-if="isOpen"
             class="absolute right-0 mt-2 w-56 border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-sm transition-all"
-            :class="[
-              theme === 'dark'
-                ? 'bg-gray-900/90 border-gray-700'
-                : 'bg-white/90 border-gray-200'
-            ]"
+            :class="[theme === 'dark' ? 'bg-gray-900/90 border-gray-700' : 'bg-white/90 border-gray-200']"
           >
             <!-- User Info -->
             <div
@@ -92,54 +87,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import ThemeToggle from '~/components/ThemeToggle.vue'
-import { useUserStore } from '~/store/user'
-import { useAuth } from '~/composables/useAuth'
-import { useThemeStore } from '~/store/theme'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import ThemeToggle from '~/components/ThemeToggle.vue';
+import { useUserStore } from '~/store/user';
+import { useAuth } from '~/composables/useAuth';
+import { useThemeStore } from '~/store/theme';
 
-const { logout } = useAuth()
-const userStore = useUserStore()
-const themeStore = useThemeStore()
+const { logout } = useAuth();
+const userStore = useUserStore();
+const themeStore = useThemeStore();
 
-userStore.loadAuth()
+userStore.loadAuth();
 
-const userPhoto = userStore.user?.photo
-const userName = userStore.user?.realname
-const userEmail = userStore.user?.email
-const theme = computed(() => themeStore.theme)
+const userPhoto = userStore.user?.photo;
+const userName = userStore.user?.realname;
+const userEmail = userStore.user?.email;
+const theme = computed(() => themeStore.theme);
 
-const isOpen = ref(false)
-const userMenu = ref<HTMLElement | null>(null)
+const isOpen = ref(false);
+const userMenu = ref<HTMLElement | null>(null);
 
 const toggleDropdown = () => {
-  isOpen.value = !isOpen.value
-}
+  isOpen.value = !isOpen.value;
+};
 
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenu.value && !userMenu.value.contains(event.target as Node)) {
-    isOpen.value = false
+    isOpen.value = false;
   }
-}
+};
 
 const handleLogout = async () => {
-  isOpen.value = false
-  await logout()
-}
+  isOpen.value = false;
+  await logout();
+};
 
 const handleProfile = () => {
-  isOpen.value = false
-  navigateTo('/admin/profile')
-}
+  isOpen.value = false;
+  navigateTo('/admin/profile');
+};
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .fade-enter-from,
 .fade-leave-to {

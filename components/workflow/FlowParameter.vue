@@ -10,15 +10,17 @@
 </template>
 
 <script setup lang="ts">
-import { useWorkflowStore } from '~/store/workflow'
-const store = useWorkflowStore()
+import { useWorkflowStore } from '~/store/workflow';
+const store = useWorkflowStore();
 
-function add() { store.parameters.push({ wfparameterid: Date.now(), parametername: '' }) }
+function add() {
+  store.parameters.push({ wfparameterid: Date.now(), parametername: '' });
+}
 function remove(id: any) {
   // call backend removal if id exists in DB
   if (!id || typeof id !== 'number') {
-    store.parameters = store.parameters.filter((p: any) => p.wfparameterid !== id)
-    return
+    store.parameters = store.parameters.filter((p: any) => p.wfparameterid !== id);
+    return;
   }
   // try remove via store API if implemented
   // store.removeParameter(id)
@@ -44,5 +46,4 @@ function remove(id: any) {
 .w-80 {
   z-index: 20;
 }
-
 </style>

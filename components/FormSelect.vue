@@ -1,110 +1,110 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useApi } from '~/composables/useApi'
+import { ref, type Ref, computed, watch, onMounted } from 'vue';
+import { useApi } from '~/composables/useApi';
 
 interface Option {
-  label: string
-  value: string | number
+  label: string;
+  value: string | number;
 }
 
 interface Props {
   component: {
-    key: string
-    label: string
-    text?: string
-    source?: string
-    place?: string
-    valueField?: string // opsional: jika value-nya beda dari key utama
-  }
-  formData: Ref<Record<string, any>>
-  validationErrors: Record<string, string>
-  validateField: (component: any, val: any) => void
+    key: string;
+    label: string;
+    text?: string;
+    source?: string;
+    place?: string;
+    valueField?: string;
+  };
+  formData: Ref<Record<string, any>>;
+  validationErrors: Record<string, string>;
+  validateField: (component: any, val: any) => void;
 }
 
-const props = defineProps<Props>()
-const Api = useApi()
+const props = defineProps<Props>();
+const Api = useApi();
+
+// Destructure supaya ESLint mengenali di template
+const { component, formData, validationErrors, validateField } = props;
 
 // Pastikan key ada di formData
-if (!(props.component.key in props.formData.value))
-  props.formData.value[props.component.key] = ''
+if (!(component.key in formData.value)) formData.value[component.key] = '';
 
-const options = ref<Option[]>([])
-const loading = ref(false)
+const options = ref<Option[]>([]);
+const loading = ref(false);
 
 // 🔹 Ambil data dari API
 onMounted(async () => {
-  if (!props.component.source) return
-  loading.value = true
+  if (!component.source) return;
+  loading.value = true;
 
   try {
-    const dataForm = new FormData()
-    dataForm.append('flowname', props.component.source)
-    dataForm.append('menu', 'admin')
-    dataForm.append('search', 'true')
+    const dataForm = new FormData();
+    dataForm.append('flowname', component.source);
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm)
+    const res = await Api.post('admin/execute-flow', dataForm);
 
     if (res.code === 200 && Array.isArray(res.data?.data)) {
-      const labelField = props.component.label || 'label'
-      const valueField = props.component.valueField || props.component.key || 'value'
+      const labelField = component.label || 'label';
+      const valueField = component.valueField || component.key || 'value';
 
       options.value = res.data.data.map((item: Record<string, any>) => ({
         label: item[labelField],
-        value: item[valueField]
-      }))
-
+        value: item[valueField],
+      }));
     } else {
-      console.error('Gagal ambil data untuk select:', res?.message)
+      console.error('Gagal ambil data untuk select:', res?.message);
     }
   } catch (err) {
-    console.error('Error fetch data select:', err)
+    console.error('Error fetch data select:', err);
   }
 
-  loading.value = false
-})
+  loading.value = false;
+});
 
 // 🔹 Computed dua arah
 const modelSelect = computed({
-  get: () => props.formData.value[props.component.key],
+  get: () => formData.value[component.key],
   set: (val) => {
-    props.formData.value[props.component.key] =
-      typeof val === 'string' && !isNaN(Number(val)) ? Number(val) : val
-    props.validateField(props.component, val)
-  }
-})
+    formData.value[component.key] = typeof val === 'string' && !isNaN(Number(val)) ? Number(val) : val;
+    validateField(component, val);
+  },
+});
 
 // 🔹 Sinkronisasi value setelah options siap
-watch(options, (newOptions) => {
-  if (!newOptions.length) return
-
-  const key = props.component.key
-  const val = props.formData.value[key]
-
-  if (val != null && val !== '') {
-    const exists = newOptions.some(o => o.value == val)
-    if (!exists) {
-      console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${key}`)
-      // Bisa direset kalau mau:
-      // props.formData.value[key] = ''
-    } else {
-      // force reactivity update agar USelect sinkron
-      props.formData.value[key] = val
-    }
-  }
-})
-
-// 🔹 Jika formData diubah dari luar (misal via ReadHandler)
 watch(
-  () => props.formData.value[props.component.key],
-  (val) => {
-    if (options.value.length > 0) {
-      const exists = options.value.some(o => o.value == val)
-      if (!exists && val) {
-        console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${props.component.key}`)
+  options,
+  (newOptions) => {
+    if (!newOptions.length) return;
+
+    const val = formData.value[component.key];
+    if (val != null && val !== '') {
+      const exists = newOptions.some((o) => o.value == val);
+      if (!exists) {
+        console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
+      } else {
+        // force reactivity update agar USelect sinkron
+        formData.value[component.key] = val;
       }
     }
-  }
-)
+  },
+  { immediate: true },
+);
+
+// 🔹 Jika formData diubah dari luar
+watch(
+  () => formData.value[component.key],
+  (val) => {
+    if (options.value.length > 0 && val != null && val !== '') {
+      const exists = options.value.some((o) => o.value == val);
+      if (!exists) {
+        console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${component.key}`);
+      }
+    }
+  },
+);
 </script>
 
 <template>
