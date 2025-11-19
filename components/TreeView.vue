@@ -1,15 +1,10 @@
 <template>
   <ul class="text-sm select-none">
-    <li
-      v-for="node in nodes"
-      :key="node.id"
-      class="mb-1 pl-2 border-l border-gray-200"
-    >
+    <li v-for="node in nodes" :key="node.id" class="mb-1 pl-2 border-l border-gray-200">
       <div
         class="flex items-center gap-1 py-0.5 cursor-pointer rounded hover:bg-gray-50"
         :class="{
-          'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-500':
-            selected?.id === node.id
+          'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-500': selected?.id === node.id,
         }"
       >
         <!-- 🔹 Expand/Collapse toggle -->
@@ -28,10 +23,7 @@
         </span>
 
         <!-- 🔹 Node label -->
-        <span
-          class="truncate"
-          @click.stop="$emit('select', node)"
-        >
+        <span class="truncate" @click.stop="$emit('select', node)">
           {{ node.label || node.props?.label || node.type }}
         </span>
       </div>
@@ -51,20 +43,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 const props = defineProps({
   nodes: { type: Array, required: true },
-  selected: { type: Object, default: null }
-})
-const emit = defineEmits(['select'])
+  selected: { type: Object, default: null },
+});
+const emit = defineEmits(['select']);
 
 // 🔹 Simpan state expand/collapse per node
-const expanded = ref<Record<string, boolean>>({})
+const expanded = ref<Record<string, boolean>>({});
 
 const toggleExpand = (node: any) => {
-  expanded.value[node.id] = !expanded.value[node.id]
-}
+  expanded.value[node.id] = !expanded.value[node.id];
+};
 </script>
 
 <style scoped>

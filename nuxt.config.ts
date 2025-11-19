@@ -1,27 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import colors from 'tailwindcss/colors'
-import tailwindcss from "@tailwindcss/vite";
+import colors from 'tailwindcss/colors';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineNuxtConfig({
-  modules: [
-    '@pinia/nuxt',
-    '@vueuse/nuxt',
-    '@nuxt/image',
-    '@nuxt/ui',
-    '@nuxtjs/i18n',
-  ],
-  ssr:true,
+  modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/image', '@nuxt/ui', '@nuxtjs/i18n'],
+  ssr: true,
   compatibilityDate: '2025-07-15',
   css: [
     'assets/css/main.css',
     '@fortawesome/fontawesome-free/css/all.min.css',
-    "drawflow/dist/drawflow.min.css",
-    "assets/css/drawflow.css"
+    'drawflow/dist/drawflow.min.css',
+    'assets/css/drawflow.css',
   ],
   vite: {
-    plugins: [
-      tailwindcss(),
-    ],
+    build: {
+      sourcemap: false,
+    },
+    plugins: [tailwindcss()],
   },
   pinia: {
     storesDirs: ['./store/**'],
@@ -30,10 +25,10 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
     locales: [
       { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'id', name: 'Indonesian', file: 'id.json' }
+      { code: 'id', name: 'Indonesian', file: 'id.json' },
     ],
     strategy: 'prefix_except_default',
-    detectBrowserLanguage: false
+    detectBrowserLanguage: false,
   },
   runtimeConfig: {
     // Variabel private (tidak dikirim ke client)
@@ -50,13 +45,9 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: process.env.APP_NAME || 'Nuxt ERP CMS',
-      meta: [
-        { name: 'description', content: 'CMS + Ecommerce ERP frontend SSR' },
-      ],
+      meta: [{ name: 'description', content: 'CMS + Ecommerce ERP frontend SSR' }],
     },
   },
-    components: [
-    { path: '~/components', extensions: ['vue'], pathPrefix: false },
-  ],
-  devtools: { enabled: true }
-})
+  components: [{ path: '~/components', extensions: ['vue'], pathPrefix: false }],
+  devtools: { enabled: true },
+});

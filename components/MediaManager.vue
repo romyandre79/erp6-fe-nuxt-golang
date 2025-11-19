@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center space-x-2 cursor-pointer">
         <button @click="navigateUp" class="px-2 py-1 bg-gray-200">⬆</button>
-        <span class="text-sm  italic">Path: {{ currentPath || '/' }}</span>
+        <span class="text-sm italic">Path: {{ currentPath || '/' }}</span>
       </div>
       <div class="space-x-2">
         <input type="file" ref="fileInput" class="hidden" @change="handleUpload" />
@@ -55,52 +55,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useMediaManager } from '~/composables/useMediaManager'
+import { ref, onMounted } from 'vue';
+import { useMediaManager } from '~/composables/useMediaManager';
 
-const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager()
-const fileInput = ref<HTMLInputElement | null>(null)
-const preview = ref<any>(null)
-const Api = useApi()
+const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager();
+const fileInput = ref<HTMLInputElement | null>(null);
+const preview = ref<any>(null);
+const Api = useApi();
 
-onMounted(() => loadMedia())
+onMounted(() => loadMedia());
 
 function openFolder(path: string) {
-  loadMedia(path)
+  loadMedia(path);
 }
 
 function navigateUp() {
-  if (!currentPath.value) return
-  const up = currentPath.value.split('/').slice(0, -1).join('/')
-  loadMedia(up)
+  if (!currentPath.value) return;
+  const up = currentPath.value.split('/').slice(0, -1).join('/');
+  loadMedia(up);
 }
 
 function handleUpload(e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) uploadFile(file)
-  if (fileInput.value) fileInput.value.value = ''
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) uploadFile(file);
+  if (fileInput.value) fileInput.value.value = '';
 }
 
 async function rename(item: any) {
-  const newName = prompt('Rename to:', item.name)
+  const newName = prompt('Rename to:', item.name);
   if (newName && newName !== item.name) {
-    await renameFile(item.path, newName)
+    await renameFile(item.path, newName);
   }
 }
 
 async function promptCreateFolder() {
-  const name = prompt('Folder name:')
-  if (name) await createFolder(name)
+  const name = prompt('Folder name:');
+  if (name) await createFolder(name);
 }
 
 async function previewFile(item: any) {
-  const res = await Api.get(`/media/preview?path=${encodeURIComponent(item.path)}`)
-  preview.value = res
+  const res = await Api.get(`/media/preview?path=${encodeURIComponent(item.path)}`);
+  preview.value = res;
 }
 
 function isImage(ext: string) {
-  return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)
+  return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
 }
 </script>
-
