@@ -70,7 +70,8 @@ function open(key: string) {
 
 async function edit(key: string) {
   const flow = parsedSchema.value.action?.onGet;
-  if (flow && selectedRows.length > 0) {
+  console.log('edit ',key)
+  if (flow && selectedRows.value.length > 0) {
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
     const dataForm = new FormData();
