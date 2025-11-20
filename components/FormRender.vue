@@ -59,10 +59,12 @@ watch(
 
       // jika bukan modal pertama → tambahkan ke detailTab
       if (index > 0) {
-        detailTab.value.push(m);
+        console.log('m ', m);
+        detailTab.value.push({
+          label: m.key
+        });
       }
     });
-    console.log('detail ',detailTab)
   },
   { immediate: true },
 );

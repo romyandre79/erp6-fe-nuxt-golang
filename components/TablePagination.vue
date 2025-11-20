@@ -86,6 +86,8 @@
                 'transition-colors duration-200',
                 isDark ? 'hover:bg-gray-700/60 text-gray-100' : 'hover:bg-gray-100 text-gray-800',
               ]"
+              @click.stop="toggleRowSelection(row)"
+              :checked="isSelected(row)"
             >
               <td class="px-4 py-3" v-if="enableCheck">
                 <input
@@ -97,12 +99,12 @@
               </td>
 
               <td class="px-4 py-3" v-if="tables?.length > 1">
-                <button @click="toggleExpand(row)">
+                <button @click.stop="toggleExpand(row)">
                   {{ isExpanded(row) ? '-' : '+' }}
                 </button>
               </td>
 
-              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm">
+              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer">
                 <span v-html="formatCellValue(col, row[col.key || col])"></span>
               </td>
 

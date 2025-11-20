@@ -500,6 +500,7 @@ const layoutContainers = [
     props: {
       type: 'modal',
       key: '',
+      text: '',
       class: 'flex flex-wrap gap-2 mb-3',
     },
     children: [],
@@ -703,7 +704,7 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
       id: randomId(),
       type: 'buttons',
       label: 'Buttons',
-      props: { class: dbSchema.buttons.class },
+      props: { ...dbSchema.buttons },
       children: dbSchema.buttons.components.map((btn: any) => ({
         id: randomId(),
         type: 'button',
@@ -721,13 +722,13 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
       id: randomId(),
       type: 'tables',
       label: 'Tables',
-      props: {},
+      props: { ... dbSchema.tables },
       children: dbSchema.tables.map((tbl: any) => {
         const tableNode = {
           id: randomId(),
           type: 'table',
           label: tbl.text || tbl.name || 'Table',
-          props: tbl,
+          props: { ...tbl },
           children: [],
         };
 
@@ -736,7 +737,7 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
             id: randomId(),
             type: 'search',
             label: 'Search',
-            props: {},
+            props: { ...tbl.search },
             children: tbl.search.map((s: any) => ({
               id: randomId(),
               type: s.type || 'field',
@@ -754,12 +755,12 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
             id: randomId(),
             type: 'columns',
             label: 'Columns',
-            props: {},
+            props: { ...tbl.columns },
             children: tbl.columns.map((col: any) => ({
               id: randomId(),
               type: 'column',
               label: col.label || col.name,
-              props: col,
+              props: { ...col },
               children: [],
             })),
           };
@@ -777,18 +778,19 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
     const modalsContainer = {
       id: randomId(),
       type: 'modals',
-      label: dbSchema.modals,
-      props: {},
+      label: dbSchema.modals.label,
+      props: { ...dbSchema },
       children: dbSchema.modals.map((mdl: any) => ({
         id: randomId(),
         type: 'modal',
         label: mdl.key,
-        props: mdl,
+        text: mdl.text,
+        props: { ...mdl },
         children: mdl.components.map((cmp: any) => ({
           id: randomId(),
           type: cmp.type,
           label: cmp.text,
-          props: cmp,
+          props: { ...cmp },
           children: [],
         })),
       })),
@@ -866,6 +868,7 @@ function recursiveDesignerToDbSchema(node: any, result: any): any {
         result.modals = (child.children || []).map((modal) => ({
           type: modal.type || 'modal',
           key: modal.key || 'modalForm',
+          text: modal.text || '',
           components: (modal.children || []).map((nextchild) => ({
             type: nextchild.props.type || 'text',
             key: nextchild.props.key || '',
@@ -910,6 +913,7 @@ function designerToDbSchema(designer: NodeSchema[]): any {
 watch(
   canvasComponents,
   (newVal) => {
+    console.log('canvass ',newVal)
     const runtimeSchema = designerToDbSchema(newVal);
     formattedJson.value = JSON.stringify(runtimeSchema, null, 2);
     formSchema.value = runtimeSchema;
