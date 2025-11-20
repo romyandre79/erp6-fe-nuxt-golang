@@ -70,7 +70,7 @@ function open(key: string) {
 
 async function edit(key: string) {
   const flow = parsedSchema.value.action?.onGet;
-  console.log('edit ',key)
+  console.log('edit ', key);
   if (flow && selectedRows.value.length > 0) {
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
@@ -544,9 +544,9 @@ function renderTable(component: any) {
       title: component.text || '',
       class: component.class || 'mb-4',
       rowKey: component.primary,
-      isDetail: key == `table0` ? false : true,
       relationKey: component.relationkey,
       selectionKeyData: selectedRows.value,
+      tables: tables.value,
       onSelectionChange: (selRows: any) => {
         selectedRows.value = selRows;
       },
@@ -750,9 +750,7 @@ async function saveData(key: any) {
       </UModal>
     </div>
 
-    <div v-for="(value, index) in tables" :key="index">
-      <component :is="renderTable(value)" />
-    </div>
+    <component :is="renderTable(tables[0])" />
   </div>
   <div v-else :class="parsedSchema.class">
     <div class="w-full">
