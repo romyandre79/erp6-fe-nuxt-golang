@@ -68,6 +68,7 @@ export const useUserStore = defineStore('user', {
       } catch (err) {
         console.error('❌ Gagal parse cookie user:', err);
         this.user = null;
+        this.logout()
       }
     },
 

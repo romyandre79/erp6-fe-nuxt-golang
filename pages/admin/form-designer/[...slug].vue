@@ -777,13 +777,13 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
     const modalsContainer = {
       id: randomId(),
       type: 'modals',
-      label: 'Modals',
+      label: dbSchema.modals,
       props: {},
       children: dbSchema.modals.map((mdl: any) => ({
         id: randomId(),
         type: 'modal',
         label: mdl.key,
-        props: { key: mdl.key },
+        props: mdl,
         children: mdl.components.map((cmp: any) => ({
           id: randomId(),
           type: cmp.type,

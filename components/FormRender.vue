@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FormSelect from '~/components/FormSelect.vue';
 import TablePagination from './TablePagination.vue';
-import { UModal } from '#components';
+import { UModal, UTabs } from '#components';
 import { useApi } from '~/composables/useApi';
 
 const props = defineProps({
@@ -44,15 +44,25 @@ watch(
   { deep: true },
 );
 
+const detailTab = ref<any[]>([])
+const activeTab = ref<string>('');
+
 // 🧩 Rebuild modalRefs setiap kali modals berubah
 watch(
   modals,
   async (newVal) => {
     await nextTick();
     for (const key of Object.keys(modalRefs)) delete modalRefs[key];
-    for (const m of newVal || []) {
+    newVal?.forEach((m, index) => {
+      // buat modal ref
       modalRefs[m.key] = ref(false);
-    }
+
+      // jika bukan modal pertama → tambahkan ke detailTab
+      if (index > 0) {
+        detailTab.value.push(m);
+      }
+    });
+    console.log('detail ',detailTab)
   },
   { immediate: true },
 );
@@ -704,6 +714,8 @@ async function saveData(key: any) {
     console.error('Gagal simpan data:', err);
   }
 }
+
+
 </script>
 
 <template>
@@ -731,7 +743,7 @@ async function saveData(key: any) {
 
     <div v-for="(value, index) in modals" :key="index">
       <UModal
-        v-if="modalRefs?.[value.key]"
+        v-if="modalRefs?.[value.key] && index == 0"
         v-model:open="modalRefs[value.key].value"
         :title="modalTitle"
         :dismissible="false"
@@ -740,6 +752,8 @@ async function saveData(key: any) {
       >
         <template #body>
           <component :is="renderContainer(value.components)" />
+
+          <UTabs :items="detailTab" v-model="activeTab"> </UTabs>
         </template>
         <template #footer>
           <div class="flex gap-2">
@@ -750,7 +764,7 @@ async function saveData(key: any) {
       </UModal>
     </div>
 
-    <component :is="renderTable(tables[0])" />
+    <component :is="renderTable(tables[0])"/>
   </div>
   <div v-else :class="parsedSchema.class">
     <div class="w-full">
