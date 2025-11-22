@@ -1,11 +1,6 @@
 <template>
   <header
     class="flex items-center justify-between sticky top-0 z-1000 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
-    :class="[
-      theme === 'dark'
-        ? 'bg-gray-900/80 border-b border-gray-700 text-gray-100'
-        : 'bg-white/80 border-b border-gray-200 text-gray-900',
-    ]"
   >
     <!-- LEFT: Title -->
     <div class="flex items-center gap-3"></div>

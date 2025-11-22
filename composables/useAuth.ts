@@ -13,11 +13,11 @@ export const useAuth = () => {
         userStore.setAuth(res.data?.token, res.data.user);
         navigateTo('/admin/dashboard');
       } else {
-        throw new Error(res.message || $t('INVALID_CREDENTIAL'));
+        throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }
     } catch (err) {
       console.error(err);
-      throw new Error($t('INVALID_CREDENTIAL'));
+      throw new Error($t('INVALID CREDENTIAL'));
     }
   };
 
@@ -27,11 +27,13 @@ export const useAuth = () => {
       if (res.code == 200) {
         return res;
       } else {
-        throw new Error(res.message || $t('INVALID_CREDENTIAL'));
+        this.logout();
+        throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }
     } catch (err) {
       console.error(err);
-      throw new Error($t('INVALID_CREDENTIAL'));
+      this.logout();
+      throw new Error($t('INVALID CREDENTIAL'));
     }
   };
 
@@ -46,11 +48,11 @@ export const useAuth = () => {
       if (res.code == 200) {
         return res;
       } else {
-        throw new Error(res.message || $t('INVALID_CREDENTIAL'));
+        throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }
     } catch (err) {
       console.error(err);
-      throw new Error($t('INVALID_CREDENTIAL'));
+      throw new Error($t('INVALID CREDENTIAL'));
     }
   };
 

@@ -59,6 +59,7 @@ export default [
         HTMLTextAreaElement: 'readonly',
         HTMLInputElement: 'readonly',
         File: 'readonly',
+        useRoute: 'readonly',
       },
     },
     plugins: { vue },

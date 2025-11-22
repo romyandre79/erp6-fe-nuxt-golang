@@ -18,6 +18,11 @@ export default defineNuxtConfig({
     },
     plugins: [tailwindcss()],
   },
+  devServer: {
+    watch: {
+      usePolling: true
+    }
+  },
   pinia: {
     storesDirs: ['./store/**'],
   },

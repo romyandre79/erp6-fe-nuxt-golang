@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref, computed, watch, onMounted } from 'vue';
 import { useApi } from '~/composables/useApi';
-
-interface Option {
-  label: string;
-  value: string | number;
-}
+import type { SelectMenuItem } from '@nuxt/ui';
 
 interface Props {
   component: {
@@ -30,7 +26,7 @@ const { component, formData, validationErrors, validateField } = props;
 // Pastikan key ada di formData
 if (!(component.key in formData.value)) formData.value[component.key] = '';
 
-const options = ref<Option[]>([]);
+const options = ref<SelectMenuItem[]>([]);
 const loading = ref(false);
 
 // 🔹 Ambil data dari API
@@ -52,7 +48,7 @@ onMounted(async () => {
 
       options.value = res.data.data.map((item: Record<string, any>) => ({
         label: item[labelField],
-        value: item[valueField],
+        id: item[valueField],
       }));
     } else {
       console.error('Gagal ambil data untuk select:', res?.message);
@@ -113,9 +109,10 @@ watch(
       {{ $t(component.text.toUpperCase()) }}
     </label>
 
-    <USelect
+    <USelectMenu
       v-model="modelSelect"
       :items="options"
+      value-key="id"
       :loading="loading"
       :placeholder="component.place || $t('CHOOSE')"
       class="w-full dark:bg-gray-900 dark:border-gray-700 px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"

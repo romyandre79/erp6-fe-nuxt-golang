@@ -301,5 +301,14 @@
   "SEARCH A MENUICON": "Search Icon",
   "SEARCH A MENUTYPE": "Search Menu Type",
   "MANAGE USER ACCESS PERMISSIONS AND CONTROL WHO CAN VIEW OR MODIFY SPECIFIC MODULES OR FEATURES WITHIN THE SYSTEM": "Manage user access permissions and control who can view or modify specific modules or features within the system.",
-  "DATA SAVED": "Data Saved"
+  "DATA SAVED": "Data Saved",
+  "SEARCH A WFNAME": "Search a Name",
+  "SEARCH A WF DESCRIPTION": "Search a Description",
+  "SEARCH A WF MIN STATUS": "Search a Min Status",
+  "SEARCH A WF MAX STATUS": "Search a Max Status",
+  "SEARCH A COMPONENT NAME": "Search a Component Name",
+  "ENTER A COMPONENT TITLE": "Enter a Component Title",
+  "ENTER A CATEGORY NAME": "Enter a Category Name",
+  "SEARCH A DETAIL TYPE": "Search a Detail Type",
+  "ENTER A LABEL": "Enter a Label"
 }

@@ -1,2 +1,73 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+.btnPrimary {
+  background: var(--button-primary-background);
+  color: var(--button-primary-color);
+  border-radius: var(--button-radius);
+  border: 1px solid var(--button-primary-border-color);
+  padding: var(--button-padding);
+}
+
+.btnPrimary:hover {
+  background: var(--button-primary-hover-background);
+  color: var(--button-primary-hover-color);
+}
+
+.btnSecondary {
+  background: var(--button-secondary-background);
+  color: var(--button-secondary-color);
+  border-radius: var(--button-radius);
+  border: 1px solid var(--button-secondary-border-color);
+  padding: var(--button-padding);
+}
+
+.btnSecondary:hover {
+  background: var(--button-primary-hover-background);
+  color: var(--button-secondary-hover-color);
+}
+
+.h1 {
+  color: var(--h1-color);
+  font-size: var(--h1-font-size);
+  padding-top: var(--h1-padding-top);
+  padding-bottom: var(--h1-padding-bottom);
+}
+
+.h2 {
+  color: var(--h2-color);
+  font-size: var(--h2-font-size);
+  padding-top: var(--h2-padding-top);
+  padding-bottom: var(--h2-padding-bottom);
+}
+
+.p {
+  color: var(--p-color);
+  font-size: var(--p-font-size);
+  padding-top: var(--p-padding-top);
+  padding-bottom: var(--p-padding-bottom);
+}
+
+.table {
+    background: var(--table-background);
+    color: var(--table-color);
+    border-width: var(--table-border-size);
+    border-radius: var(--border-radius);
+    border-color: var(--table-border-color);
+    border-style: var(--table-border-style);
+}
+
+.thead {
+    background: var(--table-head-background);
+    color: var(--table-head-color);
+}
+
+tr:nth-child(odd) {
+  background: var(--table-row-odd-background);
+  color: var(--table-row-odd-color);
+}
+
+tr:nth-child(even) {
+  background: var(--table-row-even-background);
+  color: var(--table-row-even-color);
+}
