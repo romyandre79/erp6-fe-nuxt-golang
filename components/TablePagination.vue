@@ -1,39 +1,51 @@
 <template>
   <div class="w-full">
     <!-- Header & Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+    <div class="flex flex-col sm:flex-row mb-3">
       <h2 class="text-2xl font-semibold">{{ title }}</h2>
 
-      <div class="flex gap-2">
         <!-- Search -->
-        <div v-if="enableSearch && simpleSearch">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search..."
-            class="border rounded px-2 py-1 text-sm"
-            @keyup.enter="fetchData"
-          />
-        </div>
-        <div v-if="!simpleSearch" v-for="(col, index) in searchColumn" :key="index">
-          <input
-            v-if="['text', 'number', 'email'].includes(col.type)"
-            v-model="searchComplexQuery[col.key]"
-            :type="col.type"
-            :placeholder="`${$t(col.place.toUpperCase())}...`"
-            class="border rounded px-2 py-1 text-sm"
-            @keyup.enter="fetchData"
-          />
-        </div>
+        <!-- Filter Container -->
+<div v-if="enableSearch" class="mb-4">
+  <!-- SIMPLE SEARCH -->
+  <div v-if="simpleSearch" class="flex items-center gap-2">
+    <input
+      v-model="searchQuery"
+      type="text"
+      placeholder="Search..."
+      class="border rounded px-3 py-2 text-sm w-full"
+      @keyup.enter="fetchData"
+    />
+
+    <button
+      class="px-3 py-2 bg-blue-600 text-white rounded"
+      @click="fetchData"
+    >
+      Cari
+    </button>
+  </div>
+
+  <!-- COMPLEX SEARCH -->
+  <div
+    v-else
+    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+  >
+    <div v-for="(col, index) in searchColumn" :key="index">
+      <input
+        v-if="['text', 'number', 'email'].includes(col.type)"
+        v-model="searchComplexQuery[col.key]"
+        :type="col.type"
+        :placeholder="`${$t(col.place.toUpperCase())}...`"
+        class="border rounded px-3 py-2 text-sm w-full"
+        @keyup.enter="fetchData"
+      />
+    </div>
+  </div>
+
 
         <!-- Toolbar Actions -->
         <div v-if="actions && actions.length">
-          <button
-            v-for="(action, index) in actions"
-            :key="index"
-            class="btnPrimary"
-            @click="$emit('action', action)"
-          >
+          <button v-for="(action, index) in actions" :key="index" class="btnPrimary" @click="$emit('action', action)">
             <i v-if="action.icon" :class="['mr-1', action.icon]"></i>
             {{ action.label }}
           </button>
@@ -42,21 +54,11 @@
     </div>
 
     <!-- Table -->
-    <div
-      :class="[
-        'overflow-x-auto rounded-xl border shadow-sm transition-colors duration-300',
-        isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-      ]"
-    >
-      <table class="table w-full">
-        <thead
-          :class="[
-            'text-sm uppercase font-semibold',
-            isDark ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-700',
-          ]"
-        >
+    <div class="table w-full rounded-xl">
+      <table>
+        <thead class="thead text-sm uppercase font-semibold">
           <tr>
-            <th class="px-4 py-3" v-if="enableCheck && isSelectAll">
+            <th class="thead px-4 py-3" v-if="enableCheck && isSelectAll">
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
@@ -64,12 +66,12 @@
                 @change="toggleSelectAll"
               />
             </th>
-            <th class="px-4 py-3" v-else></th>
-            <th class="px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
-            <th v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-left tracking-wide">
+            <th class="thead px-4 py-3" v-else></th>
+            <th class="thead px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
+            <th v-for="col in columns" :key="col.key || col" class="thead px-4 py-3 text-left tracking-wide">
               {{ col.text || col.label }}
             </th>
-            <th v-if="rowActions && rowActions.length" class="px-4 py-3 text-left">Actions</th>
+            <th v-if="rowActions && rowActions.length" class="thead px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
 
@@ -82,14 +84,7 @@
 
           <template v-for="(row, rowIndex) in rowsData" :key="rowIndex">
             <!-- Master Row -->
-            <tr
-              :class="[
-                'transition-colors duration-200',
-                isDark ? 'hover:bg-gray-700/60 text-gray-100' : 'hover:bg-gray-100 text-gray-800',
-              ]"
-              @click.stop="toggleRowSelection(row)"
-              :checked="isSelected(row)"
-            >
+            <tr class="transition-colors duration-200" @click.stop="toggleRowSelection(row)" :checked="isSelected(row)">
               <td class="px-4 py-3" v-if="enableCheck">
                 <input
                   type="checkbox"

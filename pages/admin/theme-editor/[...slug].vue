@@ -67,6 +67,16 @@
               @input="onChange(prop.key, $event.target.value)"
               class="border px-2 py-1 rounded w-28"
             />
+            <select
+              v-else-if="prop.type === 'select'"
+              v-model="themeState[prop.key]"
+              @change="onChange(prop.key, $event.target.value)"
+              class="border px-2 py-1 rounded w-44"
+            >
+              <option v-for="opt in prop.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
             <input
               v-else
               type="text"
@@ -108,16 +118,35 @@
             <h1 class="font-bold text-lg">Live Preview</h1>
           </div>
 
-            <h1 :style="h1Style">Header H1</h1>
-            <h2 :style="h2Style">Header H2</h2>
-            <p :style="pStyle">
-              Paragraph
-            </p>
+          <h1 :style="h1Style">Header H1</h1>
+          <h2 :style="h2Style">Header H2</h2>
+          <p :style="pStyle">Paragraph</p>
 
-            <div class="mt-4 flex gap-2">
-              <button class="px-3 py-1 rounded" :style="btnPrimaryStyle">Primary</button>
-              <button class="px-3 py-1 rounded" :style="btnSecondaryStyle">Secondary</button>
-            </div>
+          <div class="mt-4 flex gap-2">
+            <button class="px-3 py-1 rounded" :style="btnPrimaryStyle">Primary</button>
+            <button class="px-3 py-1 rounded" :style="btnSecondaryStyle">Secondary</button>
+          </div>
+
+          <div class="mt-4 flex gap-2">
+            <table :style="tableStyle">
+              <thead :style="tableHeadStyle">
+                <tr>
+                  <th class="px-4 py-3">Column 1</th>
+                  <th class="px-4 py-3">Column 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(row, index) in 6"
+                  :key="row.id"
+                  :style="index % 2 === 0 ? tableRowStyle.even : tableRowStyle.odd"
+                >
+                  <td class="px-4 py-3">Data Kolom 1</td>
+                  <td class="px-4 py-3">Data Kolom 2</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -217,7 +246,7 @@ const categories = [
       {
         key: 'border-radius',
         label: 'Common Border Radius',
-        type: 'color',
+        type: 'text',
       },
       {
         key: 'font-size',
@@ -302,8 +331,61 @@ const categories = [
         type: 'color',
       },
       {
-        key: 'table-background-color',
+        key: 'table-border-size',
+        label: 'Table Border Size',
+        type: 'text',
+      },
+      {
+        key: 'table-border-style',
+        label: 'Table Border Style',
+        type: 'select',
+        options: [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'double' },
+          { value: 'hidden', label: 'hidden' },
+          { value: 'none', label: 'none' },
+        ],
+      },
+      {
+        key: 'table-border-color',
+        label: 'Table Border Color',
+        type: 'color',
+      },
+      {
+        key: 'table-background',
         label: 'Table Background Color',
+        type: 'color',
+      },
+      {
+        key: 'table-head-color',
+        label: 'Table Head Color',
+        type: 'color',
+      },
+      {
+        key: 'table-head-background',
+        label: 'Table Head Background Color',
+        type: 'color',
+      },
+      {
+        key: 'table-row-even-color',
+        label: 'Table Row Even Color',
+        type: 'color',
+      },
+      {
+        key: 'table-row-even-background',
+        label: 'Table Row Even Background Color',
+        type: 'color',
+      },
+      {
+        key: 'table-row-odd-color',
+        label: 'Table Row Odd Color',
+        type: 'color',
+      },
+      {
+        key: 'table-row-odd-background',
+        label: 'Table Row odd Background Color',
         type: 'color',
       },
     ],
@@ -324,7 +406,7 @@ const newValue = ref('');
 onMounted(async () => {
   await store.loadSingleThemes();
   themeList.value = store.themeData;
-  console.log(store.themeData)
+  console.log(store.themeData);
   if (themeList.value) {
     selectedThemeKey.value = themeList.value.themename;
     loadThemeToState(selectedThemeKey.value);
@@ -386,37 +468,6 @@ function addCustom() {
   applyAllVars();
 }
 
-function downloadJSON() {
-  const blob = new Blob([JSON.stringify(themeState, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${selectedThemeKey.value || 'theme'}.json`;
-  a.click();
-  a.remove();
-}
-
-async function importJSON(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const text = await file.text();
-  try {
-    const json = JSON.parse(text);
-    Object.keys(json).forEach((k) => {
-      themeState[k] = json[k];
-    });
-    applyAllVars();
-    alert('Imported');
-  } catch (err) {
-    alert('Invalid JSON');
-  }
-  e.target.value = '';
-}
-
-function openImport() {
-  fileInput.value?.click();
-}
-
 function resetToDefault() {
   // reload original themedata from store or defaults
   loadThemeToState(selectedThemeKey.value);
@@ -473,13 +524,37 @@ const btnPrimaryStyle = computed(() => ({
   background: `var(--button-primary-background, #4f46e5)`,
   color: `var(--button-primary-color, #fff)`,
   borderRadius: `var(--button-radius)`,
-  padding: `var(--button-padding)`,
 }));
 
 const btnSecondaryStyle = computed(() => ({
   background: `var(--button-secondary-background, #64748b)`,
   color: `var(--button-secondary-color, #fff)`,
-  borderRadius: `${themeState['button-radius'] || 6}px`,
+  borderRadius: `var(--button-radius)`,
+}));
+
+const tableStyle = computed(() => ({
+  background: `var(--table-background, #64748b)`,
+  color: `var(--table-color, #fff)`,
+  borderWidth: `var(--table-border-size, 1px)`,
+  borderRadius: `var(--border-radius, 1px)`,
+  borderStyle: `var(--table-border-style)`,
+  borderColor: `var(--table-border-color)`,
+}));
+
+const tableHeadStyle = computed(() => ({
+  background: `var(--table-head-background, #64748b)`,
+  color: `var(--table-head-color, #fff)`,
+}));
+
+const tableRowStyle = computed(() => ({
+  odd: {
+    background: `var(--table-row-odd-background, #f9fafb)`,
+    color: `var(--table-row-odd-color, #111827)`,
+  },
+  even: {
+    background: `var(--table-row-even-background, #ffffff)`,
+    color: `var(--table-row-even-color, #111827)`,
+  },
 }));
 
 // expose for template input file
