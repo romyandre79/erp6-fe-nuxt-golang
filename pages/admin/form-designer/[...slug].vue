@@ -722,7 +722,7 @@ function dbSchemaToDesigner(dbSchema: any): any[] {
       id: randomId(),
       type: 'tables',
       label: 'Tables',
-      props: { ... dbSchema.tables },
+      props: { ...dbSchema.tables },
       children: dbSchema.tables.map((tbl: any) => {
         const tableNode = {
           id: randomId(),
@@ -913,7 +913,6 @@ function designerToDbSchema(designer: NodeSchema[]): any {
 watch(
   canvasComponents,
   (newVal) => {
-    console.log('canvass ',newVal)
     const runtimeSchema = designerToDbSchema(newVal);
     formattedJson.value = JSON.stringify(runtimeSchema, null, 2);
     formSchema.value = runtimeSchema;

@@ -26,7 +26,7 @@ definePageMeta({
 
 onMounted(async () => {
   try {
-    menuName.value = route.params.slug;
+    menuName.value = route.params.slug[0];
     const res = await getMenuForm(route.params.slug);
     if (res?.code == 200) {
       formTitle.value = res.data.data.description;

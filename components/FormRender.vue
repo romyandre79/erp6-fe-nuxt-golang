@@ -3,6 +3,7 @@ import FormSelect from '~/components/FormSelect.vue';
 import TablePagination from './TablePagination.vue';
 import { UModal, UTabs } from '#components';
 import { useApi } from '~/composables/useApi';
+import { useThemeStore } from '~/store/theme';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -11,6 +12,7 @@ const props = defineProps({
   formType: { type: String, default: 'form' },
 });
 
+const store = useThemeStore();
 const modalTitle = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
@@ -44,7 +46,6 @@ watch(
   { deep: true },
 );
 
-const detailTab = ref<any[]>([])
 const activeTab = ref<string>('');
 
 // 🧩 Rebuild modalRefs setiap kali modals berubah
@@ -56,13 +57,33 @@ watch(
     newVal?.forEach((m, index) => {
       // buat modal ref
       modalRefs[m.key] = ref(false);
+    });
+  },
+  { immediate: true },
+);
 
-      // jika bukan modal pertama → tambahkan ke detailTab
-      if (index > 0) {
-        console.log('m ', m);
-        detailTab.value.push({
-          label: m.key
-        });
+const detailTab = computed(() => {
+  if (!modals.value) return [];
+
+  // Skip modal pertama (index 0)
+  return modals.value.slice(1).map((m, i) => ({
+    ...m,
+  }));
+});
+
+const detailRows = ref({});
+
+watch(
+  detailTab,
+  (tabs) => {
+    tabs.forEach((t) => {
+      if (!detailRows.value[t.key]) {
+        // Jika API memberi value
+        if (t.value && Array.isArray(t.value)) {
+          detailRows.value[t.key] = [...t.value];
+        } else {
+          detailRows.value[t.key] = [{}]; // minimal 1 row
+        }
       }
     });
   },
@@ -82,7 +103,6 @@ function open(key: string) {
 
 async function edit(key: string) {
   const flow = parsedSchema.value.action?.onGet;
-  console.log('edit ', key);
   if (flow && selectedRows.value.length > 0) {
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
@@ -170,12 +190,17 @@ function navigate(key: any) {
   } else if (key.includes('workflow-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
+  } else if (key.includes('theme-editor') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
   } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['menuname']);
   } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['widgetname']);
   } else if (key.includes('workflow-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['wfname']);
+  } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['themename']);
   } else {
     navigateTo(key);
   }
@@ -184,7 +209,6 @@ function navigate(key: any) {
 const actions = { open, close, edit, downForm, deleteData, downTemplate, navigate, upload };
 
 function runAction(code: string) {
-  console.log(code);
   const match = code.match(/^(\w+)\((.*)\)$/);
   if (!match) return console.warn('Invalid action:', code);
 
@@ -192,7 +216,6 @@ function runAction(code: string) {
   const arg = match[2].replace(/['"]/g, '');
 
   const fn = actions[fnName];
-  console.log(fn);
   if (fn) fn(arg);
   else console.warn('Unknown function:', fnName);
 }
@@ -276,10 +299,10 @@ async function handleFileChange(e: Event) {
 let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 
-function renderComponent(component: any) {
+function renderComponent(component: any, isgrid: boolean) {
   switch (component.type) {
     case 'label':
-      return h('div', { class: 'mb-2 text-gray-800 font-medium' }, $t(component.text.toUpperCase()));
+      return h('div', { class: 'mb-2' }, $t(component.text.toUpperCase()));
 
     case 'longtext': {
       if (!(component.key in formData.value)) formData.value[component.key] = '';
@@ -293,7 +316,7 @@ function renderComponent(component: any) {
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
+            ? h('label', { class: 'mb-1 font-medium' }, $t(component.text.toUpperCase()))
             : null
           : '',
         h('textarea', {
@@ -309,7 +332,7 @@ function renderComponent(component: any) {
           value: modelInputArea.value,
         }),
         validationErrors[component.key]
-          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+          ? h('span', { class: 'text-red-500 mt-1' }, validationErrors[component.key])
           : null,
       ]);
     }
@@ -324,7 +347,7 @@ function renderComponent(component: any) {
           formData.value[component.key] = val;
         },
       });
-      return h('div', { class: 'flex flex-col mb-3' }, [
+      return h('div', { class: !isgrid ? 'flex flex-col mb-3' : '' }, [
         component.type != 'hidden'
           ? component.text
             ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
@@ -386,7 +409,7 @@ function renderComponent(component: any) {
       return h(
         'button',
         {
-          class: `px-4 py-2 rounded mr-2 text-white bg-gray-600 hover:bg-gray-700 transition mb-3`,
+          class: `btnPrimary px-4 py-2 rounded mr-2 transition mb-3`,
           onClick: async () => {
             const eventName = (component.event || component.onClick).toUpperCase();
             if (eventName === 'ONCREATE') {
@@ -408,7 +431,7 @@ function renderComponent(component: any) {
   }
 }
 
-function renderContainer(container: any) {
+function renderContainer(container: any, isgrid: boolean) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.components || [];
@@ -416,12 +439,12 @@ function renderContainer(container: any) {
   return h(
     'div',
     {
-      class: '',
+      class: container.class,
     },
     children.map((component: any) => {
       switch (component.type) {
         case 'table':
-          return renderTable(component);
+          return renderTable(component, isgrid);
 
         case 'master':
         case 'masters':
@@ -434,11 +457,11 @@ function renderContainer(container: any) {
         case 'components':
           return h('div', { class: 'ml-4 mt-2' }, [
             component.text ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text) : null,
-            renderContainer(component),
+            renderContainer(component, isgrid),
           ]);
 
         default:
-          return renderComponent(component);
+          return renderComponent(component, isgrid);
       }
     }),
   );
@@ -531,7 +554,7 @@ function validateAllFields() {
   return valid;
 }
 
-function renderTable(component: any) {
+function renderTable(component: any, isInput: boolean) {
   if (!component) return null;
   const key = component.key || component.text || `table0`;
 
@@ -559,6 +582,12 @@ function renderTable(component: any) {
       relationKey: component.relationkey,
       selectionKeyData: selectedRows.value,
       tables: tables.value,
+      isInput: isInput,
+      isSelectAll: !isInput,
+      selectedKeyData:
+        component.relationkey != '' && selectedRows.value.length > 0
+          ? selectedRows.value[0][component.relationkey]
+          : '',
       onSelectionChange: (selRows: any) => {
         selectedRows.value = selRows;
       },
@@ -672,7 +701,9 @@ const DeleteHandler = async () => {
   }
 };
 
-onMounted(ReadHandler);
+onMounted(() => {
+  ReadHandler();
+});
 
 async function saveData(key: any) {
   try {
@@ -716,14 +747,12 @@ async function saveData(key: any) {
     console.error('Gagal simpan data:', err);
   }
 }
-
-
 </script>
 
 <template>
   <div v-if="parsedSchema?.type != 'widget'" :class="parsedSchema.class">
-    <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
-    <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
+    <h1 class="h1">{{ parsedSchema.title.text }}</h1>
+    <p class="p">{{ parsedSchema.subtitle.text }}</p>
 
     <!-- 🔹 Buttons -->
     <div
@@ -734,10 +763,8 @@ async function saveData(key: any) {
       "
     >
       <div v-for="(value, index) in buttons.components" :key="index">
-        <button
-          class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
-          @click="runAction(value.onClick)"
-        >
+        <button class="btnPrimary" 
+           @click="runAction(value.onClick)">
           <Icon :name="value.icon" /> {{ value.text }}
         </button>
       </div>
@@ -745,28 +772,39 @@ async function saveData(key: any) {
 
     <div v-for="(value, index) in modals" :key="index">
       <UModal
+        fullscreen
         v-if="modalRefs?.[value.key] && index == 0"
         v-model:open="modalRefs[value.key].value"
         :title="modalTitle"
         :dismissible="false"
         :description="parsedSchema.menuname"
+        class="min-"
         :scrollable="false"
       >
         <template #body>
-          <component :is="renderContainer(value.components)" />
+          <component :is="renderContainer(value.components, false)" />
+          <UTabs :items="detailTab" v-model="activeTab" class="gap-4" :class="value.class">
+            <template #default="{ item }">
+              {{ item.label || item.text }}
+            </template>
 
-          <UTabs :items="detailTab" v-model="activeTab"> </UTabs>
+            <template #content="{ item }">
+              <div v-for="(valueTable, ix) in tables" :key="ix">
+                <component :is="renderTable(valueTable, true)" v-if="ix > 0" />
+              </div>
+            </template>
+          </UTabs>
         </template>
         <template #footer>
           <div class="flex gap-2">
-            <UButton color="neutral" :label="$t('CLOSE')" @click="modalRefs[value.key].value = false" />
-            <UButton :label="$t('SAVE')" @click="saveData(value.key)" />
+            <UButton class="btnSecondary" :label="$t('CLOSE')" @click="modalRefs[value.key].value = false" />
+            <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.key)" />
           </div>
         </template>
       </UModal>
     </div>
 
-    <component :is="renderTable(tables[0])"/>
+    <component :is="renderTable(tables[0], false)" />
   </div>
   <div v-else :class="parsedSchema.class">
     <div class="w-full">
@@ -774,10 +812,10 @@ async function saveData(key: any) {
       <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
       <!-- Komponen utama -->
-      <component :is="renderContainer(parsedSchema)" />
+      <component :is="renderContainer(parsedSchema, false)" />
 
       <div v-for="(value, index) in tables" :key="index">
-        <component :is="renderTable(value)" />
+        <component :is="renderTable(value, false)" />
       </div>
     </div>
   </div>
@@ -788,3 +826,7 @@ async function saveData(key: any) {
   <!-- 🔹 Hidden file input -->
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
 </template>
+
+<style>
+
+</style>

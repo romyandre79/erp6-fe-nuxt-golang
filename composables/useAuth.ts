@@ -27,12 +27,12 @@ export const useAuth = () => {
       if (res.code == 200) {
         return res;
       } else {
-        this.logout()
+        this.logout();
         throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }
     } catch (err) {
       console.error(err);
-      this.logout()
+      this.logout();
       throw new Error($t('INVALID CREDENTIAL'));
     }
   };

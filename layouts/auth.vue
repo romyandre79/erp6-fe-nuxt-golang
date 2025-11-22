@@ -63,27 +63,11 @@ const toggleExpand = (id: number) => {
 <template>
   <ClientOnly>
     <UApp>
-      <div
-        :class="[
-          'flex min-h-screen transition-colors duration-300',
-          themeStore.theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900',
-        ]"
-      >
+      <div class="bgSystem flex min-h-screen transition-colors duration-300">
         <!-- SIDEBAR -->
-        <aside
-          :class="[
-            'flex flex-col transition-all duration-300 border-r',
-            isCollapsed ? 'w-20' : 'w-64',
-            themeStore.theme === 'dark'
-              ? 'bg-gray-900 text-gray-100 border-gray-800'
-              : 'bg-white text-gray-800 border-gray-200',
-          ]"
-        >
+        <aside :class="['flex flex-col transition-all duration-300 border-r', isCollapsed ? 'w-20' : 'w-64']">
           <!-- HEADER -->
-          <div
-            class="flex items-center justify-between p-4 border-b"
-            :class="themeStore.theme === 'dark' ? 'border-gray-800' : 'border-gray-200'"
-          >
+          <div class="flex items-center justify-between p-4 border-b">
             <h2 v-if="!isCollapsed" class="text-xl font-bold truncate">
               {{ config.public.appName }}
             </h2>
@@ -186,7 +170,8 @@ const toggleExpand = (id: number) => {
   </ClientOnly>
 </template>
 
-<style scoped>
+<style>
+
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;

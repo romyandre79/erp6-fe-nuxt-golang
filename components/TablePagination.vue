@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
       <h2 class="text-2xl font-semibold">{{ title }}</h2>
 
-      <div class="flex items-center gap-2">
+      <div class="flex gap-2">
         <!-- Search -->
         <div v-if="enableSearch && simpleSearch">
           <input
@@ -31,7 +31,7 @@
           <button
             v-for="(action, index) in actions"
             :key="index"
-            :class="['btn btn-sm', action.class || 'btn-primary']"
+            class="btnPrimary"
             @click="$emit('action', action)"
           >
             <i v-if="action.icon" :class="['mr-1', action.icon]"></i>
@@ -56,7 +56,7 @@
           ]"
         >
           <tr>
-            <th class="px-4 py-3" v-if="enableCheck">
+            <th class="px-4 py-3" v-if="enableCheck && isSelectAll">
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
@@ -64,7 +64,8 @@
                 @change="toggleSelectAll"
               />
             </th>
-            <th class="px-4 py-3" v-if="tables?.length > 1"></th>
+            <th class="px-4 py-3" v-else></th>
+            <th class="px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
             <th v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-left tracking-wide">
               {{ col.text || col.label }}
             </th>
@@ -98,7 +99,7 @@
                 />
               </td>
 
-              <td class="px-4 py-3" v-if="tables?.length > 1">
+              <td class="px-4 py-3" v-if="tables?.length > 1 && props.isInput == false">
                 <button @click.stop="toggleExpand(row)">
                   {{ isExpanded(row) ? '-' : '+' }}
                 </button>
@@ -123,8 +124,8 @@
 
             <!-- Child Row -->
             <tr v-if="isExpanded(row)">
-              <td :colspan="columns.length  + 2">
-                <div class="rounded-lg w-full" v-for="(child, index) in tables" >
+              <td :colspan="columns.length + 2">
+                <div class="rounded-lg w-full" v-for="(child, index) in tables">
                   <component :is="renderTable(child)" v-if="index > 0"></component>
                 </div>
               </td>
@@ -208,8 +209,10 @@ const props = defineProps({
   enableCheck: { type: Boolean, default: true },
   method: { type: String, default: 'GET' },
   rowKey: { type: String, default: 'id' },
-  selectedKeyData: { type: String, default: ''},
-  relationKey: { type: String, default: ''},
+  selectedKeyData: { type: String, default: '' },
+  relationKey: { type: String, default: '' },
+  isInput: { type: Boolean, default: false },
+  isSelectAll: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
@@ -232,6 +235,9 @@ const selectedKeys = ref<any[]>([]);
 const toggleRowSelection = (row: any) => {
   const key = row[props.rowKey];
   const index = selectedKeys.value.indexOf(key);
+  if (props.isInput) {
+    selectedKeys.value = [];
+  }
   if (index === -1) selectedKeys.value.push(key);
   else selectedKeys.value.splice(index, 1);
 };
@@ -258,9 +264,9 @@ const toggleExpand = (row: any) => {
   const key = row[props.rowKey];
   expandedKey.value = expandedKey.value === key ? null : key;
 };
-const isExpanded = ((row: any) => {
+const isExpanded = (row: any) => {
   return row && expandedKey.value === row[props.rowKey];
-})
+};
 
 // Formatter
 const formatCellValue = (col: any, value: any) => {
@@ -292,7 +298,7 @@ async function fetchData() {
         dataForm.append(col.key, searchComplexQuery.value[col.key] || '');
       }
       if (props.selectedKeyData) {
-        dataForm.append(props.relationKey, props.selectedKeyData)
+        dataForm.append(props.relationKey, props.selectedKeyData);
       }
       res = await Api.post('/admin/execute-flow', dataForm);
     } else {
@@ -316,7 +322,7 @@ async function fetchData() {
 }
 
 function renderTable(component: any) {
-  console.log('com ',component)
+  console.log('com ', component);
   if (!component) return null;
   const key = component.key || component.text || `table0`;
 
@@ -342,7 +348,7 @@ function renderTable(component: any) {
       rowKey: component.primary,
       enableCheck: false,
       relationKey: component.relationkey,
-      selectedKeyData: expandedKey.value
+      selectedKeyData: expandedKey.value,
     }),
   ]);
 }

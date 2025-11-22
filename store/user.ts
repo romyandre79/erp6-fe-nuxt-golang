@@ -8,7 +8,9 @@ interface User {
   email: string;
   photo: string;
   languageid?: number;
+  languagename?: string;
   themeid?: number;
+  themename?: string;
 }
 
 interface AuthState {
@@ -68,7 +70,7 @@ export const useUserStore = defineStore('user', {
       } catch (err) {
         console.error('❌ Gagal parse cookie user:', err);
         this.user = null;
-        this.logout()
+        this.logout();
       }
     },
 

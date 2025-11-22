@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref, computed, watch, onMounted } from 'vue';
 import { useApi } from '~/composables/useApi';
-import type { SelectMenuItem } from '@nuxt/ui'
+import type { SelectMenuItem } from '@nuxt/ui';
 
 interface Props {
   component: {
