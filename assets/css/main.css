@@ -1,12 +1,34 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+body {
+  background: var(--body-background);
+  color: var(--body-color);
+  box-shadow: var(--panel-shadow);
+  border: var(--border);
+  border-color: var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size);
+  font-family: var(--font-family);
+}
+
+button {
+  padding: var(--button-padding);
+  border-color: var(--button-border-color);
+  border-radius: var(--button-radius);
+  background: var(--button-background);
+  color: var(--button-color);
+  cursor: pointer
+}
+
+button:hover {
+  background: var(--button-hover-background);
+  color: var(--button-hover-color);
+}
+
 .btnPrimary {
   background: var(--button-primary-background);
   color: var(--button-primary-color);
-  border-radius: var(--button-radius);
-  border: 1px solid var(--button-primary-border-color);
-  padding: var(--button-padding);
 }
 
 .btnPrimary:hover {
@@ -17,9 +39,6 @@
 .btnSecondary {
   background: var(--button-secondary-background);
   color: var(--button-secondary-color);
-  border-radius: var(--button-radius);
-  border: 1px solid var(--button-secondary-border-color);
-  padding: var(--button-padding);
 }
 
 .btnSecondary:hover {
@@ -27,28 +46,28 @@
   color: var(--button-secondary-hover-color);
 }
 
-.h1 {
+h1 {
   color: var(--h1-color);
   font-size: var(--h1-font-size);
   padding-top: var(--h1-padding-top);
   padding-bottom: var(--h1-padding-bottom);
 }
 
-.h2 {
+h2 {
   color: var(--h2-color);
   font-size: var(--h2-font-size);
   padding-top: var(--h2-padding-top);
   padding-bottom: var(--h2-padding-bottom);
 }
 
-.p {
+p {
   color: var(--p-color);
   font-size: var(--p-font-size);
   padding-top: var(--p-padding-top);
   padding-bottom: var(--p-padding-bottom);
 }
 
-.table {
+table {
     background: var(--table-background);
     color: var(--table-color);
     border-width: var(--table-border-size);
@@ -57,9 +76,25 @@
     border-style: var(--table-border-style);
 }
 
-.thead {
+thead {
     background: var(--table-head-background);
     color: var(--table-head-color);
+}
+
+tfoot {
+    background: var(--table-footer-background);
+    color: var(--table-footer-color);
+}
+
+tr>th {
+    background: var(--table-head-background);
+    color: var(--table-head-color);
+
+}
+
+.paging {
+    background: var(--table-pagination-background);
+    color: var(--table-pagination-color);
 }
 
 tr:nth-child(odd) {
@@ -70,4 +105,26 @@ tr:nth-child(odd) {
 tr:nth-child(even) {
   background: var(--table-row-even-background);
   color: var(--table-row-even-color);
+}
+
+input {
+  background: var(--input-background);
+  color: var(--input-color);
+  border-style: var(--input-border-style);
+}
+
+input:focus {
+  border-color: var(--input-focus-border-color);
+}
+
+select {
+  background: var(--input-background);
+  color: var(--input-color);
+  border-style: var(--input-border-style);
+}
+
+textarea {
+  background: var(--input-background);
+  color: var(--input-color);
+  border-style: var(--input-border-style);
 }

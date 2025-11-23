@@ -1,31 +1,31 @@
 <template>
   <div class="flex">
-    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
+    <button class=" w-full py-1 rounded" @click="saveSchema">
       💾 Save Schema
     </button>
-    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
+    <button class="w-full py-1 rounded" @click="loadSchema">
       📂 Load Schema
     </button>
-    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
+    <button class="w-full py-1 rounded" @click="copySchema">
       📂 Copy From ...
     </button>
-    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
+    <button class="w-full py-1 rounded" @click="togglePreview">
       {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
     </button>
-    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
+    <button class="w-full py-1 rounded" @click="toggleJson">
       {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
     </button>
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
+    <aside class="w-1/5 border-r p-3 overflow-y-auto ">
       <h2 class="font-bold text-lg mb-3">Elements</h2>
 
       <!-- Komponen dasar -->
       <div
         v-for="(comp, idx) in availableComponents"
         :key="idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
+        class="border rounded p-2 mb-2 cursor-move"
         draggable="true"
         @dragstart="onDragStart(comp)"
       >
@@ -37,7 +37,7 @@
       <div
         v-for="(group, idx) in layoutContainers"
         :key="'grp-' + idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
+        class="border rounded p-2 mb-2 cursor-move "
         draggable="true"
         @dragstart="onDragStart(group)"
       >
@@ -46,7 +46,7 @@
     </aside>
 
     <!-- 🔹 Canvas Tengah -->
-    <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
+    <main class="flex-1 p-5 overflow-auto w-full ">
       <div
         v-if="previewMode"
         class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
@@ -95,7 +95,7 @@
     </main>
 
     <!-- 🔹 Tree View + Property Panel -->
-    <aside class="w-1/4 bg-white border-l p-4 overflow-y-auto dark:bg-black">
+    <aside class="w-1/4 border-l p-4 overflow-y-auto ">
       <h3 class="font-semibold mb-3">Form Structure</h3>
       <TreeView :nodes="canvasComponents" :selected="selected" @select="selectComponent" />
 

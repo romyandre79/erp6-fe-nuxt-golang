@@ -115,7 +115,7 @@ watch(
       value-key="id"
       :loading="loading"
       :placeholder="component.place || $t('CHOOSE')"
-      class="w-full dark:bg-gray-900 dark:border-gray-700 px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
+      class="w-full px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
       :disabled="loading"
     />
 

@@ -63,7 +63,7 @@ const toggleExpand = (id: number) => {
 <template>
   <ClientOnly>
     <UApp>
-      <div class="bgSystem flex min-h-screen transition-colors duration-300">
+      <div class="flex min-h-screen transition-colors duration-300">
         <!-- SIDEBAR -->
         <aside :class="['flex flex-col transition-all duration-300 border-r', isCollapsed ? 'w-20' : 'w-64']">
           <!-- HEADER -->
@@ -71,7 +71,7 @@ const toggleExpand = (id: number) => {
             <h2 v-if="!isCollapsed" class="text-xl font-bold truncate">
               {{ config.public.appName }}
             </h2>
-            <button @click="toggleSidebar" class="text-gray-400 hover:text-white dark:hover:text-gray-200">
+            <button @click="toggleSidebar" >
               <i :class="isCollapsed ? 'fa fa-chevron-right' : 'fa fa-chevron-left'"></i>
             </button>
           </div>
@@ -82,7 +82,6 @@ const toggleExpand = (id: number) => {
               <button
                 @click="getChildren(parent.menuaccessid).length ? toggleExpand(parent.menuaccessid) : null"
                 class="w-full flex items-center justify-between p-2 rounded-md transition-colors"
-                :class="themeStore.theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-200'"
               >
                 <div class="flex items-center gap-2">
                   <span v-if="!isCollapsed" class="capitalize truncate">
@@ -106,11 +105,6 @@ const toggleExpand = (id: number) => {
                     :key="child.menuaccessid"
                     :to="`/admin/${child.menuname.toLowerCase()}`"
                     class="flex items-center gap-2 p-2 rounded-md transition-colors"
-                    :class="
-                      themeStore.theme === 'dark'
-                        ? 'hover:bg-gray-800 active:bg-gray-700'
-                        : 'hover:bg-gray-200 active:bg-gray-300'
-                    "
                     active-class="font-semibold"
                   >
                     <span class="text-sm truncate">
@@ -125,7 +119,6 @@ const toggleExpand = (id: number) => {
           <!-- FOOTER PROFILE -->
           <div
             class="p-3 mt-auto border-t flex items-center gap-2"
-            :class="mode === 'dark' ? 'border-gray-800' : 'border-gray-200'"
           >
             <div v-if="!isCollapsed">
               <p class="text-sm font-semibold">{{ userStore.user?.realname }}</p>
@@ -138,29 +131,19 @@ const toggleExpand = (id: number) => {
         <main class="flex-1 flex flex-col">
           <NavbarAdmin
             class="sticky top-0 z-50 shadow-md border-b"
-            :class="
-              themeStore.theme === 'dark'
-                ? 'bg-gray-800 border-gray-700 text-gray-100'
-                : 'bg-white border-gray-200 text-gray-900'
-            "
           >
             <template #right>
               <!-- THEME TOGGLE -->
               <button
                 @click="themeStore.toggleTheme()"
                 class="p-2 rounded-md transition-colors"
-                :class="
-                  themeStore.theme === 'dark' ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-200 text-gray-700'
-                "
               >
-                <i :class="themeStore.theme === 'dark' ? 'fa fa-sun' : 'fa fa-moon'"></i>
               </button>
             </template>
           </NavbarAdmin>
 
           <div
-            class="py-6 flex-1 overflow-auto transition-colors duration-300"
-            :class="themeStore.theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'"
+            class="flex-1 overflow-auto transition-colors duration-300"
           >
             <NuxtPage />
           </div>

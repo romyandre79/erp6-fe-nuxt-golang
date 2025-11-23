@@ -356,7 +356,7 @@ function renderComponent(component: any, isgrid: boolean) {
         h('input', {
           type: component.type,
           class:
-            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none dark:text-white text-black ' +
+            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
             (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
@@ -409,7 +409,7 @@ function renderComponent(component: any, isgrid: boolean) {
       return h(
         'button',
         {
-          class: `btnPrimary px-4 py-2 rounded mr-2 transition mb-3`,
+          class: `px-4 py-2 rounded mr-2 transition mb-3`,
           onClick: async () => {
             const eventName = (component.event || component.onClick).toUpperCase();
             if (eventName === 'ONCREATE') {
@@ -763,7 +763,7 @@ async function saveData(key: any) {
       "
     >
       <div v-for="(value, index) in buttons.components" :key="index">
-        <button class="btnPrimary" 
+        <button 
            @click="runAction(value.onClick)">
           <Icon :name="value.icon" /> {{ value.text }}
         </button>

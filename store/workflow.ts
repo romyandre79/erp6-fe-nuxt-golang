@@ -30,7 +30,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
       const res = await api.post('/admin/execute-flow', dataForm);
       // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
       const wfObj = res?.data?.data ?? {};
-      console.log(wfObj);
 
       // try various locations
       const flowString = wfObj?.flow;
@@ -96,12 +95,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   async function loadComponentProperties(name: string, nodeId: number) {
-    console.log('node id', nodeId);
     const defaults = componentDefaultDetails.value.filter((x) => x.componentname === name);
-    console.log('default ', defaults);
 
     const saved = componentDetails.value.filter((x) => x.componentname === name && Number(x.nodeid) === Number(nodeId));
-    console.log('saved ', saved);
 
     // map saved by componentdetailid OR propertykey
     const savedMap = new Map();

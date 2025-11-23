@@ -310,5 +310,15 @@
   "ENTER A COMPONENT TITLE": "Enter a Component Title",
   "ENTER A CATEGORY NAME": "Enter a Category Name",
   "SEARCH A DETAIL TYPE": "Search a Detail Type",
-  "ENTER A LABEL": "Enter a Label"
+  "ENTER A LABEL": "Enter a Label",
+  "SEARCH A WIDGET TITLE": "Search a widget title",
+  "SEARCH A WIDGET VERSION": "Search a widget version",
+  "SEARCH A USERNAME": "Search a username",
+  "SEARCH CREATED DATE": "Search created date",
+  "SEARCH USER ACTION": "Search user action",
+  "SEARCH NEW DATA": "Search new data",
+  "SEARCH MENU NAME": "Search menu name",
+  "SEARCH TABLE ID": "Search table id",
+  "SEARCH A MODULE VERSION": "Search a module version",
+  "SEARCH A INSTALL DATE": "Search a install date"
 }
