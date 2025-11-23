@@ -49,13 +49,11 @@ function initEditor(container: HTMLElement) {
   ed.on('connectionRemoved', () => scheduleSave());
 
   ed.on('nodeSelected', async (id: string) => {
-    console.log('node sele ', id);
     const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
       const res = await store.loadComponentProperties(node.name, cleanId.toString());
-      console.log('node ', res);
       store.setSelectedNode(node);
     }
   });
@@ -110,7 +108,6 @@ onMounted(async () => {
   if (flowObj && editor) {
     try {
       editor.import(flowObj);
-      console.log('✅ DRAWFLOW IMPORTED');
     } catch (e) {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
@@ -124,9 +121,6 @@ watch(
 
     try {
       const parsed = typeof wf.flow === 'string' ? JSON.parse(wf.flow) : wf.flow;
-
-      console.log('📥 Importing workflow after load…');
-
       editor.import(parsed.drawflow ? parsed : parsed.flow);
     } catch (e) {
       console.error('❌ Failed to import workflow', e);
@@ -174,8 +168,6 @@ function drop(ev: DragEvent) {
   const x = ev.clientX - rect.left;
   const y = ev.clientY - rect.top;
 
-  console.log('📌 Dropping node:', cmp);
-
   editor.addNode(
     cmp.componentname ?? cmp.name ?? cmp.code,
     cmp.input ?? cmp.inputs ?? 1,
@@ -218,7 +210,5 @@ async function exportImage() {
   link.download = 'workflow.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
-
-  console.log('📤 Workflow exported as PNG');
 }
 </script>

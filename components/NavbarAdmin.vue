@@ -25,7 +25,7 @@
             <p class="text-sm font-semibold text-base-content">
               {{ userName }}
             </p>
-            <p class="text-xs ">{{ userEmail }}</p>
+            <p class="text-xs">{{ userEmail }}</p>
           </div>
           <i
             class="fa-solid fa-chevron-down text-xs ml-1 text-gray-400 transition-transform duration-200"
@@ -41,9 +41,7 @@
             :class="[theme === 'dark' ? 'bg-gray-900/90 border-gray-700' : 'bg-white/90 border-gray-200']"
           >
             <!-- User Info -->
-            <div
-              class="px-4 py-3 border-b"
-            >
+            <div class="px-4 py-3 border-b">
               <p class="text-sm font-semibold">
                 {{ userName }}
               </p>
@@ -57,7 +55,7 @@
               <li>
                 <button
                   @click.prevent="handleProfile"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left  transition-colors"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left transition-colors"
                 >
                   <i class="fa-regular fa-user w-5 text-primary"></i>
                   <span>{{ $t('PROFILE') }}</span>

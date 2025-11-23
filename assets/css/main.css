@@ -18,7 +18,7 @@ button {
   border-radius: var(--button-radius);
   background: var(--button-background);
   color: var(--button-color);
-  cursor: pointer
+  cursor: pointer;
 }
 
 button:hover {
@@ -68,33 +68,32 @@ p {
 }
 
 table {
-    background: var(--table-background);
-    color: var(--table-color);
-    border-width: var(--table-border-size);
-    border-radius: var(--border-radius);
-    border-color: var(--table-border-color);
-    border-style: var(--table-border-style);
+  background: var(--table-background);
+  color: var(--table-color);
+  border-width: var(--table-border-size);
+  border-radius: var(--border-radius);
+  border-color: var(--table-border-color);
+  border-style: var(--table-border-style);
 }
 
 thead {
-    background: var(--table-head-background);
-    color: var(--table-head-color);
+  background: var(--table-head-background);
+  color: var(--table-head-color);
 }
 
 tfoot {
-    background: var(--table-footer-background);
-    color: var(--table-footer-color);
+  background: var(--table-footer-background);
+  color: var(--table-footer-color);
 }
 
-tr>th {
-    background: var(--table-head-background);
-    color: var(--table-head-color);
-
+tr > th {
+  background: var(--table-head-background);
+  color: var(--table-head-color);
 }
 
 .paging {
-    background: var(--table-pagination-background);
-    color: var(--table-pagination-color);
+  background: var(--table-pagination-background);
+  color: var(--table-pagination-color);
 }
 
 tr:nth-child(odd) {
@@ -111,6 +110,7 @@ input {
   background: var(--input-background);
   color: var(--input-color);
   border-style: var(--input-border-style);
+  border: border;
 }
 
 input:focus {

@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full">
     <!-- LEFT: CATEGORY LIST -->
-    <aside class="w-120 border-r p-4 space-y-4 ">
+    <aside class="w-120 border-r p-4 space-y-4">
       <h1 class="font-bold text-lg mb-2">Theme Builder - {{ route.params.slug[0] || '' }}</h1>
 
       <!-- Theme select & actions -->
@@ -168,7 +168,7 @@
             <textarea :style="inputStyle" class="border" placeholder="place" />
           </div>
           <div class="mt-4">
-            <select :style="inputStyle" class="border" placeholder="place" >
+            <select :style="inputStyle" class="border" placeholder="place">
               <option>Pilihan 1</option>
               <option>Pilihan 2</option>
             </select>
@@ -301,13 +301,13 @@ const categories = [
         options: [
           {
             label: 'Border',
-            value: 'border'
+            value: 'border',
           },
           {
             label: 'None',
-            value: ''
-          }
-        ]
+            value: '',
+          },
+        ],
       },
       {
         key: 'font-size',
@@ -516,9 +516,9 @@ const categories = [
           { value: 'double', label: 'double' },
           { value: 'hidden', label: 'hidden' },
           { value: 'none', label: 'none' },
-        ]
+        ],
       },
-            {
+      {
         key: 'input-focus-border-color',
         label: 'Input Focus Border Color',
         type: 'color',
@@ -530,69 +530,68 @@ const categories = [
         options: [
           {
             label: 'Rounded',
-            value: 'Rounded'
+            value: 'Rounded',
           },
           {
             label: 'None',
-            value: ''
-          }
-        ]
+            value: '',
+          },
+        ],
       },
-
     ],
   },
   {
     key: 'panel',
     label: 'Panel',
-    props :[
+    props: [
       {
         key: 'panel-background',
         label: 'Panel Background',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'panel-header-background',
         label: 'Panel Header Background',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'panel-header-color',
         label: 'Panel Header Color',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'panel-shadow',
         label: 'Panel Shadow',
-        type: 'color'
-      }
-    ]
+        type: 'color',
+      },
+    ],
   },
   {
     key: 'tab',
     label: 'Tab',
-    props :[
+    props: [
       {
         key: 'tab-color',
         label: 'Tab Color',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'tab-active-background',
         label: 'Tab Active Background',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'tab-active-color',
         label: 'Tab Active Header Color',
-        type: 'color'
+        type: 'color',
       },
       {
         key: 'tab-border-color',
         label: 'Tab Border Color',
-        type: 'color'
-      }
-    ]
-  }
+        type: 'color',
+      },
+    ],
+  },
 ];
 
 // state
@@ -635,7 +634,6 @@ async function loadThemeToState() {
   Object.keys(data).forEach((k) => {
     themeState[k] = data[k];
   });
-
 }
 
 function selectCategory(key) {
@@ -727,7 +725,7 @@ const buttonStyle = computed(() => ({
   hover: {
     background: `var(--button-hover-background, #4f46e5)`,
     color: `var(--button-hover-color, #fff)`,
-  }
+  },
 }));
 
 const btnPrimaryStyle = computed(() => ({
@@ -738,7 +736,7 @@ const btnPrimaryStyle = computed(() => ({
   hover: {
     background: `var(--button-primary-hover-background, #4f46e5)`,
     color: `var(--button-primary-hover-color, #fff)`,
-  }
+  },
 }));
 
 const btnSecondaryStyle = computed(() => ({
@@ -797,5 +795,4 @@ const inputStyle = computed(() => ({
   borderRadius: `var(--border-radius)`,
   border: `var(--border, 6)`,
 }));
-
 </script>

@@ -5,15 +5,12 @@ import NavbarAdmin from '~/components/NavbarAdmin.vue';
 import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '~/store/theme';
 import { useAuth } from '~/composables/useAuth';
-import { useColorMode } from '@vueuse/core';
 
 const themeStore = useThemeStore();
 const { t } = useI18n();
 const userStore = useUserStore();
 const { me } = useAuth();
 const config = useRuntimeConfig();
-
-const mode = useColorMode();
 
 // Sidebar collapse state
 const isCollapsed = ref(false);
@@ -22,6 +19,7 @@ const expanded = ref<Record<number, boolean>>({});
 const menus = ref<any[]>([]);
 
 onMounted(async () => {
+  themeStore.applyCurrentTheme();
   try {
     const res = await me();
     if (res?.code === 200 && res.data?.menus) {
@@ -31,11 +29,6 @@ onMounted(async () => {
     }
   } catch (err) {
     console.error('Error loading user info:', err);
-  }
-
-  // Apply initial theme
-  if (process.client) {
-    document.documentElement.classList.toggle('dark', themeStore.theme === 'dark');
   }
 });
 
@@ -71,7 +64,7 @@ const toggleExpand = (id: number) => {
             <h2 v-if="!isCollapsed" class="text-xl font-bold truncate">
               {{ config.public.appName }}
             </h2>
-            <button @click="toggleSidebar" >
+            <button @click="toggleSidebar">
               <i :class="isCollapsed ? 'fa fa-chevron-right' : 'fa fa-chevron-left'"></i>
             </button>
           </div>
@@ -117,9 +110,7 @@ const toggleExpand = (id: number) => {
           </nav>
 
           <!-- FOOTER PROFILE -->
-          <div
-            class="p-3 mt-auto border-t flex items-center gap-2"
-          >
+          <div class="p-3 mt-auto border-t flex items-center gap-2">
             <div v-if="!isCollapsed">
               <p class="text-sm font-semibold">{{ userStore.user?.realname }}</p>
               <p class="text-xs opacity-70">{{ userStore.user?.email }}</p>
@@ -129,22 +120,14 @@ const toggleExpand = (id: number) => {
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col">
-          <NavbarAdmin
-            class="sticky top-0 z-50 shadow-md border-b"
-          >
+          <NavbarAdmin class="sticky top-0 z-50 shadow-md border-b">
             <template #right>
               <!-- THEME TOGGLE -->
-              <button
-                @click="themeStore.toggleTheme()"
-                class="p-2 rounded-md transition-colors"
-              >
-              </button>
+              <button @click="themeStore.toggleTheme()" class="p-2 rounded-md transition-colors"></button>
             </template>
           </NavbarAdmin>
 
-          <div
-            class="flex-1 overflow-auto transition-colors duration-300"
-          >
+          <div class="flex-1 overflow-auto transition-colors duration-300">
             <NuxtPage />
           </div>
         </main>
@@ -154,7 +137,6 @@ const toggleExpand = (id: number) => {
 </template>
 
 <style>
-
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;

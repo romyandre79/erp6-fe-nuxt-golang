@@ -22,7 +22,7 @@ import { ref, watch, computed } from 'vue';
 import { useThemeStore } from '~/store/theme';
 
 const store = useThemeStore();
-const auth = useAuth()
+const auth = useAuth();
 const localTheme = ref(store.theme); // two-way bind
 
 // preview color
@@ -40,8 +40,8 @@ const previewColor = computed(() => {
 
 // ketika select berubah → apply theme
 watch(localTheme, (val) => {
-  auth.updateUserTheme(val)
-  store.loadSingleThemes(val)
-  store.applyTheme(val)
+  auth.updateUserTheme(val);
+  store.loadSingleThemes(val);
+  store.applyTheme(val);
 });
 </script>

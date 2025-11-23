@@ -256,7 +256,7 @@ const isExpanded = (row: any) => {
 
 // Formatter
 const formatCellValue = (col: any, value: any) => {
-  if (['boolean', 'bool'].includes(col.type))
+  if (['boolean', 'bool', 'checkbox'].includes(col.type))
     return value
       ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
       : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
@@ -308,7 +308,6 @@ async function fetchData() {
 }
 
 function renderTable(component: any) {
-  console.log('com ', component);
   if (!component) return null;
   const key = component.key || component.text || `table0`;
 

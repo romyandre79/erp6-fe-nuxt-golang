@@ -193,6 +193,9 @@ function navigate(key: any) {
   } else if (key.includes('theme-editor') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
+  } else if (key.includes('db-designer') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
   } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['menuname']);
   } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
@@ -201,6 +204,8 @@ function navigate(key: any) {
     navigateTo(key + '/' + selectedRows.value[0]['wfname']);
   } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['themename']);
+  } else if (key.includes('db-designer') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['objectname']);
   } else {
     navigateTo(key);
   }
@@ -421,7 +426,6 @@ function renderComponent(component: any, isgrid: boolean) {
             } else if (eventName === 'ONDELETE') {
               await DeleteHandler();
             } else {
-              console.log(emit);
               emit(eventName, { ...formData });
             }
           },
@@ -763,10 +767,7 @@ async function saveData(key: any) {
       "
     >
       <div v-for="(value, index) in buttons.components" :key="index">
-        <button 
-           @click="runAction(value.onClick)">
-          <Icon :name="value.icon" /> {{ value.text }}
-        </button>
+        <button @click="runAction(value.onClick)"><Icon :name="value.icon" /> {{ value.text }}</button>
       </div>
     </div>
 
@@ -827,6 +828,4 @@ async function saveData(key: any) {
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
 </template>
 
-<style>
-
-</style>
+<style></style>
