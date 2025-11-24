@@ -110,7 +110,7 @@ input {
   background: var(--input-background);
   color: var(--input-color);
   border-style: var(--input-border-style);
-  border: border;
+  border: var(--border);
 }
 
 input:focus {
@@ -128,3 +128,16 @@ textarea {
   color: var(--input-color);
   border-style: var(--input-border-style);
 }
+
+.modal {
+  background: var(--dialog-background);
+  color: var(--dialog-color);
+  border: var(--dialog-border-color);
+  box-shadow: var(--dialog-shadow);
+}
+
+.modalHeader {
+  background: var(--dialog-header-background);
+  color: var(--dialog-header-color);
+}
+

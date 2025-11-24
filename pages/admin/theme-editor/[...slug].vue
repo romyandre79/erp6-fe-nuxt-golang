@@ -188,6 +188,22 @@ const store = useThemeStore();
 const route = useRoute();
 
 // simplified category list (you can extend or generate dynamically)
+const optionBorderStyle = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'dashed', label: 'Dashed' },
+  { value: 'dotted', label: 'Dotted' },
+  { value: 'double', label: 'double' },
+  { value: 'hidden', label: 'hidden' },
+  { value: 'none', label: 'none' },
+];
+const optionBorder = [
+  { label: 'Border', value: 'border' },
+  { label: 'None', value: '' },
+];
+const optionRounded = [
+  { label: 'Rounded', value: 'Rounded' },
+  { label: 'None', value: '' },
+];
 const categories = [
   {
     key: 'button',
@@ -298,16 +314,7 @@ const categories = [
         key: 'border',
         label: 'Common Border',
         type: 'select',
-        options: [
-          {
-            label: 'Border',
-            value: 'border',
-          },
-          {
-            label: 'None',
-            value: '',
-          },
-        ],
+        options: optionBorder,
       },
       {
         key: 'font-size',
@@ -377,12 +384,12 @@ const categories = [
       },
       {
         key: 'p-padding-top',
-        label: 'P Padding Top',
+        label: 'Paragraph Padding Top',
         type: 'text',
       },
       {
         key: 'p-padding-bottom',
-        label: 'P Padding Bottom',
+        label: 'Paragraph Padding Bottom',
         type: 'text',
       },
     ],
@@ -405,14 +412,7 @@ const categories = [
         key: 'table-border-style',
         label: 'Table Border Style',
         type: 'select',
-        options: [
-          { value: 'solid', label: 'Solid' },
-          { value: 'dashed', label: 'Dashed' },
-          { value: 'dotted', label: 'Dotted' },
-          { value: 'double', label: 'double' },
-          { value: 'hidden', label: 'hidden' },
-          { value: 'none', label: 'none' },
-        ],
+        options: optionBorderStyle,
       },
       {
         key: 'table-border-color',
@@ -509,14 +509,7 @@ const categories = [
         key: 'input-border-style',
         label: 'Input Border Style',
         type: 'select',
-        options: [
-          { value: 'solid', label: 'Solid' },
-          { value: 'dashed', label: 'Dashed' },
-          { value: 'dotted', label: 'Dotted' },
-          { value: 'double', label: 'double' },
-          { value: 'hidden', label: 'hidden' },
-          { value: 'none', label: 'none' },
-        ],
+        options: optionBorderStyle,
       },
       {
         key: 'input-focus-border-color',
@@ -527,16 +520,7 @@ const categories = [
         key: 'input-rounded',
         label: 'Input Rounded',
         type: 'select',
-        options: [
-          {
-            label: 'Rounded',
-            value: 'Rounded',
-          },
-          {
-            label: 'None',
-            value: '',
-          },
-        ],
+        options: optionRounded
       },
     ],
   },
@@ -588,6 +572,151 @@ const categories = [
       {
         key: 'tab-border-color',
         label: 'Tab Border Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'accordion',
+    label: 'Accordion',
+    props: [
+      {
+        key: 'accordion-header-background',
+        label: 'Accordion Header Background',
+        type: 'color',
+      },
+      {
+        key: 'accordion-header-active-background',
+        label: 'Accordion Header Active Background',
+        type: 'color',
+      },
+      {
+        key: 'accordion-header-color',
+        label: 'Accordion Header Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'slider',
+    label: 'Slider',
+    props: [
+      {
+        key: 'slider-track-background',
+        label: 'Slider Track Background',
+        type: 'color',
+      },
+      {
+        key: 'slider-thumb-background',
+        label: 'Slider Thumb Background',
+        type: 'color',
+      },
+      {
+        key: 'slider-thumb-border-color',
+        label: 'Slider Thumb Border Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'progress',
+    label: 'Progress',
+    props: [
+      {
+        key: 'progress-background',
+        label: 'Progress Background',
+        type: 'color',
+      },
+      {
+        key: 'progress-bar-background',
+        label: 'Progress Bar Background',
+        type: 'color',
+      },
+      {
+        key: 'progress-bar-color',
+        label: 'Progress Bar Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'calendar',
+    label: 'Calendar',
+    props: [
+      {
+        key: 'calendar-background',
+        label: 'Calendar Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-header-background',
+        label: 'Calendar Header Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-header-color',
+        label: 'Calendar Header Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-day-color',
+        label: 'Calendar Day Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-day-hover-background',
+        label: 'Calendar Day Hover Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-background',
+        label: 'Calendar Today Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-color',
+        label: 'Calendar Today Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-color',
+        label: 'Calendar Today Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'dialog',
+    label: 'Dialog',
+    props: [
+      {
+        key: 'dialog-background',
+        label: 'Dialog Background',
+        type: 'color',
+      },
+      {
+        key: 'dialog-color',
+        label: 'Dialog Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-header-background',
+        label: 'Dialog Header Background',
+        type: 'color',
+      },
+      {
+        key: 'dialog-header-color',
+        label: 'Dialog Header Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-border-color',
+        label: 'Dialog Border Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-shadow',
+        label: 'Dialog Shadow',
         type: 'color',
       },
     ],
@@ -667,7 +796,7 @@ function resetToDefault() {
 async function applyTheme() {
   store.saveActiveTheme(JSON.stringify(themeState));
   // apply and (optionally) persist selection as current theme
-  alert('Theme applied');
+      toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });  
 }
 
 const cssText = computed(() => {

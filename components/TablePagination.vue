@@ -177,6 +177,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useThemeStore } from '~/store/theme';
 import { useApi } from '~/composables/useApi';
 import TablePagination from '~/components/TablePagination';
+import { resolveSoa } from 'dns';
 
 const props = defineProps({
   title: String,
@@ -294,11 +295,17 @@ async function fetchData() {
       res = await Api.get(`${props.endPoint}?${query}`);
     }
 
-    if (res.code === 200) {
+    if (res.code === 200 && res.data?.data) {
+      currentPage.value = res.data.page
       rowsData.value = res.data.data || [];
       totalRecords.value = res.data.total || rowsData.value.length;
       totalPages.value = res.data.meta?.totalPages || Math.ceil(totalRecords.value / pageSize.value);
-    } else rowsData.value = [];
+    } else {
+      currentPage.value = 0
+      rowsData.value = [];
+      totalPages.value = 0
+      totalRecords.value = 0
+    }
   } catch (e) {
     console.error(e);
     rowsData.value = [];
