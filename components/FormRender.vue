@@ -3,7 +3,6 @@ import FormSelect from '~/components/FormSelect.vue';
 import TablePagination from './TablePagination.vue';
 import { UModal, UTabs } from '#components';
 import { useApi } from '~/composables/useApi';
-import { useThemeStore } from '~/store/theme';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -12,7 +11,6 @@ const props = defineProps({
   formType: { type: String, default: 'form' },
 });
 
-const store = useThemeStore();
 const modalTitle = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
@@ -103,6 +101,7 @@ function open(key: string) {
 
 async function edit(key: string) {
   const flow = parsedSchema.value.action?.onGet;
+  console.log(modalRefs)
   if (flow && selectedRows.value.length > 0) {
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
@@ -193,6 +192,9 @@ function navigate(key: any) {
   } else if (key.includes('theme-editor') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
+  } else if (key.includes('db-designer') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
   } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['menuname']);
   } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
@@ -201,6 +203,8 @@ function navigate(key: any) {
     navigateTo(key + '/' + selectedRows.value[0]['wfname']);
   } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['themename']);
+  } else if (key.includes('db-designer') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['objectname']);
   } else {
     navigateTo(key);
   }
@@ -356,7 +360,7 @@ function renderComponent(component: any, isgrid: boolean) {
         h('input', {
           type: component.type,
           class:
-            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none dark:text-white text-black ' +
+            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
             (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
@@ -409,19 +413,18 @@ function renderComponent(component: any, isgrid: boolean) {
       return h(
         'button',
         {
-          class: `btnPrimary px-4 py-2 rounded mr-2 transition mb-3`,
+          class: `px-4 py-2 rounded mr-2 transition mb-3`,
           onClick: async () => {
             const eventName = (component.event || component.onClick).toUpperCase();
             if (eventName === 'ONCREATE') {
               if (validateAllFields()) await CreateHandler();
-              else alert('⚠️ Validasi gagal! Periksa input Anda.');
+              else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
             } else if (eventName === 'ONUPDATE') {
               if (validateAllFields()) await UpdateHandler();
-              else alert('⚠️ Validasi gagal! Periksa input Anda.');
+              else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
             } else if (eventName === 'ONDELETE') {
               await DeleteHandler();
             } else {
-              console.log(emit);
               emit(eventName, { ...formData });
             }
           },
@@ -638,7 +641,7 @@ const CreateHandler = async () => {
       ReadHandler();
     }
   } else {
-    alert('Invalid Flow ' + flow);
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
@@ -667,7 +670,7 @@ const UpdateHandler = async () => {
       });
     }
   } else {
-    alert('Invalid Flow ' + flow);
+                        toast.add({ title: 'Error', description: 'Invalid Flow '+flow, color: 'error' });
   }
 };
 
@@ -697,7 +700,7 @@ const DeleteHandler = async () => {
       //ReadHandler()
     }
   } else {
-    alert('Invalid Flow ' + flow);
+                        toast.add({ title: 'Error', description: 'Invalid Flow '+flow, color: 'error' });
   }
 };
 
@@ -739,10 +742,10 @@ async function saveData(key: any) {
         description: $t(res.message.replaceAll('_', ' ')),
       });
       tableRef.value.refreshTable();
+      modalRefs[key].value = false;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
     }
-    modalRefs[key] = false;
   } catch (err) {
     console.error('Gagal simpan data:', err);
   }
@@ -763,10 +766,7 @@ async function saveData(key: any) {
       "
     >
       <div v-for="(value, index) in buttons.components" :key="index">
-        <button class="btnPrimary" 
-           @click="runAction(value.onClick)">
-          <Icon :name="value.icon" /> {{ value.text }}
-        </button>
+        <button @click="runAction(value.onClick)"><Icon :name="value.icon" /> {{ value.text }}</button>
       </div>
     </div>
 
@@ -778,17 +778,17 @@ async function saveData(key: any) {
         :title="modalTitle"
         :dismissible="false"
         :description="parsedSchema.menuname"
-        class="min-"
+        class="modalHeader"
         :scrollable="false"
       >
-        <template #body>
+        <template #body class="modal">
           <component :is="renderContainer(value.components, false)" />
           <UTabs :items="detailTab" v-model="activeTab" class="gap-4" :class="value.class">
             <template #default="{ item }">
               {{ item.label || item.text }}
             </template>
 
-            <template #content="{ item }">
+            <template #content="{ item }" class="modal">
               <div v-for="(valueTable, ix) in tables" :key="ix">
                 <component :is="renderTable(valueTable, true)" v-if="ix > 0" />
               </div>
@@ -827,6 +827,4 @@ async function saveData(key: any) {
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
 </template>
 
-<style>
-
-</style>
+<style></style>

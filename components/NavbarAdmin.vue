@@ -14,18 +14,18 @@
         <!-- Trigger -->
         <button
           @click.stop="toggleDropdown"
-          class="flex items-center gap-2 cursor-pointer hover:bg-base-200 dark:hover:bg-gray-800 rounded-xl px-3 py-2 transition-all"
+          class="flex items-center gap-2 cursor-pointer hover:bg-base-200 rounded-xl px-3 py-2 transition-all"
         >
           <img
             :src="userPhoto || '/default-avatar.png'"
             alt="user avatar"
-            class="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-700 shadow-sm"
+            class="w-9 h-9 rounded-full border shadow-sm"
           />
           <div class="hidden sm:block text-left leading-tight">
-            <p class="text-sm font-semibold text-base-content dark:text-gray-100">
+            <p class="text-sm font-semibold text-base-content">
               {{ userName }}
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ userEmail }}</p>
+            <p class="text-xs">{{ userEmail }}</p>
           </div>
           <i
             class="fa-solid fa-chevron-down text-xs ml-1 text-gray-400 transition-transform duration-200"
@@ -41,24 +41,21 @@
             :class="[theme === 'dark' ? 'bg-gray-900/90 border-gray-700' : 'bg-white/90 border-gray-200']"
           >
             <!-- User Info -->
-            <div
-              class="px-4 py-3 border-b"
-              :class="theme === 'dark' ? 'border-gray-700 bg-gray-800/60' : 'border-gray-200 bg-gray-50/80'"
-            >
-              <p class="text-sm font-semibold text-base-content dark:text-gray-100">
+            <div class="px-4 py-3 border-b">
+              <p class="text-sm font-semibold">
                 {{ userName }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p class="text-xs truncate">
                 {{ userEmail }}
               </p>
             </div>
 
             <!-- Menu -->
-            <ul class="divide-y" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
+            <ul class="divide-y">
               <li>
                 <button
                   @click.prevent="handleProfile"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left transition-colors"
                 >
                   <i class="fa-regular fa-user w-5 text-primary"></i>
                   <span>{{ $t('PROFILE') }}</span>
@@ -67,7 +64,7 @@
               <li>
                 <button
                   @click.prevent="handleLogout"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-red-500"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left transition-colors text-red-500"
                 >
                   <i class="fa-solid fa-right-from-bracket w-5"></i>
                   <span>{{ $t('LOGOUT') }}</span>

@@ -2,7 +2,11 @@
 import { useRuntimeConfig } from '#app';
 
 const config = useRuntimeConfig();
+const themeStore = useThemeStore();
 
+onMounted(async () => {
+  themeStore.applyCurrentTheme();
+});
 </script>
 
 <template>

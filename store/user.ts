@@ -7,6 +7,7 @@ interface User {
   realname: string;
   email: string;
   photo: string;
+  password: string;
   languageid?: number;
   languagename?: string;
   themeid?: number;

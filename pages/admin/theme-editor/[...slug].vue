@@ -1,13 +1,13 @@
 <template>
   <div class="flex h-full">
     <!-- LEFT: CATEGORY LIST -->
-    <aside class="w-120 border-r p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+    <aside class="w-120 border-r p-4 space-y-4">
       <h1 class="font-bold text-lg mb-2">Theme Builder - {{ route.params.slug[0] || '' }}</h1>
 
       <!-- Theme select & actions -->
       <div class="space-y-2">
         <div class="flex gap-2 mt-2">
-          <button class="py-2 px-3 bg-primary-600 text-white rounded" @click="applyTheme">Save</button>
+          <button class="py-2 px-3 bg-primary-600 rounded" @click="applyTheme">Save</button>
           <button class="px-3 py-2 border rounded" @click="resetToDefault">Reset</button>
         </div>
 
@@ -113,7 +113,7 @@
         <!-- PROPERTY EDITOR -->
 
         <!-- LIVE PREVIEW -->
-        <div>
+        <div :style="bodyStyle">
           <div class="flex items-center justify-between mb-3">
             <h1 class="font-bold text-lg">Live Preview</h1>
           </div>
@@ -123,6 +123,7 @@
           <p :style="pStyle">Paragraph</p>
 
           <div class="mt-4 flex gap-2">
+            <button class="px-3 py-1 rounded" :style="buttonStyle">Button</button>
             <button class="px-3 py-1 rounded" :style="btnPrimaryStyle">Primary</button>
             <button class="px-3 py-1 rounded" :style="btnSecondaryStyle">Secondary</button>
           </div>
@@ -131,8 +132,8 @@
             <table :style="tableStyle">
               <thead :style="tableHeadStyle">
                 <tr>
-                  <th class="px-4 py-3">Column 1</th>
-                  <th class="px-4 py-3">Column 2</th>
+                  <th :style="tableHeadStyle" class="px-4 py-3">Column 1</th>
+                  <th :style="tableHeadStyle" class="px-4 py-3">Column 2</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,7 +146,32 @@
                   <td class="px-4 py-3">Data Kolom 2</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr :style="tableFooterStyle">
+                  <td class="text-right font-bold">Total</td>
+                  <td class="text-right">1500</td>
+                </tr>
+                <tr :style="tablePaginationStyle" class="items-center">
+                  <td class="text-right font-bold" colspan="2">Page 1 / 1</td>
+                </tr>
+              </tfoot>
             </table>
+          </div>
+
+          <div class="mt-4">
+            <label :style="labelStyle">Label</label>
+          </div>
+          <div class="mt-4 max-w-full">
+            <input type="text" :style="inputStyle" class="border" placeholder="place" />
+          </div>
+          <div class="mt-4">
+            <textarea :style="inputStyle" class="border" placeholder="place" />
+          </div>
+          <div class="mt-4">
+            <select :style="inputStyle" class="border" placeholder="place">
+              <option>Pilihan 1</option>
+              <option>Pilihan 2</option>
+            </select>
           </div>
         </div>
       </div>
@@ -162,6 +188,22 @@ const store = useThemeStore();
 const route = useRoute();
 
 // simplified category list (you can extend or generate dynamically)
+const optionBorderStyle = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'dashed', label: 'Dashed' },
+  { value: 'dotted', label: 'Dotted' },
+  { value: 'double', label: 'double' },
+  { value: 'hidden', label: 'hidden' },
+  { value: 'none', label: 'none' },
+];
+const optionBorder = [
+  { label: 'Border', value: 'border' },
+  { label: 'None', value: '' },
+];
+const optionRounded = [
+  { label: 'Rounded', value: 'Rounded' },
+  { label: 'None', value: '' },
+];
 const categories = [
   {
     key: 'button',
@@ -181,6 +223,26 @@ const categories = [
         key: 'button-padding',
         label: 'Button Padding',
         type: 'text',
+      },
+      {
+        key: 'button-color',
+        label: 'Common Button Text Color',
+        type: 'color',
+      },
+      {
+        key: 'button-background',
+        label: 'Common Button Background',
+        type: 'color',
+      },
+      {
+        key: 'button-hover-color',
+        label: 'Common Button Hover Text Color',
+        type: 'color',
+      },
+      {
+        key: 'button-hover-background',
+        label: 'Common Button Hover Background',
+        type: 'color',
       },
       {
         key: 'button-primary-color',
@@ -249,8 +311,19 @@ const categories = [
         type: 'text',
       },
       {
+        key: 'border',
+        label: 'Common Border',
+        type: 'select',
+        options: optionBorder,
+      },
+      {
         key: 'font-size',
         label: 'Common Font Size',
+        type: 'text',
+      },
+      {
+        key: 'font-family',
+        label: 'Common Font Family',
         type: 'text',
       },
     ],
@@ -311,12 +384,12 @@ const categories = [
       },
       {
         key: 'p-padding-top',
-        label: 'P Padding Top',
+        label: 'Paragraph Padding Top',
         type: 'text',
       },
       {
         key: 'p-padding-bottom',
-        label: 'P Padding Bottom',
+        label: 'Paragraph Padding Bottom',
         type: 'text',
       },
     ],
@@ -339,14 +412,7 @@ const categories = [
         key: 'table-border-style',
         label: 'Table Border Style',
         type: 'select',
-        options: [
-          { value: 'solid', label: 'Solid' },
-          { value: 'dashed', label: 'Dashed' },
-          { value: 'dotted', label: 'Dotted' },
-          { value: 'double', label: 'double' },
-          { value: 'hidden', label: 'hidden' },
-          { value: 'none', label: 'none' },
-        ],
+        options: optionBorderStyle,
       },
       {
         key: 'table-border-color',
@@ -388,6 +454,271 @@ const categories = [
         label: 'Table Row odd Background Color',
         type: 'color',
       },
+      {
+        key: 'table-footer-color',
+        label: 'Table Footer Color',
+        type: 'color',
+      },
+      {
+        key: 'table-footer-background',
+        label: 'Table Footer Background Color',
+        type: 'color',
+      },
+      {
+        key: 'table-pagination-color',
+        label: 'Table Pagination Color',
+        type: 'color',
+      },
+      {
+        key: 'table-pagination-background',
+        label: 'Table Pagination Background Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'input',
+    label: 'Input',
+    props: [
+      {
+        key: 'label-color',
+        label: 'Label Font Color',
+        type: 'color',
+      },
+      {
+        key: 'label-background',
+        label: 'Label Background Color',
+        type: 'color',
+      },
+      {
+        key: 'input-color',
+        label: 'Input Font Color',
+        type: 'color',
+      },
+      {
+        key: 'input-background',
+        label: 'Input Background Color',
+        type: 'color',
+      },
+      {
+        key: 'input-border-size',
+        label: 'Input Border Size',
+        type: 'text',
+      },
+      {
+        key: 'input-border-style',
+        label: 'Input Border Style',
+        type: 'select',
+        options: optionBorderStyle,
+      },
+      {
+        key: 'input-focus-border-color',
+        label: 'Input Focus Border Color',
+        type: 'color',
+      },
+      {
+        key: 'input-rounded',
+        label: 'Input Rounded',
+        type: 'select',
+        options: optionRounded
+      },
+    ],
+  },
+  {
+    key: 'panel',
+    label: 'Panel',
+    props: [
+      {
+        key: 'panel-background',
+        label: 'Panel Background',
+        type: 'color',
+      },
+      {
+        key: 'panel-header-background',
+        label: 'Panel Header Background',
+        type: 'color',
+      },
+      {
+        key: 'panel-header-color',
+        label: 'Panel Header Color',
+        type: 'color',
+      },
+      {
+        key: 'panel-shadow',
+        label: 'Panel Shadow',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'tab',
+    label: 'Tab',
+    props: [
+      {
+        key: 'tab-color',
+        label: 'Tab Color',
+        type: 'color',
+      },
+      {
+        key: 'tab-active-background',
+        label: 'Tab Active Background',
+        type: 'color',
+      },
+      {
+        key: 'tab-active-color',
+        label: 'Tab Active Header Color',
+        type: 'color',
+      },
+      {
+        key: 'tab-border-color',
+        label: 'Tab Border Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'accordion',
+    label: 'Accordion',
+    props: [
+      {
+        key: 'accordion-header-background',
+        label: 'Accordion Header Background',
+        type: 'color',
+      },
+      {
+        key: 'accordion-header-active-background',
+        label: 'Accordion Header Active Background',
+        type: 'color',
+      },
+      {
+        key: 'accordion-header-color',
+        label: 'Accordion Header Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'slider',
+    label: 'Slider',
+    props: [
+      {
+        key: 'slider-track-background',
+        label: 'Slider Track Background',
+        type: 'color',
+      },
+      {
+        key: 'slider-thumb-background',
+        label: 'Slider Thumb Background',
+        type: 'color',
+      },
+      {
+        key: 'slider-thumb-border-color',
+        label: 'Slider Thumb Border Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'progress',
+    label: 'Progress',
+    props: [
+      {
+        key: 'progress-background',
+        label: 'Progress Background',
+        type: 'color',
+      },
+      {
+        key: 'progress-bar-background',
+        label: 'Progress Bar Background',
+        type: 'color',
+      },
+      {
+        key: 'progress-bar-color',
+        label: 'Progress Bar Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'calendar',
+    label: 'Calendar',
+    props: [
+      {
+        key: 'calendar-background',
+        label: 'Calendar Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-header-background',
+        label: 'Calendar Header Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-header-color',
+        label: 'Calendar Header Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-day-color',
+        label: 'Calendar Day Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-day-hover-background',
+        label: 'Calendar Day Hover Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-background',
+        label: 'Calendar Today Background',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-color',
+        label: 'Calendar Today Color',
+        type: 'color',
+      },
+      {
+        key: 'calendar-today-color',
+        label: 'Calendar Today Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'dialog',
+    label: 'Dialog',
+    props: [
+      {
+        key: 'dialog-background',
+        label: 'Dialog Background',
+        type: 'color',
+      },
+      {
+        key: 'dialog-color',
+        label: 'Dialog Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-header-background',
+        label: 'Dialog Header Background',
+        type: 'color',
+      },
+      {
+        key: 'dialog-header-color',
+        label: 'Dialog Header Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-border-color',
+        label: 'Dialog Border Color',
+        type: 'color',
+      },
+      {
+        key: 'dialog-shadow',
+        label: 'Dialog Shadow',
+        type: 'color',
+      },
     ],
   },
 ];
@@ -398,15 +729,13 @@ const selectedThemeKey = ref('');
 const selectedCategory = ref(null);
 const themeState = reactive({});
 
-const fileInput = ref(null);
 const newKey = ref('');
 const newValue = ref('');
 
 // load themes from store / api
 onMounted(async () => {
-  await store.loadSingleThemes();
+  await store.loadSingleThemes(route.params.slug);
   themeList.value = store.themeData;
-  console.log(store.themeData);
   if (themeList.value) {
     selectedThemeKey.value = themeList.value.themename;
     loadThemeToState(selectedThemeKey.value);
@@ -434,15 +763,6 @@ async function loadThemeToState() {
   Object.keys(data).forEach((k) => {
     themeState[k] = data[k];
   });
-
-  // apply css variables
-  applyAllVars();
-}
-
-function applyAllVars() {
-  for (const [k, v] of Object.entries(themeState)) {
-    document.documentElement.style.setProperty(`--${k}`, String(v));
-  }
 }
 
 function selectCategory(key) {
@@ -465,7 +785,6 @@ function addCustom() {
   themeState[newKey.value] = newValue.value;
   newKey.value = '';
   newValue.value = '';
-  applyAllVars();
 }
 
 function resetToDefault() {
@@ -477,10 +796,7 @@ function resetToDefault() {
 async function applyTheme() {
   store.saveActiveTheme(JSON.stringify(themeState));
   // apply and (optionally) persist selection as current theme
-  applyAllVars();
-  // save cookie via store
-  store.applyTheme(selectedThemeKey.value);
-  alert('Theme applied');
+      toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });  
 }
 
 const cssText = computed(() => {
@@ -499,6 +815,14 @@ const jsonText = computed(() => {
 });
 
 // preview styles
+const bodyStyle = computed(() => ({
+  color: `var(--body-color, #fff)`,
+  background: `var(--body-background, #fff)`,
+  fontSize: `var(--font-size, 6)`,
+  fontFamily: `var(--font-family, 6)`,
+  border: `var(--border, 6)`,
+}));
+
 const h1Style = computed(() => ({
   color: `var(--h1-color, #fff)`,
   fontSize: `var(--h1-font-size, 6)`,
@@ -520,10 +844,28 @@ const pStyle = computed(() => ({
   paddingBottom: `var(--p-padding-bottom, 6)`,
 }));
 
+const buttonStyle = computed(() => ({
+  background: `var(--button-background, #4f46e5)`,
+  color: `var(--button-color, #fff)`,
+  borderRadius: `var(--button-radius)`,
+  borderColor: `var(--button-border-color)`,
+  padding: `var(--button-padding)`,
+  border: `var(--border)`,
+  hover: {
+    background: `var(--button-hover-background, #4f46e5)`,
+    color: `var(--button-hover-color, #fff)`,
+  },
+}));
+
 const btnPrimaryStyle = computed(() => ({
   background: `var(--button-primary-background, #4f46e5)`,
   color: `var(--button-primary-color, #fff)`,
   borderRadius: `var(--button-radius)`,
+  borderColor: `var(--button-border-color)`,
+  hover: {
+    background: `var(--button-primary-hover-background, #4f46e5)`,
+    color: `var(--button-primary-hover-color, #fff)`,
+  },
 }));
 
 const btnSecondaryStyle = computed(() => ({
@@ -539,6 +881,7 @@ const tableStyle = computed(() => ({
   borderRadius: `var(--border-radius, 1px)`,
   borderStyle: `var(--table-border-style)`,
   borderColor: `var(--table-border-color)`,
+  boxShadow: `var(--panel-shadow, 6)`,
 }));
 
 const tableHeadStyle = computed(() => ({
@@ -557,8 +900,28 @@ const tableRowStyle = computed(() => ({
   },
 }));
 
-// expose for template input file
-const fileInputRef = ref(null);
-</script>
+const tableFooterStyle = computed(() => ({
+  background: `var(--table-footer-background, #f9fafb)`,
+  color: `var(--table-footer-color, #111827)`,
+}));
 
-<style scoped></style>
+const tablePaginationStyle = computed(() => ({
+  background: `var(--table-pagination-background, #f9fafb)`,
+  color: `var(--table-pagination-color, #111827)`,
+}));
+
+const labelStyle = computed(() => ({
+  background: `var(--label-background, #f9fafb)`,
+  color: `var(--label-color, #111827)`,
+}));
+
+const inputStyle = computed(() => ({
+  background: `var(--input-background, #f9fafb)`,
+  color: `var(--input-color, #111827)`,
+  borderStyle: `var(--input-border-style)`,
+  borderSize: `var(--input-border-size)`,
+  borderFocusColor: `var(--input-focus-border-color)`,
+  borderRadius: `var(--border-radius)`,
+  border: `var(--border, 6)`,
+}));
+</script>

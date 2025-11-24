@@ -121,6 +121,7 @@ definePageMeta({
 });
 
 const route = useRoute();
+const toast = useToast();
 
 interface NodeSchema {
   id: string;
@@ -605,12 +606,12 @@ const saveSchema = async () => {
   try {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res?.code == 200) {
-      alert('Runtime schema saved successfully');
+            toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
     } else {
-      alert(res.message);
+            toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
   } catch (err) {
-    alert(err);
+          toast.add({ title: 'Error', description: err, color: 'error' });
   }
 };
 
@@ -865,6 +866,7 @@ function recursiveDesignerToDbSchema(node: any, result: any): any {
         break;
 
       case 'modals':
+        console.log(child)
         result.modals = (child.children || []).map((modal) => ({
           type: modal.type || 'modal',
           key: modal.key || 'modalForm',

@@ -77,12 +77,16 @@ watch(
 
     const val = formData.value[component.key];
     if (val != null && val !== '') {
-      const exists = newOptions.some((o) => o.value == val);
+      const exists = newOptions.some((o) => o.id == val);
+      console.log(newOptions)
+      console.log(val)
+      console.log(exists)
       if (!exists) {
         console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
       } else {
         // force reactivity update agar USelect sinkron
         formData.value[component.key] = val;
+        console.log(formData)
       }
     }
   },
@@ -94,7 +98,7 @@ watch(
   () => formData.value[component.key],
   (val) => {
     if (options.value.length > 0 && val != null && val !== '') {
-      const exists = options.value.some((o) => o.value == val);
+      const exists = options.value.some((o) => o.id == val);
       if (!exists) {
         console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${component.key}`);
       }
@@ -115,7 +119,7 @@ watch(
       value-key="id"
       :loading="loading"
       :placeholder="component.place || $t('CHOOSE')"
-      class="w-full dark:bg-gray-900 dark:border-gray-700 px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
+      class="w-full px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
       :disabled="loading"
     />
 

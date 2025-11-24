@@ -4,48 +4,39 @@
     <div class="flex flex-col sm:flex-row mb-3">
       <h2 class="text-2xl font-semibold">{{ title }}</h2>
 
-        <!-- Search -->
-        <!-- Filter Container -->
-<div v-if="enableSearch" class="mb-4">
-  <!-- SIMPLE SEARCH -->
-  <div v-if="simpleSearch" class="flex items-center gap-2">
-    <input
-      v-model="searchQuery"
-      type="text"
-      placeholder="Search..."
-      class="border rounded px-3 py-2 text-sm w-full"
-      @keyup.enter="fetchData"
-    />
+      <!-- Search -->
+      <!-- Filter Container -->
+      <div v-if="enableSearch" class="mb-4">
+        <!-- SIMPLE SEARCH -->
+        <div v-if="simpleSearch" class="flex items-center gap-2">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search..."
+            class="border rounded px-3 py-2 text-sm w-full"
+            @keyup.enter="fetchData"
+          />
 
-    <button
-      class="px-3 py-2 bg-blue-600 text-white rounded"
-      @click="fetchData"
-    >
-      Cari
-    </button>
-  </div>
+          <button class="px-3 py-2 bg-blue-600 text-white rounded" @click="fetchData">Cari</button>
+        </div>
 
-  <!-- COMPLEX SEARCH -->
-  <div
-    v-else
-    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-  >
-    <div v-for="(col, index) in searchColumn" :key="index">
-      <input
-        v-if="['text', 'number', 'email'].includes(col.type)"
-        v-model="searchComplexQuery[col.key]"
-        :type="col.type"
-        :placeholder="`${$t(col.place.toUpperCase())}...`"
-        class="border rounded px-3 py-2 text-sm w-full"
-        @keyup.enter="fetchData"
-      />
-    </div>
-  </div>
-
+        <!-- COMPLEX SEARCH -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div v-for="(col, index) in searchColumn" :key="index">
+            <input
+              v-if="['text', 'number', 'email'].includes(col.type)"
+              v-model="searchComplexQuery[col.key]"
+              :type="col.type"
+              :placeholder="`${$t(col.place.toUpperCase())}...`"
+              class="border rounded px-3 py-2 text-sm w-full"
+              @keyup.enter="fetchData"
+            />
+          </div>
+        </div>
 
         <!-- Toolbar Actions -->
         <div v-if="actions && actions.length">
-          <button v-for="(action, index) in actions" :key="index" class="btnPrimary" @click="$emit('action', action)">
+          <button v-for="(action, index) in actions" :key="index" @click="$emit('action', action)">
             <i v-if="action.icon" :class="['mr-1', action.icon]"></i>
             {{ action.label }}
           </button>
@@ -54,11 +45,11 @@
     </div>
 
     <!-- Table -->
-    <div class="table w-full rounded-xl">
-      <table>
-        <thead class="thead text-sm uppercase font-semibold">
+    <div class="w-full rounded-xl">
+      <table class="w-full">
+        <thead class="text-sm uppercase font-semibold">
           <tr>
-            <th class="thead px-4 py-3" v-if="enableCheck && isSelectAll">
+            <th class="px-4 py-3" v-if="enableCheck && isSelectAll">
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
@@ -136,13 +127,13 @@
       </table>
 
       <!-- Pagination -->
-      <div v-if="enablePaging" class="flex justify-center items-center mt-4 gap-2">
+      <div v-if="enablePaging" class="paging flex justify-center items-center gap-2">
         <span class="text-base-content/70"> Page {{ currentPage }} / {{ totalPages }} </span>
 
         <select
           v-if="enablePageSize"
           v-model.number="pageSize"
-          class="border rounded px-2 py-1 text-sm dark:text-gray-800 dark:bg-white"
+          class="border rounded px-2 py-1 text-sm"
           @change="handlePageSizeChange"
         >
           <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
@@ -186,6 +177,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useThemeStore } from '~/store/theme';
 import { useApi } from '~/composables/useApi';
 import TablePagination from '~/components/TablePagination';
+import { resolveSoa } from 'dns';
 
 const props = defineProps({
   title: String,
@@ -265,7 +257,7 @@ const isExpanded = (row: any) => {
 
 // Formatter
 const formatCellValue = (col: any, value: any) => {
-  if (['boolean', 'bool'].includes(col.type))
+  if (['boolean', 'bool', 'checkbox'].includes(col.type))
     return value
       ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
       : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
@@ -303,11 +295,17 @@ async function fetchData() {
       res = await Api.get(`${props.endPoint}?${query}`);
     }
 
-    if (res.code === 200) {
+    if (res.code === 200 && res.data?.data) {
+      currentPage.value = res.data.page
       rowsData.value = res.data.data || [];
       totalRecords.value = res.data.total || rowsData.value.length;
       totalPages.value = res.data.meta?.totalPages || Math.ceil(totalRecords.value / pageSize.value);
-    } else rowsData.value = [];
+    } else {
+      currentPage.value = 0
+      rowsData.value = [];
+      totalPages.value = 0
+      totalRecords.value = 0
+    }
   } catch (e) {
     console.error(e);
     rowsData.value = [];
@@ -317,7 +315,6 @@ async function fetchData() {
 }
 
 function renderTable(component: any) {
-  console.log('com ', component);
   if (!component) return null;
   const key = component.key || component.text || `table0`;
 

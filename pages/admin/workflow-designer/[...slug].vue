@@ -28,6 +28,5 @@ onMounted(async () => {
   const id = (route.params.slug ?? route.params.id ?? route.query.id) as string;
   if (!id) return;
   await store.loadWorkflow(id);
-  console.log('AFTER LOAD workflow =>', store.workflow);
 });
 </script>

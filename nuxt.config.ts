@@ -20,8 +20,8 @@ export default defineNuxtConfig({
   },
   devServer: {
     watch: {
-      usePolling: true
-    }
+      usePolling: true,
+    },
   },
   pinia: {
     storesDirs: ['./store/**'],
