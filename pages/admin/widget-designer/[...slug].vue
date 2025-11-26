@@ -1,25 +1,34 @@
 <template>
   <div class="flex">
-    <button class="w-full py-1 rounded" @click="saveSchema">💾 Save Schema</button>
-    <button class="w-full py-1 rounded" @click="loadSchema">📂 Load Schema</button>
-    <button class="w-full py-1 rounded" @click="copySchema">📂 Copy From ...</button>
-    <button class="w-full py-1 rounded" @click="togglePreview">
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
+      💾 Save Schema
+    </button>
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="clearSchema">
+      Clear Schema
+    </button>
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
+      📂 Load Schema
+    </button>
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="copySchema">
+      📂 Copy From ...
+    </button>
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="togglePreview">
       {{ previewMode ? '🧱 Edit Mode' : '👁 Preview' }}
     </button>
-    <button class="w-full py-1 rounded" @click="toggleJson">
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="toggleJson">
       {{ showJson ? '🧱 Debug Off' : '👁 Debug On' }}
     </button>
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-1/5 border-r p-3 overflow-y-auto">
+    <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
       <h2 class="font-bold text-lg mb-3">Elements</h2>
 
       <!-- Komponen dasar -->
       <div
         v-for="(comp, idx) in availableComponents"
         :key="idx"
-        class="border rounded p-2 mb-2 cursor-move"
+        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
         draggable="true"
         @dragstart="onDragStart(comp)"
       >
@@ -31,7 +40,7 @@
       <div
         v-for="(group, idx) in layoutContainers"
         :key="'grp-' + idx"
-        class="border rounded p-2 mb-2 cursor-move"
+        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
         draggable="true"
         @dragstart="onDragStart(group)"
       >
@@ -40,7 +49,7 @@
     </aside>
 
     <!-- 🔹 Canvas Tengah -->
-    <main class="flex-1 p-5 overflow-auto w-full">
+    <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
       <div
         v-if="previewMode"
         class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
@@ -48,20 +57,20 @@
         <FormRender
           v-if="formSchema"
           :schema="formSchema"
-          :menuName="dataWidget.menuName"
-          :formType="dataWidget.menuType"
-          :title="dataWidget.description"
+          :menuName="dataMenu.menuName"
+          :formType="dataMenu.menuType"
+          :title="dataMenu.description"
         />
       </div>
       <div v-if="!previewMode" class="min-h-[80vh] rounded-xl shadow-inner" @dragover.prevent @drop="onDropRoot">
-        <div v-if="!canvasComponents.length" class="text-gray-400 text-center py-20">
+        <div v-if="!canvasComponents?.length" class="text-gray-400 text-center py-20">
           Drag components or containers here
         </div>
 
         <draggable v-model="canvasComponents" group="components" item-key="id" class="space-y-3">
           <template #item="{ element }">
             <div
-              class="border rounded p-3 bg-gray-50 hover:border-blue-500 cursor-pointer relative group"
+              class="panel border rounded p-3 cursor-pointer relative group"
               :class="{ 'border-blue-600': selected?.id === element.id }"
               @click.stop="selectComponent(element)"
             >
@@ -77,19 +86,19 @@
             </div>
           </template>
         </draggable>
-      </div>
-      <!-- 🔍 JSON Debug View -->
-      <div
-        v-if="showJson && !previewMode"
-        class="bg-gray-900 text-green-400 font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]"
-      >
-        <h1>Debug</h1>
-        <pre>{{ formattedJson }}</pre>
+        <!-- 🔍 JSON Debug View -->
+        <div v-if="showJson && !previewMode" class="panel font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
+          <h1>Debug</h1>
+          <textarea
+  v-model="debugText"
+  class="w-full h-120 p-3 border rounded font-mono text-sm"
+></textarea>
+        </div>
       </div>
     </main>
 
     <!-- 🔹 Tree View + Property Panel -->
-    <aside class="w-1/4 border-l p-4 overflow-y-auto">
+    <aside class="w-1/4 bg-white border-l p-4 overflow-y-auto dark:bg-black">
       <h3 class="font-semibold mb-3">Form Structure</h3>
       <TreeView :nodes="canvasComponents" :selected="selected" @select="selectComponent" />
 
@@ -97,7 +106,7 @@
 
       <div v-if="selected && !previewMode">
         <h3 class="font-semibold mb-3">Properties</h3>
-        <PropertyEditor v-model="selected.props" :availableComponents="availableComponents" />
+        <PropertyEditor v-model="selected.props" />
       </div>
     </aside>
   </div>
@@ -109,14 +118,14 @@ import draggable from 'vuedraggable';
 import RenderNode from '~/components/RenderNode.vue';
 import TreeView from '~/components/TreeView.vue';
 import PropertyEditor from '~/components/PropertyEditor.vue';
-import FormRender from '~/components/FormRender.vue';
+import { availableComponents, layoutContainers } from '~/types/components';
 
 definePageMeta({
   middleware: ['auth'],
 });
 
-const toast = useToast();
 const route = useRoute();
+const toast = useToast();
 
 interface NodeSchema {
   id: string;
@@ -126,380 +135,7 @@ interface NodeSchema {
   children?: NodeSchema[];
 }
 
-const availableComponents = [
-  {
-    type: 'bool',
-    label: 'Boolean',
-    props: {
-      type: 'bool',
-      key: '',
-      label: '',
-      place: '',
-      text: '',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'button',
-    label: 'Button',
-    props: {
-      type: 'button',
-      text: 'Button',
-      class: 'px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition',
-      icon: 'heroicons:plus',
-      onClick: '',
-    },
-  },
-  {
-    type: 'chart',
-    label: 'Chart',
-    props: {
-      type: 'chart',
-      key: '',
-      label: '',
-      place: '',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'color',
-    label: 'Color',
-    props: {
-      type: 'color',
-      key: '',
-      text: 'Color',
-      place: 'Enter a color',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'date',
-    label: 'Date',
-    props: {
-      type: 'date',
-      key: '',
-      text: 'Date',
-      place: 'Enter a date',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'datetime',
-    label: 'Date Time',
-    props: {
-      type: 'datetime',
-      key: '',
-      text: 'Date Time',
-      place: 'Enter a date time',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'email',
-    label: 'Email',
-    props: {
-      type: 'email',
-      key: '',
-      label: 'Email',
-      place: 'example@mail.com',
-      required: false,
-    },
-  },
-  {
-    type: 'file',
-    label: 'File',
-    props: {
-      type: 'file',
-      key: '',
-      text: 'File',
-      place: 'Enter a file',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'hidden',
-    label: 'Hidden',
-    props: {
-      type: 'hidden',
-      text: 'Hidden Text',
-      place: 'Enter a text',
-      key: '',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'image',
-    label: 'Image',
-    props: {
-      type: 'image',
-      key: '',
-      text: 'Image',
-      place: 'Enter a image',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'longtext',
-    label: 'Long Text',
-    props: {
-      type: 'longtext',
-      key: '',
-      label: 'Long Text',
-      place: 'Enter long text',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'month',
-    label: 'Month',
-    props: {
-      type: 'month',
-      key: '',
-      text: 'Month',
-      place: 'Enter a month',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'number',
-    label: 'Number',
-    props: {
-      type: 'number',
-      key: '',
-      text: 'Number',
-      place: 'enter a number',
-      required: false,
-    },
-  },
-  {
-    type: 'radio',
-    label: 'Radio',
-    props: {
-      type: 'radio',
-      key: '',
-      text: 'Radio',
-      place: 'Enter a radio',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'range',
-    label: 'Range',
-    props: {
-      type: 'range',
-      key: '',
-      text: 'Range',
-      place: 'Enter a range',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'reset',
-    label: 'Reset',
-    props: {
-      type: 'reset',
-      key: '',
-      text: 'Reset',
-      place: 'Enter a reset',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'select',
-    label: 'Select',
-    props: {
-      type: 'select',
-      key: '',
-      text: '',
-      source: '',
-      label: '',
-      place: 'Choose a data',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'tel',
-    label: 'Tel',
-    props: {
-      type: 'tel',
-      key: '',
-      text: 'Tel',
-      place: 'Enter a tel',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'text',
-    label: 'Text',
-    props: {
-      type: 'text',
-      key: '',
-      text: 'Text',
-      place: 'Enter a text',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'time',
-    label: 'Time',
-    props: {
-      type: 'time',
-      key: '',
-      text: 'Time',
-      place: 'Enter a time',
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'url',
-    label: 'Url',
-    props: {
-      type: 'url',
-      key: '',
-      text: 'Url',
-      place: 'Enter a url',
-      enabled: true,
-      required: false,
-    },
-  },
-];
-
 const formattedJson = ref('');
-
-const layoutContainers = [
-  {
-    type: 'widget',
-    label: 'Widget',
-    props: {
-      type: 'widget',
-      class: 'w-full',
-      layout: 'standard',
-      primary: '',
-      title: {
-        text: '',
-        class: 'text-2xl font-bold tracking-tight mb-4',
-      },
-      subtitle: {
-        text: '',
-        class: 'text-1xl tracking-tight mb-4',
-      },
-      action: {
-        onNew: '',
-        onRead: '',
-        onGet: '',
-        onCreate: '',
-        onUpdate: '',
-        onUpload: '',
-        onPurge: '',
-        onPdf: '',
-        onXls: '',
-      },
-    },
-    children: [],
-  },
-  {
-    type: 'buttons',
-    label: 'Buttons',
-    props: {
-      type: 'buttons',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'components',
-    label: 'Components',
-    props: {
-      type: 'components',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'table',
-    label: 'Table',
-    props: {
-      type: 'table',
-      key: 'table0',
-      primary: '',
-      text: '',
-      source: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    search: [],
-    columns: [],
-  },
-  {
-    type: 'tables',
-    label: 'Tables',
-    props: {
-      type: 'tables',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    tables: [],
-    search: [],
-  },
-  {
-    type: 'search',
-    label: 'Search',
-    props: {
-      type: 'search',
-      key: '',
-      class: '',
-    },
-    children: [],
-  },
-  {
-    type: 'columns',
-    label: 'Columns',
-    props: {
-      type: 'columns',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'modals',
-    label: 'Modals',
-    props: {
-      type: 'modals',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'modal',
-    label: 'Modal',
-    props: {
-      type: 'modal',
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-];
 
 const canvasComponents = ref<NodeSchema[]>([]);
 const selected = ref<NodeSchema | null>(null);
@@ -566,37 +202,34 @@ const selectComponent = (node: NodeSchema) => {
 
 const togglePreview = () => {
   previewMode.value = !previewMode.value;
-  selected.value = null;
-  const designJson = canvasComponents.value;
-  const runtimeJson = designerToDbSchema(designJson);
-  formSchema.value = runtimeJson;
 };
 
 const toggleJson = () => {
   showJson.value = !showJson.value;
 };
 
-const saveSchema = async () => {
-  const designJson = canvasComponents.value;
-  const runtimeJson = designerToDbSchema(designJson);
+const clearSchema = async () => {
+  canvasComponents.value = []
+}
 
+const saveSchema = async () => {
   const dataForm = new FormData();
   dataForm.append('flowname', 'modifwidget');
   dataForm.append('menu', 'admin');
   dataForm.append('search', 'true');
-  dataForm.append('widgetid', dataWidget.widgetid);
-  dataForm.append('widgetname', dataWidget.widgetname);
-  dataForm.append('description', dataWidget.description);
-  dataForm.append('widgettitle', dataWidget.widgettitle);
-  dataForm.append('widgetversion', dataWidget.widgetversion);
-  dataForm.append('widgetby', dataWidget.widgetby);
-  dataForm.append('moduleid', dataWidget.moduleid);
-  dataForm.append('recordstatus', dataWidget.recordStatus);
-  dataForm.append('widgetform', JSON.stringify(runtimeJson));
+  dataForm.append('widgetid', dataMenu.widgetid);
+  dataForm.append('widgetname', dataMenu.widgetname);
+  dataForm.append('description', dataMenu.description);
+  dataForm.append('widgettitle', dataMenu.widgettitle);
+  dataForm.append('widgetversion', dataMenu.widgetversion);
+  dataForm.append('widgetby', dataMenu.widgetby);
+  dataForm.append('moduleid', dataMenu.moduleid);
+  dataForm.append('recordstatus', dataMenu.recordStatus);
+  dataForm.append('widgetform', JSON.stringify(formattedJson.value));
   try {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res?.code == 200) {
-      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
+      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
@@ -605,14 +238,17 @@ const saveSchema = async () => {
   }
 };
 
-const dataWidget = reactive({
+const dataMenu = reactive({
   widgetid: Number,
   widgetname: String,
   widgettitle: String,
   widgetversion: String,
-  widgetby: String,
+  widgetform: String,
   description: String,
   moduleid: Number,
+  modulename: String,
+  widgetby: String,
+  installdate: String,
   recordStatus: Number,
 });
 
@@ -620,18 +256,19 @@ const loadSchema = async () => {
   try {
     const res = await getWidgetForm(route.params.slug);
     if (res?.code == 200) {
-      dataWidget.widgetid = res?.data.data.widgetid;
-      dataWidget.widgetname = res?.data.data.widgetname;
-      ((dataWidget.description = res?.data.data.description),
-        (dataWidget.widgettitle = res?.data.data.widgettitle),
-        (dataWidget.widgetversion = res?.data.data.widgetversion),
-        (dataWidget.widgetby = res?.data.data.widgetby),
-        (dataWidget.description = res?.data.data.description),
-        (dataWidget.moduleid = res?.data.data.moduleid),
-        (dataWidget.recordStatus = res?.data.data.recordstatus));
+      dataMenu.widgetid = res?.data.data.widgetid;
+      dataMenu.widgetname = res?.data.data.widgetname;
+      dataMenu.description = res?.data.data.description
+      dataMenu.widgettitle = res?.data.data.widgettitle,
+        dataMenu.widgetversion = res?.data.data.widgetversion,
+        dataMenu.moduleid = res?.data.data.moduleid,
+        dataMenu.modulename = res?.data.data.modulename,
+        dataMenu.widgetby = res?.data.data.widgetby,
+        dataMenu.installdate = res?.data.data.installdate,
+      dataMenu.recordStatus = res?.data.data.recordstatus;
       if (res?.data.data.widgetform != '') {
-        formSchema.value = res?.data?.data.menuform;
-        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.widgetform));
+        formSchema.value = res?.data?.data.widgetform;
+        canvasComponents.value = JSON.parse(res?.data?.data.widgetform);
       }
     } else {
       console.error('Invalid response from ', res);
@@ -647,9 +284,9 @@ const copySchema = async () => {
     try {
       const res = await getWidgetForm(name);
       if (res?.code == 200) {
-        if (res?.data.widgetform != '') {
-          formSchema.value = res?.data?.widgetform;
-          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.widgetform));
+        if (res?.data.data.menuform != '') {
+          formSchema.value = res?.data?.data.menuform;
+          canvasComponents.value = res?.data?.data.menuform;
         }
       } else {
         console.error('Invalid response from ', res);
@@ -666,268 +303,22 @@ onMounted(async () => {
   loadSchema();
 });
 
-function dbSchemaToDesigner(dbSchema: any): any[] {
-  const randomId = () => crypto.randomUUID();
-
-  const masterContainer: any = {
-    id: randomId(),
-    type: 'widget',
-    label: dbSchema.title?.text || 'Widget',
-    props: {
-      class: dbSchema.class,
-      layout: dbSchema.layout,
-      primary: dbSchema.primary,
-      title: dbSchema.title,
-      subtitle: dbSchema.subtitle,
-      action: dbSchema.action || {},
-    },
-    children: [],
-  };
-
-  // === BUTTONS ===
-  if (dbSchema.buttons?.components?.length) {
-    const buttonsContainer = {
-      id: randomId(),
-      type: 'buttons',
-      label: 'Buttons',
-      props: { class: dbSchema.buttons.class },
-      children: dbSchema.buttons.components.map((btn: any) => ({
-        id: randomId(),
-        type: 'button',
-        label: btn.text,
-        props: btn,
-        children: [],
-      })),
-    };
-    masterContainer.children.push(buttonsContainer);
+const debugText = computed({
+  get() {
+    return JSON.stringify(canvasComponents.value, null, 2)
+  },
+  set(v: string) {
+    try {
+      canvasComponents.value = JSON.parse(v)
+    } catch {}
   }
-
-  if (dbSchema.components?.length) {
-    const componentContainer = {
-      id: randomId(),
-      type: 'components',
-      label: 'Components',
-      props: { class: dbSchema.class },
-      children: dbSchema.components.map((cmp: any) => ({
-        id: randomId(),
-        type: cmp.type,
-        label: cmp.text,
-        props: cmp,
-      })),
-    };
-    masterContainer.children.push(componentContainer);
-  }
-
-  // === TABLES ===
-  if (Array.isArray(dbSchema.tables) && dbSchema.tables.length) {
-    const tablesContainer = {
-      id: randomId(),
-      type: 'tables',
-      label: 'Tables',
-      props: {},
-      children: dbSchema.tables.map((tbl: any) => {
-        const tableNode = {
-          id: randomId(),
-          type: 'table',
-          label: tbl.text || tbl.name || 'Table',
-          props: tbl,
-          children: [],
-        };
-
-        if (Array.isArray(tbl.search) && tbl.search.length) {
-          const searchContainer = {
-            id: randomId(),
-            type: 'search',
-            label: 'Search',
-            props: {},
-            children: tbl.search.map((s: any) => ({
-              id: randomId(),
-              type: s.type || 'field',
-              label: s.label || s.name,
-              props: s,
-              children: [],
-            })),
-          };
-          tableNode.children.push(searchContainer);
-        }
-
-        // 🧩 Tambahkan kolom jika ada
-        if (Array.isArray(tbl.columns) && tbl.columns.length) {
-          const columnsContainer = {
-            id: randomId(),
-            type: 'columns',
-            label: 'Columns',
-            props: {},
-            children: tbl.columns.map((col: any) => ({
-              id: randomId(),
-              type: 'column',
-              label: col.label || col.name,
-              props: col,
-              children: [],
-            })),
-          };
-          tableNode.children.push(columnsContainer);
-        }
-
-        return tableNode;
-      }),
-    };
-    masterContainer.children.push(tablesContainer);
-  }
-
-  // === MODALS ===
-  if (Array.isArray(dbSchema.modals) && dbSchema.modals.length) {
-    const modalsContainer = {
-      id: randomId(),
-      type: 'modals',
-      label: 'Modals',
-      props: {},
-      children: dbSchema.modals.map((mdl: any) => ({
-        id: randomId(),
-        type: 'modal',
-        label: mdl.key,
-        props: { key: mdl.key },
-        children: mdl.components.map((cmp: any) => ({
-          id: randomId(),
-          type: cmp.type,
-          label: cmp.text,
-          props: cmp,
-          children: [],
-        })),
-      })),
-    };
-    masterContainer.children.push(modalsContainer);
-  }
-
-  return [masterContainer];
-}
-
-function getSearch(node: any): any[] {
-  if (!Array.isArray(node)) return [];
-
-  const res = node
-    .filter((child) => child?.type === 'search')
-    .flatMap((child) =>
-      (child.children || []).map((nodeChild: any) => ({
-        type: nodeChild.props?.type || 'text',
-        key: nodeChild.props?.key || '',
-        text: nodeChild.props?.text || '',
-        place: nodeChild.props?.place || '',
-        enabled: nodeChild.props?.enabled ?? true,
-        required: nodeChild.props?.required ?? false,
-      })),
-    );
-  return res;
-}
-
-function getColumns(node: any): any[] {
-  if (!Array.isArray(node)) return [];
-
-  const res = node
-    .filter((child) => child?.type === 'columns')
-    .flatMap((child) =>
-      (child.children || []).map((nodeChild: any) => ({
-        type: nodeChild.props?.type || 'text',
-        key: nodeChild.props?.key || '',
-        text: nodeChild.props?.text || '',
-        primary: nodeChild.props?.primary ?? false,
-      })),
-    );
-  return res;
-}
-
-function recursiveDesignerToDbSchema(node: any, result: any): any {
-  (node.children || []).forEach((child) => {
-    switch (child.type) {
-      case 'buttons':
-        result.buttons = {
-          class: child.class || 'flex flex-wrap gap-2 mb-3',
-          components: (child.children || []).map((nextchild) => ({
-            text: nextchild.props.text || '',
-            class: nextchild.props.class || '',
-            icon: nextchild.props.icon || '',
-            onClick: nextchild.props.onClick || '',
-          })),
-        };
-        break;
-
-      case 'tables':
-        result.tables = (child.children || []).map((tbl) => ({
-          type: 'table',
-          text: tbl.props.text || '',
-          key: tbl.props.key || '',
-          primary: tbl.props.primary,
-          source: tbl.props.source,
-          search: getSearch(tbl.children),
-          columns: getColumns(tbl.children),
-        }));
-        break;
-
-      case 'components':
-        result.components = (child.children || []).map((nextchild) => ({
-          type: nextchild.props.type || 'text',
-          key: nextchild.props.key || '',
-          text: nextchild.props.text || '',
-          length: nextchild.props.length || 0,
-          place: nextchild.props.place || '',
-          source: nextchild.props.source || '',
-          label: nextchild.props.label || '',
-          enable: nextchild.props.enable || true,
-          validated: nextchild.props.validated,
-        }));
-        break;
-
-      case 'modals':
-        result.modals = (child.children || []).map((modal) => ({
-          type: modal.type || 'modal',
-          key: modal.key || 'modalForm',
-          components: (modal.children || []).map((nextchild) => ({
-            type: nextchild.props.type || 'text',
-            key: nextchild.props.key || '',
-            text: nextchild.props.text || '',
-            length: nextchild.props.length || 0,
-            place: nextchild.props.place || '',
-            source: nextchild.props.source || '',
-            label: nextchild.props.label || '',
-            enable: nextchild.props.enable || true,
-            validated: nextchild.props.validated,
-          })),
-        }));
-        break;
-    }
-  });
-  return result;
-}
-
-function designerToDbSchema(designer: NodeSchema[]): any {
-  if (!designer?.length) return;
-  const master = designer[0];
-
-  const result = {
-    type: master.type || 'widget',
-    class: master.props.class || '',
-    layout: master.props.layout || '',
-    primary: master.props.primary || '',
-    title: master.props.title || null,
-    subtitle: master.props.subtitle || null,
-    action: master.props.action || {},
-    buttons: [],
-    tables: [],
-    modals: [],
-    components: [],
-  };
-
-  // Loop semua children level pertama
-
-  return recursiveDesignerToDbSchema(master, result);
-}
+})
 
 watch(
   canvasComponents,
   (newVal) => {
-    const runtimeSchema = designerToDbSchema(newVal);
-    formattedJson.value = JSON.stringify(runtimeSchema, null, 2);
-    formSchema.value = runtimeSchema;
+    formattedJson.value = newVal;
+    formSchema.value = newVal;
   },
   { deep: true, immediate: true },
 );

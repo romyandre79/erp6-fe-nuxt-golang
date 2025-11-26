@@ -179,14 +179,15 @@ async function downForm(mode: any) {
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
     }
-    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName[0] + '.' + mode);
+    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
 }
 
 async function downTemplate() {
   let dataForm = new FormData();
+  
   dataForm.append('menu', props.menuName);
-  await Api.donlotFile('/admin/down-template', dataForm, props.menuName[0] + '.xlsx');
+  await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
 function navigate(key: any) {
@@ -403,9 +404,9 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const prop = component.props;
+      console.log(formData)
       return h(FormSelect, {
-        key: component.props.key,
-        prop,
+        component: prop,
         formData,
         validationErrors,
         validateField,
@@ -503,6 +504,8 @@ function renderContainer(container: any, isgrid: boolean) {
         case 'tables':
         case 'columns':
         case 'search':
+        case 'widget':
+        case 'form':
         case 'modals':
           return h('div', { class: component.props.class }, [renderContainer(component, isgrid)]);
         case 'action':
@@ -525,17 +528,17 @@ function validateField(component: any, value: any) {
     switch (ruleName.toLowerCase()) {
       case 'empty':
         if (value === null || value === undefined || value === '')
-          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
         break;
 
       case 'number':
         if (value !== '' && isNaN(Number(value)))
-          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
         break;
 
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
         break;
 
       // 🧩 min / max
@@ -543,9 +546,9 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MIN`, { entry: component.props.text || component.props.key, value: ruleValue });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MIN_CHAR`, { entry: component.props.text || component.props.key, value: ruleValue });
         }
         break;
 
@@ -553,9 +556,9 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MAX`, { entry: component.props.text || component.props.key, value: ruleValue });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MAX_CHAR`, { entry: component.props.text || component.props.key, value: ruleValue });
         }
         break;
 
@@ -564,7 +567,7 @@ function validateField(component: any, value: any) {
         try {
           const pattern = new RegExp(ruleValue);
           if (!pattern.test(String(value || '')))
-            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.text || component.key });
+            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
         } catch {
           console.warn('Invalid regex:', ruleValue);
         }
@@ -575,7 +578,7 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, { entry: component.text || component.key, field: otherField });
+          message = $t(`INVALID_ENTRY_MATCH`, { entry: component.props.text || component.props.key, field: otherField });
         break;
       }
     }
@@ -583,7 +586,7 @@ function validateField(component: any, value: any) {
     if (message != '') break;
   }
 
-  validationErrors[component.key] = message;
+  validationErrors[component.props.key] = message;
   return !message;
 }
 
@@ -604,11 +607,12 @@ function validateAllFields() {
 
 function renderTable(component: any, isInput: boolean) {
   if (!component) return null;
-  const key = component.key || component.text || `table0`;
+  const key = component.props.key || component.props.text || `table0`;
   let columns: any;
   let searchs: any;
 
   function getData() {
+    console.log(component)
     for (const element of component.children) {
       if (element.type === 'columns') {
         columns = element;
@@ -670,7 +674,7 @@ function getAction(action: string) {
 }
 
 const ReadHandler = async () => {
-  const flow = getAction('get');
+  const flow = getAction('read');
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
