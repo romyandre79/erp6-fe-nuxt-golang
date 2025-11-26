@@ -78,15 +78,15 @@ watch(
     const val = formData.value[component.key];
     if (val != null && val !== '') {
       const exists = newOptions.some((o) => o.id == val);
-      console.log(newOptions)
-      console.log(val)
-      console.log(exists)
+      console.log(newOptions);
+      console.log(val);
+      console.log(exists);
       if (!exists) {
         console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
       } else {
         // force reactivity update agar USelect sinkron
         formData.value[component.key] = val;
-        console.log(formData)
+        console.log(formData);
       }
     }
   },

@@ -520,7 +520,7 @@ const categories = [
         key: 'input-rounded',
         label: 'Input Rounded',
         type: 'select',
-        options: optionRounded
+        options: optionRounded,
       },
     ],
   },
@@ -531,6 +531,11 @@ const categories = [
       {
         key: 'panel-background',
         label: 'Panel Background',
+        type: 'color',
+      },
+      {
+        key: 'panel-color',
+        label: 'Panel Color',
         type: 'color',
       },
       {
@@ -796,7 +801,7 @@ function resetToDefault() {
 async function applyTheme() {
   store.saveActiveTheme(JSON.stringify(themeState));
   // apply and (optionally) persist selection as current theme
-      toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });  
+  toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });
 }
 
 const cssText = computed(() => {

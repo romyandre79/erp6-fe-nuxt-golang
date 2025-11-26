@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FormSelect from '~/components/FormSelect.vue';
 import TablePagination from './TablePagination.vue';
-import { UModal, UTabs } from '#components';
+import { UModal, UTabs, UButton } from '#components';
 import { useApi } from '~/composables/useApi';
 
 const props = defineProps({
@@ -24,7 +24,6 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-const buttons = computed(() => parsedSchema.value?.buttons || {});
 const modals = computed(() => parsedSchema.value?.modals || []);
 const tables = computed(() => parsedSchema.value?.tables || []);
 
@@ -90,26 +89,37 @@ watch(
 
 // 🧩 Modal actions
 function open(key: string) {
+  console.log('🔥 TRY OPEN:', key, modalRefs[key]);
   if (modalRefs[key]) {
     modalRefs[key].value = true;
-    modalTitle.value = 'New Data';
-    formData.value = {};
+    console.log('🔥 UPDATED:', modalRefs[key].value);
   } else {
     console.warn('❌ Modal not found:', key);
   }
 }
 
+function getPrimary() {
+  let node: any 
+  parsedSchema.value.forEach(element => {
+    if (element.type == 'master') {
+      node = element;
+    }
+  });
+  return node.props.primary || null;
+}
+
 async function edit(key: string) {
-  const flow = parsedSchema.value.action?.onGet;
-  console.log(modalRefs)
+  const flow = getAction('get');
+  console.log('flow ',flow)
   if (flow && selectedRows.value.length > 0) {
+    const primary = getPrimary()
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
-    dataForm.append(parsedSchema.value.primary, selectedRows.value[0][parsedSchema.value.primary]);
+    dataForm.append(primary, selectedRows.value[0][primary]);
     try {
       const res = await Api.post('admin/execute-flow', dataForm);
       if (res.code == 200) {
@@ -157,9 +167,9 @@ async function deleteData(table: any) {
 async function downForm(mode: any) {
   let flow = '';
   if (mode == 'pdf') {
-    flow = parsedSchema.value.action?.onPdf;
+    flow = getAction('pdf');
   } else if (mode == 'xlsx' || mode == 'xls') {
-    flow = parsedSchema.value.action?.onXls;
+    flow = getAction('xls');
   }
   if (flow) {
     let dataForm = new FormData();
@@ -175,7 +185,7 @@ async function downForm(mode: any) {
 
 async function downTemplate() {
   let dataForm = new FormData();
-  dataForm.append('menu', props.menuName[0]);
+  dataForm.append('menu', props.menuName);
   await Api.donlotFile('/admin/down-template', dataForm, props.menuName[0] + '.xlsx');
 }
 
@@ -305,38 +315,54 @@ const validationErrors = reactive<Record<string, string>>({});
 
 function renderComponent(component: any, isgrid: boolean) {
   switch (component.type) {
+    case 'title':
+      return h(
+        'h1',
+        {
+          class: component.props.class,
+        },
+        $t(component.props.text),
+      );
+    case 'subtitle':
+      return h(
+        'h2',
+        {
+          class: component.props.class,
+        },
+        $t(component.props.text),
+      );
     case 'label':
-      return h('div', { class: 'mb-2' }, $t(component.text.toUpperCase()));
+      return h('div', { class: 'mb-2' }, $t(component.props.text.toUpperCase()));
 
     case 'longtext': {
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInputArea = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
+          formData.value[component.props.key] = val;
           //validateField(component, val)
         },
       });
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.type != 'hidden'
-          ? component.text
-            ? h('label', { class: 'mb-1 font-medium' }, $t(component.text.toUpperCase()))
+          ? component.props.text
+            ? h('label', { class: 'mb-1 font-medium' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('textarea', {
           type: component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
-            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.place?.toUpperCase()) || '',
+          placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
           onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
           value: modelInputArea.value,
         }),
-        validationErrors[component.key]
-          ? h('span', { class: 'text-red-500 mt-1' }, validationErrors[component.key])
+        validationErrors[component.props.key]
+          ? h('span', { class: 'text-red-500 mt-1' }, validationErrors[component.props.key])
           : null,
       ]);
     }
@@ -344,41 +370,42 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'hidden':
     case 'password':
     case 'number': {
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
+          formData.value[component.props.key] = val;
         },
       });
       return h('div', { class: !isgrid ? 'flex flex-col mb-3' : '' }, [
         component.type != 'hidden'
-          ? component.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
+          ? component.props.text
+            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('input', {
           type: component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
-            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.place?.toUpperCase()) || '',
+          placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
         }),
-        validationErrors[component.key]
-          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+        validationErrors[component.props.key]
+          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
           : null,
       ]);
     }
     case 'select':
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
+      const prop = component.props;
       return h(FormSelect, {
-        key: component.key,
-        component,
+        key: component.props.key,
+        prop,
         formData,
         validationErrors,
         validateField,
@@ -386,12 +413,12 @@ function renderComponent(component: any, isgrid: boolean) {
 
     case 'bool':
     case 'boolean': {
-      if (!(component.key in formData.value)) formData.value[component.key] = false;
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = false;
       const modelCheckbox = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
-          validateField(component, val);
+          formData.value[component.props.key] = val;
+          validateField(component.props, val);
         },
       });
       return h('div', { class: 'flex items-center mb-3 space-x-2' }, [
@@ -404,40 +431,62 @@ function renderComponent(component: any, isgrid: boolean) {
         h(
           'label',
           { class: 'text-sm font-medium text-gray-700 cursor-pointer' },
-          $t(component.text.toUpperCase()) || '',
+          $t(component.props.text.toUpperCase()) || '',
         ),
       ]);
     }
 
     case 'button':
-      return h(
-        'button',
-        {
-          class: `px-4 py-2 rounded mr-2 transition mb-3`,
-          onClick: async () => {
-            const eventName = (component.event || component.onClick).toUpperCase();
-            if (eventName === 'ONCREATE') {
-              if (validateAllFields()) await CreateHandler();
-              else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
-            } else if (eventName === 'ONUPDATE') {
-              if (validateAllFields()) await UpdateHandler();
-              else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
-            } else if (eventName === 'ONDELETE') {
-              await DeleteHandler();
-            } else {
-              emit(eventName, { ...formData });
-            }
-          },
+      return h(UButton, {
+        class: 'px-4 py-2 rounded mr-2 transition mb-3',
+        icon: component.props.icon || '',
+        onClick: async () => {
+          const eventName = component.props.onClick.toLowerCase();
+          console.log('event ', eventName);
+          if (eventName === 'oncreate') {
+            if (validateAllFields()) await CreateHandler();
+            else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
+          } else if (eventName === 'onupdate') {
+            if (validateAllFields()) await UpdateHandler();
+            else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
+          } else if (eventName === 'ondelete') {
+            await DeleteHandler();
+          } else if (eventName.startsWith('open')) {
+            const key = eventName.replace('open:', '');
+            open(key);
+            return;
+          } else if (eventName.startsWith('edit')) {
+            const key = eventName.replace('edit:', '');
+            edit(key);
+            return;
+          } else if (eventName.startsWith('navigate')) {
+            const key = eventName.replace('navigate:', '');
+            navigate(key);
+            return;
+          } else if (eventName.startsWith('downform')) {
+            const key = eventName.replace('downform:', '');
+            downForm(key);
+            return;
+          } else if (eventName.startsWith('upload')) {
+            upload();
+            return;
+          } else if (eventName === 'downtemplate') {
+            await downTemplate();
+          } else {
+            emit(eventName, { ...formData });
+          }
         },
-        component.text || component.type,
-      );
+        label: component.props.text,
+      });
+    case 'action':
+      break;
   }
 }
 
 function renderContainer(container: any, isgrid: boolean) {
   if (!container) return null;
 
-  let children = Array.isArray(container) ? container : container.components || [];
+  let children = Array.isArray(container) ? container : container.children || [];
 
   return h(
     'div',
@@ -450,18 +499,14 @@ function renderContainer(container: any, isgrid: boolean) {
           return renderTable(component, isgrid);
 
         case 'master':
-        case 'masters':
         case 'buttons':
         case 'tables':
         case 'columns':
         case 'search':
-        case 'detail':
         case 'modals':
-        case 'components':
-          return h('div', { class: 'ml-4 mt-2' }, [
-            component.text ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text) : null,
-            renderContainer(component, isgrid),
-          ]);
+          return h('div', { class: component.props.class }, [renderContainer(component, isgrid)]);
+        case 'action':
+          break;
 
         default:
           return renderComponent(component, isgrid);
@@ -560,36 +605,50 @@ function validateAllFields() {
 function renderTable(component: any, isInput: boolean) {
   if (!component) return null;
   const key = component.key || component.text || `table0`;
+  let columns: any;
+  let searchs: any;
+
+  function getData() {
+    for (const element of component.children) {
+      if (element.type === 'columns') {
+        columns = element;
+      } else if (element.type === 'search') {
+        searchs = element;
+      }
+    }
+  }
+
+  getData();
 
   return h('div', { key: key }, [
     h(TablePagination, {
       ref: tableRef,
       columns:
-        component.columns?.map((col: any, i: number) => ({
-          label: col.text || `Column ${i + 1}`,
-          key: col.key || `col${i + 1}`,
+        columns?.children.map((col: any, i: number) => ({
+          label: col.props.text || `Column ${i + 1}`,
+          key: col.props.key || `col${i + 1}`,
           type: col.type || 'text',
         })) ?? [],
       searchColumn:
-        component.search?.map((col: any, i: number) => ({
-          key: col.key || `col${i + 1}`,
+        searchs?.children.map((col: any, i: number) => ({
+          key: col.props.key || `col${i + 1}`,
           type: col.type || 'text',
-          place: col.place || 'search ...',
+          place: col.props.place || 'search ...',
         })) ?? [],
       method: 'POST',
-      endPoint: component.source,
+      endPoint: component.props.source,
       simpleSearch: false,
-      class: component.class || 'mb-4',
-      rowKey: component.primary,
+      class: component.props.class || 'mb-4',
+      rowKey: component.props.primary,
       enableSearch: true,
-      relationKey: component.relationkey,
+      relationKey: component.props.relationkey,
       selectionKeyData: selectedRows.value,
       tables: tables.value,
       isInput: isInput,
       isSelectAll: !isInput,
       selectedKeyData:
-        component.relationkey != '' && selectedRows.value.length > 0
-          ? selectedRows.value[0][component.relationkey]
+        component.props.relationkey != '' && selectedRows.value.length > 0
+          ? selectedRows.value[0][component.props.relationkey]
           : '',
       onSelectionChange: (selRows: any) => {
         selectedRows.value = selRows;
@@ -598,8 +657,20 @@ function renderTable(component: any, isInput: boolean) {
   ]);
 }
 
+
+function getAction(action: string) {
+  let node: any 
+  parsedSchema.value.forEach(element => {
+    if (element.type == 'action') {
+      node = element;
+    }
+  });
+  const formatted = 'on' + action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
+  return node.props[formatted] || null;
+}
+
 const ReadHandler = async () => {
-  const flow = parsedSchema.value.action?.onRead;
+  const flow = getAction('get');
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -616,7 +687,7 @@ const ReadHandler = async () => {
 };
 
 const CreateHandler = async () => {
-  const flow = parsedSchema.value.action?.onCreate;
+  const flow = getAction('create');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -646,7 +717,7 @@ const CreateHandler = async () => {
 };
 
 const UpdateHandler = async () => {
-  const flow = parsedSchema.value.action?.onUpdate;
+  const flow = getAction('update');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -670,12 +741,12 @@ const UpdateHandler = async () => {
       });
     }
   } else {
-                        toast.add({ title: 'Error', description: 'Invalid Flow '+flow, color: 'error' });
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
 const DeleteHandler = async () => {
-  const flow = parsedSchema.value.action?.onPurge;
+  const flow = getAction('purge');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -700,7 +771,7 @@ const DeleteHandler = async () => {
       //ReadHandler()
     }
   } else {
-                        toast.add({ title: 'Error', description: 'Invalid Flow '+flow, color: 'error' });
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
@@ -713,9 +784,9 @@ async function saveData(key: any) {
     let flow = '';
 
     if (modalTitle.value == 'New Data') {
-      flow = parsedSchema.value.action?.onCreate;
+      flow = getAction('create');
     } else {
-      flow = parsedSchema.value.action?.onUpdate;
+      flow = getAction('update');
     }
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -750,77 +821,68 @@ async function saveData(key: any) {
     console.error('Gagal simpan data:', err);
   }
 }
+
+function getModals(schema: any) {
+  let modals: any[] = [];
+  schema.forEach((node) => {
+    if (node.type === 'modals') modals.push(...node.children);
+    if (node.children?.length) {
+      modals.push(...getModals(node.children));
+    }
+  });
+  return modals;
+}
+
+function initModalRefs(schema: any) {
+  schema.forEach((node) => {
+    if (node.type === 'modals') {
+      node.children.forEach((modal) => {
+        const key = modal.props.key;
+        if (key && !modalRefs[key]) {
+          modalRefs[key] = ref(false);
+        }
+      });
+    }
+    if (node.children?.length) initModalRefs(node.children);
+  });
+}
+
+watchEffect(() => {
+  if (parsedSchema.value?.length) {
+    initModalRefs(parsedSchema.value);
+  }
+});
 </script>
 
 <template>
-  <div v-if="parsedSchema?.type != 'widget'" :class="parsedSchema.class">
-    <h1 class="h1">{{ parsedSchema.title.text }}</h1>
-    <p class="p">{{ parsedSchema.subtitle.text }}</p>
-
-    <!-- 🔹 Buttons -->
-    <div
-      :class="parsedSchema.buttons?.class"
-      v-if="
-        buttons &&
-        (parsedSchema.type == 'master' || parsedSchema.type == 'master-detail' || parsedSchema.type == 'report')
-      "
-    >
-      <div v-for="(value, index) in buttons.components" :key="index">
-        <button @click="runAction(value.onClick)"><Icon :name="value.icon" /> {{ value.text }}</button>
-      </div>
-    </div>
-
-    <div v-for="(value, index) in modals" :key="index">
-      <UModal
-        fullscreen
-        v-if="modalRefs?.[value.key] && index == 0"
-        v-model:open="modalRefs[value.key].value"
-        :title="modalTitle"
-        :dismissible="false"
-        :description="parsedSchema.menuname"
-        class="modalHeader"
-        :scrollable="false"
-      >
-        <template #body class="modal">
-          <component :is="renderContainer(value.components, false)" />
-          <UTabs :items="detailTab" v-model="activeTab" class="gap-4" :class="value.class">
-            <template #default="{ item }">
-              {{ item.label || item.text }}
-            </template>
-
-            <template #content="{ item }" class="modal">
-              <div v-for="(valueTable, ix) in tables" :key="ix">
-                <component :is="renderTable(valueTable, true)" v-if="ix > 0" />
-              </div>
-            </template>
-          </UTabs>
-        </template>
-        <template #footer>
-          <div class="flex gap-2">
-            <UButton class="btnSecondary" :label="$t('CLOSE')" @click="modalRefs[value.key].value = false" />
-            <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.key)" />
-          </div>
-        </template>
-      </UModal>
-    </div>
-
-    <component :is="renderTable(tables[0], false)" />
+  <div v-for="(value, index) in parsedSchema">
+    <component :is="renderContainer(value, false)"></component>
   </div>
-  <div v-else :class="parsedSchema.class">
-    <div class="w-full">
-      <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
-      <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
-      <!-- Komponen utama -->
-      <component :is="renderContainer(parsedSchema, false)" />
-
-      <div v-for="(value, index) in tables" :key="index">
-        <component :is="renderTable(value, false)" />
-      </div>
-    </div>
-  </div>
   <div v-if="isUploading" class="mt-2 w-full bg-gray-200 h-2 rounded overflow-hidden">
     <div class="bg-green-500 h-2" :style="{ width: uploadProgress + '%' }"></div>
+  </div>
+
+  <div v-for="(value, index) in getModals(parsedSchema)" :key="value.props.key">
+    <UModal
+      fullscreen
+      v-if="modalRefs?.[value.props.key]"
+      v-model:open="modalRefs[value.props.key]"
+      :title="modalTitle"
+      :dismissible="false"
+      :description="parsedSchema.menuname"
+      :scrollable="false"
+    >
+      <template #body>
+        <component :is="renderContainer(value.children, false)" />
+      </template>
+      <template #footer>
+        <div class="flex gap-2">
+          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="modalRefs[value.props.key].value = false" />
+          <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
+        </div>
+      </template>
+    </UModal>
   </div>
 
   <!-- 🔹 Hidden file input -->

@@ -140,28 +140,28 @@
         </select>
 
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100"
           :disabled="currentPage === 1 || loading || totalPages === 0"
           @click="firstPage"
         >
           <<
         </button>
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100"
           :disabled="currentPage === 1 || loading || totalPages === 0"
           @click="prevPage"
         >
           <
         </button>
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100"
           :disabled="currentPage === totalPages || loading"
           @click="nextPage"
         >
           >
         </button>
         <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+          class="px-3 py-1 rounded-lg border hover:bg-base-100"
           :disabled="currentPage === totalPages || loading"
           @click="lastPage"
         >
@@ -296,15 +296,15 @@ async function fetchData() {
     }
 
     if (res.code === 200 && res.data?.data) {
-      currentPage.value = res.data.page
+      currentPage.value = Number(res.data.page);
       rowsData.value = res.data.data || [];
-      totalRecords.value = res.data.total || rowsData.value.length;
-      totalPages.value = res.data.meta?.totalPages || Math.ceil(totalRecords.value / pageSize.value);
+      totalRecords.value = Number(res.data.total) || Number(rowsData.value.length);
+      totalPages.value = Number(res.data.meta?.totalPages) || Math.ceil(totalRecords.value / pageSize.value);
     } else {
-      currentPage.value = 0
+      currentPage.value = 0;
       rowsData.value = [];
-      totalPages.value = 0
-      totalRecords.value = 0
+      totalPages.value = 0;
+      totalRecords.value = 0;
     }
   } catch (e) {
     console.error(e);

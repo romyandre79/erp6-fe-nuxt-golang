@@ -3,6 +3,9 @@
     <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
       💾 Save Schema
     </button>
+    <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="clearSchema">
+      Clear Schema
+    </button>
     <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="loadSchema">
       📂 Load Schema
     </button>
@@ -60,14 +63,14 @@
         />
       </div>
       <div v-if="!previewMode" class="min-h-[80vh] rounded-xl shadow-inner" @dragover.prevent @drop="onDropRoot">
-        <div v-if="!canvasComponents.length" class="text-gray-400 text-center py-20">
+        <div v-if="!canvasComponents?.length" class="text-gray-400 text-center py-20">
           Drag components or containers here
         </div>
 
         <draggable v-model="canvasComponents" group="components" item-key="id" class="space-y-3">
           <template #item="{ element }">
             <div
-              class="border rounded p-3 bg-gray-50 hover:border-blue-500 cursor-pointer relative group"
+              class="panel border rounded p-3 cursor-pointer relative group"
               :class="{ 'border-blue-600': selected?.id === element.id }"
               @click.stop="selectComponent(element)"
             >
@@ -83,14 +86,14 @@
             </div>
           </template>
         </draggable>
-      </div>
-      <!-- 🔍 JSON Debug View -->
-      <div
-        v-if="showJson && !previewMode"
-        class="bg-gray-900 text-green-400 font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]"
-      >
-        <h1>Debug</h1>
-        <pre>{{ formattedJson }}</pre>
+        <!-- 🔍 JSON Debug View -->
+        <div v-if="showJson && !previewMode" class="panel font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
+          <h1>Debug</h1>
+          <textarea
+  v-model="debugText"
+  class="w-full h-120 p-3 border rounded font-mono text-sm"
+></textarea>
+        </div>
       </div>
     </main>
 
@@ -136,7 +139,6 @@ const availableComponents = [
     type: 'bool',
     label: 'Boolean',
     props: {
-      type: 'bool',
       key: '',
       label: '',
       place: '',
@@ -150,9 +152,8 @@ const availableComponents = [
     type: 'button',
     label: 'Button',
     props: {
-      type: 'button',
       text: 'Button',
-      class: 'px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition',
+      class: 'px-4 py-2 rounded transition',
       icon: 'heroicons:plus',
       onClick: '',
     },
@@ -161,7 +162,6 @@ const availableComponents = [
     type: 'color',
     label: 'Color',
     props: {
-      type: 'color',
       key: '',
       text: 'Color',
       place: 'Enter a color',
@@ -174,7 +174,6 @@ const availableComponents = [
     type: 'date',
     label: 'Date',
     props: {
-      type: 'date',
       key: '',
       text: 'Date',
       place: 'Enter a date',
@@ -187,7 +186,6 @@ const availableComponents = [
     type: 'datetime',
     label: 'Date Time',
     props: {
-      type: 'datetime',
       key: '',
       text: 'Date Time',
       place: 'Enter a date time',
@@ -200,7 +198,6 @@ const availableComponents = [
     type: 'email',
     label: 'Email',
     props: {
-      type: 'email',
       key: '',
       label: 'Email',
       place: 'example@mail.com',
@@ -213,7 +210,6 @@ const availableComponents = [
     type: 'file',
     label: 'File',
     props: {
-      type: 'file',
       key: '',
       text: 'File',
       place: 'Enter a file',
@@ -226,7 +222,6 @@ const availableComponents = [
     type: 'hidden',
     label: 'Hidden',
     props: {
-      type: 'hidden',
       text: 'Hidden Text',
       place: 'Enter a text',
       key: '',
@@ -239,7 +234,6 @@ const availableComponents = [
     type: 'image',
     label: 'Image',
     props: {
-      type: 'image',
       key: '',
       text: 'Image',
       place: 'Enter a image',
@@ -252,7 +246,6 @@ const availableComponents = [
     type: 'longtext',
     label: 'Long Text',
     props: {
-      type: 'longtext',
       key: '',
       label: 'Long Text',
       place: 'Enter long text',
@@ -265,7 +258,6 @@ const availableComponents = [
     type: 'month',
     label: 'Month',
     props: {
-      type: 'month',
       key: '',
       text: 'Month',
       place: 'Enter a month',
@@ -278,7 +270,6 @@ const availableComponents = [
     type: 'number',
     label: 'Number',
     props: {
-      type: 'number',
       key: '',
       label: 'Number',
       place: 'enter a number',
@@ -292,7 +283,6 @@ const availableComponents = [
     type: 'radio',
     label: 'Radio',
     props: {
-      type: 'radio',
       key: '',
       text: 'Radio',
       place: 'Enter a radio',
@@ -305,7 +295,6 @@ const availableComponents = [
     type: 'range',
     label: 'Range',
     props: {
-      type: 'range',
       key: '',
       text: 'Range',
       place: 'Enter a range',
@@ -318,7 +307,6 @@ const availableComponents = [
     type: 'reset',
     label: 'Reset',
     props: {
-      type: 'reset',
       key: '',
       text: 'Reset',
       place: 'Enter a reset',
@@ -331,7 +319,6 @@ const availableComponents = [
     type: 'select',
     label: 'Select',
     props: {
-      type: 'select',
       key: '',
       text: '',
       source: '',
@@ -346,7 +333,6 @@ const availableComponents = [
     type: 'tel',
     label: 'Tel',
     props: {
-      type: 'tel',
       key: '',
       text: 'Tel',
       place: 'Enter a tel',
@@ -359,7 +345,6 @@ const availableComponents = [
     type: 'text',
     label: 'Text',
     props: {
-      type: 'text',
       key: '',
       text: 'Text',
       place: 'Enter a text',
@@ -372,7 +357,6 @@ const availableComponents = [
     type: 'time',
     label: 'Time',
     props: {
-      type: 'time',
       key: '',
       text: 'Time',
       place: 'Enter a time',
@@ -385,7 +369,6 @@ const availableComponents = [
     type: 'url',
     label: 'Url',
     props: {
-      type: 'url',
       key: '',
       text: 'Url',
       place: 'Enter a url',
@@ -394,38 +377,51 @@ const availableComponents = [
       required: false,
     },
   },
+  {
+    type: 'title',
+    label: 'Title',
+    props: {
+      text: 'title',
+      class: 'tracking-tight mb-4',
+    },
+  },
+  {
+    type: 'subtitle',
+    label: 'Sub Title',
+    props: {
+      text: 'Sub Title',
+      class: 'tracking-tight mb-4',
+    },
+  },
+  {
+    type: 'action',
+    label: 'Action',
+    props: {
+      onNew: '',
+      onGet: '',
+      onGetDetail: [],
+      onCreate: '',
+      onUpdate: '',
+      onUpload: '',
+      onPurge: '',
+      onPdf: '',
+      onXls: '',
+    },
+  },
 ];
 
 const formattedJson = ref('');
+
 
 const layoutContainers = [
   {
     type: 'master',
     label: 'Master',
     props: {
-      type: 'master',
       class: 'w-full',
       layout: 'standard',
+      key: 'master',
       primary: '',
-      title: {
-        text: '',
-        class: 'text-2xl font-bold tracking-tight mb-4',
-      },
-      subtitle: {
-        text: '',
-        class: 'text-1xl tracking-tight mb-4',
-      },
-      action: {
-        onNew: '',
-        onGet: '',
-        onGetDetail: [],
-        onCreate: '',
-        onUpdate: '',
-        onUpload: '',
-        onPurge: '',
-        onPdf: '',
-        onXls: '',
-      },
     },
     children: [],
   },
@@ -433,7 +429,6 @@ const layoutContainers = [
     type: 'buttons',
     label: 'Buttons',
     props: {
-      type: 'buttons',
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
     },
@@ -443,7 +438,6 @@ const layoutContainers = [
     type: 'table',
     label: 'Table',
     props: {
-      type: 'table',
       key: 'table0',
       primary: '',
       relationkey: '',
@@ -451,25 +445,21 @@ const layoutContainers = [
       source: '',
       class: 'w-full mb-4',
     },
-    search: [],
-    columns: [],
+    children: [],
   },
   {
     type: 'tables',
     label: 'Tables',
     props: {
-      type: 'tables',
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
     },
-    tables: [],
-    search: [],
+    children: [],
   },
   {
     type: 'search',
     label: 'Search',
     props: {
-      type: 'search',
       key: '',
       class: '',
     },
@@ -479,7 +469,6 @@ const layoutContainers = [
     type: 'columns',
     label: 'Columns',
     props: {
-      type: 'columns',
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
     },
@@ -489,7 +478,6 @@ const layoutContainers = [
     type: 'modals',
     label: 'Modals',
     props: {
-      type: 'modals',
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
     },
@@ -499,7 +487,6 @@ const layoutContainers = [
     type: 'modal',
     label: 'Modal',
     props: {
-      type: 'modal',
       key: '',
       text: '',
       class: 'flex flex-wrap gap-2 mb-3',
@@ -573,20 +560,17 @@ const selectComponent = (node: NodeSchema) => {
 
 const togglePreview = () => {
   previewMode.value = !previewMode.value;
-  selected.value = null;
-  const designJson = canvasComponents.value;
-  const runtimeJson = designerToDbSchema(designJson);
-  formSchema.value = runtimeJson;
 };
 
 const toggleJson = () => {
   showJson.value = !showJson.value;
 };
 
-const saveSchema = async () => {
-  const designJson = canvasComponents.value;
-  const runtimeJson = designerToDbSchema(designJson);
+const clearSchema = async () => {
+  canvasComponents.value = []
+}
 
+const saveSchema = async () => {
   const dataForm = new FormData();
   dataForm.append('flowname', 'modifmenuaccess');
   dataForm.append('menu', 'admin');
@@ -602,16 +586,16 @@ const saveSchema = async () => {
   dataForm.append('menuversion', dataMenu.menuVersion);
   dataForm.append('menutype', dataMenu.menuType);
   dataForm.append('recordstatus', dataMenu.recordStatus);
-  dataForm.append('menuform', JSON.stringify(runtimeJson));
+  dataForm.append('menuform', JSON.stringify(formattedJson.value));
   try {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res?.code == 200) {
-            toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
+      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
     } else {
-            toast.add({ title: 'Error', description: res.message, color: 'error' });
+      toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
   } catch (err) {
-          toast.add({ title: 'Error', description: err, color: 'error' });
+    toast.add({ title: 'Error', description: err, color: 'error' });
   }
 };
 
@@ -646,7 +630,7 @@ const loadSchema = async () => {
       dataMenu.recordStatus = res?.data.data.recordstatus;
       if (res?.data.data.menuform != '') {
         formSchema.value = res?.data?.data.menuform;
-        canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.menuform));
+        canvasComponents.value = JSON.parse(res?.data?.data.menuform);
       }
     } else {
       console.error('Invalid response from ', res);
@@ -664,7 +648,7 @@ const copySchema = async () => {
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
           formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = dbSchemaToDesigner(JSON.parse(res?.data?.data.menuform));
+          canvasComponents.value = res?.data?.data.menuform;
         }
       } else {
         console.error('Invalid response from ', res);
@@ -681,243 +665,22 @@ onMounted(async () => {
   loadSchema();
 });
 
-function dbSchemaToDesigner(dbSchema: any): any[] {
-  const randomId = () => crypto.randomUUID();
-
-  const masterContainer: any = {
-    id: randomId(),
-    type: 'master',
-    label: dbSchema.title?.text || 'Master',
-    props: {
-      class: dbSchema.class,
-      layout: dbSchema.layout,
-      primary: dbSchema.primary,
-      title: dbSchema.title,
-      subtitle: dbSchema.subtitle,
-      action: dbSchema.action || {},
-    },
-    children: [],
-  };
-
-  // === BUTTONS ===
-  if (dbSchema.buttons?.components?.length) {
-    const buttonsContainer = {
-      id: randomId(),
-      type: 'buttons',
-      label: 'Buttons',
-      props: { ...dbSchema.buttons },
-      children: dbSchema.buttons.components.map((btn: any) => ({
-        id: randomId(),
-        type: 'button',
-        label: btn.text,
-        props: btn,
-        children: [],
-      })),
-    };
-    masterContainer.children.push(buttonsContainer);
+const debugText = computed({
+  get() {
+    return JSON.stringify(canvasComponents.value, null, 2)
+  },
+  set(v: string) {
+    try {
+      canvasComponents.value = JSON.parse(v)
+    } catch {}
   }
-
-  // === TABLES ===
-  if (Array.isArray(dbSchema.tables) && dbSchema.tables.length) {
-    const tablesContainer = {
-      id: randomId(),
-      type: 'tables',
-      label: 'Tables',
-      props: { ...dbSchema.tables },
-      children: dbSchema.tables.map((tbl: any) => {
-        const tableNode = {
-          id: randomId(),
-          type: 'table',
-          label: tbl.text || tbl.name || 'Table',
-          props: { ...tbl },
-          children: [],
-        };
-
-        if (Array.isArray(tbl.search) && tbl.search.length) {
-          const searchContainer = {
-            id: randomId(),
-            type: 'search',
-            label: 'Search',
-            props: { ...tbl.search },
-            children: tbl.search.map((s: any) => ({
-              id: randomId(),
-              type: s.type || 'field',
-              label: s.label || s.name,
-              props: s,
-              children: [],
-            })),
-          };
-          tableNode.children.push(searchContainer);
-        }
-
-        // 🧩 Tambahkan kolom jika ada
-        if (Array.isArray(tbl.columns) && tbl.columns.length) {
-          const columnsContainer = {
-            id: randomId(),
-            type: 'columns',
-            label: 'Columns',
-            props: { ...tbl.columns },
-            children: tbl.columns.map((col: any) => ({
-              id: randomId(),
-              type: 'column',
-              label: col.label || col.name,
-              props: { ...col },
-              children: [],
-            })),
-          };
-          tableNode.children.push(columnsContainer);
-        }
-
-        return tableNode;
-      }),
-    };
-    masterContainer.children.push(tablesContainer);
-  }
-
-  // === MODALS ===
-  if (Array.isArray(dbSchema.modals) && dbSchema.modals.length) {
-    const modalsContainer = {
-      id: randomId(),
-      type: 'modals',
-      label: dbSchema.modals.label,
-      props: { ...dbSchema },
-      children: dbSchema.modals.map((mdl: any) => ({
-        id: randomId(),
-        type: 'modal',
-        label: mdl.key,
-        text: mdl.text,
-        props: { ...mdl },
-        children: mdl.components.map((cmp: any) => ({
-          id: randomId(),
-          type: cmp.type,
-          label: cmp.text,
-          props: { ...cmp },
-          children: [],
-        })),
-      })),
-    };
-    masterContainer.children.push(modalsContainer);
-  }
-
-  return [masterContainer];
-}
-
-function getSearch(node: any): any[] {
-  if (!Array.isArray(node)) return [];
-
-  const res = node
-    .filter((child) => child?.type === 'search')
-    .flatMap((child) =>
-      (child.children || []).map((nodeChild: any) => ({
-        type: nodeChild.props?.type || 'text',
-        key: nodeChild.props?.key || '',
-        text: nodeChild.props?.text || '',
-        place: nodeChild.props?.place || '',
-        enabled: nodeChild.props?.enabled ?? true,
-        required: nodeChild.props?.required ?? false,
-      })),
-    );
-  return res;
-}
-
-function getColumns(node: any): any[] {
-  if (!Array.isArray(node)) return [];
-
-  const res = node
-    .filter((child) => child?.type === 'columns')
-    .flatMap((child) =>
-      (child.children || []).map((nodeChild: any) => ({
-        type: nodeChild.props?.type || 'text',
-        key: nodeChild.props?.key || '',
-        text: nodeChild.props?.text || '',
-        primary: nodeChild.props?.primary ?? false,
-      })),
-    );
-  return res;
-}
-
-function recursiveDesignerToDbSchema(node: any, result: any): any {
-  (node.children || []).forEach((child) => {
-    switch (child.type) {
-      case 'buttons':
-        result.buttons = {
-          class: child.class || 'flex flex-wrap gap-2 mb-3',
-          components: (child.children || []).map((nextchild) => ({
-            text: nextchild.props.text || '',
-            class: nextchild.props.class || '',
-            icon: nextchild.props.icon || '',
-            onClick: nextchild.props.onClick || '',
-          })),
-        };
-        break;
-
-      case 'tables':
-        result.tables = (child.children || []).map((tbl) => ({
-          type: 'table',
-          text: tbl.props.text || '',
-          key: tbl.props.key || '',
-          relationkey: tbl.props.relationkey || '',
-          primary: tbl.props.primary,
-          source: tbl.props.source,
-          class: tbl.props.class,
-          search: getSearch(tbl.children),
-          columns: getColumns(tbl.children),
-        }));
-        break;
-
-      case 'modals':
-        console.log(child)
-        result.modals = (child.children || []).map((modal) => ({
-          type: modal.type || 'modal',
-          key: modal.key || 'modalForm',
-          text: modal.text || '',
-          components: (modal.children || []).map((nextchild) => ({
-            type: nextchild.props.type || 'text',
-            key: nextchild.props.key || '',
-            text: nextchild.props.text || '',
-            length: nextchild.props.length || 0,
-            place: nextchild.props.place || '',
-            source: nextchild.props.source || '',
-            class: nextchild.props.class || '',
-            label: nextchild.props.label || '',
-            enable: nextchild.props.enable || true,
-            validated: nextchild.props.validated,
-          })),
-        }));
-        break;
-    }
-  });
-  return result;
-}
-
-function designerToDbSchema(designer: NodeSchema[]): any {
-  if (!designer?.length) return;
-  const master = designer[0];
-
-  const result = {
-    type: master.type || 'master',
-    class: master.props.class || '',
-    layout: master.props.layout || '',
-    primary: master.props.primary || '',
-    title: master.props.title || null,
-    subtitle: master.props.subtitle || null,
-    action: master.props.action || {},
-    buttons: [],
-    tables: [],
-    modals: [],
-  };
-
-  // Loop semua children level pertama
-
-  return recursiveDesignerToDbSchema(master, result);
-}
+})
 
 watch(
   canvasComponents,
   (newVal) => {
-    const runtimeSchema = designerToDbSchema(newVal);
-    formattedJson.value = JSON.stringify(runtimeSchema, null, 2);
-    formSchema.value = runtimeSchema;
+    formattedJson.value = newVal;
+    formSchema.value = newVal;
   },
   { deep: true, immediate: true },
 );
