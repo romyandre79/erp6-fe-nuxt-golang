@@ -269,7 +269,7 @@ async function handleFileChange(e: Event) {
 
   selectedFile.value = file;
 
-  const flow = parsedSchema.value.action?.onUpload;
+  const flow = getAction('upload');
   if (!flow) {
     toast.add({ title: 'Error', description: 'Upload flow not defined.' });
     return;
