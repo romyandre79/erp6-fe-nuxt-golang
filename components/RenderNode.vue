@@ -155,7 +155,11 @@ const onAdd = (event: any) => {
   };
 
   if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
-          toast.add({ title: 'Error', description: `❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`, color: 'error' });
+    toast.add({
+      title: 'Error',
+      description: `❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`,
+      color: 'error',
+    });
     props.node.children.splice(event.added.newIndex, 1);
     return;
   }

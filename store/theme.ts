@@ -86,7 +86,7 @@ export const useThemeStore = defineStore('theme', () => {
         applyTheme(themeCookie.value); // skip update agar tidak trigger watch
       }
     } else {
-      navigateTo('/login')
+      navigateTo('/login');
     }
   });
 

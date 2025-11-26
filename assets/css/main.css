@@ -5,7 +5,6 @@ body {
   background: var(--body-background);
   color: var(--body-color);
   box-shadow: var(--panel-shadow);
-  border: var(--border);
   border-color: var(--border-color);
   border-radius: var(--border-radius);
   font-size: var(--font-size);
@@ -18,7 +17,6 @@ button {
   border-radius: var(--button-radius);
   background: var(--button-background);
   color: var(--button-color);
-  cursor: pointer;
 }
 
 button:hover {
@@ -110,7 +108,6 @@ input {
   background: var(--input-background);
   color: var(--input-color);
   border-style: var(--input-border-style);
-  border: var(--border);
 }
 
 input:focus {
@@ -141,3 +138,8 @@ textarea {
   color: var(--dialog-header-color);
 }
 
+.panel {
+  background: var(--panel-background);
+  color: var(--panel-color);
+  box-shadow: var(--panel-shadow);
+}
