@@ -185,7 +185,7 @@ async function downForm(mode: any) {
 
 async function downTemplate() {
   let dataForm = new FormData();
-  
+
   dataForm.append('menu', props.menuName);
   await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
@@ -427,11 +427,11 @@ function renderComponent(component: any, isgrid: boolean) {
           type: 'checkbox',
           checked: modelCheckbox.value,
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
-          class: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2',
+          class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
         h(
           'label',
-          { class: 'text-sm font-medium text-gray-700 cursor-pointer' },
+          { class: 'cursor-pointer' },
           $t(component.props.text.toUpperCase()) || '',
         ),
       ]);
@@ -439,7 +439,7 @@ function renderComponent(component: any, isgrid: boolean) {
 
     case 'button':
       return h(UButton, {
-        class: 'px-4 py-2 rounded mr-2 transition mb-3',
+        class: 'rounded px-4 py-2 mr-2 transition mb-3',
         icon: component.props.icon || '',
         onClick: async () => {
           const eventName = component.props.onClick.toLowerCase();

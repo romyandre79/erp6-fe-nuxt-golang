@@ -260,7 +260,7 @@ const loadSchema = async () => {
       dataMenu.menuName = res?.data.data.menuname;
       dataMenu.description = res?.data.data.description;
       dataMenu.menuCode = res?.data.data.menucode;
-      dataMenu.menuUrl = res?.datas.data.menuurl;
+      dataMenu.menuUrl = res?.data.data.menuurl;
       dataMenu.menuIcon = res?.data.data.menuicon;
       dataMenu.moduleId = res?.data.data.moduleid;
       dataMenu.sortOrder = res?.data.data.sortorder;

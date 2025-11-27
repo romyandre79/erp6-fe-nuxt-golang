@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable';
 import { ref, computed } from 'vue';
+import { UButton } from '#components';
 
 const props = defineProps({
   node: { type: Object, required: true },
@@ -175,7 +176,7 @@ const onChildChange = () => emit('select', props.node);
 const resolveComponent = (type: string) => {
   switch (type) {
     case 'button':
-      return 'button';
+      return UButton;
     case 'input':
     case 'number':
     case 'email':
