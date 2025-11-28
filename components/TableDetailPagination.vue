@@ -175,7 +175,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import { useApi } from '~/composables/useApi';
-import TableDetailPagination from '~/components/TableDetailPagination';
+import TablePagination from '~/components/TablePagination';
 
 const props = defineProps({
   title: String,
@@ -195,6 +195,8 @@ const props = defineProps({
   enableCheck: { type: Boolean, default: true },
   method: { type: String, default: 'GET' },
   rowKey: { type: String, default: 'id' },
+  selectedKeyData: { type: String, default: '' },
+  relationKey: { type: String, default: '' },
   isInput: { type: Boolean, default: false },
   isSelectAll: { type: Boolean, default: false },
 });
@@ -283,7 +285,7 @@ async function fetchData() {
       }
       console.log('sele key data', props.selectedKeyData)
       if (props.selectedKeyData) {
-        dataForm.append(props.rowKey, props.selectedKeyData);
+        dataForm.append(props.relationKey, props.selectedKeyData);
       }
       res = await Api.post('/admin/execute-flow', dataForm);
     } else {
@@ -334,7 +336,7 @@ function renderTable(component: any) {
     getData();
 
   return h('div', { key: key }, [
-    h(TableDetailPagination, {
+    h(TablePagination, {
       columns:
         columns?.children.map((col: any, i: number) => ({
           label: col.props.text || `Column ${i + 1}`,
@@ -353,14 +355,13 @@ function renderTable(component: any) {
       class: component.props.class || 'mb-4',
       rowKey: component.props.primary,
       enableSearch: true,
-      title: component.props.text,
       relationKey: component.props.relationkey,
       selectionKeyData: selectedRows.value,
       isInput: props.isInput,
       isSelectAll: !props.isInput,
       selectedKeyData:
-        component.props.relationkey != '' && expandedKey.value != null
-          ? expandedKey.value
+        component.props.relationkey != '' && selectedRows.value.length > 0
+          ? selectedRows.value[0][component.props.relationkey]
           : '',
       onSelectionChange: (selRows: any) => {
         selectedRows.value = selRows;

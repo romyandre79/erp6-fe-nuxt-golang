@@ -322,6 +322,7 @@ export const layoutContainers = [
     label: 'Table',
     props: {
       key: 'table0',
+      isdetail: false,
       primary: '',
       relationkey: '',
       text: '',

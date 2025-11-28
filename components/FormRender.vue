@@ -24,8 +24,32 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-const modals = computed(() => parsedSchema.value?.modals || []);
-const tables = computed(() => parsedSchema.value?.tables || []);
+function findNode(node,type) {
+  let result = [];
+
+  if (Array.isArray(node)) {
+    for (const n of node) result.push(...findNode(n,type));
+    return result;
+  }
+
+  if (!node || typeof node !== "object") return [];
+
+  // jika object ini adalah table → push
+  if (node.type === type) result.push(node);
+
+  // scan children
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      result.push(...findNode(child,type));
+    }
+  }
+
+  return result;
+}
+
+const tables = computed(() => findNode(parsedSchema.value,'table'));
+const modals = computed(() => findNode(parsedSchema.value,'modal'));
+
 
 // 🔥 Ketika selectedRows berubah
 watch(
@@ -99,8 +123,8 @@ function open(key: string) {
 }
 
 function getPrimary() {
-  let node: any 
-  parsedSchema.value.forEach(element => {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
     if (element.type == 'master') {
       node = element;
     }
@@ -110,9 +134,9 @@ function getPrimary() {
 
 async function edit(key: string) {
   const flow = getAction('get');
-  console.log('flow ',flow)
+  console.log('flow ', flow);
   if (flow && selectedRows.value.length > 0) {
-    const primary = getPrimary()
+    const primary = getPrimary();
     modalTitle.value = 'Edit Data';
     modalRefs[key].value = true;
     const dataForm = new FormData();
@@ -371,6 +395,7 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'hidden':
     case 'password':
     case 'number': {
+      console.log('comm ', component);
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
         get: () => formData.value[component.props.key],
@@ -391,7 +416,7 @@ function renderComponent(component: any, isgrid: boolean) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.props.place?.toUpperCase()) || '',
+          placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
@@ -404,7 +429,7 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const prop = component.props;
-      console.log(formData)
+      console.log(formData);
       return h(FormSelect, {
         component: prop,
         formData,
@@ -429,11 +454,7 @@ function renderComponent(component: any, isgrid: boolean) {
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
           class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
-        h(
-          'label',
-          { class: 'cursor-pointer' },
-          $t(component.props.text.toUpperCase()) || '',
-        ),
+        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
@@ -546,9 +567,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, { entry: component.props.text || component.props.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MIN`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, { entry: component.props.text || component.props.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -556,9 +583,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, { entry: component.props.text || component.props.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MAX`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, { entry: component.props.text || component.props.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -578,7 +611,10 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, { entry: component.props.text || component.props.key, field: otherField });
+          message = $t(`INVALID_ENTRY_MATCH`, {
+            entry: component.props.text || component.props.key,
+            field: otherField,
+          });
         break;
       }
     }
@@ -608,63 +644,58 @@ function validateAllFields() {
 function renderTable(component: any, isInput: boolean) {
   if (!component) return null;
   const key = component.props.key || component.props.text || `table0`;
-  let columns: any;
-  let searchs: any;
+  if (component.props.isdetail == false) {
+    let columns: any;
+    let searchs: any;
 
-  function getData() {
-    console.log(component)
-    for (const element of component.children) {
-      if (element.type === 'columns') {
-        columns = element;
-      } else if (element.type === 'search') {
-        searchs = element;
+    function getData() {
+      for (const element of component.children) {
+        if (element.type === 'columns') {
+          columns = element;
+        } else if (element.type === 'search') {
+          searchs = element;
+        }
       }
     }
+
+    getData();
+
+    return h('div', { key: key }, [
+      h(TablePagination, {
+        ref: tableRef,
+        columns:
+          columns?.children.map((col: any, i: number) => ({
+            label: col.props.text || `Column ${i + 1}`,
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+          })) ?? [],
+        searchColumn:
+          searchs?.children.map((col: any, i: number) => ({
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+            place: col.props.place || 'search ...',
+          })) ?? [],
+        method: 'POST',
+        endPoint: component.props.source,
+        simpleSearch: false,
+        class: component.props.class || 'mb-4',
+        rowKey: component.props.primary,
+        enableSearch: true,
+        tables: tables.value,
+        modals: modals.value,
+        isSelectAll: true,
+        onSelectionChange: (selRows: any) => {
+          selectedRows.value = selRows;
+        },
+      }),
+    ]);
   }
-
-  getData();
-
-  return h('div', { key: key }, [
-    h(TablePagination, {
-      ref: tableRef,
-      columns:
-        columns?.children.map((col: any, i: number) => ({
-          label: col.props.text || `Column ${i + 1}`,
-          key: col.props.key || `col${i + 1}`,
-          type: col.type || 'text',
-        })) ?? [],
-      searchColumn:
-        searchs?.children.map((col: any, i: number) => ({
-          key: col.props.key || `col${i + 1}`,
-          type: col.type || 'text',
-          place: col.props.place || 'search ...',
-        })) ?? [],
-      method: 'POST',
-      endPoint: component.props.source,
-      simpleSearch: false,
-      class: component.props.class || 'mb-4',
-      rowKey: component.props.primary,
-      enableSearch: true,
-      relationKey: component.props.relationkey,
-      selectionKeyData: selectedRows.value,
-      tables: tables.value,
-      isInput: isInput,
-      isSelectAll: !isInput,
-      selectedKeyData:
-        component.props.relationkey != '' && selectedRows.value.length > 0
-          ? selectedRows.value[0][component.props.relationkey]
-          : '',
-      onSelectionChange: (selRows: any) => {
-        selectedRows.value = selRows;
-      },
-    }),
-  ]);
+  return null;
 }
 
-
 function getAction(action: string) {
-  let node: any 
-  parsedSchema.value.forEach(element => {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
     if (element.type == 'action') {
       node = element;
     }
