@@ -1,12 +1,12 @@
 <template>
   <div class="w-full">
     <!-- Header & Toolbar -->
-    <div class="flex flex-col sm:flex-row mb-3">
-      <h2 class="text-2xl font-semibold">{{ title }}</h2>
+    <div class="flex flex-col mb-3">
+      <h2 class="font-semibold">{{ title }}</h2>
 
       <!-- Search -->
       <!-- Filter Container -->
-      <div v-if="enableSearch" class="mb-4">
+      <div v-if="enableSearch" class="mt-2">
         <!-- SIMPLE SEARCH -->
         <div v-if="simpleSearch" class="flex items-center gap-2">
           <input
@@ -57,7 +57,6 @@
                 @change="toggleSelectAll"
               />
             </th>
-            <th class="thead px-4 py-3" v-else></th>
             <th class="thead px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
             <th v-for="col in columns" :key="col.key || col" class="thead px-4 py-3 text-left tracking-wide">
               {{ col.text || col.label }}

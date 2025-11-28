@@ -58,7 +58,7 @@
               />
             </th>
             <th class="thead px-4 py-3" v-else></th>
-            <th class="thead px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
+            <th class="thead px-4 py-3" v-if="isExpand == true"></th>
             <th v-for="col in columns" :key="col.key || col" class="thead px-4 py-3 text-left tracking-wide">
               {{ col.text || col.label }}
             </th>
@@ -76,8 +76,8 @@
           <template v-for="(row, rowIndex) in rowsData" :key="rowIndex">
             <!-- Master Row -->
             <tr class="transition-colors duration-200" @click.stop="toggleRowSelection(row)" :checked="isSelected(row)">
-              <td class="px-4 py-3" v-if="enableCheck">
-                <input
+              <td class="px-4 py-3" v-if="props.enableCheck">
+                <input v-if="props.isSelectAll"
                   type="checkbox"
                   class="checkbox checkbox-sm"
                   :checked="isSelected(row)"
@@ -85,9 +85,9 @@
                 />
               </td>
 
-              <td class="px-4 py-3" v-if="tables?.length > 1 && props.isInput == false">
+              <td class="px-4 py-3" v-if="props.isExpand == true">
                 <button @click.stop="toggleExpand(row)">
-                  {{ isExpanded(row) ? '-' : '+' }}
+                  {{ isExpanded(row) ? '^' : '>' }}
                 </button>
               </td>
 
@@ -109,7 +109,7 @@
             </tr>
 
             <!-- Child Row -->
-            <tr v-if="isExpanded(row)">
+            <tr v-if="isExpanded(row) && isExpand == true">
               <td :colspan="columns.length + 2">
                 <div class="rounded-lg w-full" v-for="(child, index) in tables">
                   <component :is="renderTable(child)" v-if="index > 0"></component>
@@ -197,6 +197,7 @@ const props = defineProps({
   rowKey: { type: String, default: 'id' },
   isInput: { type: Boolean, default: false },
   isSelectAll: { type: Boolean, default: false },
+  isExpand: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
@@ -356,8 +357,9 @@ function renderTable(component: any) {
       title: component.props.text,
       relationKey: component.props.relationkey,
       selectionKeyData: selectedRows.value,
-      isInput: props.isInput,
-      isSelectAll: !props.isInput,
+      isInput: true,
+      enableCheck: false,
+      isSelectAll: false,
       selectedKeyData:
         component.props.relationkey != '' && expandedKey.value != null
           ? expandedKey.value

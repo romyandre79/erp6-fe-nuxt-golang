@@ -194,6 +194,16 @@ export const availableComponents = [
     },
   },
   {
+    type: 'callother',
+    label: 'Call Other',
+    props: {
+      key: '',
+      othertype: '',
+      otherkey: '',
+      class: ''
+    },
+  },
+  {
     type: 'tel',
     label: 'Tel',
     props: {
@@ -317,6 +327,25 @@ export const layoutContainers = [
     },
     children: [],
   },
+   {
+    type: 'tabs',
+    label: 'Tabs',
+    props: {
+      key: 'tabs',
+      class: 'w-full mb-4',
+    },
+    children: [],
+  },
+   {
+    type: 'tab',
+    label: 'Tab',
+    props: {
+      key: 'tab',
+      class: 'w-full mb-4',
+      text: ''
+    },
+    children: [],
+  },
   {
     type: 'table',
     label: 'Table',
@@ -328,6 +357,9 @@ export const layoutContainers = [
       text: '',
       source: '',
       class: 'w-full mb-4',
+      isselectall: true,
+      enablecheck: true,
+      isexpand: false
     },
     children: [],
   },

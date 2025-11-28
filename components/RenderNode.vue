@@ -66,7 +66,7 @@
       draggable="false"
     >
       <component :is="resolveComponent(node.type)" v-bind="getComponentProps(node)" :disabled="preview">
-        {{ node.props?.text || node.label }}
+        {{ node.type + ':' + (node.props?.text || node.label) }}
       </component>
     </div>
   </div>
@@ -98,6 +98,8 @@ const containerTypes = [
   'tables',
   'columns',
   'modals',
+  'tabs',
+  'tab'
 ];
 const isContainer = computed(() => {
   if (!props.node.children) props.node.children = [];

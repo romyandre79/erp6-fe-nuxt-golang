@@ -339,5 +339,16 @@
   "OBJECT TYPE": "Object Type",
   "ENTER A OBJECT TYPE": "Enter A Object Type",
   "ENTER A OBJECT VERSION": "Enter A Object Version",
-  "ENTER OBJECT CONTENT": "Enter Object Content"
+  "ENTER OBJECT CONTENT": "Enter Object Content",
+  "ENTER A OUTPUT NODE": "Enter A Output Node",
+  "OUTPUT": "Output",
+  "ENTER A INPUT CONNECTION": "Enter A Input Connection",
+  "INPUT": "Input",
+  "ENTER A CLASS": "Enter A Class",
+  "CLASS": "Class",
+  "COMPONENT TITLE": "Component Title",
+  "ENTER A COMPONENT NAME": "Enter A Component Name",
+  "COMPONENT NAME": "Component Name",
+  "Manage and configure reusable UI components used across the application. This menu allows administrators and developers to create, update, and organize components to ensure consistency, improve development efficiency, and maintain a modular system architecture.": "Manage and configure reusable UI components used across the application. This menu allows administrators and developers to create, update, and organize components to ensure consistency, improve development efficiency, and maintain a modular system architecture.",
+  "Component Management": "Component Management"
 }

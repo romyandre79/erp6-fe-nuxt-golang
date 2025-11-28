@@ -3,6 +3,8 @@ import FormSelect from '~/components/FormSelect.vue';
 import TablePagination from './TablePagination.vue';
 import { UModal, UTabs, UButton } from '#components';
 import { useApi } from '~/composables/useApi';
+import { h, resolveComponent } from 'vue';
+import type { TabsItem } from '@nuxt/ui';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -12,6 +14,7 @@ const props = defineProps({
 });
 
 const modalTitle = ref('');
+const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
@@ -24,15 +27,15 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-function findNode(node,type) {
+function findNode(node, type) {
   let result = [];
 
   if (Array.isArray(node)) {
-    for (const n of node) result.push(...findNode(n,type));
+    for (const n of node) result.push(...findNode(n, type));
     return result;
   }
 
-  if (!node || typeof node !== "object") return [];
+  if (!node || typeof node !== 'object') return [];
 
   // jika object ini adalah table → push
   if (node.type === type) result.push(node);
@@ -40,16 +43,15 @@ function findNode(node,type) {
   // scan children
   if (Array.isArray(node.children)) {
     for (const child of node.children) {
-      result.push(...findNode(child,type));
+      result.push(...findNode(child, type));
     }
   }
 
   return result;
 }
 
-const tables = computed(() => findNode(parsedSchema.value,'table'));
-const modals = computed(() => findNode(parsedSchema.value,'modal'));
-
+const tables = computed(() => findNode(parsedSchema.value, 'table'));
+const modals = computed(() => findNode(parsedSchema.value, 'modal'));
 
 // 🔥 Ketika selectedRows berubah
 watch(
@@ -113,10 +115,9 @@ watch(
 
 // 🧩 Modal actions
 function open(key: string) {
-  console.log('🔥 TRY OPEN:', key, modalRefs[key]);
   if (modalRefs[key]) {
     modalRefs[key].value = true;
-    console.log('🔥 UPDATED:', modalRefs[key].value);
+    modalTitle.value = 'New Data'
   } else {
     console.warn('❌ Modal not found:', key);
   }
@@ -134,7 +135,6 @@ function getPrimary() {
 
 async function edit(key: string) {
   const flow = getAction('get');
-  console.log('flow ', flow);
   if (flow && selectedRows.value.length > 0) {
     const primary = getPrimary();
     modalTitle.value = 'Edit Data';
@@ -338,8 +338,12 @@ async function handleFileChange(e: Event) {
 let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 
-function renderComponent(component: any, isgrid: boolean) {
+function renderComponent(component: any) {
+  console.log('comp ', component);
   switch (component.type) {
+    case 'callother':
+      console.log('CALLOTHER EXECUTED:', component.props);
+      return renderCallOther(component); // <— buatkan function khusus
     case 'title':
       return h(
         'h1',
@@ -395,7 +399,6 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'hidden':
     case 'password':
     case 'number': {
-      console.log('comm ', component);
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
         get: () => formData.value[component.props.key],
@@ -403,7 +406,7 @@ function renderComponent(component: any, isgrid: boolean) {
           formData.value[component.props.key] = val;
         },
       });
-      return h('div', { class: !isgrid ? 'flex flex-col mb-3' : '' }, [
+      return h('div', { class: component.props.class || 'flex flex-col mb-3'}, [
         component.type != 'hidden'
           ? component.props.text
             ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
@@ -429,7 +432,6 @@ function renderComponent(component: any, isgrid: boolean) {
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const prop = component.props;
-      console.log(formData);
       return h(FormSelect, {
         component: prop,
         formData,
@@ -464,7 +466,6 @@ function renderComponent(component: any, isgrid: boolean) {
         icon: component.props.icon || '',
         onClick: async () => {
           const eventName = component.props.onClick.toLowerCase();
-          console.log('event ', eventName);
           if (eventName === 'oncreate') {
             if (validateAllFields()) await CreateHandler();
             else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
@@ -502,10 +503,74 @@ function renderComponent(component: any, isgrid: boolean) {
       });
     case 'action':
       break;
+    default:
+      console.log('⛔ SWITCH NO MATCH FOR TYPE:', component.type);
   }
 }
 
-function renderContainer(container: any, isgrid: boolean) {
+function renderTabs(component, formData) {
+  const items = component.children.map((tab, i) => ({
+    label: tab.props.text,
+    index: i,
+    raw: tab, // <-- SIMPAN TAB ASLI
+  }));
+
+  const UTabs = resolveComponent('UTabs');
+
+  return h(
+    UTabs,
+    {
+      items,
+    },
+    {
+      content: ({ item }) => {
+        console.log('ITEM SLOT:', item);
+
+        const realTab = item.raw; // <-- JSON TAB ASLI
+
+        console.log('REAL TAB:', realTab.children);
+
+        if (!realTab?.children) return h('div', 'No content');
+
+        return h(
+          'div',
+          realTab.children.map((child: any) => {
+            console.log('TAB CHILD:', child.children);
+            if (child.type != 'callother') {
+              return renderContainer(child, true);
+            } else {
+              return renderCallOther(child);
+            }
+          }),
+        );
+      },
+    },
+  );
+}
+
+function renderCallOther(component) {
+  const key = component.props.otherkey;
+  const type = component.props.othertype;
+
+  console.log('CALL OTHER PROCESS:', key, type);
+  console.log('tables ',tables.value)
+  if (type === 'table') {
+    const tableObj = tables.value.find(t => t.props.key === key);
+    tableObj.props.isdetail = false;
+    tableObj.props.isexpand = false;
+    console.log('obj ',tableObj)
+
+    if (!tableObj) {
+      return h('div', `Table ${key} not found`);
+    }
+
+    return renderTable(tableObj);
+  }
+
+  return h('div', `Unknown other type: ${type}`);
+}
+
+function renderContainer(container: any) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.children || [];
@@ -513,12 +578,14 @@ function renderContainer(container: any, isgrid: boolean) {
   return h(
     'div',
     {
-      class: container.class,
+      class: container.props?.class || '',
     },
     children.map((component: any) => {
       switch (component.type) {
         case 'table':
-          return renderTable(component, isgrid);
+          return renderTable(component);
+        case 'tabs':
+          return renderTabs(component);
 
         case 'master':
         case 'buttons':
@@ -528,12 +595,12 @@ function renderContainer(container: any, isgrid: boolean) {
         case 'widget':
         case 'form':
         case 'modals':
-          return h('div', { class: component.props.class }, [renderContainer(component, isgrid)]);
+          return h('div', { class: component.props.class }, [renderContainer(component)]);
         case 'action':
           break;
 
         default:
-          return renderComponent(component, isgrid);
+          return renderComponent(component);
       }
     }),
   );
@@ -641,10 +708,10 @@ function validateAllFields() {
   return valid;
 }
 
-function renderTable(component: any, isInput: boolean) {
+function renderTable(component: any) {
   if (!component) return null;
   const key = component.props.key || component.props.text || `table0`;
-  if (component.props.isdetail == false) {
+  if (component.props.isdetail != true) {
     let columns: any;
     let searchs: any;
 
@@ -683,7 +750,10 @@ function renderTable(component: any, isInput: boolean) {
         enableSearch: true,
         tables: tables.value,
         modals: modals.value,
-        isSelectAll: true,
+        isInput: component.props.isdetail || false,
+        isSelectAll: component.props.isselectall || true,
+        isExpand: component.props.isexpand || false,
+        enableCheck: component.props.enablecheck || true,
         onSelectionChange: (selRows: any) => {
           selectedRows.value = selRows;
         },
@@ -857,17 +927,6 @@ async function saveData(key: any) {
   }
 }
 
-function getModals(schema: any) {
-  let modals: any[] = [];
-  schema.forEach((node) => {
-    if (node.type === 'modals') modals.push(...node.children);
-    if (node.children?.length) {
-      modals.push(...getModals(node.children));
-    }
-  });
-  return modals;
-}
-
 function initModalRefs(schema: any) {
   schema.forEach((node) => {
     if (node.type === 'modals') {
@@ -898,14 +957,14 @@ watchEffect(() => {
     <div class="bg-green-500 h-2" :style="{ width: uploadProgress + '%' }"></div>
   </div>
 
-  <div v-for="(value, index) in getModals(parsedSchema)" :key="value.props.key">
+  <div v-for="(value, index) in modals" :key="value.props.key">
     <UModal
       fullscreen
       v-if="modalRefs?.[value.props.key]"
       v-model:open="modalRefs[value.props.key]"
       :title="modalTitle"
       :dismissible="false"
-      :description="parsedSchema.menuname"
+      :description="modalDescription"
       :scrollable="false"
     >
       <template #body>

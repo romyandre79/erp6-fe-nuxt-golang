@@ -142,22 +142,37 @@ const showJson = ref(true);
 const { getMenuForm } = useAuth();
 const Api = useApi();
 
+function getDefaultProps(type: string) {
+  const found =
+    availableComponents.find(x => x.type === type) ||
+    layoutContainers.find(x => x.type === type)
+
+  return found ? JSON.parse(JSON.stringify(found.props || {})) : {}
+}
+
 const onDragStart = (comp: any) => {
   event?.dataTransfer?.setData('component', JSON.stringify(comp));
   window.draggingComponent = comp; // ✅ simpan global
 };
 
 const onDropRoot = (event: DragEvent) => {
-  const data = event.dataTransfer?.getData('component');
-  if (!data) return;
-  const comp = JSON.parse(data);
+  const data = event.dataTransfer?.getData('component')
+  if (!data) return
+
+  const comp = JSON.parse(data)
+  const defaults = getDefaultProps(comp.type)
+
   const newComp: NodeSchema = {
     id: Math.random().toString(36).substr(2, 9),
-    ...comp,
-  };
-  canvasComponents.value.push(newComp);
-  window.draggingComponent = null; // ✅ reset
-};
+    type: comp.type,
+    label: comp.label,
+    props: { ...defaults },
+    children: comp.children ? [] : undefined,
+  }
+
+  canvasComponents.value.push(newComp)
+}
+
 
 const onDropChild = ([parentId, newComp]) => {
   const findAndInsert = (nodes) => {
@@ -194,7 +209,7 @@ const deleteNode = (target: NodeSchema) => {
 };
 
 const selectComponent = (node: NodeSchema) => {
-  selected.value = node;
+  selected.value = node
 };
 
 const togglePreview = () => {
