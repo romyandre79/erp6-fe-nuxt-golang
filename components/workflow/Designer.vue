@@ -1,5 +1,13 @@
 <template>
   <div class="relative h-full">
+      <div
+  v-if="testResult"
+  id="test-result-overlay"
+  class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
+>
+  <h3 class="font-bold text-lg">Test Result</h3>
+  <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
+</div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
@@ -9,8 +17,10 @@
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black">+</button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+      <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -20,6 +30,7 @@ import html2canvas from 'html2canvas';
 
 const store = useWorkflowStore();
 const toast = useToast();
+const testResult = ref('');
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -211,4 +222,30 @@ async function exportImage() {
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
+
+const route = useRoute();
+const Api = useApi();
+
+async function testFlow() {
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', route.params.slug);
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'true');
+    for (let index = 0; index < store.parameters.length; index++) {
+      const element = store.parameters[index];
+      
+    }
+    const res = await Api.post('admin/execute-flow', dataForm);
+
+    if (res.code == 200) {
+      testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
+    } else {
+      testResult.value = `Error: ${res.message}`;
+    }
+  } catch (err) {
+    testResult.value = `Exception: ${err}`;
+  }
+}
+
 </script>

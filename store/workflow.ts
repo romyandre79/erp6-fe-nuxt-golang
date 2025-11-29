@@ -171,6 +171,23 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+   async function saveFlowParameter() {
+    console.log('param ',parameters)
+    for (let index = 0; index < parameters.value.length; index++) {
+      const element = parameters.value[index];
+     const df = new FormData();
+      df.append('flowname', 'modifwfparameter');
+      df.append('menu', 'admin');
+      df.append('search', 'false');
+      df.append('workflowid', workflow.value?.workflowid ?? '');
+      df.append('wfparameterid', element.wfparameterid ?? '');
+      df.append('parametername', element.parametername ?? '');
+      df.append('parametervalue', element.parametervalue ?? '');
+      df.append('parametertype', element.parametertype ?? '');
+      await api.post('/admin/execute-flow', df);
+    }
+   }
+
   async function saveFlow(flow: any) {
     loading.value = true;
     try {
@@ -182,6 +199,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       df.append('flow', JSON.stringify(flow));
       const res = await api.post('/admin/execute-flow', df);
       await saveFlowDetails(flow);
+      await saveFlowParameter();
       await loadWorkflow(workflow.value?.wfname);
       return res;
     } finally {
