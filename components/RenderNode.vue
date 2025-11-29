@@ -8,6 +8,7 @@
     >
       ✖
     </button>
+    
 
     <!-- 🔹 Container node -->
     <div

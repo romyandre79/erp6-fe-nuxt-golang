@@ -35,23 +35,35 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', component.source);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
+    let arr = props.component.source?.split(',')
+    if (arr.length == 1) { 
+      const dataForm = new FormData();
+      dataForm.append('flowname', component.source);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('admin/execute-flow', dataForm);
 
-    if (res.code === 200 && Array.isArray(res.data?.data)) {
-      const labelField = component.label || 'label';
-      const valueField = component.valueField || component.key || 'value';
+      if (res.code === 200 && Array.isArray(res.data?.data)) {
+        const labelField = component.label || 'label';
+        const valueField = component.valueField || component.key || 'value';
 
-      options.value = res.data.data.map((item: Record<string, any>) => ({
-        label: item[labelField],
-        id: item[valueField],
-      }));
-    } else {
+        options.value = res.data.data.map((item: Record<string, any>) => ({
+          label: item[labelField],
+          id: item[valueField],
+        }));
+          } else {
       console.error('Gagal ambil data untuk select:', res?.message);
+    }
+
+    } else {
+      for (let index = 0; index < arr.length; index++) {
+        const element = arr[index];
+        options.value.push({
+          label: element,
+          id: element
+        })
+      }
     }
   } catch (err) {
     console.error('Error fetch data select:', err);

@@ -117,7 +117,10 @@ watch(
 function open(key: string) {
   if (modalRefs[key]) {
     modalRefs[key].value = true;
-    modalTitle.value = 'New Data'
+    modalTitle.value = 'New Data';
+    modalDescription.value = '';
+    const primary = getPrimary();
+    tableRef.value.setData(primary, 0);
   } else {
     console.warn('❌ Modal not found:', key);
   }
@@ -138,6 +141,7 @@ async function edit(key: string) {
   if (flow && selectedRows.value.length > 0) {
     const primary = getPrimary();
     modalTitle.value = 'Edit Data';
+    modalDescription.value = '';
     modalRefs[key].value = true;
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -151,6 +155,7 @@ async function edit(key: string) {
         for (const key in record) {
           formData.value[key] = record[key];
         }
+        tableRef.value.setData(primary, selectedRows.value[0][primary]);
       } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
         navigateTo('/login');
       }
@@ -161,12 +166,15 @@ async function edit(key: string) {
 }
 
 function close(key: string) {
-  if (modalRefs.value[key]) modalRefs.value[key].value = false;
-  else console.warn('Modal not found:', key);
+  const primary = getPrimary();
+  tableRef.value.setData(primary, selectedRows.value[0][primary]);
+  tableRef.value.setDataIsDetail(false);
+  modalRefs[key].value = false;
+  //window.location.reload(true); // TODO: next only refresh grid
 }
 
 async function deleteData(table: any) {
-  const flow = parsedSchema.value.action?.onPurge;
+  const flow = getAction('purge');
   if (flow && selectedRows.value.length > 0) {
     let dataForm = new FormData();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -243,20 +251,6 @@ function navigate(key: any) {
   } else {
     navigateTo(key);
   }
-}
-
-const actions = { open, close, edit, downForm, deleteData, downTemplate, navigate, upload };
-
-function runAction(code: string) {
-  const match = code.match(/^(\w+)\((.*)\)$/);
-  if (!match) return console.warn('Invalid action:', code);
-
-  const fnName = match[1];
-  const arg = match[2].replace(/['"]/g, '');
-
-  const fn = actions[fnName];
-  if (fn) fn(arg);
-  else console.warn('Unknown function:', fnName);
 }
 
 const uploadProgress = ref(0);
@@ -339,10 +333,8 @@ let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 
 function renderComponent(component: any) {
-  console.log('comp ', component);
   switch (component.type) {
     case 'callother':
-      console.log('CALLOTHER EXECUTED:', component.props);
       return renderCallOther(component); // <— buatkan function khusus
     case 'title':
       return h(
@@ -406,7 +398,7 @@ function renderComponent(component: any) {
           formData.value[component.props.key] = val;
         },
       });
-      return h('div', { class: component.props.class || 'flex flex-col mb-3'}, [
+      return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
             ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
@@ -490,6 +482,10 @@ function renderComponent(component: any) {
             const key = eventName.replace('downform:', '');
             downForm(key);
             return;
+          } else if (eventName.startsWith('deletedata')) {
+            const key = eventName.replace('deletedata:', '');
+            deleteData(key);
+            return;
           } else if (eventName.startsWith('upload')) {
             upload();
             return;
@@ -503,12 +499,10 @@ function renderComponent(component: any) {
       });
     case 'action':
       break;
-    default:
-      console.log('⛔ SWITCH NO MATCH FOR TYPE:', component.type);
   }
 }
 
-function renderTabs(component, formData) {
+function renderTabs(component) {
   const items = component.children.map((tab, i) => ({
     label: tab.props.text,
     index: i,
@@ -524,20 +518,14 @@ function renderTabs(component, formData) {
     },
     {
       content: ({ item }) => {
-        console.log('ITEM SLOT:', item);
-
         const realTab = item.raw; // <-- JSON TAB ASLI
-
-        console.log('REAL TAB:', realTab.children);
-
         if (!realTab?.children) return h('div', 'No content');
 
         return h(
           'div',
           realTab.children.map((child: any) => {
-            console.log('TAB CHILD:', child.children);
             if (child.type != 'callother') {
-              return renderContainer(child, true);
+              return renderContainer(child);
             } else {
               return renderCallOther(child);
             }
@@ -548,17 +536,17 @@ function renderTabs(component, formData) {
   );
 }
 
+const tableUsed = ref([String]);
+
 function renderCallOther(component) {
   const key = component.props.otherkey;
   const type = component.props.othertype;
 
-  console.log('CALL OTHER PROCESS:', key, type);
-  console.log('tables ',tables.value)
   if (type === 'table') {
-    const tableObj = tables.value.find(t => t.props.key === key);
+    const tableObj = tables.value.find((t) => t.props.key === key);
     tableObj.props.isdetail = false;
     tableObj.props.isexpand = false;
-    console.log('obj ',tableObj)
+    tableUsed.value.push(key);
 
     if (!tableObj) {
       return h('div', `Table ${key} not found`);
@@ -750,7 +738,6 @@ function renderTable(component: any) {
         enableSearch: true,
         tables: tables.value,
         modals: modals.value,
-        isInput: component.props.isdetail || false,
         isSelectAll: component.props.isselectall || true,
         isExpand: component.props.isexpand || false,
         enableCheck: component.props.enablecheck || true,
@@ -972,7 +959,7 @@ watchEffect(() => {
       </template>
       <template #footer>
         <div class="flex gap-2">
-          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="modalRefs[value.props.key].value = false" />
+          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
           <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
         </div>
       </template>

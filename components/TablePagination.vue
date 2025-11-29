@@ -195,10 +195,28 @@ const props = defineProps({
   enableCheck: { type: Boolean, default: true },
   method: { type: String, default: 'GET' },
   rowKey: { type: String, default: 'id' },
+  relationKey: { type: String, default: 'id' },
   isInput: { type: Boolean, default: false },
   isSelectAll: { type: Boolean, default: false },
   isExpand: { type: Boolean, default: false },
+  isDetail: { type: Boolean, default: false },
+  selectedKeyData: { type: String, default: '' },
 });
+
+const internalRelationKey = ref(props.relationKey);
+const internalSelectedKeyData = ref(props.selectedKeyData);
+const internalIsDetail = ref(props.isDetail);
+
+function setData(primary: string, selectedData: string) {
+  internalRelationKey.value = primary;
+  internalSelectedKeyData.value = selectedData
+  fetchData()
+}
+
+function setDataIsDetail(val: boolean) {
+  internalIsDetail.value = val;
+}
+
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
@@ -282,9 +300,9 @@ async function fetchData() {
       for (const col of props.columns) {
         dataForm.append(col.key, searchComplexQuery.value[col.key] || '');
       }
-      console.log('sele key data', props.selectedKeyData)
-      if (props.selectedKeyData) {
-        dataForm.append(props.rowKey, props.selectedKeyData);
+      console.log('sele key data', internalSelectedKeyData.value)
+      if (internalRelationKey.value) {
+        dataForm.append(internalRelationKey.value, internalSelectedKeyData.value);
       }
       res = await Api.post('/admin/execute-flow', dataForm);
     } else {
@@ -404,5 +422,11 @@ const lastPage = () => {
   }
 };
 
-defineExpose({ refreshTable: fetchData });
+
+defineExpose(
+  { 
+    refreshTable: fetchData,
+    setData
+  }
+);
 </script>
