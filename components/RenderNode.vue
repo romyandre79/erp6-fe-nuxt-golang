@@ -76,6 +76,7 @@
 import draggable from 'vuedraggable';
 import { ref, computed } from 'vue';
 import { UButton } from '#components';
+import { useToast } from '#imports';
 
 const props = defineProps({
   node: { type: Object, required: true },

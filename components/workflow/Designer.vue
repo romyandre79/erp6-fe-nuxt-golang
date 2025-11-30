@@ -23,13 +23,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import html2canvas from 'html2canvas';
+import { useToast, useNuxtApp, useI18n, useApi, useRoute } from '#imports';
 
 const store = useWorkflowStore();
 const toast = useToast();
 const testResult = ref('');
+const $t = useI18n();
 
 let editor: any = null;
 let saveTimeout: any = null;

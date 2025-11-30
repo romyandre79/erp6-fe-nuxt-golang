@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, h } from 'vue';
 import { useApi } from '#imports';
 import { TableDetailPagination } from '#components';
 

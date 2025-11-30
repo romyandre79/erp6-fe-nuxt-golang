@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useThemeStore } from '~/store/theme';
+import { useAuth } from '#imports';
 
 const store = useThemeStore();
 const auth = useAuth();
