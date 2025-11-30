@@ -16,7 +16,6 @@ const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
-const t = useI18n();
 
 const toast = useToast();
 let selectedRows = ref<any[]>([]);
@@ -340,7 +339,7 @@ function renderComponent(component: any) {
         {
           class: component.props.class,
         },
-        t(component.props.text),
+        $t(component.props.text),
       );
     case 'subtitle':
       return h(
@@ -348,10 +347,10 @@ function renderComponent(component: any) {
         {
           class: component.props.class,
         },
-        t(component.props.text),
+        $t(component.props.text),
       );
     case 'label':
-      return h('div', { class: 'mb-2' }, t(component.props.text.toUpperCase()));
+      return h('div', { class: 'mb-2' }, $t(component.props.text.toUpperCase()));
 
     case 'longtext': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
@@ -365,7 +364,7 @@ function renderComponent(component: any) {
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
-            ? h('label', { class: 'mb-1 font-medium' }, t(component.props.text.toUpperCase()))
+            ? h('label', { class: 'mb-1 font-medium' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('textarea', {
@@ -375,7 +374,7 @@ function renderComponent(component: any) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: t(component.props.place?.toUpperCase()) || '',
+          placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
           onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
           value: modelInputArea.value,
@@ -399,7 +398,7 @@ function renderComponent(component: any) {
       return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, t(component.props.text.toUpperCase()))
+            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('input', {
@@ -409,7 +408,7 @@ function renderComponent(component: any) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: component.props.place ? t(component.props.place?.toUpperCase()) : '',
+          placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
@@ -445,7 +444,7 @@ function renderComponent(component: any) {
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
           class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
-        h('label', { class: 'cursor-pointer' }, t(component.props.text.toUpperCase()) || ''),
+        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
@@ -632,17 +631,17 @@ function validateField(component: any, value: any) {
     switch (ruleName.toLowerCase()) {
       case 'empty':
         if (value === null || value === undefined || value === '')
-          message = t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
+          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
         break;
 
       case 'number':
         if (value !== '' && isNaN(Number(value)))
-          message = t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
+          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
         break;
 
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
+          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
         break;
 
       // 🧩 min / max
@@ -650,12 +649,12 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = t(`INVALID_ENTRY_MIN`, {
+              message = $t(`INVALID_ENTRY_MIN`, {
                 entry: component.props.text || component.props.key,
                 value: ruleValue,
               });
           } else if (String(value).length < Number(ruleValue))
-            message = t(`INVALID_ENTRY_MIN_CHAR`, {
+            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
               entry: component.props.text || component.props.key,
               value: ruleValue,
             });
@@ -666,12 +665,12 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = t(`INVALID_ENTRY_MAX`, {
+              message = $t(`INVALID_ENTRY_MAX`, {
                 entry: component.props.text || component.props.key,
                 value: ruleValue,
               });
           } else if (String(value).length < Number(ruleValue))
-            message = t(`INVALID_ENTRY_MAX_CHAR`, {
+            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
               entry: component.props.text || component.props.key,
               value: ruleValue,
             });
@@ -683,7 +682,7 @@ function validateField(component: any, value: any) {
         try {
           const pattern = new RegExp(ruleValue);
           if (!pattern.test(String(value || '')))
-            message = t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
+            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
         } catch {
           console.warn('Invalid regex:', ruleValue);
         }
@@ -694,7 +693,7 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = t(`INVALID_ENTRY_MATCH`, {
+          message = $t(`INVALID_ENTRY_MATCH`, {
             entry: component.props.text || component.props.key,
             field: otherField,
           });
@@ -826,8 +825,8 @@ const CreateHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: t('TITLE UPDATE'),
-        description: t(res.message.replaceAll('_', ' ')),
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll('_', ' ')),
       });
       ReadHandler();
     }
@@ -856,8 +855,8 @@ const UpdateHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: t('TITLE UPDATE'),
-        description: t(res.message.replaceAll('_', ' ')),
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll('_', ' ')),
       });
     }
   } else {
@@ -885,8 +884,8 @@ const DeleteHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: t('TITLE DELETE'),
-        description: t(res.message.replaceAll('_', ' ')),
+        title: $t('TITLE DELETE'),
+        description: $t(res.message.replaceAll('_', ' ')),
       });
       //ReadHandler()
     }
@@ -929,8 +928,8 @@ async function saveData(key: any) {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: t('TITLE UPDATE'),
-        description: t(res.message.replaceAll('_', ' ')),
+        title: $t('TITLE UPDATE'),
+        description: $t(res.message.replaceAll('_', ' ')),
       });
       tableRef.value.refreshTable();
       modalRefs[key].value = false;
@@ -965,7 +964,7 @@ watchEffect(() => {
 
 <template>
   <div v-for="(value, index) in parsedSchema">
-    <component :is="renderContainer(value, false)"></component>
+    <component :is="renderContainer(value)"></component>
   </div>
 
   <div v-if="isUploading" class="mt-2 w-full bg-gray-200 h-2 rounded overflow-hidden">
@@ -983,12 +982,12 @@ watchEffect(() => {
       :scrollable="false"
     >
       <template #body>
-        <component :is="renderContainer(value.children, false)" />
+        <component :is="renderContainer(value.children)" />
       </template>
       <template #footer>
         <div class="flex gap-2">
-          <UButton class="btnSecondary" :label="t('CLOSE')" @click="close(value.props.key)" />
-          <UButton class="btnPrimary" :label="t('SAVE')" @click="saveData(value.props.key)" />
+          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
+          <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
         </div>
       </template>
     </UModal>
