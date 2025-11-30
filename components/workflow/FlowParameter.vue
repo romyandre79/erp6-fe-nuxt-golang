@@ -66,7 +66,6 @@ function autoFixType(param: any) {
     }
   }
 }
-
 </script>
 
 <style>

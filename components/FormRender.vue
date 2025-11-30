@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import FormSelect from '~/components/FormSelect.vue';
-import TablePagination from './TablePagination.vue';
-import { UModal, UTabs, UButton } from '#components';
-import { useApi } from '~/composables/useApi';
-import { h, resolveComponent } from 'vue';
-import type { TabsItem } from '@nuxt/ui';
+import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
+import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
+import { navigateTo } from '#app';
+import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect } from 'vue';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -18,6 +16,7 @@ const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
+const t = useI18n();
 
 const toast = useToast();
 let selectedRows = ref<any[]>([]);
@@ -27,7 +26,7 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-function findNode(node, type) {
+function findNode(node: any, type: any): any {
   let result = [];
 
   if (Array.isArray(node)) {
@@ -69,15 +68,13 @@ watch(
   { deep: true },
 );
 
-const activeTab = ref<string>('');
-
 // 🧩 Rebuild modalRefs setiap kali modals berubah
 watch(
   modals,
   async (newVal) => {
     await nextTick();
     for (const key of Object.keys(modalRefs)) delete modalRefs[key];
-    newVal?.forEach((m, index) => {
+    newVal?.forEach((m) => {
       // buat modal ref
       modalRefs[m.key] = ref(false);
     });
@@ -89,7 +86,7 @@ const detailTab = computed(() => {
   if (!modals.value) return [];
 
   // Skip modal pertama (index 0)
-  return modals.value.slice(1).map((m, i) => ({
+  return modals.value.slice(1).map((m) => ({
     ...m,
   }));
 });
@@ -175,6 +172,7 @@ function close(key: string) {
 
 async function deleteData(table: any) {
   const flow = getAction('purge');
+  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
     let dataForm = new FormData();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -342,7 +340,7 @@ function renderComponent(component: any) {
         {
           class: component.props.class,
         },
-        $t(component.props.text),
+        t(component.props.text),
       );
     case 'subtitle':
       return h(
@@ -350,10 +348,10 @@ function renderComponent(component: any) {
         {
           class: component.props.class,
         },
-        $t(component.props.text),
+        t(component.props.text),
       );
     case 'label':
-      return h('div', { class: 'mb-2' }, $t(component.props.text.toUpperCase()));
+      return h('div', { class: 'mb-2' }, t(component.props.text.toUpperCase()));
 
     case 'longtext': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
@@ -367,7 +365,7 @@ function renderComponent(component: any) {
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
-            ? h('label', { class: 'mb-1 font-medium' }, $t(component.props.text.toUpperCase()))
+            ? h('label', { class: 'mb-1 font-medium' }, t(component.props.text.toUpperCase()))
             : null
           : '',
         h('textarea', {
@@ -377,7 +375,7 @@ function renderComponent(component: any) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.props.place?.toUpperCase()) || '',
+          placeholder: t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
           onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
           value: modelInputArea.value,
@@ -401,7 +399,7 @@ function renderComponent(component: any) {
       return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
+            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, t(component.props.text.toUpperCase()))
             : null
           : '',
         h('input', {
@@ -411,7 +409,7 @@ function renderComponent(component: any) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
+          placeholder: component.props.place ? t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
@@ -423,9 +421,8 @@ function renderComponent(component: any) {
     }
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
-      const prop = component.props;
       return h(FormSelect, {
-        component: prop,
+        component: component.props,
         formData,
         validationErrors,
         validateField,
@@ -448,7 +445,7 @@ function renderComponent(component: any) {
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
           class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
-        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
+        h('label', { class: 'cursor-pointer' }, t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
@@ -558,6 +555,35 @@ function renderCallOther(component) {
   return h('div', `Unknown other type: ${type}`);
 }
 
+function renderWizard(container: any) {
+  if (!container) return null;
+
+  return h(
+    FormWizard,
+    {
+      steps: container,
+      saveKey: 'wizard-h',
+    },
+    {
+      default: ({ step, schema, state }) => {
+        return h(
+          'div',
+          schema.map((field) => {
+            return h('div', { class: 'mb-3' }, [
+              h('label', field.label),
+              h('input', {
+                class: 'border p-2 w-full',
+                value: state[field.key],
+                onInput: (e) => (state[field.key] = e.target.value),
+              }),
+            ]);
+          }),
+        );
+      },
+    },
+  );
+}
+
 function renderContainer(container: any) {
   if (!container) return null;
 
@@ -575,6 +601,8 @@ function renderContainer(container: any) {
         case 'tabs':
           return renderTabs(component);
 
+        case 'wizard':
+          return renderWizard(component);
         case 'master':
         case 'buttons':
         case 'tables':
@@ -604,17 +632,17 @@ function validateField(component: any, value: any) {
     switch (ruleName.toLowerCase()) {
       case 'empty':
         if (value === null || value === undefined || value === '')
-          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
+          message = t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
         break;
 
       case 'number':
         if (value !== '' && isNaN(Number(value)))
-          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
+          message = t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
         break;
 
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
+          message = t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
         break;
 
       // 🧩 min / max
@@ -622,12 +650,12 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, {
+              message = t(`INVALID_ENTRY_MIN`, {
                 entry: component.props.text || component.props.key,
                 value: ruleValue,
               });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
+            message = t(`INVALID_ENTRY_MIN_CHAR`, {
               entry: component.props.text || component.props.key,
               value: ruleValue,
             });
@@ -638,12 +666,12 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, {
+              message = t(`INVALID_ENTRY_MAX`, {
                 entry: component.props.text || component.props.key,
                 value: ruleValue,
               });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
+            message = t(`INVALID_ENTRY_MAX_CHAR`, {
               entry: component.props.text || component.props.key,
               value: ruleValue,
             });
@@ -655,7 +683,7 @@ function validateField(component: any, value: any) {
         try {
           const pattern = new RegExp(ruleValue);
           if (!pattern.test(String(value || '')))
-            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
+            message = t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
         } catch {
           console.warn('Invalid regex:', ruleValue);
         }
@@ -666,7 +694,7 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, {
+          message = t(`INVALID_ENTRY_MATCH`, {
             entry: component.props.text || component.props.key,
             field: otherField,
           });
@@ -798,8 +826,8 @@ const CreateHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+        title: t('TITLE UPDATE'),
+        description: t(res.message.replaceAll('_', ' ')),
       });
       ReadHandler();
     }
@@ -828,8 +856,8 @@ const UpdateHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+        title: t('TITLE UPDATE'),
+        description: t(res.message.replaceAll('_', ' ')),
       });
     }
   } else {
@@ -857,8 +885,8 @@ const DeleteHandler = async () => {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: $t('TITLE DELETE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+        title: t('TITLE DELETE'),
+        description: t(res.message.replaceAll('_', ' ')),
       });
       //ReadHandler()
     }
@@ -901,8 +929,8 @@ async function saveData(key: any) {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+        title: t('TITLE UPDATE'),
+        description: t(res.message.replaceAll('_', ' ')),
       });
       tableRef.value.refreshTable();
       modalRefs[key].value = false;
@@ -959,8 +987,8 @@ watchEffect(() => {
       </template>
       <template #footer>
         <div class="flex gap-2">
-          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
-          <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
+          <UButton class="btnSecondary" :label="t('CLOSE')" @click="close(value.props.key)" />
+          <UButton class="btnPrimary" :label="t('SAVE')" @click="saveData(value.props.key)" />
         </div>
       </template>
     </UModal>

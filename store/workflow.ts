@@ -1,6 +1,7 @@
 // stores/workflow.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { useApi } from '../composables/useApi';
 
 export const useWorkflowStore = defineStore('workflow', () => {
   const workflow = ref<any>(null);
@@ -171,11 +172,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
-   async function saveFlowParameter() {
-    console.log('param ',parameters)
+  async function saveFlowParameter() {
     for (let index = 0; index < parameters.value.length; index++) {
       const element = parameters.value[index];
-     const df = new FormData();
+      const df = new FormData();
       df.append('flowname', 'modifwfparameter');
       df.append('menu', 'admin');
       df.append('search', 'false');
@@ -186,7 +186,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       df.append('parametertype', element.parametertype ?? '');
       await api.post('/admin/execute-flow', df);
     }
-   }
+  }
 
   async function saveFlow(flow: any) {
     loading.value = true;

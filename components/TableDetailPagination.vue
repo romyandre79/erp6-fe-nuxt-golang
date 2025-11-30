@@ -172,9 +172,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { useApi } from '~/composables/useApi';
-import TablePagination from '~/components/TablePagination';
+import { ref, watch, onMounted, h } from 'vue';
+import { useApi } from '#imports';
+import { TablePagination } from '#components';
 
 const props = defineProps({
   title: String,
@@ -246,7 +246,6 @@ const expandedKey = ref<any | null>(null);
 const toggleExpand = (row: any) => {
   const key = row[props.rowKey];
   expandedKey.value = expandedKey.value === key ? null : key;
-  console.log('exp ',expandedKey)
 };
 const isExpanded = (row: any) => {
   return row && expandedKey.value === row[props.rowKey];
@@ -266,7 +265,6 @@ const formatCellValue = (col: any, value: any) => {
   return value ?? '';
 };
 
-
 // Fetch data
 async function fetchData() {
   loading.value = true;
@@ -282,7 +280,6 @@ async function fetchData() {
       for (const col of props.columns) {
         dataForm.append(col.key, searchComplexQuery.value[col.key] || '');
       }
-      console.log('sele key data', props.selectedKeyData)
       if (props.selectedKeyData) {
         dataForm.append(props.relationKey, props.selectedKeyData);
       }
@@ -320,19 +317,19 @@ function renderTable(component: any) {
   const key = component.key || component.text || `table0`;
 
   let columns: any;
-    let searchs: any;
+  let searchs: any;
 
-    function getData() {
-      for (const element of component.children) {
-        if (element.type === 'columns') {
-          columns = element;
-        } else if (element.type === 'search') {
-          searchs = element;
-        }
+  function getData() {
+    for (const element of component.children) {
+      if (element.type === 'columns') {
+        columns = element;
+      } else if (element.type === 'search') {
+        searchs = element;
       }
     }
+  }
 
-    getData();
+  getData();
 
   return h('div', { key: key }, [
     h(TablePagination, {

@@ -1,5 +1,6 @@
 <script setup>
 import { useRuntimeConfig } from '#app';
+import { useThemeStore } from '../store/theme';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();

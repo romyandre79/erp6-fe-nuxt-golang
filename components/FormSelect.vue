@@ -35,8 +35,8 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    let arr = props.component.source?.split(',')
-    if (arr.length == 1) { 
+    let arr = props.component.source?.split(',');
+    if (arr.length == 1) {
       const dataForm = new FormData();
       dataForm.append('flowname', component.source);
       dataForm.append('menu', 'admin');
@@ -52,17 +52,16 @@ onMounted(async () => {
           label: item[labelField],
           id: item[valueField],
         }));
-          } else {
-      console.error('Gagal ambil data untuk select:', res?.message);
-    }
-
+      } else {
+        console.error('Gagal ambil data untuk select:', res?.message);
+      }
     } else {
       for (let index = 0; index < arr.length; index++) {
         const element = arr[index];
         options.value.push({
           label: element,
-          id: element
-        })
+          id: element,
+        });
       }
     }
   } catch (err) {

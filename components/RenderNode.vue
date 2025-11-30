@@ -8,7 +8,6 @@
     >
       ✖
     </button>
-    
 
     <!-- 🔹 Container node -->
     <div
@@ -100,13 +99,16 @@ const containerTypes = [
   'columns',
   'modals',
   'tabs',
-  'tab'
+  'tab',
+  'wizard',
 ];
 const isContainer = computed(() => {
   if (!props.node.children) props.node.children = [];
   return containerTypes.includes(props.node.type);
 });
 const emitSelect = () => emit('select', props.node);
+
+const toast = useToast();
 
 // 🔹 Drag events
 const onDragEnter = () => (isDragOver.value = true);
@@ -124,10 +126,6 @@ const onDrop = (event: DragEvent) => {
   try {
     const comp = JSON.parse(data);
 
-    // 🧩 Validasi jenis komponen berdasarkan container
-    const containerType = props.node.type;
-    const componentType = comp.type;
-
     // ✅ Komponen valid → tambahkan
     const newComp = {
       id: Math.random().toString(36).substr(2, 9),
@@ -139,8 +137,6 @@ const onDrop = (event: DragEvent) => {
     console.error('Invalid drop data', err);
   }
 };
-
-const isHover = ref(false);
 
 const onAdd = (event: any) => {
   const containerType = props.node.type;

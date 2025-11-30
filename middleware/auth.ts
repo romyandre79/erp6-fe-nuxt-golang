@@ -1,3 +1,6 @@
+import { useUserStore } from '../store/user';
+import { navigateTo, defineNuxtRouteMiddleware } from '#app';
+s;
 export default defineNuxtRouteMiddleware((to) => {
   const userStore = useUserStore();
   userStore.loadAuth();

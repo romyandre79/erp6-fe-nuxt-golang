@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useApi } from '#imports';
 import { useMediaManager } from '~/composables/useMediaManager';
 
 const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager();

@@ -143,11 +143,9 @@ const { getMenuForm } = useAuth();
 const Api = useApi();
 
 function getDefaultProps(type: string) {
-  const found =
-    availableComponents.find(x => x.type === type) ||
-    layoutContainers.find(x => x.type === type)
+  const found = availableComponents.find((x) => x.type === type) || layoutContainers.find((x) => x.type === type);
 
-  return found ? JSON.parse(JSON.stringify(found.props || {})) : {}
+  return found ? JSON.parse(JSON.stringify(found.props || {})) : {};
 }
 
 const onDragStart = (comp: any) => {
@@ -156,11 +154,11 @@ const onDragStart = (comp: any) => {
 };
 
 const onDropRoot = (event: DragEvent) => {
-  const data = event.dataTransfer?.getData('component')
-  if (!data) return
+  const data = event.dataTransfer?.getData('component');
+  if (!data) return;
 
-  const comp = JSON.parse(data)
-  const defaults = getDefaultProps(comp.type)
+  const comp = JSON.parse(data);
+  const defaults = getDefaultProps(comp.type);
 
   const newComp: NodeSchema = {
     id: Math.random().toString(36).substr(2, 9),
@@ -168,11 +166,10 @@ const onDropRoot = (event: DragEvent) => {
     label: comp.label,
     props: { ...defaults },
     children: comp.children ? [] : undefined,
-  }
+  };
 
-  canvasComponents.value.push(newComp)
-}
-
+  canvasComponents.value.push(newComp);
+};
 
 const onDropChild = ([parentId, newComp]) => {
   const findAndInsert = (nodes) => {
@@ -209,7 +206,7 @@ const deleteNode = (target: NodeSchema) => {
 };
 
 const selectComponent = (node: NodeSchema) => {
-  selected.value = node
+  selected.value = node;
 };
 
 const togglePreview = () => {
@@ -302,7 +299,7 @@ const copySchema = async () => {
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
           formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = res?.data?.data.menuform;
+          canvasComponents.value = JSON.parse(res?.data?.data.menuform);
         }
       } else {
         console.error('Invalid response from ', res);
@@ -311,7 +308,7 @@ const copySchema = async () => {
       console.error('Error loading :', err);
     }
   } else {
-    console.log('Empty');
+    console.warn('Empty');
   }
 };
 

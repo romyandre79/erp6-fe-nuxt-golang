@@ -89,10 +89,7 @@
         <!-- 🔍 JSON Debug View -->
         <div v-if="showJson && !previewMode" class="panel font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
           <h1>Debug</h1>
-          <textarea
-  v-model="debugText"
-  class="w-full h-120 p-3 border rounded font-mono text-sm"
-></textarea>
+          <textarea v-model="debugText" class="w-full h-120 p-3 border rounded font-mono text-sm"></textarea>
         </div>
       </div>
     </main>
@@ -209,8 +206,8 @@ const toggleJson = () => {
 };
 
 const clearSchema = async () => {
-  canvasComponents.value = []
-}
+  canvasComponents.value = [];
+};
 
 const saveSchema = async () => {
   const dataForm = new FormData();
@@ -258,14 +255,14 @@ const loadSchema = async () => {
     if (res?.code == 200) {
       dataMenu.widgetid = res?.data.data.widgetid;
       dataMenu.widgetname = res?.data.data.widgetname;
-      dataMenu.description = res?.data.data.description
-      dataMenu.widgettitle = res?.data.data.widgettitle,
-        dataMenu.widgetversion = res?.data.data.widgetversion,
-        dataMenu.moduleid = res?.data.data.moduleid,
-        dataMenu.modulename = res?.data.data.modulename,
-        dataMenu.widgetby = res?.data.data.widgetby,
-        dataMenu.installdate = res?.data.data.installdate,
-      dataMenu.recordStatus = res?.data.data.recordstatus;
+      dataMenu.description = res?.data.data.description;
+      ((dataMenu.widgettitle = res?.data.data.widgettitle),
+        (dataMenu.widgetversion = res?.data.data.widgetversion),
+        (dataMenu.moduleid = res?.data.data.moduleid),
+        (dataMenu.modulename = res?.data.data.modulename),
+        (dataMenu.widgetby = res?.data.data.widgetby),
+        (dataMenu.installdate = res?.data.data.installdate),
+        (dataMenu.recordStatus = res?.data.data.recordstatus));
       if (res?.data.data.widgetform != '') {
         formSchema.value = res?.data?.data.widgetform;
         canvasComponents.value = JSON.parse(res?.data?.data.widgetform);
@@ -295,7 +292,7 @@ const copySchema = async () => {
       console.error('Error loading :', err);
     }
   } else {
-    console.log('Empty');
+    console.warn('Empty');
   }
 };
 
@@ -305,14 +302,14 @@ onMounted(async () => {
 
 const debugText = computed({
   get() {
-    return JSON.stringify(canvasComponents.value, null, 2)
+    return JSON.stringify(canvasComponents.value, null, 2);
   },
   set(v: string) {
     try {
-      canvasComponents.value = JSON.parse(v)
+      canvasComponents.value = JSON.parse(v);
     } catch {}
-  }
-})
+  },
+});
 
 watch(
   canvasComponents,

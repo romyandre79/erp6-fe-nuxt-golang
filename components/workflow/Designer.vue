@@ -1,13 +1,13 @@
 <template>
   <div class="relative h-full">
-      <div
-  v-if="testResult"
-  id="test-result-overlay"
-  class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
->
-  <h3 class="font-bold text-lg">Test Result</h3>
-  <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
-</div>
+    <div
+      v-if="testResult"
+      id="test-result-overlay"
+      class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
+    >
+      <h3 class="font-bold text-lg">Test Result</h3>
+      <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
+    </div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
@@ -20,7 +20,6 @@
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
     </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -64,7 +63,7 @@ function initEditor(container: HTMLElement) {
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      const res = await store.loadComponentProperties(node.name, cleanId.toString());
+      await store.loadComponentProperties(node.name, cleanId.toString());
       store.setSelectedNode(node);
     }
   });
@@ -146,7 +145,9 @@ watch(
 onBeforeUnmount(() => {
   try {
     editor?.destroy();
-  } catch {}
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 /* ======================================================
@@ -234,11 +235,11 @@ async function testFlow() {
     dataForm.append('search', 'true');
     for (let index = 0; index < store.parameters.length; index++) {
       const element = store.parameters[index];
-      
+      dataForm.append(element.parametername, element.parametervalue);
     }
     const res = await Api.post('admin/execute-flow', dataForm);
 
-    if (res.code == 200) {
+    if (res?.code == 200) {
       testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
     } else {
       testResult.value = `Error: ${res.message}`;
@@ -247,5 +248,4 @@ async function testFlow() {
     testResult.value = `Exception: ${err}`;
   }
 }
-
 </script>

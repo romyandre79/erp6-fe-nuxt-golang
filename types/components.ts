@@ -200,7 +200,7 @@ export const availableComponents = [
       key: '',
       othertype: '',
       otherkey: '',
-      class: ''
+      class: '',
     },
   },
   {
@@ -287,24 +287,20 @@ export const availableComponents = [
 
 export const layoutContainers = [
   {
-    type: 'master',
-    label: 'Master',
+    type: 'buttons',
+    label: 'Buttons',
     props: {
-      class: 'w-full',
-      layout: 'standard',
-      key: 'master',
-      primary: '',
+      key: '',
+      class: 'flex flex-wrap gap-2 mb-3',
     },
     children: [],
   },
   {
-    type: 'widget',
-    label: 'Widget',
+    type: 'columns',
+    label: 'Columns',
     props: {
-      class: 'w-full',
-      layout: 'standard',
-      key: 'widget',
-      primary: '',
+      key: '',
+      class: 'flex flex-wrap gap-2 mb-3',
     },
     children: [],
   },
@@ -319,74 +315,13 @@ export const layoutContainers = [
     children: [],
   },
   {
-    type: 'buttons',
-    label: 'Buttons',
+    type: 'master',
+    label: 'Master',
     props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-   {
-    type: 'tabs',
-    label: 'Tabs',
-    props: {
-      key: 'tabs',
-      class: 'w-full mb-4',
-    },
-    children: [],
-  },
-   {
-    type: 'tab',
-    label: 'Tab',
-    props: {
-      key: 'tab',
-      class: 'w-full mb-4',
-      text: ''
-    },
-    children: [],
-  },
-  {
-    type: 'table',
-    label: 'Table',
-    props: {
-      key: 'table0',
-      isdetail: false,
+      class: 'w-full',
+      layout: 'standard',
+      key: 'master',
       primary: '',
-      relationkey: '',
-      text: '',
-      source: '',
-      class: 'w-full mb-4',
-      isselectall: true,
-      enablecheck: true,
-      isexpand: false
-    },
-    children: [],
-  },
-  {
-    type: 'tables',
-    label: 'Tables',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'search',
-    label: 'Search',
-    props: {
-      key: '',
-      class: '',
-    },
-    children: [],
-  },
-  {
-    type: 'columns',
-    label: 'Columns',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
     },
     children: [],
   },
@@ -406,6 +341,82 @@ export const layoutContainers = [
       key: '',
       text: '',
       class: 'flex flex-wrap gap-2 mb-3',
+    },
+    children: [],
+  },
+  {
+    type: 'search',
+    label: 'Search',
+    props: {
+      key: '',
+      class: '',
+    },
+    children: [],
+  },
+  {
+    type: 'tabs',
+    label: 'Tabs',
+    props: {
+      key: 'tabs',
+      class: 'w-full mb-4',
+    },
+    children: [],
+  },
+  {
+    type: 'tab',
+    label: 'Tab',
+    props: {
+      key: 'tab',
+      class: 'w-full mb-4',
+      text: '',
+    },
+    children: [],
+  },
+  {
+    type: 'table',
+    label: 'Table',
+    props: {
+      key: 'table0',
+      isdetail: false,
+      primary: '',
+      relationkey: '',
+      text: '',
+      source: '',
+      class: 'w-full mb-4',
+      isselectall: true,
+      enablecheck: true,
+      isexpand: false,
+    },
+    children: [],
+  },
+  {
+    type: 'tables',
+    label: 'Tables',
+    props: {
+      key: '',
+      class: 'flex flex-wrap gap-2 mb-3',
+    },
+    children: [],
+  },
+  {
+    type: 'widget',
+    label: 'Widget',
+    props: {
+      class: 'w-full',
+      layout: 'standard',
+      key: 'widget',
+      primary: '',
+    },
+    children: [],
+  },
+  {
+    type: 'wizard',
+    label: 'Wizard',
+    props: {
+      class: 'w-full',
+      layout: 'standard',
+      key: 'wizard',
+      primary: '',
     },
     children: [],
   },
