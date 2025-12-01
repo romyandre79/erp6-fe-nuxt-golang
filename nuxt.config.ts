@@ -4,7 +4,13 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/image', '@nuxt/ui', '@nuxtjs/i18n'],
-  ssr: true,
+  ssr: false,
+  nitro: {
+    preset: 'static',
+    output: {
+      publicDir: '../erp6-be-golang-dist/public', // folder tujuan generate
+    },
+  },
   compatibilityDate: '2025-07-15',
   css: [
     'assets/css/main.css',

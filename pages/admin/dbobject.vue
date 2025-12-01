@@ -2,14 +2,11 @@
   <div class="h-screen flex flex-col bg-gray-50">
     <header class="flex items-center justify-between p-4 border-b bg-white">
       <div class="flex items-center gap-3">
-        <h1 class="text-xl font-semibold">Database Designer — Nuxt + Tailwind</h1>
-        <p class="text-sm text-gray-500">drag & drop, relasi, import/export JSON, save via API</p>
+        <h1 class="text-xl font-semibold">Database Designer</h1>
       </div>
       <div class="flex items-center gap-2">
-        <input @change="onLoadFile" ref="fileInput" type="file" accept="application/json" class="hidden" />
-        <button @click="$refs.fileInput.click()" class="px-3 py-1 rounded bg-white border">Load JSON</button>
-        <button @click="downloadJSON" class="px-3 py-1 rounded bg-blue-600 text-white">Download JSON</button>
-        <button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save to Backend</button>
+        <button @click="addTableAtNextPosition" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</button>
+        <button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</button>
         <button @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</button>
       </div>
     </header>
@@ -76,9 +73,7 @@
         </div>
 
         <!-- add table button pinned bottom-left -->
-        <div class="absolute left-4 bottom-4">
-          <button @click="addTableAt(40, 40)" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</button>
-        </div>
+        <div class="absolute left-4 bottom-4"></div>
       </div>
 
       <!-- properties panel -->
@@ -89,6 +84,16 @@
           <div>
             <label class="text-sm text-gray-600">Table Name</label>
             <input v-model="selectedTable.name" class="w-full mt-1 p-2 border rounded" />
+          </div>
+
+          <div>
+            <label class="text-sm text-gray-600">Comment</label>
+            <input v-model="selectedTable.comment" class="w-full mt-1 p-2 border rounded" />
+          </div>
+
+          <div>
+            <label class="text-sm text-gray-600">Is Published</label>
+            <input type="checkbox" v-model="selectedTable.ispublished" class="w-full mt-1 p-2 border rounded" />
           </div>
 
           <div>
@@ -129,20 +134,6 @@
           </div>
         </div>
 
-        <div v-else class="text-gray-500">
-          <p>Pilih tabel di kanvas (double-click) untuk mengedit properties.</p>
-          <p class="mt-2 text-sm">Atau gunakan tombol Add Table untuk membuat baru.</p>
-        </div>
-
-        <hr class="my-4" />
-
-        <div>
-          <h3 class="font-semibold">Export / Import</h3>
-          <pre class="mt-2 text-xs bg-gray-50 p-2 border rounded max-h-44 overflow-auto font-mono">{{
-            JsonExport
-          }}</pre>
-        </div>
-
         <div class="mt-4">
           <h3 class="font-semibold">Relations</h3>
           <div v-if="relations.length">
@@ -161,8 +152,9 @@
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed, watch, toRaw, nextTick } from 'vue';
+<script setup lang="ts">
+import { ref, reactive, computed, watch, toRaw, onMounted } from 'vue';
+import { useDbobjectStore } from '~/store/dbobject';
 
 let idSeq = 1;
 let relSeq = 1;
@@ -176,26 +168,86 @@ const offset = ref({ x: 0, y: 0 });
 const canvasRef = ref(null);
 
 const jsonPreview = ref('');
+const store = useDbobjectStore();
+const dbobject = ref<Dbobject>({
+  dbobjectid: '',
+  objectname: '',
+  dbobjecttypeid: '',
+  objectcontent: '',
+  objectversion: '',
+  ispublished: 0,
+  comment: '',
+});
 
 // linking state for creating relations
 const linkPreview = reactive({ active: false, from: null, sx: 0, sy: 0, path: '' });
 
-function makeTable(x = 60, y = 60) {
-  return {
+function addTableAt(x = 40, y = 40) {
+  const table = {
     id: idSeq++,
-    name: `table_${idSeq - 1}`,
+    dbid: '',
+    name: `table_${idSeq}`,
     x,
     y,
-    width: 220,
+    width: 240,
     columns: [
       { name: 'id', type: 'int' },
       { name: 'name', type: 'varchar' },
     ],
   };
+  tables.push(table);
 }
 
-function addTableAt(x, y) {
-  tables.push(makeTable(x, y));
+function addTableAtNextPosition() {
+  const spacingX = 340;
+  const spacingY = 200;
+  const perRow = 4;
+  const index = tables.length;
+
+  const row = Math.floor(index / perRow);
+  const col = index % perRow;
+
+  addTableAt(40 + col * spacingX, 40 + row * spacingY);
+}
+
+function createTableFromDBObject(obj, index) {
+  const spacingX = 340;
+  const spacingY = 200;
+  const perRow = 4;
+
+  const row = Math.floor(index / perRow);
+  const col = index % perRow;
+
+  let columns = [
+    { name: 'id', type: 'int' },
+    { name: 'name', type: 'varchar' },
+  ]; // fallback
+
+  if (obj.objectcontent) {
+    try {
+      const content = JSON.parse(obj.objectcontent);
+      if (Array.isArray(content.columns)) {
+        columns = content.columns.map((col) => ({
+          name: col.name || 'col',
+          type: col.type || 'varchar',
+        }));
+      }
+    } catch (e) {
+      console.warn(`Invalid objectcontent JSON for ${obj.objectname}`);
+    }
+  }
+
+  return {
+    id: Number(obj.dbobjectid) || idSeq++,
+    dbid: Number(obj.dbobjectid),
+    name: obj.objectname || `table_${index + 1}`,
+    x: 40 + col * spacingX,
+    y: 40 + row * spacingY,
+    width: 240,
+    columns,
+    ispublished: obj.ispublished == 1 ? true : false,
+    comment: obj.comment
+  };
 }
 
 function selectTable(id) {
@@ -223,8 +275,12 @@ function onDropCanvas(ev) {
   computeRelationsPaths();
 }
 
-function deleteTable(id) {
-  const idx = tables.findIndex((t) => t.id === id);
+async function deleteTable(id) {
+  if (!confirm('Are you sure ?')) return
+  const idx = tables.findIndex((t) => t.id === id);  
+  const table = tables.find((t) => t.id === id); 
+  console.log(table)
+  await store.purgeTable(table.dbid);
   if (idx >= 0) tables.splice(idx, 1);
   // remove relations referencing it
   for (let i = relations.length - 1; i >= 0; i--) {
@@ -281,56 +337,30 @@ function copyJSONToClipboard() {
   navigator.clipboard.writeText(jsonPreview.value).then(() => alert('Copied'));
 }
 
-const JsonExport = computed(() => JSON.stringify({ tables: toRaw(tables), relations: toRaw(relations) }, null, 2));
-
-function downloadJSON() {
-  const blob = new Blob([JsonExport.value], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'design.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function onLoadFile(ev) {
-  const f = ev.target.files?.[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const obj = JSON.parse(reader.result);
-      if (obj && Array.isArray(obj.tables)) {
-        tables.splice(0, tables.length, ...obj.tables.map((t) => ({ ...t })));
-        relations.splice(
-          0,
-          relations.length,
-          ...(Array.isArray(obj.relations) ? obj.relations.map((r) => ({ ...r })) : []),
-        );
-        idSeq = Math.max(...tables.map((t) => t.id), 0) + 1;
-        relSeq = Math.max(...relations.map((r) => r.id), 0) + 1;
-        selectedId.value = null;
-        computeRelationsPaths();
-      } else {
-        alert('Invalid design file');
-      }
-    } catch (e) {
-      alert('Failed to parse file');
-    }
-  };
-  reader.readAsText(f);
-  ev.target.value = '';
-}
-
-function resetDesign() {
+async function resetDesign() {
   if (!confirm('Reset design?')) return;
+  await loadDesign();
+}
+
+async function loadDesign() {
   tables.splice(0, tables.length);
   relations.splice(0, relations.length);
   idSeq = 1;
   relSeq = 1;
   selectedId.value = null;
+  await store.fetchAll();
+
+  tables.splice(0, tables.length);
+  relations.splice(0, relations.length);
+
+  store.dbobjects.forEach((obj, idx) => {
+    const table = createTableFromDBObject(obj, idx);
+    tables.push(table);
+  });
+
+  idSeq = Math.max(...tables.map((t) => t.id), 0) + 1;
+
+  computeRelationsPaths();
 }
 
 // Relation creation: pointerdown on a column starts linking, pointerup over target column finishes
@@ -430,45 +460,54 @@ watch(relations, computeRelationsPaths, { deep: true });
 
 // SAVE
 async function saveToBackend() {
-  const payload = { tables: toRaw(tables), relations: toRaw(relations) };
+  if (!tables.length) return alert('No tables to save');
+
   try {
-    await $fetch('/api/designer/save', { method: 'POST', body: payload });
-    alert('Saved to backend');
-  } catch (e) {
-    console.error(e);
-    alert('Failed to save to backend');
+    for (const table of toRaw(tables)) {
+      dbobject.value = {
+        dbobjectid: '',
+        objectname: '',
+        dbobjecttypeid: '',
+        objectcontent: '',
+        objectversion: '',
+        ispublished: 0,
+        comment: '',
+      };
+      dbobject.value.dbobjectid = table.dbid || '';
+      dbobject.value.objectname = table.name;
+      dbobject.value.dbobjecttypeid = 1;
+      const payload = {
+        table: table,
+        relations: relations
+          .filter((r) => r.from.table === table.id || r.to.table === table.id)
+          .map((r) => ({
+            id: r.id,
+            from: r.from,
+            to: r.to,
+          })),
+      };
+      dbobject.value.objectcontent = JSON.stringify(payload);
+      dbobject.value.objectversion = '1';
+      dbobject.value.ispublished = table.ispublished == true ? 1 : 0;
+      dbobject.value.comment = table.comment || '';
+
+      console.log(dbobject.value);
+
+      await store.saveTable(dbobject.value);
+
+      console.log(`Saved table ${table.name}`);
+    }
+
+    alert('All tables saved successfully');
+  } catch (err) {
+    console.error(err);
+    alert('Failed to save some tables');
   }
 }
 
-// init sample
-addTableAt(40, 40);
-addTableAt(320, 120);
-// EXPORT JSON
-function exportJSON() {
-  const payload = {
-    tables: toRaw(tables),
-    relations: toRaw(relations),
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'db-designer.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// IMPORT JSON
-function importJSON(file) {
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const data = JSON.parse(ev.target.result);
-    tables.splice(0, tables.length, ...(data.tables || []));
-    relations.splice(0, relations.length, ...(data.relations || []));
-    computeRelationPoints();
-  };
-  reader.readAsText(file);
-}
+onMounted(async () => {
+  await loadDesign();
+});
 </script>
 
 <style scoped>

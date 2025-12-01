@@ -10,14 +10,6 @@
           <button class="py-2 px-3 bg-primary-600 rounded" @click="applyTheme">Save</button>
           <button class="px-3 py-2 border rounded" @click="resetToDefault">Reset</button>
         </div>
-
-        <!-- <div class="flex gap-2 mt-2">
-          <button class="flex-1 px-3 py-2 border rounded" @click="downloadJSON">Export</button>
-          <label class="flex-1 px-3 py-2 border rounded text-center cursor-pointer">
-            Import
-            <input type="file" accept="application/json" ref="fileInput" class="hidden" @change="importJSON" />
-          </label>
-        </div> -->
       </div>
 
       <!-- Category list -->
@@ -124,8 +116,6 @@
 
           <div class="mt-4 flex gap-2">
             <button class="px-3 py-1 rounded" :style="buttonStyle">Button</button>
-            <button class="px-3 py-1 rounded" :style="btnPrimaryStyle">Primary</button>
-            <button class="px-3 py-1 rounded" :style="btnSecondaryStyle">Secondary</button>
           </div>
 
           <div class="mt-4 flex gap-2">
@@ -159,6 +149,9 @@
           </div>
 
           <div class="mt-4">
+            <a :style="linkStyle">Link</a>
+          </div>
+          <div class="mt-4">
             <label :style="labelStyle">Label</label>
           </div>
           <div class="mt-4 max-w-full">
@@ -182,9 +175,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useThemeStore } from '~/store/theme';
+import { useToast, useRoute } from '#imports';
 
 // integrate with Pinia theme store
 const store = useThemeStore();
+const toast = useToast();
 const route = useRoute();
 
 // simplified category list (you can extend or generate dynamically)
@@ -325,6 +320,32 @@ const categories = [
         key: 'font-family',
         label: 'Common Font Family',
         type: 'text',
+      },
+    ],
+  },
+  {
+    key: 'link',
+    label: 'Link',
+    props: [
+      {
+        key: 'a-background',
+        label: 'Link Background',
+        type: 'color',
+      },
+      {
+        key: 'a-color',
+        label: 'Link Color',
+        type: 'color',
+      },
+      {
+        key: 'a-hover-background',
+        label: 'Link Hover Background',
+        type: 'color',
+      },
+      {
+        key: 'a-hover-color',
+        label: 'Link Hover Color',
+        type: 'color',
       },
     ],
   },
@@ -850,33 +871,18 @@ const pStyle = computed(() => ({
 }));
 
 const buttonStyle = computed(() => ({
+  button: {
   background: `var(--button-background, #4f46e5)`,
   color: `var(--button-color, #fff)`,
   borderRadius: `var(--button-radius)`,
   borderColor: `var(--button-border-color)`,
   padding: `var(--button-padding)`,
   border: `var(--border)`,
+  },
   hover: {
     background: `var(--button-hover-background, #4f46e5)`,
     color: `var(--button-hover-color, #fff)`,
   },
-}));
-
-const btnPrimaryStyle = computed(() => ({
-  background: `var(--button-primary-background, #4f46e5)`,
-  color: `var(--button-primary-color, #fff)`,
-  borderRadius: `var(--button-radius)`,
-  borderColor: `var(--button-border-color)`,
-  hover: {
-    background: `var(--button-primary-hover-background, #4f46e5)`,
-    color: `var(--button-primary-hover-color, #fff)`,
-  },
-}));
-
-const btnSecondaryStyle = computed(() => ({
-  background: `var(--button-secondary-background, #64748b)`,
-  color: `var(--button-secondary-color, #fff)`,
-  borderRadius: `var(--button-radius)`,
 }));
 
 const tableStyle = computed(() => ({
@@ -920,7 +926,19 @@ const labelStyle = computed(() => ({
   color: `var(--label-color, #111827)`,
 }));
 
+const linkStyle = computed(() => ({
+  a: {
+  background: `var(--a-background, #f9fafb)`,
+  color: `var(--a-color, #111827)`
+  },
+  hover: {
+  background: `var(--a-hover-background, #f9fafb)`,
+  color: `var(--a-hover-color, #111827)`,
+  }
+}));
+
 const inputStyle = computed(() => ({
+  input: {
   background: `var(--input-background, #f9fafb)`,
   color: `var(--input-color, #111827)`,
   borderStyle: `var(--input-border-style)`,
@@ -928,5 +946,6 @@ const inputStyle = computed(() => ({
   borderFocusColor: `var(--input-focus-border-color)`,
   borderRadius: `var(--border-radius)`,
   border: `var(--border, 6)`,
+  }
 }));
 </script>

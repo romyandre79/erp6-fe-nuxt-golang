@@ -21,7 +21,7 @@
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
+    <aside class="w-min-100 bg-white border-r p-3 overflow-y-auto dark:bg-black">
       <h2 class="font-bold text-lg mb-3">Elements</h2>
 
       <!-- Komponen dasar -->

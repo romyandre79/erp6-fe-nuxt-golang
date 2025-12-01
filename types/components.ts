@@ -1,275 +1,8 @@
 export const availableComponents = [
   {
-    type: 'bool',
-    label: 'Boolean',
-    props: {
-      key: '',
-      label: '',
-      place: '',
-      text: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'button',
-    label: 'Button',
-    props: {
-      text: 'Button',
-      class: 'px-4 py-2 rounded transition',
-      icon: 'heroicons:plus',
-      onClick: '',
-    },
-  },
-  {
-    type: 'color',
-    label: 'Color',
-    props: {
-      key: '',
-      text: 'Color',
-      place: 'Enter a color',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'date',
-    label: 'Date',
-    props: {
-      key: '',
-      text: 'Date',
-      place: 'Enter a date',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'datetime',
-    label: 'Date Time',
-    props: {
-      key: '',
-      text: 'Date Time',
-      place: 'Enter a date time',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'email',
-    label: 'Email',
-    props: {
-      key: '',
-      label: 'Email',
-      place: 'example@mail.com',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'file',
-    label: 'File',
-    props: {
-      key: '',
-      text: 'File',
-      place: 'Enter a file',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'hidden',
-    label: 'Hidden',
-    props: {
-      text: 'Hidden Text',
-      place: 'Enter a text',
-      key: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'image',
-    label: 'Image',
-    props: {
-      key: '',
-      text: 'Image',
-      place: 'Enter a image',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'longtext',
-    label: 'Long Text',
-    props: {
-      key: '',
-      label: 'Long Text',
-      place: 'Enter long text',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'month',
-    label: 'Month',
-    props: {
-      key: '',
-      text: 'Month',
-      place: 'Enter a month',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'number',
-    label: 'Number',
-    props: {
-      key: '',
-      label: 'Number',
-      place: 'enter a number',
-      text: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'radio',
-    label: 'Radio',
-    props: {
-      key: '',
-      text: 'Radio',
-      place: 'Enter a radio',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'range',
-    label: 'Range',
-    props: {
-      key: '',
-      text: 'Range',
-      place: 'Enter a range',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'reset',
-    label: 'Reset',
-    props: {
-      key: '',
-      text: 'Reset',
-      place: 'Enter a reset',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'select',
-    label: 'Select',
-    props: {
-      key: '',
-      text: '',
-      source: '',
-      label: '',
-      place: 'Choose a data',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'callother',
-    label: 'Call Other',
-    props: {
-      key: '',
-      othertype: '',
-      otherkey: '',
-      class: '',
-    },
-  },
-  {
-    type: 'tel',
-    label: 'Tel',
-    props: {
-      key: '',
-      text: 'Tel',
-      place: 'Enter a tel',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'text',
-    label: 'Text',
-    props: {
-      key: '',
-      text: 'Text',
-      place: 'Enter a text',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'time',
-    label: 'Time',
-    props: {
-      key: '',
-      text: 'Time',
-      place: 'Enter a time',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'url',
-    label: 'Url',
-    props: {
-      key: '',
-      text: 'Url',
-      place: 'Enter a url',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'title',
-    label: 'Title',
-    props: {
-      text: 'title',
-      class: 'tracking-tight mb-4',
-    },
-  },
-  {
-    type: 'subtitle',
-    label: 'Sub Title',
-    props: {
-      text: 'Sub Title',
-      class: 'tracking-tight mb-4',
-    },
-  },
-  {
     type: 'action',
     label: 'Action',
+    component: 'div',
     props: {
       onNew: '',
       onGet: '',
@@ -283,12 +16,328 @@ export const availableComponents = [
       onXls: '',
     },
   },
+  {
+    type: 'bool',
+    label: 'Boolean',
+    component: 'input',
+    props: {
+      key: '',
+      label: '',
+      place: '',
+      text: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'button',
+    label: 'Button',
+    component: 'UButton',
+    props: {
+      text: 'Button',
+      class: 'px-4 py-2 rounded transition',
+      icon: 'heroicons:plus',
+      onClick: '',
+    },
+  },
+  {
+    type: 'callother',
+    label: 'Call Other',
+    component: 'div',
+    props: {
+      key: '',
+      othertype: '',
+      otherkey: '',
+      class: '',
+    },
+  },
+
+  {
+    type: 'color',
+    label: 'Color',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Color',
+      place: 'Enter a color',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'date',
+    label: 'Date',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Date',
+      place: 'Enter a date',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'datetime',
+    label: 'Date Time',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Date Time',
+      place: 'Enter a date time',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'email',
+    label: 'Email',
+    component: 'input',
+    props: {
+      key: '',
+      label: 'Email',
+      place: 'example@mail.com',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'file',
+    label: 'File',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'File',
+      place: 'Enter a file',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'hidden',
+    label: 'Hidden',
+    component: 'input',
+    props: {
+      text: 'Hidden Text',
+      place: 'Enter a text',
+      key: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'image',
+    label: 'Image',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Image',
+      place: 'Enter a image',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'longtext',
+    label: 'Long Text',
+    component: 'textarea',
+    props: {
+      key: '',
+      label: 'Long Text',
+      place: 'Enter long text',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'month',
+    label: 'Month',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Month',
+      place: 'Enter a month',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'number',
+    label: 'Number',
+    component: 'input',
+    props: {
+      key: '',
+      label: 'Number',
+      place: 'enter a number',
+      text: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'password',
+    label: 'Password',
+    component: 'input',
+    props: {
+      key: '',
+      place: 'enter a password',
+      text: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'radio',
+    label: 'Radio',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Radio',
+      place: 'Enter a radio',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'range',
+    label: 'Range',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Range',
+      place: 'Enter a range',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'reset',
+    label: 'Reset',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Reset',
+      place: 'Enter a reset',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'select',
+    label: 'Select',
+    component: 'input',
+    props: {
+      key: '',
+      text: '',
+      source: '',
+      label: '',
+      place: 'Choose a data',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'tel',
+    label: 'Tel',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Tel',
+      place: 'Enter a tel',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'text',
+    label: 'Text',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Text',
+      place: 'Enter a text',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'time',
+    label: 'Time',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Time',
+      place: 'Enter a time',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'url',
+    label: 'Url',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Url',
+      place: 'Enter a url',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'title',
+    label: 'Title',
+    component: 'div',
+    props: {
+      text: 'title',
+      class: 'tracking-tight mb-4',
+    },
+  },
+  {
+    type: 'subtitle',
+    label: 'Sub Title',
+    component: 'div',
+    props: {
+      text: 'Sub Title',
+      class: 'tracking-tight mb-4',
+    },
+  },
 ];
 
 export const layoutContainers = [
   {
     type: 'buttons',
     label: 'Buttons',
+    component: 'div',
+    props: {
+      key: '',
+      class: 'flex flex-wrap gap-2 mb-3',
+    },
+    children: [],
+  },
+  {
+    type: 'charts',
+    label: 'Charts',
+    component: 'div',
     props: {
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
@@ -298,6 +347,7 @@ export const layoutContainers = [
   {
     type: 'columns',
     label: 'Columns',
+    component: 'div',
     props: {
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
@@ -307,6 +357,7 @@ export const layoutContainers = [
   {
     type: 'form',
     label: 'Form',
+    component: 'div',
     props: {
       class: 'w-full',
       key: 'form',
@@ -317,6 +368,7 @@ export const layoutContainers = [
   {
     type: 'master',
     label: 'Master',
+    component: 'div',
     props: {
       class: 'w-full',
       layout: 'standard',
@@ -328,6 +380,7 @@ export const layoutContainers = [
   {
     type: 'modals',
     label: 'Modals',
+    component: 'div',
     props: {
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
@@ -337,6 +390,7 @@ export const layoutContainers = [
   {
     type: 'modal',
     label: 'Modal',
+    component: 'div',
     props: {
       key: '',
       text: '',
@@ -347,6 +401,7 @@ export const layoutContainers = [
   {
     type: 'search',
     label: 'Search',
+    component: 'div',
     props: {
       key: '',
       class: '',
@@ -356,6 +411,7 @@ export const layoutContainers = [
   {
     type: 'tabs',
     label: 'Tabs',
+    component: 'div',
     props: {
       key: 'tabs',
       class: 'w-full mb-4',
@@ -365,6 +421,7 @@ export const layoutContainers = [
   {
     type: 'tab',
     label: 'Tab',
+    component: 'div',
     props: {
       key: 'tab',
       class: 'w-full mb-4',
@@ -375,6 +432,7 @@ export const layoutContainers = [
   {
     type: 'table',
     label: 'Table',
+    component: 'div',
     props: {
       key: 'table0',
       isdetail: false,
@@ -392,6 +450,7 @@ export const layoutContainers = [
   {
     type: 'tables',
     label: 'Tables',
+    component: 'div',
     props: {
       key: '',
       class: 'flex flex-wrap gap-2 mb-3',
@@ -401,6 +460,7 @@ export const layoutContainers = [
   {
     type: 'widget',
     label: 'Widget',
+    component: 'div',
     props: {
       class: 'w-full',
       layout: 'standard',
@@ -412,6 +472,7 @@ export const layoutContainers = [
   {
     type: 'wizard',
     label: 'Wizard',
+    component: 'div',
     props: {
       class: 'w-full',
       layout: 'standard',
