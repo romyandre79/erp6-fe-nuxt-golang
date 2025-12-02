@@ -6,13 +6,8 @@
       </div>
       <div class="flex items-center gap-2">
         <button @click="addTableAtNextPosition" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</button>
-<!-- <button @click="exportPNG" class="px-3 py-1 rounded bg-blue-600 text-white">
-  Export PNG
-</button>         -->
-<button @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">
-  Add Area
-</button>
-<button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</button>
+        <button @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</button>
+        <button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</button>
         <button @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</button>
       </div>
     </header>
@@ -21,43 +16,41 @@
       <!-- canvas -->
       <div class="flex-1 relative p-4 bg-gray-100" @dragover.prevent @drop="onDropCanvas" ref="canvasRef" id="drawflow">
         <!-- SVG relations -->
-         <div
-  v-for="area in areas"
-  :key="area.id"
-  class="absolute rounded-xl border border-purple-400 bg-purple-200/30"
-  :style="{
-    left: area.x + 'px',
-    top: area.y + 'px',
-    width: area.width + 'px',
-    height: area.height + 'px',
-  }"
-  @mousedown="startAreaDrag(area, $event)"
->
-  <!-- header -->
-  <div
-  class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between"
->
-  <input
-    v-model="area.name"
-    class="bg-purple-600 outline-none flex-1 rounded px-2"
-  />
+        <div
+          v-for="area in areas"
+          :key="area.id"
+          :data-area-id="area.id"
+          class="absolute rounded-xl border border-purple-400 bg-purple-200/30"
+          :style="{
+            left: area.x + 'px',
+            top: area.y + 'px',
+            width: area.width + 'px',
+            height: area.height + 'px',
+          }"
+          @mousedown="startAreaDrag(area, $event)"
+        >
+          <!-- header -->
+          <div
+            class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between"
+          >
+            <input v-model="area.name" class="bg-purple-600 outline-none flex-1 rounded px-2" />
 
-  <!-- tombol delete di pojok kanan -->
-  <button
-    @click.stop="deleteArea(area.id)"
-    class="ml-2 text-white hover:text-red-300 font-bold"
-    title="Delete Area"
-  >
-    ✕
-  </button>
-</div>
-  <!-- resize handle -->
-  <div
-    class="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize rounded"
-    @mousedown.stop="startAreaResize(area, $event)"
-  ></div>
+            <!-- tombol delete di pojok kanan -->
 
-</div>
+            <button
+              @click.stop="deleteArea(area.id)"
+              class="ml-2 text-white hover:text-red-300 font-bold"
+              title="Delete Area"
+            >
+              ✕
+            </button>
+          </div>
+          <!-- resize handle -->
+          <div
+            class="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize rounded"
+            @mousedown.stop="startAreaResize(area, $event)"
+          ></div>
+        </div>
 
         <svg class="absolute inset-0 pointer-events-none" style="overflow: visible">
           <defs>
@@ -222,8 +215,8 @@ const toast = useToast();
 const areas = reactive([]);
 let areaSeq = 1;
 
-const activeArea = ref(null);   // untuk drag/resize area
-const areaMode = ref(null);     // 'move' atau 'resize'
+const activeArea = ref(null); // untuk drag/resize area
+const areaMode = ref(null); // 'move' atau 'resize'
 const areaOffset = ref({ x: 0, y: 0 });
 
 const selectedId = ref(null);
@@ -295,18 +288,17 @@ function createTableFromDBObject(obj, index) {
           default: c.default ?? '',
         }));
       }
-      posX = content?.table?.x ?? (40 + (index % 4) * 340);
-  posY = content?.table?.y ?? (40 + Math.floor(index / 4) * 200);
-  width = content?.table?.width ?? 240;
+      posX = content?.table?.x ?? 40 + (index % 4) * 340;
+      posY = content?.table?.y ?? 40 + Math.floor(index / 4) * 200;
+      width = content?.table?.width ?? 240;
 
-  if (content.areas && content.areas.length > 0) {        
-    content.areas.forEach(area => {
-      if (areas.find((x)=> x.id == area.id) == undefined) {
-        createAreaFromData(area);
+      if (content.areas && content.areas.length > 0) {
+        content.areas.forEach((area) => {
+          if (areas.find((x) => x.id == area.id) == undefined) {
+            createAreaFromData(area);
+          }
+        });
       }
-    });
-}
-
     } catch (e) {
       console.warn(`Invalid objectcontent JSON for ${obj.objectname}`, e);
     }
@@ -324,12 +316,12 @@ function createTableFromDBObject(obj, index) {
     width: width,
     columns,
     ispublished: obj.ispublished == 1 ? true : false,
-    comment: obj.comment ?? ''
+    comment: obj.comment ?? '',
   };
 }
 
 function createAreaFromData(data) {
-  console.log('data ',data)
+  console.log('data ', data);
   const area = {
     id: data.id,
     name: data.name,
@@ -338,30 +330,28 @@ function createAreaFromData(data) {
     width: data.width,
     height: data.height,
     color: data.color,
-    type: "area"
+    type: 'area',
   };
 
   areas.push(area);
-  console.log('areas ',areas)
+  console.log('areas ', areas);
   renderArea(area);
 }
 
 function renderArea(area) {
-  const el = document.createElement("div");
-  el.className = "design-area";
-  el.style.left = area.x + "px";
-  el.style.top = area.y + "px";
-  el.style.width = area.width + "px";
-  el.style.height = area.height + "px";
-  el.style.background = area.color || "#fef9c3";
+  const el = document.createElement('div');
+  el.className = 'design-area';
+  el.style.left = area.x + 'px';
+  el.style.top = area.y + 'px';
+  el.style.width = area.width + 'px';
+  el.style.height = area.height + 'px';
+  el.style.background = area.color || '#fef9c3';
 
   el.dataset.id = area.id;
-  el.dataset.type = "area";
+  el.dataset.type = 'area';
 
   makeAreaDraggableAndResizable(el, area);
 }
-
-
 
 function selectTable(id) {
   selectedId.value = id;
@@ -389,17 +379,17 @@ function onDropCanvas(ev) {
 }
 
 async function deleteArea(id) {
-  if (!confirm('Are you sure to delete Area ?')) return
-  const idx = areas.findIndex((t) => t.id === id);  
+  if (!confirm('Are you sure to delete Area ?')) return;
+  const idx = areas.findIndex((t) => t.id === id);
   if (idx >= 0) areas.splice(idx, 1);
 }
 
 async function deleteTable(id) {
-  if (!confirm('Are you sure to delete Table?')) return
-  const idx = tables.findIndex((t) => t.id === id);  
-  const table = tables.find((t) => t.id === id); 
+  if (!confirm('Are you sure to delete Table?')) return;
+  const idx = tables.findIndex((t) => t.id === id);
+  const table = tables.find((t) => t.id === id);
   if (table.dbid) {
-  await store.purgeTable(table.dbid);
+    await store.purgeTable(table.dbid);
   }
   if (idx >= 0) tables.splice(idx, 1);
   // remove relations referencing it
@@ -419,7 +409,6 @@ function duplicateTable(table) {
   tables.push(copy);
   computeRelationsPaths();
 }
-
 
 function addColumn() {
   if (selectedTable.value) selectedTable.value.columns.push({ name: 'new_col', type: 'varchar' });
@@ -467,8 +456,8 @@ async function resetDesign() {
 
 function loadRelationsFromObjects(dbobjects, idMap) {
   relations.splice(0, relations.length);
-console.log(dbobjects)
-  dbobjects.forEach(obj => {
+  console.log(dbobjects);
+  dbobjects.forEach((obj) => {
     if (!obj.objectcontent) return;
     let parsed;
 
@@ -480,43 +469,42 @@ console.log(dbobjects)
 
     if (!parsed.relations || !Array.isArray(parsed.relations)) return;
 
-    console.log('rel ',parsed.relations)
-    parsed.relations.forEach(rel => {
+    console.log('rel ', parsed.relations);
+    parsed.relations.forEach((rel) => {
       const newFromTable = idMap[rel.from.table];
       const newToTable = idMap[rel.to.table];
 
       if (!newFromTable || !newToTable) return;
 
-      const exists = relations.some(r =>
-    r.from.table === newFromTable &&
-    r.from.col === rel.from.col &&
-    r.to.table === newToTable &&
-    r.to.col === rel.to.col
-  );
+      const exists = relations.some(
+        (r) =>
+          r.from.table === newFromTable &&
+          r.from.col === rel.from.col &&
+          r.to.table === newToTable &&
+          r.to.col === rel.to.col,
+      );
 
-  if (exists) return; 
+      if (exists) return;
 
       relations.push({
         id: relSeq++,
         from: {
           table: newFromTable,
           col: rel.from.col,
-          colName: rel.from.colName
+          colName: rel.from.colName,
         },
         to: {
           table: newToTable,
           col: rel.to.col,
-          colName: rel.to.colName
+          colName: rel.to.colName,
         },
-        path: ""
+        path: '',
       });
     });
   });
 
   computeRelationsPaths();
 }
-
-
 
 async function loadDesign() {
   // reset local arrays
@@ -547,16 +535,15 @@ async function loadDesign() {
 
   unique.forEach((obj, idx) => {
     const table = createTableFromDBObject(obj, idx);
-      idMap[obj.dbobjectid] = table.id; 
+    idMap[obj.dbobjectid] = table.id;
     tables.push(table);
   });
 
   // ensure idSeq is after max local id
   idSeq = Math.max(...tables.map((t) => t.id), 0) + 1;
-loadRelationsFromObjects(unique, idMap)
+  loadRelationsFromObjects(unique, idMap);
   computeRelationsPaths();
 }
-
 
 // Relation creation: pointerdown on a column starts linking, pointerup over target column finishes
 function startLink(tableId, colIndex, ev) {
@@ -664,10 +651,10 @@ async function saveToBackend() {
         relations: relations
           .filter((r) => r.from.table === table.id || r.to.table === table.id)
           .map((r) => ({ id: r.id, from: r.from, to: r.to })),
-        areas
+        areas,
       };
 
-      console.log('payload ',payloadObj)
+      console.log('payload ', payloadObj);
 
       const dbobj = {
         dbobjectid: table.dbid ? String(table.dbid) : '', // if empty -> create new
@@ -676,7 +663,7 @@ async function saveToBackend() {
         objectcontent: JSON.stringify(payloadObj),
         objectversion: '1',
         ispublished: table.ispublished ? 1 : 0,
-        comment: table.comment || ''
+        comment: table.comment || '',
       };
 
       // backend should return saved dbobject with dbobjectid
@@ -686,7 +673,7 @@ async function saveToBackend() {
       const newId = returned?.dbobjectid ?? returned?.dbobjectid ?? null;
       if (newId) {
         // update local table mapping
-        const local = tables.find(t => t.id === table.id);
+        const local = tables.find((t) => t.id === table.id);
         if (local) local.dbid = newId;
       }
     }
@@ -696,7 +683,6 @@ async function saveToBackend() {
     toast.add({ title: 'Error', description: String(err), color: 'error' });
   }
 }
-
 
 onMounted(async () => {
   await loadDesign();
@@ -714,129 +700,54 @@ function fixColors(container: HTMLElement) {
   });
 }
 
-async function exportPNG() {
-  if (!tables.length) {
-    alert("Tidak ada table untuk di-export.");
-    return;
-  }
-
-  const canvasEl = canvasRef.value;
-  const container = document.getElementById('drawflow');
-  if (!container) return;
-  if (!canvasEl) return;
-  fixColors(container)
-
-  // --- 1. Hitung bounding box ---
-  let minX = Infinity, minY = Infinity;
-  let maxX = -Infinity, maxY = -Infinity;
-
-  tables.forEach(t => {
-    minX = Math.min(minX, t.x);
-    minY = Math.min(minY, t.y);
-    maxX = Math.max(maxX, t.x + t.width);
-    maxY = Math.max(maxY, t.y + 36 + t.columns.length * 24);
-  });
-
-  relations.forEach(r => {
-    const A = tables.find(t => t.id === r.from.table);
-    const B = tables.find(t => t.id === r.to.table);
-    if (!A || !B) return;
-
-    const x1 = A.x + A.width;
-    const y1 = A.y + 36 + r.from.col * 24;
-    const x2 = B.x;
-    const y2 = B.y + 36 + r.to.col * 24;
-
-    minX = Math.min(minX, x1, x2);
-    minY = Math.min(minY, y1, y2);
-    maxX = Math.max(maxX, x1, x2);
-    maxY = Math.max(maxY, y1, y2);
-  });
-
-  const padding = 40;
-  minX -= padding;
-  minY -= padding;
-  maxX += padding;
-  maxY += padding;
-
-  const width = maxX - minX;
-  const height = maxY - minY;
-
-  // --- 2. Capture area ---
-  const screenshotCanvas = await html2canvas(canvasEl, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    x: minX,
-    y: minY,
-    width,
-    height,
-    scrollX: 0,
-    scrollY: 0,
-  });
-
-  // --- 3. Tambahkan watermark ke hasil PNG ---
-  const ctx = screenshotCanvas.getContext("2d");
-  ctx.globalAlpha = 0.35;
-  ctx.font = "20px sans-serif";
-  ctx.fillStyle = "#000";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "bottom";
-  ctx.fillText("Capella ERP Indonesia v6 - DB Designer", screenshotCanvas.width - 20, screenshotCanvas.height - 20);
-
-  // --- 4. Download file PNG ---
-  const link = document.createElement("a");
-  link.download = "database-design.png";
-  link.href = screenshotCanvas.toDataURL("image/png");
-  link.click();
-}
-
-
 function addArea() {
-  areas.push({
-    id: areaSeq++,
-    name: "Area " + areaSeq,
-    x: 100,
-    y: 100,
-    width: 400,
-    height: 300,
-    color: "#e3e9ff"
-  });
+  ((areaSeq = areaSeq + 1),
+    areas.push({
+      id: areaSeq,
+      name: 'Area ' + areaSeq,
+      x: 100,
+      y: 100,
+      width: 400,
+      height: 300,
+      color: '#e3e9ff',
+    }));
+  console.log('push area ', areas);
 }
 
 function startAreaDrag(area, ev) {
   activeArea.value = area;
-  areaMode.value = "move";
+  areaMode.value = 'move';
   areaOffset.value = {
     x: ev.clientX - area.x,
-    y: ev.clientY - area.y
+    y: ev.clientY - area.y,
   };
 
-  window.addEventListener("mousemove", onAreaMouseMove);
-  window.addEventListener("mouseup", stopAreaInteraction);
+  window.addEventListener('mousemove', onAreaMouseMove);
+  window.addEventListener('mouseup', stopAreaInteraction);
 }
 
 function startAreaResize(area, ev) {
   activeArea.value = area;
-  areaMode.value = "resize";
+  areaMode.value = 'resize';
   areaOffset.value = {
     x: ev.clientX,
-    y: ev.clientY
+    y: ev.clientY,
   };
 
-  window.addEventListener("mousemove", onAreaMouseMove);
-  window.addEventListener("mouseup", stopAreaInteraction);
+  window.addEventListener('mousemove', onAreaMouseMove);
+  window.addEventListener('mouseup', stopAreaInteraction);
 }
 
 function onAreaMouseMove(ev) {
   if (!activeArea.value) return;
   const A = activeArea.value;
 
-  if (areaMode.value === "move") {
+  if (areaMode.value === 'move') {
     A.x = ev.clientX - areaOffset.value.x;
     A.y = ev.clientY - areaOffset.value.y;
   }
 
-  if (areaMode.value === "resize") {
+  if (areaMode.value === 'resize') {
     const dx = ev.clientX - areaOffset.value.x;
     const dy = ev.clientY - areaOffset.value.y;
     A.width += dx;
@@ -848,8 +759,8 @@ function onAreaMouseMove(ev) {
 function stopAreaInteraction() {
   activeArea.value = null;
   areaMode.value = null;
-  window.removeEventListener("mousemove", onAreaMouseMove);
-  window.removeEventListener("mouseup", stopAreaInteraction);
+  window.removeEventListener('mousemove', onAreaMouseMove);
+  window.removeEventListener('mouseup', stopAreaInteraction);
 }
 
 function isTableInsideArea(table, area) {
@@ -860,29 +771,6 @@ function isTableInsideArea(table, area) {
     table.y + 36 + table.columns.length * 24 <= area.y + area.height
   );
 }
-
-function exportArea(areaId) {
-  const area = areas.find(a => a.id === areaId);
-  if (!area) return alert("Area not found");
-
-  const tablesIn = tables.filter(t => isTableInsideArea(t, area));
-  const ids = tablesIn.map(t => t.id);
-
-  const relsIn = relations.filter(r =>
-    ids.includes(r.from.table) &&
-    ids.includes(r.to.table)
-  );
-
-  const result = {
-    area,
-    tables: tablesIn,
-    relations: relsIn
-  };
-
-  console.log("EXPORT AREA:", result);
-  alert("Check console for exported JSON");
-}
-
 
 </script>
 
