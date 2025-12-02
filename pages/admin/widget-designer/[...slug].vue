@@ -226,7 +226,7 @@ const saveSchema = async () => {
   try {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res?.code == 200) {
-      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
+      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
