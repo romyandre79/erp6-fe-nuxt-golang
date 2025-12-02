@@ -66,7 +66,7 @@
       draggable="false"
     >
       <component :is="resolveComponent(node.type)" v-bind="getComponentProps(node)" :disabled="preview">
-        {{ node.props?.text || node.label }}
+        {{ node.type + ':' + (node.props?.text || node.label) }}
       </component>
     </div>
   </div>
@@ -75,6 +75,9 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable';
 import { ref, computed } from 'vue';
+import { UButton } from '#components';
+import { useToast } from '#imports';
+import { layoutContainers, availableComponents } from '~/types/components';
 
 const props = defineProps({
   node: { type: Object, required: true },
@@ -84,25 +87,15 @@ const props = defineProps({
 const emit = defineEmits(['select', 'drop-child', 'delete']);
 
 const isDragOver = ref(false);
-const containerTypes = [
-  'master',
-  'detail',
-  'widget',
-  'components',
-  'buttons',
-  'form',
-  'table',
-  'search',
-  'modal',
-  'tables',
-  'columns',
-  'modals',
-];
+const containerTypes = layoutContainers.map((c) => c.type);
+
 const isContainer = computed(() => {
   if (!props.node.children) props.node.children = [];
   return containerTypes.includes(props.node.type);
 });
 const emitSelect = () => emit('select', props.node);
+
+const toast = useToast();
 
 // 🔹 Drag events
 const onDragEnter = () => (isDragOver.value = true);
@@ -120,10 +113,6 @@ const onDrop = (event: DragEvent) => {
   try {
     const comp = JSON.parse(data);
 
-    // 🧩 Validasi jenis komponen berdasarkan container
-    const containerType = props.node.type;
-    const componentType = comp.type;
-
     // ✅ Komponen valid → tambahkan
     const newComp = {
       id: Math.random().toString(36).substr(2, 9),
@@ -136,33 +125,9 @@ const onDrop = (event: DragEvent) => {
   }
 };
 
-const isHover = ref(false);
-
 const onAdd = (event: any) => {
-  const containerType = props.node.type;
   const newItem = event.added?.element;
   if (!newItem) return;
-
-  const componentType = newItem.type;
-
-  const allowedTypes: Record<string, string[]> = {
-    master: ['button'],
-    detail: [''],
-    components: ['text', 'button'],
-    buttons: ['button'],
-    tables: ['text'],
-    table: ['text'],
-  };
-
-  if (allowedTypes[containerType] && !allowedTypes[containerType].includes(componentType)) {
-    toast.add({
-      title: 'Error',
-      description: `❌ '${componentType}' tidak dapat ditambahkan ke '${containerType}' container.`,
-      color: 'error',
-    });
-    props.node.children.splice(event.added.newIndex, 1);
-    return;
-  }
 
   emit('drop-child', props.node.id, newItem);
 };
@@ -172,39 +137,14 @@ const confirmDelete = () => emit('delete', props.node);
 const onChildChange = () => emit('select', props.node);
 
 // 🔹 Component resolver
+const componentMap: Record<string, any> = {};
+availableComponents.forEach(item => {
+  // Jika component berupa string → native element
+  // Jika berupa komponen Vue → #components otomatis resolve
+  componentMap[item.type] = item.component;
+});
 const resolveComponent = (type: string) => {
-  switch (type) {
-    case 'button':
-      return 'button';
-    case 'input':
-    case 'number':
-    case 'email':
-    case 'hidden':
-    case 'bool':
-    case 'boolean':
-    case 'password':
-    case 'date':
-    case 'time':
-    case 'datetime':
-    case 'month':
-    case 'checkbox':
-    case 'radio':
-    case 'file':
-    case 'image':
-    case 'range':
-    case 'reset':
-    case 'search':
-    case 'tel':
-    case 'url':
-    case 'week':
-    case 'color':
-    case 'text':
-      return 'input';
-    case 'longtext':
-      return 'textarea';
-    default:
-      return 'div';
-  }
+  return componentMap[type] || 'div';
 };
 
 const getComponentProps = (node: any) => {
@@ -233,7 +173,7 @@ const getComponentProps = (node: any) => {
       return { ...base, type: 'checkbox' };
 
     default:
-      return base;
+      return { ...base, class: 'panel'  };
   }
 };
 </script>

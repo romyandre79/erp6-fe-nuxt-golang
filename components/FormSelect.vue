@@ -35,23 +35,34 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', component.source);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
+    let arr = props.component.source?.split(',');
+    if (arr.length == 1) {
+      const dataForm = new FormData();
+      dataForm.append('flowname', component.source);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('admin/execute-flow', dataForm);
 
-    if (res.code === 200 && Array.isArray(res.data?.data)) {
-      const labelField = component.label || 'label';
-      const valueField = component.valueField || component.key || 'value';
+      if (res.code === 200 && Array.isArray(res.data?.data)) {
+        const labelField = component.label || 'label';
+        const valueField = component.valueField || component.key || 'value';
 
-      options.value = res.data.data.map((item: Record<string, any>) => ({
-        label: item[labelField],
-        id: item[valueField],
-      }));
+        options.value = res.data.data.map((item: Record<string, any>) => ({
+          label: item[labelField],
+          id: item[valueField],
+        }));
+      } else {
+        console.error('Gagal ambil data untuk select:', res?.message);
+      }
     } else {
-      console.error('Gagal ambil data untuk select:', res?.message);
+      for (let index = 0; index < arr.length; index++) {
+        const element = arr[index];
+        options.value.push({
+          label: element,
+          id: element,
+        });
+      }
     }
   } catch (err) {
     console.error('Error fetch data select:', err);
@@ -78,15 +89,11 @@ watch(
     const val = formData.value[component.key];
     if (val != null && val !== '') {
       const exists = newOptions.some((o) => o.id == val);
-      console.log(newOptions);
-      console.log(val);
-      console.log(exists);
       if (!exists) {
         console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
       } else {
         // force reactivity update agar USelect sinkron
         formData.value[component.key] = val;
-        console.log(formData);
       }
     }
   },

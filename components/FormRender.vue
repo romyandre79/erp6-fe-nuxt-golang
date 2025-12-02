@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import FormSelect from '~/components/FormSelect.vue';
-import TablePagination from './TablePagination.vue';
-import { UModal, UTabs, UButton } from '#components';
-import { useApi } from '~/composables/useApi';
+import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
+import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
+import { navigateTo } from '#app';
+import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect } from 'vue';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -12,6 +12,7 @@ const props = defineProps({
 });
 
 const modalTitle = ref('');
+const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
@@ -24,8 +25,31 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-const modals = computed(() => parsedSchema.value?.modals || []);
-const tables = computed(() => parsedSchema.value?.tables || []);
+function findNode(node: any, type: any): any {
+  let result = [];
+
+  if (Array.isArray(node)) {
+    for (const n of node) result.push(...findNode(n, type));
+    return result;
+  }
+
+  if (!node || typeof node !== 'object') return [];
+
+  // jika object ini adalah table → push
+  if (node.type === type) result.push(node);
+
+  // scan children
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      result.push(...findNode(child, type));
+    }
+  }
+
+  return result;
+}
+
+const tables = computed(() => findNode(parsedSchema.value, 'table'));
+const modals = computed(() => findNode(parsedSchema.value, 'modal'));
 
 // 🔥 Ketika selectedRows berubah
 watch(
@@ -43,15 +67,13 @@ watch(
   { deep: true },
 );
 
-const activeTab = ref<string>('');
-
 // 🧩 Rebuild modalRefs setiap kali modals berubah
 watch(
   modals,
   async (newVal) => {
     await nextTick();
     for (const key of Object.keys(modalRefs)) delete modalRefs[key];
-    newVal?.forEach((m, index) => {
+    newVal?.forEach((m) => {
       // buat modal ref
       modalRefs[m.key] = ref(false);
     });
@@ -63,7 +85,7 @@ const detailTab = computed(() => {
   if (!modals.value) return [];
 
   // Skip modal pertama (index 0)
-  return modals.value.slice(1).map((m, i) => ({
+  return modals.value.slice(1).map((m) => ({
     ...m,
   }));
 });
@@ -89,18 +111,20 @@ watch(
 
 // 🧩 Modal actions
 function open(key: string) {
-  console.log('🔥 TRY OPEN:', key, modalRefs[key]);
   if (modalRefs[key]) {
     modalRefs[key].value = true;
-    console.log('🔥 UPDATED:', modalRefs[key].value);
+    modalTitle.value = 'New Data';
+    modalDescription.value = '';
+    const primary = getPrimary();
+    tableRef.value.setData(primary, 0);
   } else {
     console.warn('❌ Modal not found:', key);
   }
 }
 
 function getPrimary() {
-  let node: any 
-  parsedSchema.value.forEach(element => {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
     if (element.type == 'master') {
       node = element;
     }
@@ -110,10 +134,10 @@ function getPrimary() {
 
 async function edit(key: string) {
   const flow = getAction('get');
-  console.log('flow ',flow)
   if (flow && selectedRows.value.length > 0) {
-    const primary = getPrimary()
+    const primary = getPrimary();
     modalTitle.value = 'Edit Data';
+    modalDescription.value = '';
     modalRefs[key].value = true;
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -127,6 +151,7 @@ async function edit(key: string) {
         for (const key in record) {
           formData.value[key] = record[key];
         }
+        tableRef.value.setData(primary, selectedRows.value[0][primary]);
       } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
         navigateTo('/login');
       }
@@ -137,12 +162,16 @@ async function edit(key: string) {
 }
 
 function close(key: string) {
-  if (modalRefs.value[key]) modalRefs.value[key].value = false;
-  else console.warn('Modal not found:', key);
+  const primary = getPrimary();
+  tableRef.value.setData(primary, selectedRows.value[0][primary]);
+  tableRef.value.setDataIsDetail(false);
+  modalRefs[key].value = false;
+  //window.location.reload(true); // TODO: next only refresh grid
 }
 
 async function deleteData(table: any) {
-  const flow = parsedSchema.value.action?.onPurge;
+  const flow = getAction('purge');
+  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
     let dataForm = new FormData();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -179,14 +208,15 @@ async function downForm(mode: any) {
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
     }
-    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName[0] + '.' + mode);
+    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
 }
 
 async function downTemplate() {
   let dataForm = new FormData();
+
   dataForm.append('menu', props.menuName);
-  await Api.donlotFile('/admin/down-template', dataForm, props.menuName[0] + '.xlsx');
+  await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
 function navigate(key: any) {
@@ -218,20 +248,6 @@ function navigate(key: any) {
   } else {
     navigateTo(key);
   }
-}
-
-const actions = { open, close, edit, downForm, deleteData, downTemplate, navigate, upload };
-
-function runAction(code: string) {
-  const match = code.match(/^(\w+)\((.*)\)$/);
-  if (!match) return console.warn('Invalid action:', code);
-
-  const fnName = match[1];
-  const arg = match[2].replace(/['"]/g, '');
-
-  const fn = actions[fnName];
-  if (fn) fn(arg);
-  else console.warn('Unknown function:', fnName);
 }
 
 const uploadProgress = ref(0);
@@ -269,7 +285,7 @@ async function handleFileChange(e: Event) {
 
   selectedFile.value = file;
 
-  const flow = parsedSchema.value.action?.onUpload;
+  const flow = getAction('upload');
   if (!flow) {
     toast.add({ title: 'Error', description: 'Upload flow not defined.' });
     return;
@@ -313,8 +329,10 @@ async function handleFileChange(e: Event) {
 let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 
-function renderComponent(component: any, isgrid: boolean) {
+function renderComponent(component: any) {
   switch (component.type) {
+    case 'callother':
+      return renderCallOther(component); // <— buatkan function khusus
     case 'title':
       return h(
         'h1',
@@ -377,7 +395,7 @@ function renderComponent(component: any, isgrid: boolean) {
           formData.value[component.props.key] = val;
         },
       });
-      return h('div', { class: !isgrid ? 'flex flex-col mb-3' : '' }, [
+      return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
         component.type != 'hidden'
           ? component.props.text
             ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
@@ -390,7 +408,7 @@ function renderComponent(component: any, isgrid: boolean) {
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.props.place?.toUpperCase()) || '',
+          placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
@@ -402,10 +420,8 @@ function renderComponent(component: any, isgrid: boolean) {
     }
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
-      const prop = component.props;
       return h(FormSelect, {
-        key: component.props.key,
-        prop,
+        component: component.props,
         formData,
         validationErrors,
         validateField,
@@ -426,23 +442,18 @@ function renderComponent(component: any, isgrid: boolean) {
           type: 'checkbox',
           checked: modelCheckbox.value,
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
-          class: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2',
+          class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
-        h(
-          'label',
-          { class: 'text-sm font-medium text-gray-700 cursor-pointer' },
-          $t(component.props.text.toUpperCase()) || '',
-        ),
+        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
     case 'button':
       return h(UButton, {
-        class: 'px-4 py-2 rounded mr-2 transition mb-3',
+        class: 'rounded px-4 py-2 mr-2 transition mb-3',
         icon: component.props.icon || '',
         onClick: async () => {
           const eventName = component.props.onClick.toLowerCase();
-          console.log('event ', eventName);
           if (eventName === 'oncreate') {
             if (validateAllFields()) await CreateHandler();
             else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
@@ -467,6 +478,10 @@ function renderComponent(component: any, isgrid: boolean) {
             const key = eventName.replace('downform:', '');
             downForm(key);
             return;
+          } else if (eventName.startsWith('deletedata')) {
+            const key = eventName.replace('deletedata:', '');
+            deleteData(key);
+            return;
           } else if (eventName.startsWith('upload')) {
             upload();
             return;
@@ -483,7 +498,92 @@ function renderComponent(component: any, isgrid: boolean) {
   }
 }
 
-function renderContainer(container: any, isgrid: boolean) {
+function renderTabs(component) {
+  const items = component.children.map((tab, i) => ({
+    label: tab.props.text,
+    index: i,
+    raw: tab, // <-- SIMPAN TAB ASLI
+  }));
+
+  const UTabs = resolveComponent('UTabs');
+
+  return h(
+    UTabs,
+    {
+      items,
+    },
+    {
+      content: ({ item }) => {
+        const realTab = item.raw; // <-- JSON TAB ASLI
+        if (!realTab?.children) return h('div', 'No content');
+
+        return h(
+          'div',
+          realTab.children.map((child: any) => {
+            if (child.type != 'callother') {
+              return renderContainer(child);
+            } else {
+              return renderCallOther(child);
+            }
+          }),
+        );
+      },
+    },
+  );
+}
+
+const tableUsed = ref([String]);
+
+function renderCallOther(component) {
+  const key = component.props.otherkey;
+  const type = component.props.othertype;
+
+  if (type === 'table') {
+    const tableObj = tables.value.find((t) => t.props.key === key);
+    tableObj.props.isdetail = false;
+    tableObj.props.isexpand = false;
+    tableUsed.value.push(key);
+
+    if (!tableObj) {
+      return h('div', `Table ${key} not found`);
+    }
+
+    return renderTable(tableObj);
+  }
+
+  return h('div', `Unknown other type: ${type}`);
+}
+
+function renderWizard(container: any) {
+  if (!container) return null;
+
+  return h(
+    FormWizard,
+    {
+      steps: container,
+      saveKey: 'wizard-h',
+    },
+    {
+      default: ({ step, schema, state }) => {
+        return h(
+          'div',
+          schema.map((field) => {
+            return h('div', { class: 'mb-3' }, [
+              h('label', field.label),
+              h('input', {
+                class: 'border p-2 w-full',
+                value: state[field.key],
+                onInput: (e) => (state[field.key] = e.target.value),
+              }),
+            ]);
+          }),
+        );
+      },
+    },
+  );
+}
+
+function renderContainer(container: any) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.children || [];
@@ -491,25 +591,31 @@ function renderContainer(container: any, isgrid: boolean) {
   return h(
     'div',
     {
-      class: container.class,
+      class: container.props?.class || '',
     },
     children.map((component: any) => {
       switch (component.type) {
         case 'table':
-          return renderTable(component, isgrid);
+          return renderTable(component);
+        case 'tabs':
+          return renderTabs(component);
 
+        case 'wizard':
+          return renderWizard(component);
         case 'master':
         case 'buttons':
         case 'tables':
         case 'columns':
         case 'search':
+        case 'widget':
+        case 'form':
         case 'modals':
-          return h('div', { class: component.props.class }, [renderContainer(component, isgrid)]);
+          return h('div', { class: component.props.class }, [renderContainer(component)]);
         case 'action':
           break;
 
         default:
-          return renderComponent(component, isgrid);
+          return renderComponent(component);
       }
     }),
   );
@@ -525,17 +631,17 @@ function validateField(component: any, value: any) {
     switch (ruleName.toLowerCase()) {
       case 'empty':
         if (value === null || value === undefined || value === '')
-          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
         break;
 
       case 'number':
         if (value !== '' && isNaN(Number(value)))
-          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
         break;
 
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
         break;
 
       // 🧩 min / max
@@ -543,9 +649,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MIN`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -553,9 +665,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MAX`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -564,7 +682,7 @@ function validateField(component: any, value: any) {
         try {
           const pattern = new RegExp(ruleValue);
           if (!pattern.test(String(value || '')))
-            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.text || component.key });
+            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
         } catch {
           console.warn('Invalid regex:', ruleValue);
         }
@@ -575,7 +693,10 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, { entry: component.text || component.key, field: otherField });
+          message = $t(`INVALID_ENTRY_MATCH`, {
+            entry: component.props.text || component.props.key,
+            field: otherField,
+          });
         break;
       }
     }
@@ -583,7 +704,7 @@ function validateField(component: any, value: any) {
     if (message != '') break;
   }
 
-  validationErrors[component.key] = message;
+  validationErrors[component.props.key] = message;
   return !message;
 }
 
@@ -602,65 +723,63 @@ function validateAllFields() {
   return valid;
 }
 
-function renderTable(component: any, isInput: boolean) {
+function renderTable(component: any) {
   if (!component) return null;
-  const key = component.key || component.text || `table0`;
-  let columns: any;
-  let searchs: any;
+  const key = component.props.key || component.props.text || `table0`;
+  if (component.props.isdetail != true) {
+    let columns: any;
+    let searchs: any;
 
-  function getData() {
-    for (const element of component.children) {
-      if (element.type === 'columns') {
-        columns = element;
-      } else if (element.type === 'search') {
-        searchs = element;
+    function getData() {
+      for (const element of component.children) {
+        if (element.type === 'columns') {
+          columns = element;
+        } else if (element.type === 'search') {
+          searchs = element;
+        }
       }
     }
+
+    getData();
+
+    return h('div', { key: key }, [
+      h(TablePagination, {
+        ref: tableRef,
+        columns:
+          columns?.children.map((col: any, i: number) => ({
+            label: col.props.text || `Column ${i + 1}`,
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+          })) ?? [],
+        searchColumn:
+          searchs?.children.map((col: any, i: number) => ({
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+            place: col.props.place || 'search ...',
+          })) ?? [],
+        method: 'POST',
+        endPoint: component.props.source,
+        simpleSearch: false,
+        class: component.props.class || 'mb-4',
+        rowKey: component.props.primary,
+        enableSearch: true,
+        tables: tables.value,
+        modals: modals.value,
+        isSelectAll: component.props.isselectall || true,
+        isExpand: component.props.isexpand || false,
+        enableCheck: component.props.enablecheck || true,
+        onSelectionChange: (selRows: any) => {
+          selectedRows.value = selRows;
+        },
+      }),
+    ]);
   }
-
-  getData();
-
-  return h('div', { key: key }, [
-    h(TablePagination, {
-      ref: tableRef,
-      columns:
-        columns?.children.map((col: any, i: number) => ({
-          label: col.props.text || `Column ${i + 1}`,
-          key: col.props.key || `col${i + 1}`,
-          type: col.type || 'text',
-        })) ?? [],
-      searchColumn:
-        searchs?.children.map((col: any, i: number) => ({
-          key: col.props.key || `col${i + 1}`,
-          type: col.type || 'text',
-          place: col.props.place || 'search ...',
-        })) ?? [],
-      method: 'POST',
-      endPoint: component.props.source,
-      simpleSearch: false,
-      class: component.props.class || 'mb-4',
-      rowKey: component.props.primary,
-      enableSearch: true,
-      relationKey: component.props.relationkey,
-      selectionKeyData: selectedRows.value,
-      tables: tables.value,
-      isInput: isInput,
-      isSelectAll: !isInput,
-      selectedKeyData:
-        component.props.relationkey != '' && selectedRows.value.length > 0
-          ? selectedRows.value[0][component.props.relationkey]
-          : '',
-      onSelectionChange: (selRows: any) => {
-        selectedRows.value = selRows;
-      },
-    }),
-  ]);
+  return null;
 }
 
-
 function getAction(action: string) {
-  let node: any 
-  parsedSchema.value.forEach(element => {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
     if (element.type == 'action') {
       node = element;
     }
@@ -670,7 +789,7 @@ function getAction(action: string) {
 }
 
 const ReadHandler = async () => {
-  const flow = getAction('get');
+  const flow = getAction('read');
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -822,17 +941,6 @@ async function saveData(key: any) {
   }
 }
 
-function getModals(schema: any) {
-  let modals: any[] = [];
-  schema.forEach((node) => {
-    if (node.type === 'modals') modals.push(...node.children);
-    if (node.children?.length) {
-      modals.push(...getModals(node.children));
-    }
-  });
-  return modals;
-}
-
 function initModalRefs(schema: any) {
   schema.forEach((node) => {
     if (node.type === 'modals') {
@@ -856,29 +964,29 @@ watchEffect(() => {
 
 <template>
   <div v-for="(value, index) in parsedSchema">
-    <component :is="renderContainer(value, false)"></component>
+    <component :is="renderContainer(value)"></component>
   </div>
 
   <div v-if="isUploading" class="mt-2 w-full bg-gray-200 h-2 rounded overflow-hidden">
     <div class="bg-green-500 h-2" :style="{ width: uploadProgress + '%' }"></div>
   </div>
 
-  <div v-for="(value, index) in getModals(parsedSchema)" :key="value.props.key">
+  <div v-for="(value, index) in modals" :key="value.props.key">
     <UModal
       fullscreen
       v-if="modalRefs?.[value.props.key]"
       v-model:open="modalRefs[value.props.key]"
       :title="modalTitle"
       :dismissible="false"
-      :description="parsedSchema.menuname"
+      :description="modalDescription"
       :scrollable="false"
     >
       <template #body>
-        <component :is="renderContainer(value.children, false)" />
+        <component :is="renderContainer(value.children)" />
       </template>
       <template #footer>
         <div class="flex gap-2">
-          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="modalRefs[value.props.key].value = false" />
+          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
           <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
         </div>
       </template>

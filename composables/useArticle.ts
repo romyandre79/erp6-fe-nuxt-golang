@@ -1,4 +1,5 @@
-import { useI18n } from 'vue-i18n';
+import { ref } from 'vue';
+import { useRuntimeConfig, useApi, useI18n } from '#imports';
 
 export const useArticle = () => {
   const { get } = useApi();
@@ -13,13 +14,13 @@ export const useArticle = () => {
       loading.value = true;
       error.value = '';
       const res = await get('/blog/post?companyid=' + config.public.companyId);
-      if (res.code == 200) {
+      if (res?.code == 200) {
         return res;
       } else {
-        error.value = $t('INVALID_DATA_RETRIEVED');
+        error.value = res?.message;
       }
     } catch (err) {
-      error.value = t('INVALID_DATA_RETRIEVED');
+      error.value = err;
     } finally {
       loading.value = false;
     }
@@ -33,7 +34,7 @@ export const useArticle = () => {
       if (res.code == 200) {
         return res.data;
       } else {
-        error.value = $t('INVALID_DATA_RETRIEVED');
+        error.value = t('INVALID_DATA_RETRIEVED');
       }
     } catch (err) {
       error.value = t('INVALID_DATA_RETRIEVED');

@@ -21,7 +21,7 @@
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
+    <aside class="w-min-100 bg-white border-r p-3 overflow-y-auto dark:bg-black">
       <h2 class="font-bold text-lg mb-3">Elements</h2>
 
       <!-- Komponen dasar -->
@@ -89,10 +89,7 @@
         <!-- 🔍 JSON Debug View -->
         <div v-if="showJson && !previewMode" class="panel font-mono text-sm rounded-xl p-4 overflow-auto max-h-[80vh]">
           <h1>Debug</h1>
-          <textarea
-  v-model="debugText"
-  class="w-full h-120 p-3 border rounded font-mono text-sm"
-></textarea>
+          <textarea v-model="debugText" class="w-full h-120 p-3 border rounded font-mono text-sm"></textarea>
         </div>
       </div>
     </main>
@@ -118,6 +115,7 @@ import draggable from 'vuedraggable';
 import RenderNode from '~/components/RenderNode.vue';
 import TreeView from '~/components/TreeView.vue';
 import PropertyEditor from '~/components/PropertyEditor.vue';
+import { availableComponents, layoutContainers } from '~/types/components';
 
 definePageMeta({
   middleware: ['auth'],
@@ -134,366 +132,7 @@ interface NodeSchema {
   children?: NodeSchema[];
 }
 
-const availableComponents = [
-  {
-    type: 'bool',
-    label: 'Boolean',
-    props: {
-      key: '',
-      label: '',
-      place: '',
-      text: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'button',
-    label: 'Button',
-    props: {
-      text: 'Button',
-      class: 'px-4 py-2 rounded transition',
-      icon: 'heroicons:plus',
-      onClick: '',
-    },
-  },
-  {
-    type: 'color',
-    label: 'Color',
-    props: {
-      key: '',
-      text: 'Color',
-      place: 'Enter a color',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'date',
-    label: 'Date',
-    props: {
-      key: '',
-      text: 'Date',
-      place: 'Enter a date',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'datetime',
-    label: 'Date Time',
-    props: {
-      key: '',
-      text: 'Date Time',
-      place: 'Enter a date time',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'email',
-    label: 'Email',
-    props: {
-      key: '',
-      label: 'Email',
-      place: 'example@mail.com',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'file',
-    label: 'File',
-    props: {
-      key: '',
-      text: 'File',
-      place: 'Enter a file',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'hidden',
-    label: 'Hidden',
-    props: {
-      text: 'Hidden Text',
-      place: 'Enter a text',
-      key: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'image',
-    label: 'Image',
-    props: {
-      key: '',
-      text: 'Image',
-      place: 'Enter a image',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'longtext',
-    label: 'Long Text',
-    props: {
-      key: '',
-      label: 'Long Text',
-      place: 'Enter long text',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'month',
-    label: 'Month',
-    props: {
-      key: '',
-      text: 'Month',
-      place: 'Enter a month',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'number',
-    label: 'Number',
-    props: {
-      key: '',
-      label: 'Number',
-      place: 'enter a number',
-      text: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'radio',
-    label: 'Radio',
-    props: {
-      key: '',
-      text: 'Radio',
-      place: 'Enter a radio',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'range',
-    label: 'Range',
-    props: {
-      key: '',
-      text: 'Range',
-      place: 'Enter a range',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'reset',
-    label: 'Reset',
-    props: {
-      key: '',
-      text: 'Reset',
-      place: 'Enter a reset',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'select',
-    label: 'Select',
-    props: {
-      key: '',
-      text: '',
-      source: '',
-      label: '',
-      place: 'Choose a data',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'tel',
-    label: 'Tel',
-    props: {
-      key: '',
-      text: 'Tel',
-      place: 'Enter a tel',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'text',
-    label: 'Text',
-    props: {
-      key: '',
-      text: 'Text',
-      place: 'Enter a text',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'time',
-    label: 'Time',
-    props: {
-      key: '',
-      text: 'Time',
-      place: 'Enter a time',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'url',
-    label: 'Url',
-    props: {
-      key: '',
-      text: 'Url',
-      place: 'Enter a url',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
-    type: 'title',
-    label: 'Title',
-    props: {
-      text: 'title',
-      class: 'tracking-tight mb-4',
-    },
-  },
-  {
-    type: 'subtitle',
-    label: 'Sub Title',
-    props: {
-      text: 'Sub Title',
-      class: 'tracking-tight mb-4',
-    },
-  },
-  {
-    type: 'action',
-    label: 'Action',
-    props: {
-      onNew: '',
-      onGet: '',
-      onGetDetail: [],
-      onCreate: '',
-      onUpdate: '',
-      onUpload: '',
-      onPurge: '',
-      onPdf: '',
-      onXls: '',
-    },
-  },
-];
-
 const formattedJson = ref('');
-
-
-const layoutContainers = [
-  {
-    type: 'master',
-    label: 'Master',
-    props: {
-      class: 'w-full',
-      layout: 'standard',
-      key: 'master',
-      primary: '',
-    },
-    children: [],
-  },
-  {
-    type: 'buttons',
-    label: 'Buttons',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'table',
-    label: 'Table',
-    props: {
-      key: 'table0',
-      primary: '',
-      relationkey: '',
-      text: '',
-      source: '',
-      class: 'w-full mb-4',
-    },
-    children: [],
-  },
-  {
-    type: 'tables',
-    label: 'Tables',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'search',
-    label: 'Search',
-    props: {
-      key: '',
-      class: '',
-    },
-    children: [],
-  },
-  {
-    type: 'columns',
-    label: 'Columns',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'modals',
-    label: 'Modals',
-    props: {
-      key: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-  {
-    type: 'modal',
-    label: 'Modal',
-    props: {
-      key: '',
-      text: '',
-      class: 'flex flex-wrap gap-2 mb-3',
-    },
-    children: [],
-  },
-];
 
 const canvasComponents = ref<NodeSchema[]>([]);
 const selected = ref<NodeSchema | null>(null);
@@ -503,6 +142,12 @@ const showJson = ref(true);
 const { getMenuForm } = useAuth();
 const Api = useApi();
 
+function getDefaultProps(type: string) {
+  const found = availableComponents.find((x) => x.type === type) || layoutContainers.find((x) => x.type === type);
+
+  return found ? JSON.parse(JSON.stringify(found.props || {})) : {};
+}
+
 const onDragStart = (comp: any) => {
   event?.dataTransfer?.setData('component', JSON.stringify(comp));
   window.draggingComponent = comp; // ✅ simpan global
@@ -511,13 +156,19 @@ const onDragStart = (comp: any) => {
 const onDropRoot = (event: DragEvent) => {
   const data = event.dataTransfer?.getData('component');
   if (!data) return;
+
   const comp = JSON.parse(data);
+  const defaults = getDefaultProps(comp.type);
+
   const newComp: NodeSchema = {
     id: Math.random().toString(36).substr(2, 9),
-    ...comp,
+    type: comp.type,
+    label: comp.label,
+    props: { ...defaults },
+    children: comp.children ? [] : undefined,
   };
+
   canvasComponents.value.push(newComp);
-  window.draggingComponent = null; // ✅ reset
 };
 
 const onDropChild = ([parentId, newComp]) => {
@@ -567,8 +218,8 @@ const toggleJson = () => {
 };
 
 const clearSchema = async () => {
-  canvasComponents.value = []
-}
+  canvasComponents.value = [];
+};
 
 const saveSchema = async () => {
   const dataForm = new FormData();
@@ -619,14 +270,14 @@ const loadSchema = async () => {
     if (res?.code == 200) {
       dataMenu.menuAccessId = res?.data.data.menuaccessid;
       dataMenu.menuName = res?.data.data.menuname;
-      ((dataMenu.description = res?.data.data.description),
-        (dataMenu.menuCode = res?.data.data.menucode),
-        (dataMenu.menuUrl = res?.data.data.menuurl),
-        (dataMenu.menuIcon = res?.data.data.menuicon),
-        (dataMenu.moduleId = res?.data.data.moduleid),
-        (dataMenu.sortOrder = res?.data.data.sortorder),
-        (dataMenu.menuVersion = res?.data.data.menuversion),
-        (dataMenu.menuType = res?.data.data.menutype));
+      dataMenu.description = res?.data.data.description;
+      dataMenu.menuCode = res?.data.data.menucode;
+      dataMenu.menuUrl = res?.data.data.menuurl;
+      dataMenu.menuIcon = res?.data.data.menuicon;
+      dataMenu.moduleId = res?.data.data.moduleid;
+      dataMenu.sortOrder = res?.data.data.sortorder;
+      dataMenu.menuVersion = res?.data.data.menuversion;
+      dataMenu.menuType = res?.data.data.menutype;
       dataMenu.recordStatus = res?.data.data.recordstatus;
       if (res?.data.data.menuform != '') {
         formSchema.value = res?.data?.data.menuform;
@@ -648,7 +299,7 @@ const copySchema = async () => {
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
           formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = res?.data?.data.menuform;
+          canvasComponents.value = JSON.parse(res?.data?.data.menuform);
         }
       } else {
         console.error('Invalid response from ', res);
@@ -657,7 +308,7 @@ const copySchema = async () => {
       console.error('Error loading :', err);
     }
   } else {
-    console.log('Empty');
+    console.warn('Empty');
   }
 };
 
@@ -667,14 +318,14 @@ onMounted(async () => {
 
 const debugText = computed({
   get() {
-    return JSON.stringify(canvasComponents.value, null, 2)
+    return JSON.stringify(canvasComponents.value, null, 2);
   },
   set(v: string) {
     try {
-      canvasComponents.value = JSON.parse(v)
+      canvasComponents.value = JSON.parse(v);
     } catch {}
-  }
-})
+  },
+});
 
 watch(
   canvasComponents,
