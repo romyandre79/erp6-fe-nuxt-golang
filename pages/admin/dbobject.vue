@@ -9,6 +9,9 @@
         <button @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</button>
         <button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</button>
         <button @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</button>
+        <button @click="aiSuggestRelations()" class="px-3 py-1 bg-purple-500 text-white rounded">
+          AI Suggest Relations
+        </button>
       </div>
     </header>
 
@@ -115,6 +118,14 @@
 
       <!-- properties panel -->
       <aside class="w-96 border-l bg-white p-4 overflow-auto">
+        <div class="mt-4">
+  <label class="text-sm font-semibold">AI Generate Table</label>
+  <div class="flex gap-2 mt-1">
+    <textarea v-model="aiDescription" placeholder="e.g. Customer table with id, name, email" class="flex-1 p-2 border rounded" />
+    <button @click="aiGenerateTableFromDescription(aiDescription)" class="px-3 py-1 bg-yellow-500 text-white rounded">Generate</button>
+  </div>
+</div>
+
         <div v-if="selectedTable" class="space-y-4">
           <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
 
@@ -162,7 +173,12 @@
               </div>
               <div class="flex gap-2">
                 <button @click="addColumn()" class="px-3 py-1 bg-blue-600 text-white rounded">Add Column</button>
-                <button @click="autoTypes()" class="px-3 py-1 bg-gray-200 rounded">Auto Types</button>
+                <button
+                  @click="aiSuggestColumns(selectedTable)"
+                  class="px-3 py-1 bg-yellow-500 text-white rounded"
+                >
+                  AI Suggest Types
+                </button>
               </div>
             </div>
           </div>
@@ -187,7 +203,6 @@
             <div v-for="r in relations" :key="r.id" class="flex items-center justify-between mt-2">
               <div class="text-sm">{{ r.from.table }}.{{ r.from.col }} ➜ {{ r.to.table }}.{{ r.to.col ?? '-' }}</div>
               <div class="flex gap-2">
-                <button @click="editRelation(r.id)" class="px-2 py-1 bg-gray-200 rounded">Edit</button>
                 <button @click="removeRelation(r.id)" class="px-2 py-1 bg-red-500 text-white rounded">Delete</button>
               </div>
             </div>
@@ -334,7 +349,6 @@ function createAreaFromData(data) {
   };
 
   areas.push(area);
-  console.log('areas ', areas);
   renderArea(area);
 }
 
@@ -417,18 +431,6 @@ function removeColumn(idx) {
   if (selectedTable.value) selectedTable.value.columns.splice(idx, 1);
 }
 
-function autoTypes() {
-  if (!selectedTable.value) return;
-  selectedTable.value.columns.forEach((c) => {
-    const n = (c.name || '').toLowerCase();
-    if (n.includes('id')) c.type = 'int';
-    else if (n.includes('date') || n.includes('at')) c.type = 'datetime';
-    else if (n.startsWith('is_') || n.startsWith('is')) c.type = 'boolean';
-    else c.type = c.type || 'varchar';
-  });
-  jsonPreview.value = JSON.stringify(selectedTable.value, null, 2);
-}
-
 function applyJSONToSelected() {
   if (!selectedTable.value) return;
   try {
@@ -456,7 +458,6 @@ async function resetDesign() {
 
 function loadRelationsFromObjects(dbobjects, idMap) {
   relations.splice(0, relations.length);
-  console.log(dbobjects);
   dbobjects.forEach((obj) => {
     if (!obj.objectcontent) return;
     let parsed;
@@ -469,7 +470,6 @@ function loadRelationsFromObjects(dbobjects, idMap) {
 
     if (!parsed.relations || !Array.isArray(parsed.relations)) return;
 
-    console.log('rel ', parsed.relations);
     parsed.relations.forEach((rel) => {
       const newFromTable = idMap[rel.from.table];
       const newToTable = idMap[rel.to.table];
@@ -633,9 +633,6 @@ function removeRelation(id) {
   const idx = relations.findIndex((r) => r.id === id);
   if (idx >= 0) relations.splice(idx, 1);
 }
-function editRelation(id) {
-  alert('Edit relation not implemented yet');
-}
 
 watch(tables, computeRelationsPaths, { deep: true });
 watch(relations, computeRelationsPaths, { deep: true });
@@ -650,11 +647,13 @@ async function saveToBackend() {
         table,
         relations: relations
           .filter((r) => r.from.table === table.id || r.to.table === table.id)
-          .map((r) => ({ id: r.id, from: r.from, to: r.to })),
+          .map((r) => ({
+            id: r.id,
+            from: { ...r.from, table: tables.find((t) => t.id === r.from.table)?.dbid },
+            to: { ...r.to, table: tables.find((t) => t.id === r.to.table)?.dbid },
+          })),
         areas,
       };
-
-      console.log('payload ', payloadObj);
 
       const dbobj = {
         dbobjectid: table.dbid ? String(table.dbid) : '', // if empty -> create new
@@ -688,18 +687,6 @@ onMounted(async () => {
   await loadDesign();
 });
 
-function fixColors(container: HTMLElement) {
-  const elements = container.querySelectorAll('*');
-
-  elements.forEach((el: any) => {
-    const style = window.getComputedStyle(el);
-
-    if (style.color.includes('oklch')) el.style.color = '#222';
-    if (style.backgroundColor.includes('oklch')) el.style.backgroundColor = '#fff';
-    if (style.borderColor.includes('oklch')) el.style.borderColor = '#ccc';
-  });
-}
-
 function addArea() {
   ((areaSeq = areaSeq + 1),
     areas.push({
@@ -711,7 +698,6 @@ function addArea() {
       height: 300,
       color: '#e3e9ff',
     }));
-  console.log('push area ', areas);
 }
 
 function startAreaDrag(area, ev) {
@@ -763,14 +749,130 @@ function stopAreaInteraction() {
   window.removeEventListener('mouseup', stopAreaInteraction);
 }
 
-function isTableInsideArea(table, area) {
-  return (
-    table.x >= area.x &&
-    table.y >= area.y &&
-    table.x + table.width <= area.x + area.width &&
-    table.y + 36 + table.columns.length * 24 <= area.y + area.height
-  );
+function aiSuggestColumns(table) {
+  if (!table || !table.columns) return;
+
+  table.columns.forEach((col) => {
+    const name = (col.name || '').toLowerCase();
+
+    // heuristic type detection
+    if (name.includes('id')) col.type = 'auto';
+    else if (name.includes('date') || name.endsWith('at')) col.type = 'timestamp';
+    else if (name.startsWith('is') || name.startsWith('has')) col.type = 'boolean';
+    else if (name.includes('amount') || name.includes('price') || name.includes('total')) col.type = 'number';
+    else col.type = 'text';
+  });
 }
+
+function aiSuggestRelations() {
+  const existingRelations = new Set(
+    relations.map(r => `${r.from.table}_${r.from.col}-${r.to.table}_${r.to.col}`)
+  );
+
+  const primaryKeys = tables.reduce((acc, t) => {
+    const pkCols = t.columns
+      .map((c, idx) => (c.type === 'auto' ? idx : null))
+      .filter(x => x !== null);
+    acc[t.id] = pkCols; 
+    return acc;
+  }, {} as Record<number, number[]>);
+
+  for (let i = 0; i < tables.length; i++) {
+    const t1 = tables[i];
+    for (let j = 0; j < tables.length; j++) {
+      if (i === j) continue;
+      const t2 = tables[j];
+
+      t1.columns.forEach((col1, idx1) => {
+        if (col1.name.toLowerCase() === t2.name.toLowerCase() + 'id') {
+          if (!primaryKeys[t2.id] || primaryKeys[t2.id].length === 0) return;
+          const idx2 = primaryKeys[t2.id][0];
+
+          // cek duplikat
+          const key = `${t1.id}_${idx1}-${t2.id}_${idx2}`;
+          const revKey = `${t2.id}_${idx2}-${t1.id}_${idx1}`;
+          if (existingRelations.has(key) || existingRelations.has(revKey)) return;
+
+          relations.push({
+            id: relSeq++,
+            from: { table: t1.id, col: idx1, colName: col1.name },
+            to: { table: t2.id, col: idx2, colName: t2.columns[idx2].name },
+            path: '',
+          });
+          existingRelations.add(key);
+        }
+      });
+    }
+  }
+
+  computeRelationsPaths();
+  toast.add({ title: 'Auto Relations', description: 'Relations generated intelligently', color: 'success' });
+}
+
+function aiGenerateTableFromDescription(description: string) {
+  if (!description) return;
+
+  // buat nama tabel default: ambil kata pertama
+  const words = description.trim().split(/\s+/);
+  const tableName = words[0] || 'table_' + idSeq;
+
+  // cek duplikat
+  if (tables.some(t => t.name.toLowerCase() === tableName.toLowerCase())) {
+    toast.add({
+      title: 'Duplicate Table',
+      description: `Table with name "${tableName}" already exists!`,
+      color: 'warning',
+    });
+    return; // stop jika duplikat
+  }
+
+  // cari kolom: kata setelah 'with'
+  let columnsPart = description.toLowerCase().split('with')[1] || '';
+  columnsPart = columnsPart.replace(/and/g, ','); // normalize
+  const colNames = columnsPart.split(',').map(c => c.trim()).filter(c => c);
+
+  // buat tabel object
+  const newTable = {
+    id: idSeq++,
+    dbid: '',
+    name: tableName,
+    x: 40 + (tables.length % 4) * 340,
+    y: 40 + Math.floor(tables.length / 4) * 200,
+    width: 240,
+    columns: colNames.map(name => {
+      let type = 'text';
+
+      // logika AI: if 'id' + kata sama/mirip table → auto
+      if (name.includes('id') && name.replace(/_/g,'').includes(tableName.toLowerCase())) {
+        type = 'auto';
+      } else if (name.includes('id')) {
+        type = 'int';
+      } else if (name.includes('date') || name.endsWith('at')) {
+        type = 'timestamp';
+      } else if (name.startsWith('is') || name.startsWith('has') || name.startsWith('recordstatus')) {
+        type = 'boolean';
+      } else if (name.includes('amount') || name.includes('price') || name.includes('total')) {
+        type = 'number';
+      }
+
+      return { name, type };
+    }),
+    ispublished: false,
+    comment: '',
+  };
+
+  tables.push(newTable);
+  selectTable(newTable.id);
+  computeRelationsPaths();
+
+  toast.add({
+    title: 'AI Table Generated',
+    description: `Table "${tableName}" created!`,
+    color: 'success',
+  });
+}
+
+
 
 </script>
 
