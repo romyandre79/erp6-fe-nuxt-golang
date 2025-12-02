@@ -119,10 +119,10 @@
       <!-- properties panel -->
       <aside class="w-96 border-l bg-white p-4 overflow-auto">
         <div class="mt-4">
-  <label class="text-sm font-semibold">AI Generate Table</label>
+  <label class="text-sm font-semibold">AI Prompt</label>
   <div class="flex gap-2 mt-1">
     <textarea v-model="aiDescription" placeholder="e.g. Customer table with id, name, email" class="flex-1 p-2 border rounded" />
-    <button @click="aiGenerateTableFromDescription(aiDescription)" class="px-3 py-1 bg-yellow-500 text-white rounded">Generate</button>
+    <button @click="aiParseNatural(aiDescription)" class="px-3 py-1 bg-yellow-500 text-white rounded">Generate</button>
   </div>
 </div>
 
@@ -873,6 +873,121 @@ function aiGenerateTableFromDescription(description: string) {
     color: 'success',
   });
 }
+
+function aiParseNatural(prompt: string) {
+  if (!prompt) return;
+
+  const instructions = prompt.split(/[\.\n]/).map(p => p.trim()).filter(Boolean);
+
+  for (const instr of instructions) {
+    const lower = instr.toLowerCase();
+
+    // CREATE TABLE
+    if (lower.startsWith('create table')) {
+      const desc = instr.replace(/create table/i, '').trim();
+      aiGenerateTableFromDescription(desc);
+      continue;
+    }
+
+    // ADD COLUMN
+    if (lower.includes('add column')) {
+  // match: add column <name> (above|below <refCol>) to|in <tableName>
+  const colMatch = /add column (\w+)(?: (above|below) (\w+))?(?: (?:to|in) (\w+))?/i.exec(instr);
+  if (colMatch) {
+    const [, newCol, position, refCol, tableName] = colMatch;
+
+    // tentukan target table
+    let tbl = null;
+    if (tableName) {
+      tbl = tables.find(t => t.name.toLowerCase() === tableName.toLowerCase());
+      if (!tbl) {
+        toast.add({ title: 'Table Not Found', description: `Table "${tableName}" not found`, color: 'warning' });
+        continue;
+      }
+    } else {
+      tbl = selectedTable.value || tables[tables.length - 1];
+      if (!tbl) {
+        toast.add({ title: 'No Table Selected', description: `Cannot add column "${newCol}"`, color: 'warning' });
+        continue;
+      }
+    }
+
+    const refIndex = refCol ? tbl.columns.findIndex(c => c.name.toLowerCase() === refCol.toLowerCase()) : -1;
+
+    // Tentukan tipe otomatis
+    let type = 'text';
+    if (newCol.includes('id') && newCol.replace(/_/g,'').includes(tbl.name.toLowerCase())) type = 'auto';
+    else if (newCol.includes('id')) type = 'int';
+    else if (newCol.includes('date') || newCol.endsWith('at')) type = 'timestamp';
+    else if (newCol.startsWith('is') || newCol.startsWith('has') || newCol.startsWith('recordstatus')) type = 'boolean';
+    else if (newCol.includes('amount') || newCol.includes('price') || newCol.includes('total')) type = 'number';
+
+    const insertIndex = refIndex >= 0 ? (position === 'above' ? refIndex : refIndex + 1) : tbl.columns.length;
+    tbl.columns.splice(insertIndex, 0, { name: newCol, type });
+  }
+  continue;
+}
+
+
+    // REMOVE COLUMN
+    if (lower.includes('remove column') || lower.includes('delete column')) {
+      const colMatch = /(?:remove|delete) column (\w+)/i.exec(instr);
+      if (colMatch) {
+        const [, colName] = colMatch;
+        let tbl = selectedTable.value;
+        if (!tbl) {
+          toast.add({ title: 'No Table Selected', description: `Cannot remove column "${colName}"`, color: 'warning' });
+          continue;
+        }
+        const idx = tbl.columns.findIndex(c => c.name.toLowerCase() === colName.toLowerCase());
+        if (idx >= 0) tbl.columns.splice(idx, 1);
+      }
+      continue;
+    }
+
+    // DELETE TABLE
+    if (lower.includes('delete table')) {
+      const tblMatch = /delete table (\w+)?/i.exec(instr);
+      const tableName = tblMatch?.[1];
+      if (tableName) {
+        const idx = tables.findIndex(t => t.name.toLowerCase() === tableName.toLowerCase());
+        if (idx >= 0) tables.splice(idx, 1);
+      } else if (selectedTable.value) {
+        const idx = tables.findIndex(t => t.id === selectedTable.value.id);
+        if (idx >= 0) tables.splice(idx, 1);
+      } else {
+        toast.add({ title: 'No Table Selected', description: 'Cannot delete table', color: 'warning' });
+      }
+      continue;
+    }
+
+    // DELETE AREA
+    if (lower.includes('delete area')) {
+      const areaMatch = /delete area (\w+)?/i.exec(instr);
+      const areaName = areaMatch?.[1];
+      if (areaName) {
+        const idx = areas.findIndex(a => a.name.toLowerCase() === areaName.toLowerCase());
+        if (idx >= 0) areas.splice(idx, 1);
+      } else if (activeArea.value) {
+        const idx = areas.findIndex(a => a.id === activeArea.value.id);
+        if (idx >= 0) areas.splice(idx, 1);
+      } else {
+        toast.add({ title: 'No Area Selected', description: 'Cannot delete area', color: 'warning' });
+      }
+      continue;
+    }
+
+    console.warn('Unknown instruction:', instr);
+  }
+
+  computeRelationsPaths();
+  toast.add({
+    title: 'AI Natural Instructions Executed',
+    description: 'All recognized actions applied.',
+    color: 'success',
+  });
+}
+
 
 
 
