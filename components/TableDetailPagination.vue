@@ -1,12 +1,12 @@
 <template>
   <div class="w-full">
     <!-- Header & Toolbar -->
-    <div class="flex flex-col sm:flex-row mb-3">
-      <h2 class="text-2xl font-semibold">{{ title }}</h2>
+    <div class="flex flex-col mb-3">
+      <h2 class="font-semibold">{{ title }}</h2>
 
       <!-- Search -->
       <!-- Filter Container -->
-      <div v-if="enableSearch" class="mb-4">
+      <div v-if="enableSearch" class="mt-2">
         <!-- SIMPLE SEARCH -->
         <div v-if="simpleSearch" class="flex items-center gap-2">
           <input
@@ -57,8 +57,7 @@
                 @change="toggleSelectAll"
               />
             </th>
-            <th class="thead px-4 py-3" v-else></th>
-            <th class="thead px-4 py-3" v-if="isExpand == true"></th>
+            <th class="thead px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
             <th v-for="col in columns" :key="col.key || col" class="thead px-4 py-3 text-left tracking-wide">
               {{ col.text || col.label }}
             </th>
@@ -76,9 +75,8 @@
           <template v-for="(row, rowIndex) in rowsData" :key="rowIndex">
             <!-- Master Row -->
             <tr class="transition-colors duration-200" @click.stop="toggleRowSelection(row)" :checked="isSelected(row)">
-              <td class="px-4 py-3" v-if="props.enableCheck">
+              <td class="px-4 py-3" v-if="enableCheck">
                 <input
-                  v-if="props.isSelectAll"
                   type="checkbox"
                   class="checkbox checkbox-sm"
                   :checked="isSelected(row)"
@@ -86,9 +84,9 @@
                 />
               </td>
 
-              <td class="px-4 py-3" v-if="props.isExpand == true">
+              <td class="px-4 py-3" v-if="tables?.length > 1 && props.isInput == false">
                 <button @click.stop="toggleExpand(row)">
-                  {{ isExpanded(row) ? '^' : '>' }}
+                  {{ isExpanded(row) ? '-' : '+' }}
                 </button>
               </td>
 
@@ -110,7 +108,7 @@
             </tr>
 
             <!-- Child Row -->
-            <tr v-if="isExpanded(row) && isExpand == true">
+            <tr v-if="isExpanded(row)">
               <td :colspan="columns.length + 2">
                 <div class="rounded-lg w-full" v-for="(child, index) in tables">
                   <component :is="renderTable(child)" v-if="index > 0"></component>
@@ -176,7 +174,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, h } from 'vue';
 import { useApi } from '#imports';
-import { TableDetailPagination } from '#components';
+import { TablePagination } from '#components';
 
 const props = defineProps({
   title: String,
@@ -196,27 +194,11 @@ const props = defineProps({
   enableCheck: { type: Boolean, default: true },
   method: { type: String, default: 'GET' },
   rowKey: { type: String, default: 'id' },
-  relationKey: { type: String, default: 'id' },
+  selectedKeyData: { type: String, default: '' },
+  relationKey: { type: String, default: '' },
   isInput: { type: Boolean, default: false },
   isSelectAll: { type: Boolean, default: false },
-  isExpand: { type: Boolean, default: false },
-  isDetail: { type: Boolean, default: false },
-  selectedKeyData: { type: String, default: '' },
 });
-
-const internalRelationKey = ref(props.relationKey);
-const internalSelectedKeyData = ref(props.selectedKeyData);
-const internalIsDetail = ref(props.isDetail);
-
-function setData(primary: string, selectedData: string) {
-  internalRelationKey.value = primary;
-  internalSelectedKeyData.value = selectedData;
-  fetchData();
-}
-
-function setDataIsDetail(val: boolean) {
-  internalIsDetail.value = val;
-}
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
@@ -298,8 +280,8 @@ async function fetchData() {
       for (const col of props.columns) {
         dataForm.append(col.key, searchComplexQuery.value[col.key] || '');
       }
-      if (internalRelationKey.value) {
-        dataForm.append(internalRelationKey.value, internalSelectedKeyData.value);
+      if (props.selectedKeyData) {
+        dataForm.append(props.relationKey, props.selectedKeyData);
       }
       res = await Api.post('/admin/execute-flow', dataForm);
     } else {
@@ -350,7 +332,7 @@ function renderTable(component: any) {
   getData();
 
   return h('div', { key: key }, [
-    h(TableDetailPagination, {
+    h(TablePagination, {
       columns:
         columns?.children.map((col: any, i: number) => ({
           label: col.props.text || `Column ${i + 1}`,
@@ -369,13 +351,14 @@ function renderTable(component: any) {
       class: component.props.class || 'mb-4',
       rowKey: component.props.primary,
       enableSearch: true,
-      title: component.props.text,
       relationKey: component.props.relationkey,
       selectionKeyData: selectedRows.value,
-      isInput: true,
-      enableCheck: false,
-      isSelectAll: false,
-      selectedKeyData: component.props.relationkey != '' && expandedKey.value != null ? expandedKey.value : '',
+      isInput: props.isInput,
+      isSelectAll: !props.isInput,
+      selectedKeyData:
+        component.props.relationkey != '' && selectedRows.value.length > 0
+          ? selectedRows.value[0][component.props.relationkey]
+          : '',
       onSelectionChange: (selRows: any) => {
         selectedRows.value = selRows;
       },
@@ -416,9 +399,5 @@ const lastPage = () => {
   }
 };
 
-defineExpose({
-  refreshTable: fetchData,
-  setData,
-  setDataIsDetail,
-});
+defineExpose({ refreshTable: fetchData });
 </script>

@@ -1,10 +1,10 @@
 <template>
-  <div class="p-6 space-y-5" v-for="(value, i) in recordWidget">
+  <div class="p-3 space-y-5" v-for="(value, i) in recordWidget">
     <div
       v-if="fetchForm(i)"
-      class="p-5 w-full rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-white text-black hover:shadow-xl transition-all duration-300"
+      class="p-5 w-full rounded-2xl shadow-md border hover:shadow-xl transition-all duration-300"
     >
-      <FormRender :schema="fetchForm(i)" formtype="widget" />
+      <FormRender :schema="fetchForm(i)" formType="widget" />
     </div>
   </div>
 </template>

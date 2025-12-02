@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import FormSelect from '~/components/FormSelect.vue';
-import TablePagination from './TablePagination.vue';
-import { UModal } from '#components';
-import { useApi } from '~/composables/useApi';
+import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
+import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
+import { navigateTo } from '#app';
+import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect } from 'vue';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -12,6 +12,7 @@ const props = defineProps({
 });
 
 const modalTitle = ref('');
+const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
@@ -24,9 +25,31 @@ const emit = defineEmits([]);
 // 🧩 Parse schema
 const parsedSchema = computed(() => (typeof props.schema === 'string' ? JSON.parse(props.schema) : props.schema));
 
-const buttons = computed(() => parsedSchema.value?.buttons || {});
-const modals = computed(() => parsedSchema.value?.modals || []);
-const tables = computed(() => parsedSchema.value?.tables || []);
+function findNode(node: any, type: any): any {
+  let result = [];
+
+  if (Array.isArray(node)) {
+    for (const n of node) result.push(...findNode(n, type));
+    return result;
+  }
+
+  if (!node || typeof node !== 'object') return [];
+
+  // jika object ini adalah table → push
+  if (node.type === type) result.push(node);
+
+  // scan children
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      result.push(...findNode(child, type));
+    }
+  }
+
+  return result;
+}
+
+const tables = computed(() => findNode(parsedSchema.value, 'table'));
+const modals = computed(() => findNode(parsedSchema.value, 'modal'));
 
 // 🔥 Ketika selectedRows berubah
 watch(
@@ -50,9 +73,38 @@ watch(
   async (newVal) => {
     await nextTick();
     for (const key of Object.keys(modalRefs)) delete modalRefs[key];
-    for (const m of newVal || []) {
+    newVal?.forEach((m) => {
+      // buat modal ref
       modalRefs[m.key] = ref(false);
-    }
+    });
+  },
+  { immediate: true },
+);
+
+const detailTab = computed(() => {
+  if (!modals.value) return [];
+
+  // Skip modal pertama (index 0)
+  return modals.value.slice(1).map((m) => ({
+    ...m,
+  }));
+});
+
+const detailRows = ref({});
+
+watch(
+  detailTab,
+  (tabs) => {
+    tabs.forEach((t) => {
+      if (!detailRows.value[t.key]) {
+        // Jika API memberi value
+        if (t.value && Array.isArray(t.value)) {
+          detailRows.value[t.key] = [...t.value];
+        } else {
+          detailRows.value[t.key] = [{}]; // minimal 1 row
+        }
+      }
+    });
   },
   { immediate: true },
 );
@@ -62,22 +114,36 @@ function open(key: string) {
   if (modalRefs[key]) {
     modalRefs[key].value = true;
     modalTitle.value = 'New Data';
-    formData.value = {};
+    modalDescription.value = '';
+    const primary = getPrimary();
+    tableRef.value.setData(primary, 0);
   } else {
     console.warn('❌ Modal not found:', key);
   }
 }
 
+function getPrimary() {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
+    if (element.type == 'master') {
+      node = element;
+    }
+  });
+  return node.props.primary || null;
+}
+
 async function edit(key: string) {
-  const flow = parsedSchema.value.action?.onGet;
-  if (flow && selectedRows.length > 0) {
+  const flow = getAction('get');
+  if (flow && selectedRows.value.length > 0) {
+    const primary = getPrimary();
     modalTitle.value = 'Edit Data';
+    modalDescription.value = '';
     modalRefs[key].value = true;
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
-    dataForm.append(parsedSchema.value.primary, selectedRows.value[0][parsedSchema.value.primary]);
+    dataForm.append(primary, selectedRows.value[0][primary]);
     try {
       const res = await Api.post('admin/execute-flow', dataForm);
       if (res.code == 200) {
@@ -85,6 +151,7 @@ async function edit(key: string) {
         for (const key in record) {
           formData.value[key] = record[key];
         }
+        tableRef.value.setData(primary, selectedRows.value[0][primary]);
       } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
         navigateTo('/login');
       }
@@ -95,12 +162,16 @@ async function edit(key: string) {
 }
 
 function close(key: string) {
-  if (modalRefs.value[key]) modalRefs.value[key].value = false;
-  else console.warn('Modal not found:', key);
+  const primary = getPrimary();
+  tableRef.value.setData(primary, selectedRows.value[0][primary]);
+  tableRef.value.setDataIsDetail(false);
+  modalRefs[key].value = false;
+  //window.location.reload(true); // TODO: next only refresh grid
 }
 
 async function deleteData(table: any) {
-  const flow = parsedSchema.value.action?.onPurge;
+  const flow = getAction('purge');
+  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
     let dataForm = new FormData();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -125,9 +196,9 @@ async function deleteData(table: any) {
 async function downForm(mode: any) {
   let flow = '';
   if (mode == 'pdf') {
-    flow = parsedSchema.value.action?.onPdf;
+    flow = getAction('pdf');
   } else if (mode == 'xlsx' || mode == 'xls') {
-    flow = parsedSchema.value.action?.onXls;
+    flow = getAction('xls');
   }
   if (flow) {
     let dataForm = new FormData();
@@ -137,14 +208,15 @@ async function downForm(mode: any) {
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
     }
-    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName[0] + '.' + mode);
+    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
 }
 
 async function downTemplate() {
   let dataForm = new FormData();
-  dataForm.append('menu', props.menuName[0]);
-  await Api.donlotFile('/admin/down-template', dataForm, props.menuName[0] + '.xlsx');
+
+  dataForm.append('menu', props.menuName);
+  await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
 function navigate(key: any) {
@@ -157,31 +229,25 @@ function navigate(key: any) {
   } else if (key.includes('workflow-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
+  } else if (key.includes('theme-editor') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
+  } else if (key.includes('db-designer') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
   } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['menuname']);
   } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['widgetname']);
   } else if (key.includes('workflow-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['wfname']);
+  } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['themename']);
+  } else if (key.includes('db-designer') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['objectname']);
   } else {
     navigateTo(key);
   }
-}
-
-const actions = { open, close, edit, downForm, deleteData, downTemplate, navigate, upload };
-
-function runAction(code: string) {
-  console.log(code);
-  const match = code.match(/^(\w+)\((.*)\)$/);
-  if (!match) return console.warn('Invalid action:', code);
-
-  const fnName = match[1];
-  const arg = match[2].replace(/['"]/g, '');
-
-  const fn = actions[fnName];
-  console.log(fn);
-  if (fn) fn(arg);
-  else console.warn('Unknown function:', fnName);
 }
 
 const uploadProgress = ref(0);
@@ -219,7 +285,7 @@ async function handleFileChange(e: Event) {
 
   selectedFile.value = file;
 
-  const flow = parsedSchema.value.action?.onUpload;
+  const flow = getAction('upload');
   if (!flow) {
     toast.add({ title: 'Error', description: 'Upload flow not defined.' });
     return;
@@ -265,38 +331,56 @@ const validationErrors = reactive<Record<string, string>>({});
 
 function renderComponent(component: any) {
   switch (component.type) {
+    case 'callother':
+      return renderCallOther(component); // <— buatkan function khusus
+    case 'title':
+      return h(
+        'h1',
+        {
+          class: component.props.class,
+        },
+        $t(component.props.text),
+      );
+    case 'subtitle':
+      return h(
+        'h2',
+        {
+          class: component.props.class,
+        },
+        $t(component.props.text),
+      );
     case 'label':
-      return h('div', { class: 'mb-2 text-gray-800 font-medium' }, $t(component.text.toUpperCase()));
+      return h('div', { class: 'mb-2' }, $t(component.props.text.toUpperCase()));
 
     case 'longtext': {
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInputArea = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
+          formData.value[component.props.key] = val;
           //validateField(component, val)
         },
       });
       return h('div', { class: 'flex flex-col mb-3' }, [
         component.type != 'hidden'
-          ? component.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
+          ? component.props.text
+            ? h('label', { class: 'mb-1 font-medium' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('textarea', {
           type: component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
-            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.place?.toUpperCase()) || '',
+          placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
           onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
           value: modelInputArea.value,
         }),
-        validationErrors[component.key]
-          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+        validationErrors[component.props.key]
+          ? h('span', { class: 'text-red-500 mt-1' }, validationErrors[component.props.key])
           : null,
       ]);
     }
@@ -304,41 +388,40 @@ function renderComponent(component: any) {
     case 'hidden':
     case 'password':
     case 'number': {
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
+          formData.value[component.props.key] = val;
         },
       });
-      return h('div', { class: 'flex flex-col mb-3' }, [
+      return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
         component.type != 'hidden'
-          ? component.text
-            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.text.toUpperCase()))
+          ? component.props.text
+            ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
             : null
           : '',
         h('input', {
           type: component.type,
           class:
-            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none dark:text-white text-black ' +
-            (validationErrors[component.key] ? 'border-red-500' : 'border-gray-300') +
+            'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
+            (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
             ' ' +
             (component.type === 'number' ? 'text-right' : ''),
-          placeholder: $t(component.place?.toUpperCase()) || '',
+          placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
           onInput: (e: any) => (modelInput.value = e.target.value),
         }),
-        validationErrors[component.key]
-          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.key])
+        validationErrors[component.props.key]
+          ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
           : null,
       ]);
     }
     case 'select':
-      if (!(component.key in formData.value)) formData.value[component.key] = '';
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       return h(FormSelect, {
-        key: component.key,
-        component,
+        component: component.props,
         formData,
         validationErrors,
         validateField,
@@ -346,12 +429,12 @@ function renderComponent(component: any) {
 
     case 'bool':
     case 'boolean': {
-      if (!(component.key in formData.value)) formData.value[component.key] = false;
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = false;
       const modelCheckbox = computed({
-        get: () => formData.value[component.key],
+        get: () => formData.value[component.props.key],
         set: (val) => {
-          formData.value[component.key] = val;
-          validateField(component, val);
+          formData.value[component.props.key] = val;
+          validateField(component.props, val);
         },
       });
       return h('div', { class: 'flex items-center mb-3 space-x-2' }, [
@@ -359,70 +442,177 @@ function renderComponent(component: any) {
           type: 'checkbox',
           checked: modelCheckbox.value,
           onChange: (e: any) => (modelCheckbox.value = e.target.checked),
-          class: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2',
+          class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
         }),
-        h(
-          'label',
-          { class: 'text-sm font-medium text-gray-700 cursor-pointer' },
-          $t(component.text.toUpperCase()) || '',
-        ),
+        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
     case 'button':
-      return h(
-        'button',
-        {
-          class: `px-4 py-2 rounded mr-2 text-white bg-gray-600 hover:bg-gray-700 transition mb-3`,
-          onClick: async () => {
-            const eventName = (component.event || component.onClick).toUpperCase();
-            if (eventName === 'ONCREATE') {
-              if (validateAllFields()) await CreateHandler();
-              else alert('⚠️ Validasi gagal! Periksa input Anda.');
-            } else if (eventName === 'ONUPDATE') {
-              if (validateAllFields()) await UpdateHandler();
-              else alert('⚠️ Validasi gagal! Periksa input Anda.');
-            } else if (eventName === 'ONDELETE') {
-              await DeleteHandler();
-            } else {
-              console.log(emit);
-              emit(eventName, { ...formData });
-            }
-          },
+      return h(UButton, {
+        class: 'rounded px-4 py-2 mr-2 transition mb-3',
+        icon: component.props.icon || '',
+        onClick: async () => {
+          const eventName = component.props.onClick.toLowerCase();
+          if (eventName === 'oncreate') {
+            if (validateAllFields()) await CreateHandler();
+            else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
+          } else if (eventName === 'onupdate') {
+            if (validateAllFields()) await UpdateHandler();
+            else toast.add({ title: 'Error', description: 'Error Validation', color: 'error' });
+          } else if (eventName === 'ondelete') {
+            await DeleteHandler();
+          } else if (eventName.startsWith('open')) {
+            const key = eventName.replace('open:', '');
+            open(key);
+            return;
+          } else if (eventName.startsWith('edit')) {
+            const key = eventName.replace('edit:', '');
+            edit(key);
+            return;
+          } else if (eventName.startsWith('navigate')) {
+            const key = eventName.replace('navigate:', '');
+            navigate(key);
+            return;
+          } else if (eventName.startsWith('downform')) {
+            const key = eventName.replace('downform:', '');
+            downForm(key);
+            return;
+          } else if (eventName.startsWith('deletedata')) {
+            const key = eventName.replace('deletedata:', '');
+            deleteData(key);
+            return;
+          } else if (eventName.startsWith('upload')) {
+            upload();
+            return;
+          } else if (eventName === 'downtemplate') {
+            await downTemplate();
+          } else {
+            emit(eventName, { ...formData });
+          }
         },
-        component.text || component.type,
-      );
+        label: component.props.text,
+      });
+    case 'action':
+      break;
   }
+}
+
+function renderTabs(component) {
+  const items = component.children.map((tab, i) => ({
+    label: tab.props.text,
+    index: i,
+    raw: tab, // <-- SIMPAN TAB ASLI
+  }));
+
+  const UTabs = resolveComponent('UTabs');
+
+  return h(
+    UTabs,
+    {
+      items,
+    },
+    {
+      content: ({ item }) => {
+        const realTab = item.raw; // <-- JSON TAB ASLI
+        if (!realTab?.children) return h('div', 'No content');
+
+        return h(
+          'div',
+          realTab.children.map((child: any) => {
+            if (child.type != 'callother') {
+              return renderContainer(child);
+            } else {
+              return renderCallOther(child);
+            }
+          }),
+        );
+      },
+    },
+  );
+}
+
+const tableUsed = ref([String]);
+
+function renderCallOther(component) {
+  const key = component.props.otherkey;
+  const type = component.props.othertype;
+
+  if (type === 'table') {
+    const tableObj = tables.value.find((t) => t.props.key === key);
+    tableObj.props.isdetail = false;
+    tableObj.props.isexpand = false;
+    tableUsed.value.push(key);
+
+    if (!tableObj) {
+      return h('div', `Table ${key} not found`);
+    }
+
+    return renderTable(tableObj);
+  }
+
+  return h('div', `Unknown other type: ${type}`);
+}
+
+function renderWizard(container: any) {
+  if (!container) return null;
+
+  return h(
+    FormWizard,
+    {
+      steps: container,
+      saveKey: 'wizard-h',
+    },
+    {
+      default: ({ step, schema, state }) => {
+        return h(
+          'div',
+          schema.map((field) => {
+            return h('div', { class: 'mb-3' }, [
+              h('label', field.label),
+              h('input', {
+                class: 'border p-2 w-full',
+                value: state[field.key],
+                onInput: (e) => (state[field.key] = e.target.value),
+              }),
+            ]);
+          }),
+        );
+      },
+    },
+  );
 }
 
 function renderContainer(container: any) {
   if (!container) return null;
 
-  let children = Array.isArray(container) ? container : container.components || [];
+  let children = Array.isArray(container) ? container : container.children || [];
 
   return h(
     'div',
     {
-      class: '',
+      class: container.props?.class || '',
     },
     children.map((component: any) => {
       switch (component.type) {
         case 'table':
           return renderTable(component);
+        case 'tabs':
+          return renderTabs(component);
 
+        case 'wizard':
+          return renderWizard(component);
         case 'master':
-        case 'masters':
         case 'buttons':
         case 'tables':
         case 'columns':
         case 'search':
-        case 'detail':
+        case 'widget':
+        case 'form':
         case 'modals':
-        case 'components':
-          return h('div', { class: 'ml-4 mt-2' }, [
-            component.text ? h('div', { class: 'font-semibold mb-2 text-gray-700' }, component.text) : null,
-            renderContainer(component),
-          ]);
+          return h('div', { class: component.props.class }, [renderContainer(component)]);
+        case 'action':
+          break;
 
         default:
           return renderComponent(component);
@@ -441,17 +631,17 @@ function validateField(component: any, value: any) {
     switch (ruleName.toLowerCase()) {
       case 'empty':
         if (value === null || value === undefined || value === '')
-          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
         break;
 
       case 'number':
         if (value !== '' && isNaN(Number(value)))
-          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
         break;
 
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.text || component.key });
+          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
         break;
 
       // 🧩 min / max
@@ -459,9 +649,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MIN`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -469,9 +665,15 @@ function validateField(component: any, value: any) {
         if (value !== undefined && value !== null && value !== '') {
           if (!isNaN(Number(value))) {
             if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, { entry: component.text || component.key, value: ruleValue });
+              message = $t(`INVALID_ENTRY_MAX`, {
+                entry: component.props.text || component.props.key,
+                value: ruleValue,
+              });
           } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, { entry: component.text || component.key, value: ruleValue });
+            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
+              entry: component.props.text || component.props.key,
+              value: ruleValue,
+            });
         }
         break;
 
@@ -480,7 +682,7 @@ function validateField(component: any, value: any) {
         try {
           const pattern = new RegExp(ruleValue);
           if (!pattern.test(String(value || '')))
-            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.text || component.key });
+            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
         } catch {
           console.warn('Invalid regex:', ruleValue);
         }
@@ -491,7 +693,10 @@ function validateField(component: any, value: any) {
         const otherField = ruleValue;
         const otherValue = formData.value[otherField];
         if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, { entry: component.text || component.key, field: otherField });
+          message = $t(`INVALID_ENTRY_MATCH`, {
+            entry: component.props.text || component.props.key,
+            field: otherField,
+          });
         break;
       }
     }
@@ -499,7 +704,7 @@ function validateField(component: any, value: any) {
     if (message != '') break;
   }
 
-  validationErrors[component.key] = message;
+  validationErrors[component.props.key] = message;
   return !message;
 }
 
@@ -520,41 +725,71 @@ function validateAllFields() {
 
 function renderTable(component: any) {
   if (!component) return null;
-  const key = component.key || component.text || `table0`;
+  const key = component.props.key || component.props.text || `table0`;
+  if (component.props.isdetail != true) {
+    let columns: any;
+    let searchs: any;
 
-  return h('div', { key: key }, [
-    h(TablePagination, {
-      ref: tableRef,
-      columns:
-        component.columns?.map((col: any, i: number) => ({
-          label: col.text || `Column ${i + 1}`,
-          key: col.key || `col${i + 1}`,
-          type: col.type || 'text',
-        })) ?? [],
-      searchColumn:
-        component.search?.map((col: any, i: number) => ({
-          key: col.key || `col${i + 1}`,
-          type: col.type || 'text',
-          place: col.place || 'search ...',
-        })) ?? [],
-      method: 'POST',
-      endPoint: component.source,
-      simpleSearch: false,
-      title: component.text || '',
-      class: component.class || 'mb-4',
-      rowKey: component.primary,
-      isDetail: key == `table0` ? false : true,
-      relationKey: component.relationkey,
-      selectionKeyData: selectedRows.value,
-      onSelectionChange: (selRows: any) => {
-        selectedRows.value = selRows;
-      },
-    }),
-  ]);
+    function getData() {
+      for (const element of component.children) {
+        if (element.type === 'columns') {
+          columns = element;
+        } else if (element.type === 'search') {
+          searchs = element;
+        }
+      }
+    }
+
+    getData();
+
+    return h('div', { key: key }, [
+      h(TablePagination, {
+        ref: tableRef,
+        columns:
+          columns?.children.map((col: any, i: number) => ({
+            label: col.props.text || `Column ${i + 1}`,
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+          })) ?? [],
+        searchColumn:
+          searchs?.children.map((col: any, i: number) => ({
+            key: col.props.key || `col${i + 1}`,
+            type: col.type || 'text',
+            place: col.props.place || 'search ...',
+          })) ?? [],
+        method: 'POST',
+        endPoint: component.props.source,
+        simpleSearch: false,
+        class: component.props.class || 'mb-4',
+        rowKey: component.props.primary,
+        enableSearch: true,
+        tables: tables.value,
+        modals: modals.value,
+        isSelectAll: component.props.isselectall || true,
+        isExpand: component.props.isexpand || false,
+        enableCheck: component.props.enablecheck || true,
+        onSelectionChange: (selRows: any) => {
+          selectedRows.value = selRows;
+        },
+      }),
+    ]);
+  }
+  return null;
+}
+
+function getAction(action: string) {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
+    if (element.type == 'action') {
+      node = element;
+    }
+  });
+  const formatted = 'on' + action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
+  return node.props[formatted] || null;
 }
 
 const ReadHandler = async () => {
-  const flow = parsedSchema.value.action?.onRead;
+  const flow = getAction('read');
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -571,7 +806,7 @@ const ReadHandler = async () => {
 };
 
 const CreateHandler = async () => {
-  const flow = parsedSchema.value.action?.onCreate;
+  const flow = getAction('create');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -596,12 +831,12 @@ const CreateHandler = async () => {
       ReadHandler();
     }
   } else {
-    alert('Invalid Flow ' + flow);
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
 const UpdateHandler = async () => {
-  const flow = parsedSchema.value.action?.onUpdate;
+  const flow = getAction('update');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -625,12 +860,12 @@ const UpdateHandler = async () => {
       });
     }
   } else {
-    alert('Invalid Flow ' + flow);
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
 const DeleteHandler = async () => {
-  const flow = parsedSchema.value.action?.onPurge;
+  const flow = getAction('purge');
   if (flow) {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
@@ -655,20 +890,22 @@ const DeleteHandler = async () => {
       //ReadHandler()
     }
   } else {
-    alert('Invalid Flow ' + flow);
+    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
-onMounted(ReadHandler);
+onMounted(() => {
+  ReadHandler();
+});
 
 async function saveData(key: any) {
   try {
     let flow = '';
 
     if (modalTitle.value == 'New Data') {
-      flow = parsedSchema.value.action?.onCreate;
+      flow = getAction('create');
     } else {
-      flow = parsedSchema.value.action?.onUpdate;
+      flow = getAction('update');
     }
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -695,81 +932,69 @@ async function saveData(key: any) {
         description: $t(res.message.replaceAll('_', ' ')),
       });
       tableRef.value.refreshTable();
+      modalRefs[key].value = false;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
     }
-    modalRefs[key] = false;
   } catch (err) {
     console.error('Gagal simpan data:', err);
   }
 }
+
+function initModalRefs(schema: any) {
+  schema.forEach((node) => {
+    if (node.type === 'modals') {
+      node.children.forEach((modal) => {
+        const key = modal.props.key;
+        if (key && !modalRefs[key]) {
+          modalRefs[key] = ref(false);
+        }
+      });
+    }
+    if (node.children?.length) initModalRefs(node.children);
+  });
+}
+
+watchEffect(() => {
+  if (parsedSchema.value?.length) {
+    initModalRefs(parsedSchema.value);
+  }
+});
 </script>
 
 <template>
-  <div v-if="parsedSchema?.type != 'widget'" :class="parsedSchema.class">
-    <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
-    <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
-
-    <!-- 🔹 Buttons -->
-    <div
-      :class="parsedSchema.buttons?.class"
-      v-if="
-        buttons &&
-        (parsedSchema.type == 'master' || parsedSchema.type == 'master-detail' || parsedSchema.type == 'report')
-      "
-    >
-      <div v-for="(value, index) in buttons.components" :key="index">
-        <button
-          class="px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700 transition"
-          @click="runAction(value.onClick)"
-        >
-          <Icon :name="value.icon" /> {{ value.text }}
-        </button>
-      </div>
-    </div>
-
-    <div v-for="(value, index) in modals" :key="index">
-      <UModal
-        v-if="modalRefs?.[value.key]"
-        v-model:open="modalRefs[value.key].value"
-        :title="modalTitle"
-        :dismissible="false"
-        :description="parsedSchema.menuname"
-        :scrollable="false"
-      >
-        <template #body>
-          <component :is="renderContainer(value.components)" />
-        </template>
-        <template #footer>
-          <div class="flex gap-2">
-            <UButton color="neutral" :label="$t('CLOSE')" @click="modalRefs[value.key].value = false" />
-            <UButton :label="$t('SAVE')" @click="saveData(value.key)" />
-          </div>
-        </template>
-      </UModal>
-    </div>
-
-    <div v-for="(value, index) in tables" :key="index">
-      <component :is="renderTable(value)" />
-    </div>
+  <div v-for="(value, index) in parsedSchema">
+    <component :is="renderContainer(value)"></component>
   </div>
-  <div v-else :class="parsedSchema.class">
-    <div class="w-full">
-      <h1 :class="parsedSchema.title.class">{{ parsedSchema.title.text }}</h1>
-      <h2 :class="parsedSchema.subtitle.class">{{ parsedSchema.subtitle.text }}</h2>
 
-      <!-- Komponen utama -->
-      <component :is="renderContainer(parsedSchema)" />
-
-      <div v-for="(value, index) in tables" :key="index">
-        <component :is="renderTable(value)" />
-      </div>
-    </div>
-  </div>
   <div v-if="isUploading" class="mt-2 w-full bg-gray-200 h-2 rounded overflow-hidden">
     <div class="bg-green-500 h-2" :style="{ width: uploadProgress + '%' }"></div>
+  </div>
+
+  <div v-for="(value, index) in modals" :key="value.props.key">
+    <UModal
+      fullscreen
+      v-if="modalRefs?.[value.props.key]"
+      v-model:open="modalRefs[value.props.key]"
+      :title="modalTitle"
+      :dismissible="false"
+      :description="modalDescription"
+      :scrollable="false"
+    >
+      <template #body>
+        <component :is="renderContainer(value.children)" />
+      </template>
+      <template #footer>
+        <div class="flex gap-2">
+          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
+          <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
+        </div>
+      </template>
+    </UModal>
   </div>
 
   <!-- 🔹 Hidden file input -->
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
 </template>
+
+<style></style>

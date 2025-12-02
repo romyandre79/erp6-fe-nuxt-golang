@@ -1,5 +1,13 @@
 <template>
   <div class="relative h-full">
+    <div
+      v-if="testResult"
+      id="test-result-overlay"
+      class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
+    >
+      <h3 class="font-bold text-lg">Test Result</h3>
+      <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
+    </div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
@@ -9,17 +17,20 @@
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black">+</button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+      <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import html2canvas from 'html2canvas';
+import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
 
 const store = useWorkflowStore();
 const toast = useToast();
+const testResult = ref('');
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -49,13 +60,11 @@ function initEditor(container: HTMLElement) {
   ed.on('connectionRemoved', () => scheduleSave());
 
   ed.on('nodeSelected', async (id: string) => {
-    console.log('node sele ', id);
     const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      const res = await store.loadComponentProperties(node.name, cleanId.toString());
-      console.log('node ', res);
+      await store.loadComponentProperties(node.name, cleanId.toString());
       store.setSelectedNode(node);
     }
   });
@@ -110,7 +119,6 @@ onMounted(async () => {
   if (flowObj && editor) {
     try {
       editor.import(flowObj);
-      console.log('✅ DRAWFLOW IMPORTED');
     } catch (e) {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
@@ -124,9 +132,6 @@ watch(
 
     try {
       const parsed = typeof wf.flow === 'string' ? JSON.parse(wf.flow) : wf.flow;
-
-      console.log('📥 Importing workflow after load…');
-
       editor.import(parsed.drawflow ? parsed : parsed.flow);
     } catch (e) {
       console.error('❌ Failed to import workflow', e);
@@ -141,7 +146,9 @@ watch(
 onBeforeUnmount(() => {
   try {
     editor?.destroy();
-  } catch {}
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 /* ======================================================
@@ -173,8 +180,6 @@ function drop(ev: DragEvent) {
   const rect = (document.getElementById('drawflow') as HTMLElement).getBoundingClientRect();
   const x = ev.clientX - rect.left;
   const y = ev.clientY - rect.top;
-
-  console.log('📌 Dropping node:', cmp);
 
   editor.addNode(
     cmp.componentname ?? cmp.name ?? cmp.code,
@@ -218,7 +223,30 @@ async function exportImage() {
   link.download = 'workflow.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+}
 
-  console.log('📤 Workflow exported as PNG');
+const route = useRoute();
+const Api = useApi();
+
+async function testFlow() {
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', route.params.slug);
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'true');
+    for (let index = 0; index < store.parameters.length; index++) {
+      const element = store.parameters[index];
+      dataForm.append(element.parametername, element.parametervalue);
+    }
+    const res = await Api.post('admin/execute-flow', dataForm);
+
+    if (res?.code == 200) {
+      testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
+    } else {
+      testResult.value = `Error: ${res.message}`;
+    }
+  } catch (err) {
+    testResult.value = `Exception: ${err}`;
+  }
 }
 </script>

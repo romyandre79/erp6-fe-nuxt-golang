@@ -1,4 +1,4 @@
-import { useUserStore } from '~/store/user';
+import { useUserStore } from '#imports';
 
 export const useApi = () => {
   const config = useRuntimeConfig();

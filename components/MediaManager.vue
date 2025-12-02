@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 bg-white dark:bg-black shadow-md">
+  <div class="p-4 shadow-md">
     <!-- 🧭 Toolbar -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center space-x-2 cursor-pointer">
@@ -42,7 +42,7 @@
       class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       @click.self="preview = null"
     >
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg w-3/4 h-3/4 overflow-auto relative">
+      <div class="p-4 rounded-lg w-3/4 h-3/4 overflow-auto relative">
         <button @click="preview = null" class="absolute top-2 right-2 text-xl">✖</button>
         <h3 class="font-semibold mb-2">{{ preview.name }}</h3>
         <div v-if="isImage(preview.ext)">
@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useApi } from '#imports';
 import { useMediaManager } from '~/composables/useMediaManager';
 
 const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager();

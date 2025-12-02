@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref, computed, watch, onMounted } from 'vue';
 import { useApi } from '~/composables/useApi';
-
-interface Option {
-  label: string;
-  value: string | number;
-}
+import type { SelectMenuItem } from '@nuxt/ui';
 
 interface Props {
   component: {
@@ -30,7 +26,7 @@ const { component, formData, validationErrors, validateField } = props;
 // Pastikan key ada di formData
 if (!(component.key in formData.value)) formData.value[component.key] = '';
 
-const options = ref<Option[]>([]);
+const options = ref<SelectMenuItem[]>([]);
 const loading = ref(false);
 
 // 🔹 Ambil data dari API
@@ -39,23 +35,34 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', component.source);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
+    let arr = props.component.source?.split(',');
+    if (arr.length == 1) {
+      const dataForm = new FormData();
+      dataForm.append('flowname', component.source);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('admin/execute-flow', dataForm);
 
-    if (res.code === 200 && Array.isArray(res.data?.data)) {
-      const labelField = component.label || 'label';
-      const valueField = component.valueField || component.key || 'value';
+      if (res.code === 200 && Array.isArray(res.data?.data)) {
+        const labelField = component.label || 'label';
+        const valueField = component.valueField || component.key || 'value';
 
-      options.value = res.data.data.map((item: Record<string, any>) => ({
-        label: item[labelField],
-        value: item[valueField],
-      }));
+        options.value = res.data.data.map((item: Record<string, any>) => ({
+          label: item[labelField],
+          id: item[valueField],
+        }));
+      } else {
+        console.error('Gagal ambil data untuk select:', res?.message);
+      }
     } else {
-      console.error('Gagal ambil data untuk select:', res?.message);
+      for (let index = 0; index < arr.length; index++) {
+        const element = arr[index];
+        options.value.push({
+          label: element,
+          id: element,
+        });
+      }
     }
   } catch (err) {
     console.error('Error fetch data select:', err);
@@ -81,7 +88,7 @@ watch(
 
     const val = formData.value[component.key];
     if (val != null && val !== '') {
-      const exists = newOptions.some((o) => o.value == val);
+      const exists = newOptions.some((o) => o.id == val);
       if (!exists) {
         console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
       } else {
@@ -98,7 +105,7 @@ watch(
   () => formData.value[component.key],
   (val) => {
     if (options.value.length > 0 && val != null && val !== '') {
-      const exists = options.value.some((o) => o.value == val);
+      const exists = options.value.some((o) => o.id == val);
       if (!exists) {
         console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${component.key}`);
       }
@@ -113,12 +120,13 @@ watch(
       {{ $t(component.text.toUpperCase()) }}
     </label>
 
-    <USelect
+    <USelectMenu
       v-model="modelSelect"
       :items="options"
+      value-key="id"
       :loading="loading"
       :placeholder="component.place || $t('CHOOSE')"
-      class="w-full dark:bg-gray-900 dark:border-gray-700 px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
+      class="w-full px-3 py-2 focus:ring focus:ring-blue-200 outline-none border-gray-300"
       :disabled="loading"
     />
 

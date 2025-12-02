@@ -18,7 +18,7 @@ const handleLogin = async () => {
     loading.value = true;
     await login(form);
   } catch (err: any) {
-    console.log(err);
+    console.warn(err);
     error.value = err?.data?.message || $t('INVALID_CREDENTIAL');
   } finally {
     loading.value = false;

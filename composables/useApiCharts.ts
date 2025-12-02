@@ -1,5 +1,6 @@
-import { ref, watchEffect, watch, computed } from 'vue';
-import { useFetch, useState } from '#app';
+import { ref, watchEffect, computed } from 'vue';
+import { useState } from '#app';
+import { useApi } from './useApi';
 
 export function useApiChart(apiUrl: string, params = {}, refreshMs = 0) {
   const data = ref(null);
