@@ -865,6 +865,8 @@ function aiGenerateTableFromDescription(description: string) {
   selectTable(newTable.id);
   computeRelationsPaths();
 
+    aiSuggestRelations();
+
   toast.add({
     title: 'AI Table Generated',
     description: `Table "${tableName}" created!`,
