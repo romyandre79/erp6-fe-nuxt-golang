@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
 
 const store = useWorkflowStore();
@@ -214,14 +214,14 @@ async function exportImage() {
 
   fixColors(container);
 
-  const canvas = await html2canvas(container, {
-    backgroundColor: '#ffffff',
-    scale: 2, // resolusi tinggi
-  });
+    const canvas = await toPng(el, {
+      cacheBust: true, // optional: mencegah cache gambar lama
+      pixelRatio: 2,   // optional: resolusi lebih tinggi
+    });
 
   const link = document.createElement('a');
   link.download = 'workflow.png';
-  link.href = canvas.toDataURL('image/png');
+  link.href = canvas;
   link.click();
 }
 

@@ -1,123 +1,144 @@
 <template>
   <div class="h-screen flex flex-col bg-gray-50">
-    <header class="flex items-center justify-between p-4 border-b bg-white">
+    <header class="flex items-center justify-between p-4 border-b bg-white sticky">
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
       </div>
       <div class="flex items-center gap-2">
-        <button @click="addTableAtNextPosition" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</button>
-        <button @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</button>
-        <button @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</button>
-        <button @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</button>
-        <button @click="aiSuggestRelations()" class="px-3 py-1 bg-purple-500 text-white rounded">
+        <UButton icon="heroicons:table-cells" @click="addTableAtNextPosition" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</UButton>
+        <UButton icon="heroicons:square-3-stack-3d" @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</UButton>
+        <UButton icon="heroicons:bookmark-square" @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</UButton>
+        <UButton icon="heroicons:arrows-right-left" @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</UButton>
+        <UButton icon="heroicons:building-library" @click="aiSuggestRelations()" class="px-3 py-1 bg-purple-500 text-white rounded">
           AI Suggest Relations
-        </button>
+        </UButton>
+      </div>
+      <div class="flex items-center gap-2">
+        <UButton icon="heroicons:bars-4" @click="exportCanvas" class="px-3 py-1 bg-indigo-500 text-white rounded">Export PNG</UButton>
+        <UButton icon="heroicons:magnifying-glass-plus" @click="zoomIn" class="px-3 py-1 bg-blue-500 text-white rounded">Zoom In</UButton>
+        <UButton icon="heroicons:magnifying-glass-minus" @click="zoomOut" class="px-3 py-1 bg-blue-500 text-white rounded">Zoom Out</UButton>
+        <UButton icon="heroicons:arrows-right-left" @click="resetZoom" class="px-3 py-1 bg-gray-500 text-white rounded">Reset Zoom</UButton>
       </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden">
-      <!-- canvas -->
-      <div class="flex-1 relative p-4 bg-gray-100" @dragover.prevent @drop="onDropCanvas" ref="canvasRef" id="drawflow">
-        <!-- SVG relations -->
-        <div
-          v-for="area in areas"
-          :key="area.id"
-          :data-area-id="area.id"
-          class="absolute rounded-xl border border-purple-400 bg-purple-200/30"
-          :style="{
-            left: area.x + 'px',
-            top: area.y + 'px',
-            width: area.width + 'px',
-            height: area.height + 'px',
-          }"
-          @mousedown="startAreaDrag(area, $event)"
-        >
-          <!-- header -->
+    <div class="flex-1 relative overflow-hidden">
+      <!-- canvas wrapper -->
+      <div class="absolute inset-0 overflow-auto">
+        <!-- canvas -->
+        <div class="relative p-4 bg-gray-100 min-w-[2000px] min-h-[2000px]" @dragover.prevent @drop="onDropCanvas" ref="canvasRef" id="drawflow"
+        :style="{
+      transform: `scale(${zoom})`,
+      transformOrigin: '0 0',
+      width: zoom < 1 ? `${100 / zoom}%` : '100%',
+      height: zoom < 1 ? `${100 / zoom}%` : '100%'
+    }">
+          <!-- SVG relations -->
           <div
-            class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between"
+            v-for="area in areas"
+            :key="area.id"
+            :data-area-id="area.id"
+            class="absolute rounded-xl border border-purple-400 bg-purple-200/30"
+            :style="{
+              left: area.x + 'px',
+              top: area.y + 'px',
+              width: area.width + 'px',
+              height: area.height + 'px',
+            }"
+            @mousedown="startAreaDrag(area, $event)"
           >
-            <input v-model="area.name" class="bg-purple-600 outline-none flex-1 rounded px-2" />
-
-            <!-- tombol delete di pojok kanan -->
-
-            <button
-              @click.stop="deleteArea(area.id)"
-              class="ml-2 text-white hover:text-red-300 font-bold"
-              title="Delete Area"
+            <!-- header -->
+            <div
+              class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between"
             >
-              ✕
-            </button>
+              <input v-model="area.name" class="bg-purple-600 outline-none flex-1 rounded px-2" />
+
+              <div class="flex items-center">
+                <UButton
+                  @click.stop="exportArea(area)"
+                  class="text-white hover:text-blue-300 font-bold mr-2"
+                  title="Export Area"
+                  icon="heroicons:arrow-down-tray"
+                >
+                </UButton>
+                <UButton
+                  @click.stop="deleteArea(area.id)"
+                  class="text-white hover:text-red-300 font-bold"
+                  title="Delete Area" icon="heroicons:trash"
+                >
+                </UButton>
+              </div>
+            </div>
+            <!-- resize handle -->
+            <div
+              class="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize rounded"
+              @mousedown.stop="startAreaResize(area, $event)"
+            ></div>
           </div>
-          <!-- resize handle -->
+
+          <svg class="absolute inset-0 pointer-events-none" style="overflow: visible">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="black" />
+              </marker>
+            </defs>
+
+            <g v-for="rel in relations" :key="rel.id">
+              <path :d="rel.path" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrow)" />
+            </g>
+
+            <!-- live preview line while linking -->
+            <path
+              v-if="linkPreview.active"
+              :d="linkPreview.path"
+              stroke="gray"
+              stroke-width="2"
+              fill="none"
+              stroke-dasharray="6 4"
+            />
+          </svg>
+
+          <!-- tables -->
           <div
-            class="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize rounded"
-            @mousedown.stop="startAreaResize(area, $event)"
-          ></div>
-        </div>
+            v-for="table in tables"
+            :key="table.id"
+            class="absolute shadow-lg rounded border bg-white cursor-move"
+            :style="{ left: table.x + 'px', top: table.y + 'px', width: table.width + 'px' }"
+            draggable="true"
+            @dragstart="onDragStart(table, $event)"
+            @dblclick="selectTable(table.id)"
+            :data-table-id="table.id"
+          >
+            <div class="flex items-center justify-between p-2 bg-gray-800 text-white rounded-t">
+              <div class="font-medium">{{ table.name || 'table_' + table.id }}</div>
+              <div class="flex gap-1">
+                <UButton icon="heroicons:document-duplicate" @click.stop="duplicateTable(table)" title="Duplicate" class="text-xs px-2"></UButton>
+                <UButton icon="heroicons:trash" @click.stop="deleteTable(table.id)" title="Delete" class="text-xs px-2"></UButton>
+              </div>
+            </div>
 
-        <svg class="absolute inset-0 pointer-events-none" style="overflow: visible">
-          <defs>
-            <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="black" />
-            </marker>
-          </defs>
+            <div class="p-2 text-xs">
+              <div v-for="(col, i) in table.columns" :key="i" class="flex items-center gap-2" :data-col-index="i">
+                <span class="w-6 text-gray-600">{{ i + 1 }}</span>
+                <span class="flex-1 truncate">{{ col.name }}</span>
+                <span class="text-gray-500 text-[11px]">{{ col.type || '' }}</span>
 
-          <g v-for="rel in relations" :key="rel.id">
-            <path :d="rel.path" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrow)" />
-          </g>
-
-          <!-- live preview line while linking -->
-          <path
-            v-if="linkPreview.active"
-            :d="linkPreview.path"
-            stroke="gray"
-            stroke-width="2"
-            fill="none"
-            stroke-dasharray="6 4"
-          />
-        </svg>
-
-        <!-- tables -->
-        <div
-          v-for="table in tables"
-          :key="table.id"
-          class="absolute shadow-lg rounded border bg-white cursor-move"
-          :style="{ left: table.x + 'px', top: table.y + 'px', width: table.width + 'px' }"
-          draggable="true"
-          @dragstart="onDragStart(table, $event)"
-          @dblclick="selectTable(table.id)"
-          :data-table-id="table.id"
-        >
-          <div class="flex items-center justify-between p-2 bg-gray-800 text-white rounded-t">
-            <div class="font-medium">{{ table.name || 'table_' + table.id }}</div>
-            <div class="flex gap-1">
-              <button @click.stop="duplicateTable(table)" title="Duplicate" class="text-xs px-2">⧉</button>
-              <button @click.stop="deleteTable(table.id)" title="Delete" class="text-xs px-2">✕</button>
+                <!-- small handle to start linking -->
+                <button
+                  @pointerdown.stop.prevent="startLink(table.id, i, $event)"
+                  class="w-4 h-4 rounded-full bg-blue-500"
+                  title="Start relation"
+                ></button>
+              </div>
             </div>
           </div>
 
-          <div class="p-2 text-xs">
-            <div v-for="(col, i) in table.columns" :key="i" class="flex items-center gap-2" :data-col-index="i">
-              <span class="w-6 text-gray-600">{{ i + 1 }}</span>
-              <span class="flex-1 truncate">{{ col.name }}</span>
-              <span class="text-gray-500 text-[11px]">{{ col.type || '' }}</span>
-
-              <!-- small handle to start linking -->
-              <button
-                @pointerdown.stop.prevent="startLink(table.id, i, $event)"
-                class="w-4 h-4 rounded-full bg-blue-500"
-                title="Start relation"
-              ></button>
-            </div>
-          </div>
+          <!-- add table button pinned bottom-left -->
+          <div class="absolute left-4 bottom-4"></div>
         </div>
-
-        <!-- add table button pinned bottom-left -->
-        <div class="absolute left-4 bottom-4"></div>
       </div>
 
       <!-- properties panel -->
-      <aside class="w-96 border-l bg-white p-4 overflow-auto">
+      <aside class="absolute right-0 top-0 bottom-0 w-96 border-l bg-white p-4 overflow-auto z-10 shadow-lg">
         <div class="mt-4">
   <label class="text-sm font-semibold">AI Prompt</label>
   <div class="flex gap-2 mt-1">
@@ -190,10 +211,6 @@
               rows="6"
               class="w-full p-2 border rounded mt-1 text-xs font-mono"
             ></textarea>
-            <div class="flex gap-2 mt-2">
-              <button @click="applyJSONToSelected" class="px-3 py-1 bg-green-600 text-white rounded">Apply</button>
-              <button @click="copyJSONToClipboard" class="px-3 py-1 bg-indigo-600 text-white rounded">Copy</button>
-            </div>
           </div>
         </div>
 
@@ -218,16 +235,16 @@
 import { ref, reactive, computed, watch, toRaw, onMounted } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 let idSeq = 1;
 let relSeq = 1;
 
-const tables = reactive([]);
-const relations = reactive([]);
+const tables = reactive<any[]>([]);
+const relations = reactive<any[]>([]);
 const toast = useToast();
 
-const areas = reactive([]);
+const areas = reactive<any[]>([]);
 let areaSeq = 1;
 
 const activeArea = ref(null); // untuk drag/resize area
@@ -251,8 +268,26 @@ const dbobject = ref<Dbobject>({
   comment: '',
 });
 
+const zoom = ref(1); // default 100%
+const zoomStep = 0.1; // step zoom
+const minZoom = 0.2;
+const maxZoom = 3;
+
 // linking state for creating relations
 const linkPreview = reactive({ active: false, from: null, sx: 0, sy: 0, path: '' });
+
+function zoomIn() {
+  zoom.value = Math.min(zoom.value + zoomStep, maxZoom);
+}
+
+function zoomOut() {
+  zoom.value = Math.max(zoom.value - zoomStep, minZoom);
+}
+
+function resetZoom() {
+  zoom.value = 1;
+}
+
 
 function addTableAt(x = 40, y = 40) {
   const table = {
@@ -273,7 +308,7 @@ function addTableAt(x = 40, y = 40) {
 function addTableAtNextPosition() {
   const spacingX = 340;
   const spacingY = 200;
-  const perRow = 4;
+  const perRow = 3;
   const index = tables.length;
 
   const row = Math.floor(index / perRow);
@@ -349,6 +384,7 @@ function createAreaFromData(data) {
   };
 
   areas.push(area);
+  areaSeq = data.id;
   renderArea(area);
 }
 
@@ -512,6 +548,7 @@ async function loadDesign() {
   relations.splice(0, relations.length);
   areas.splice(0, areas.length);
   idSeq = 1;
+  areaSeq = 1;
   relSeq = 1;
   selectedId.value = null;
 
@@ -700,6 +737,8 @@ function addArea() {
     }));
 }
 
+const activeAreaTables = ref<any[]>([]);
+
 function startAreaDrag(area, ev) {
   activeArea.value = area;
   areaMode.value = 'move';
@@ -707,6 +746,16 @@ function startAreaDrag(area, ev) {
     x: ev.clientX - area.x,
     y: ev.clientY - area.y,
   };
+
+  // Capture tables inside the area
+  activeAreaTables.value = tables.filter((t) => {
+    return (
+      t.x >= area.x &&
+      t.x <= area.x + area.width &&
+      t.y >= area.y &&
+      t.y <= area.y + area.height
+    );
+  });
 
   window.addEventListener('mousemove', onAreaMouseMove);
   window.addEventListener('mouseup', stopAreaInteraction);
@@ -729,8 +778,20 @@ function onAreaMouseMove(ev) {
   const A = activeArea.value;
 
   if (areaMode.value === 'move') {
-    A.x = ev.clientX - areaOffset.value.x;
-    A.y = ev.clientY - areaOffset.value.y;
+    const newX = ev.clientX - areaOffset.value.x;
+    const newY = ev.clientY - areaOffset.value.y;
+    
+    const dx = newX - A.x;
+    const dy = newY - A.y;
+
+    A.x = newX;
+    A.y = newY;
+
+    // Move contained tables
+    activeAreaTables.value.forEach((t) => {
+      t.x += dx;
+      t.y += dy;
+    });
   }
 
   if (areaMode.value === 'resize') {
@@ -745,6 +806,7 @@ function onAreaMouseMove(ev) {
 function stopAreaInteraction() {
   activeArea.value = null;
   areaMode.value = null;
+  activeAreaTables.value = []; // Clear captured tables
   window.removeEventListener('mousemove', onAreaMouseMove);
   window.removeEventListener('mouseup', stopAreaInteraction);
 }
@@ -846,7 +908,7 @@ function aiGenerateTableFromDescription(description: string) {
       if (name.includes('id') && name.replace(/_/g,'').includes(tableName.toLowerCase())) {
         type = 'auto';
       } else if (name.includes('id')) {
-        type = 'int';
+        type = 'integer';
       } else if (name.includes('date') || name.endsWith('at')) {
         type = 'timestamp';
       } else if (name.startsWith('is') || name.startsWith('has') || name.startsWith('recordstatus')) {
@@ -917,7 +979,7 @@ function aiParseNatural(prompt: string) {
     // Tentukan tipe otomatis
     let type = 'text';
     if (newCol.includes('id') && newCol.replace(/_/g,'').includes(tbl.name.toLowerCase())) type = 'auto';
-    else if (newCol.includes('id')) type = 'int';
+    else if (newCol.includes('id')) type = 'integer';
     else if (newCol.includes('date') || newCol.endsWith('at')) type = 'timestamp';
     else if (newCol.startsWith('is') || newCol.startsWith('has') || newCol.startsWith('recordstatus')) type = 'boolean';
     else if (newCol.includes('amount') || newCol.includes('price') || newCol.includes('total')) type = 'number';
@@ -989,6 +1051,79 @@ function aiParseNatural(prompt: string) {
 }
 
 
+async function exportCanvas() {
+  const originalZoom = zoom.value;
+  zoom.value = 1;
+  await nextTick(); // wait for DOM update
+
+  try {
+    const el = document.getElementById('drawflow');
+    if (!el) return;
+    const canvas = await toPng(el, {
+      cacheBust: true, // optional: mencegah cache gambar lama
+      pixelRatio: 2,   // optional: resolusi lebih tinggi
+    });    const link = document.createElement('a');
+    link.download = 'database-design.png';
+    link.href = canvas;
+    link.click();
+  } catch (err) {
+    console.error('Export failed:', err);
+    alert('Export failed');
+  } finally {
+    zoom.value = originalZoom;
+  }
+}
+
+async function exportArea(area: any) {
+  // buat container sementara
+  const tempDiv = document.createElement('div');
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '0';
+  tempDiv.style.top = '0';
+  tempDiv.style.background = 'white';
+  tempDiv.style.padding = '10px';
+
+  // clone area
+  const areaEl = document.querySelector(`[data-area-id="${area.id}"]`);
+  if (!areaEl) return;
+
+  const areaClone = areaEl.cloneNode(true) as HTMLElement;
+  areaClone.style.position = 'relative';
+  areaClone.style.left = '0';
+  areaClone.style.top = '0';
+  tempDiv.appendChild(areaClone);
+
+  // clone tables yang masuk area
+  tables.forEach((t) => {
+    if (
+      t.x >= area.x &&
+      t.x <= area.x + area.width &&
+      t.y >= area.y &&
+      t.y <= area.y + area.height
+    ) {
+      const tableEl = document.querySelector(`[data-table-id="${t.id}"]`);
+      if (tableEl) {
+        const clone = tableEl.cloneNode(true) as HTMLElement;
+        // adjust posisi relatif terhadap area
+        clone.style.position = 'absolute';
+        clone.style.left = t.x - area.x + 'px';
+        clone.style.top = t.y - area.y + 'px';
+        tempDiv.appendChild(clone);
+      }
+    }
+  });
+
+  // tambahkan ke body sementara untuk render
+  document.body.appendChild(tempDiv);
+
+  toPng(tempDiv, { cacheBust: true }).then((dataUrl) => {
+    const link = document.createElement('a');
+    link.download = `${area.name}.png`;
+    link.href = dataUrl;
+    link.click();
+    document.body.removeChild(tempDiv);
+  });
+}
 
 
 </script>
