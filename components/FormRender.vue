@@ -2,7 +2,10 @@
 import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
-import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect } from 'vue';
+import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect, defineComponent } from 'vue';
+import CardWrapper from './CardWrapper.vue';
+import ChartWrapper from './ChartWrapper.vue';
+import { useFormValidation } from '../composables/useFormValidation';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -328,9 +331,12 @@ async function handleFileChange(e: Event) {
 
 let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
+const { validateField } = useFormValidation();
+
+
 
 function renderComponent(component: any) {
-  switch (component.type) {
+  switch ((component.type || '').toLowerCase()) {
     case 'callother':
       return renderCallOther(component); // <— buatkan function khusus
     case 'title':
@@ -349,8 +355,14 @@ function renderComponent(component: any) {
         },
         $t(component.props.text),
       );
-    case 'label':
-      return h('div', { class: 'mb-2' }, $t(component.props.text.toUpperCase()));
+    case 'label': {
+      const text = component.props?.text || '';
+
+      return h('label', {
+        class: `block mb-1 font-medium ${component.props?.class ?? ''}`,
+        for: component.props?.for ?? null
+      }, $t(text.toUpperCase()) + required);
+    }
 
     case 'longtext': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
@@ -384,6 +396,75 @@ function renderComponent(component: any) {
           : null,
       ]);
     }
+    case 'image':
+    const modelInputArea = computed({
+        get: () => formData.value[component.props.key] || component.props.src,
+        set: (val) => {
+          formData.value[component.props.key] = val;
+          //validateField(component, val)
+        },
+      });
+  return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
+    // ============================
+    // MODE INPUT (ada label + input)
+    // ============================
+    component.props.isinput
+      ? [
+          // Label
+          component.type != 'hidden' && component.props.text
+            ? h(
+                'label',
+                { class: 'text-sm mb-1 font-medium text-gray-400' },
+                $t(component.props.text.toUpperCase())
+              )
+            : null,
+
+          // Input file
+          h('input', {
+            type: 'file',
+            accept: 'image/*',
+            class:
+              'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+              (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
+
+            onChange: (e: any) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const reader = new FileReader();
+              reader.onload = () => {
+                modelInputArea.value = reader.result; // base64 image
+              };
+              reader.readAsDataURL(file);
+            },
+          }),
+
+          // Preview image jika ada
+          modelInputArea.value
+            ? h('img', {
+                src: modelInputArea.value,
+                class: 'mt-2 w-32 h-auto rounded border',
+              })
+            : null,
+
+          // Error message
+          validationErrors[component.props.key]
+            ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
+            : null,
+        ]
+      : 
+
+      // ============================
+      // MODE VIEW (gambar saja)
+      // ============================
+      modelInputArea.value
+      ? h('img', {
+          src: modelInputArea.value,
+          class: 'w-32 h-auto rounded border',
+        })
+      : null,
+  ]);
+
     case 'text':
     case 'hidden':
     case 'password':
@@ -584,6 +665,16 @@ function renderWizard(container: any) {
   );
 }
 
+function renderCard(container: any) {
+  if (!container) return null;
+  return h(CardWrapper, { container, renderChild: renderContainer });
+}
+
+function renderChart(container: any) {
+  if (!container) return null;
+  return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
+}
+
 function renderContainer(container: any) {
   if (!container) return null;
 
@@ -603,6 +694,13 @@ function renderContainer(container: any) {
 
         case 'wizard':
           return renderWizard(component);
+
+          case 'card':
+          return renderCard(component);
+
+          case 'chart':
+          return renderChart(component);
+
         case 'master':
         case 'buttons':
         case 'tables':
@@ -610,6 +708,8 @@ function renderContainer(container: any) {
         case 'search':
         case 'widget':
         case 'form':
+          case 'cards':
+        case 'charts':
         case 'modals':
           return renderContainer(component);
         case 'action':
@@ -622,92 +722,7 @@ function renderContainer(container: any) {
   );
 }
 
-function validateField(component: any, value: any) {
-  if (!component.validated || !Array.isArray(component.validated)) return true;
-  let message = '';
 
-  for (const rule of component.validated) {
-    const [ruleName, ruleValue] = rule.split(':');
-
-    switch (ruleName.toLowerCase()) {
-      case 'empty':
-        if (value === null || value === undefined || value === '')
-          message = $t(`INVALID_ENTRY_EMPTY`, { entry: component.props.ext || component.props.key });
-        break;
-
-      case 'number':
-        if (value !== '' && isNaN(Number(value)))
-          message = $t(`INVALID_ENTRY_NUMBER`, { entry: component.props.text || component.props.key });
-        break;
-
-      case 'email':
-        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).toLowerCase()))
-          message = $t(`INVALID_ENTRY_EMAIL`, { entry: component.props.text || component.props.key });
-        break;
-
-      // 🧩 min / max
-      case 'min':
-        if (value !== undefined && value !== null && value !== '') {
-          if (!isNaN(Number(value))) {
-            if (Number(value) < Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MIN`, {
-                entry: component.props.text || component.props.key,
-                value: ruleValue,
-              });
-          } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MIN_CHAR`, {
-              entry: component.props.text || component.props.key,
-              value: ruleValue,
-            });
-        }
-        break;
-
-      case 'max':
-        if (value !== undefined && value !== null && value !== '') {
-          if (!isNaN(Number(value))) {
-            if (Number(value) > Number(ruleValue))
-              message = $t(`INVALID_ENTRY_MAX`, {
-                entry: component.props.text || component.props.key,
-                value: ruleValue,
-              });
-          } else if (String(value).length < Number(ruleValue))
-            message = $t(`INVALID_ENTRY_MAX_CHAR`, {
-              entry: component.props.text || component.props.key,
-              value: ruleValue,
-            });
-        }
-        break;
-
-      // 🧩 regex
-      case 'regex':
-        try {
-          const pattern = new RegExp(ruleValue);
-          if (!pattern.test(String(value || '')))
-            message = $t(`INVALID_ENTRY_FORMAT`, { entry: component.props.text || component.props.key });
-        } catch {
-          console.warn('Invalid regex:', ruleValue);
-        }
-        break;
-
-      // 🧩 match:<field> → nilai harus sama dengan field lain
-      case 'match': {
-        const otherField = ruleValue;
-        const otherValue = formData.value[otherField];
-        if (value !== otherValue)
-          message = $t(`INVALID_ENTRY_MATCH`, {
-            entry: component.props.text || component.props.key,
-            field: otherField,
-          });
-        break;
-      }
-    }
-
-    if (message != '') break;
-  }
-
-  validationErrors[component.props.key] = message;
-  return !message;
-}
 
 /* 🧩 Validasi semua field */
 function validateAllFields() {

@@ -1,14 +1,20 @@
 <template>
-  <div class="flex flex-wrap p-2">
-    <div
-      v-for="(value, i) in recordWidget"
-      :key="i"
-      :class="value.webformat"
-    >
-        <FormRender :schema="value.widgetform" formType="widget" />
+<div
+  v-for="group in groupedWidgets"
+  :key="group.key"
+  class="flex flex-row flex-nowrap gap-3 p-2"
+>
+  <div
+    v-for="(value, i) in group.items"
+    :key="i"
+    class="flex-1 min-w-0 p-"
+  >
+      <FormRender :schema="value.widgetform" formType="widget" />
   </div>
-  </div>
+</div>
+
 </template>
+
 
 <script setup lang="ts">
 import FormRender from '~/components/FormRender.vue';
@@ -22,6 +28,45 @@ const { fetchWidgets } = useWidgets();
 const recordWidget = ref<Record<string, any> | null>(null);
 let res: any;
 let schema: any;
+
+const groupedWidgets = computed(() => {
+  if (!recordWidget.value) return [];
+
+  // Group by dasgroup
+  const groups: Record<string, any[]> = {};
+
+  for (const item of recordWidget.value) {
+    const key = item.dashgroup || '';
+
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  }
+
+  // Sort items per group by position
+  for (const key in groups) {
+    groups[key].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  }
+
+  // Convert to sorted array by group key
+  const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+    // jika dashgroup angka → urutkan numerik
+    const na = Number(a);
+    const nb = Number(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+
+    // jika bukan angka → urutkan alphabet
+    return a.localeCompare(b);
+  });
+
+  // Return array berurutan:
+  // [ { groupKey: "...", items: [...] }, ... ]
+  return sortedGroupKeys.map(key => ({
+    key,
+    items: groups[key],
+  }));
+});
+
+
 
 const fetchData = async () => {
   try {

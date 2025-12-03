@@ -28,7 +28,6 @@ export function useWidgets() {
       dataForm.append('search', 'true');
       dataForm.append('modulename', modulename);
       const res = await Api.post('admin/execute-flow', dataForm);
-      //const res = await Api.get('/admin/getwidgets?module='+modulename)
       if (res.code === 200) return res;
     } catch (e) {
       console.error('Error fetching widgets', e);
