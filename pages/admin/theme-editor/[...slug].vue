@@ -324,6 +324,38 @@ const categories = [
     ],
   },
   {
+    key: 'nav',
+    label: 'Nav',
+    props: [
+      {
+        key: 'nav-background',
+        label: 'Nav Background',
+        type: 'color',
+      },
+      {
+        key: 'nav-color',
+        label: 'Nav Color',
+        type: 'color',
+      },
+    ]
+  },
+  {
+    key: 'navbar-admin',
+    label: 'Navbar Admin',
+    props: [
+      {
+        key: 'navbar-admin-background',
+        label: 'Navbar Admin Background',
+        type: 'color',
+      },
+      {
+        key: 'navbar-admin-color',
+        label: 'Navbar Admin Color',
+        type: 'color',
+      },
+    ]
+  },
+  {
     key: 'link',
     label: 'Link',
     props: [

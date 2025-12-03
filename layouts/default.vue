@@ -16,7 +16,7 @@ onMounted(async () => {
       <div class="min-h-screen flex flex-col">
         <!-- Optional Navbar -->
         <header class="bg-base-100 dark:bg-gray-900 shadow-md p-4">
-          <Navbar />
+          <Navbar class="nav" />
         </header>
 
         <!-- Main content -->
