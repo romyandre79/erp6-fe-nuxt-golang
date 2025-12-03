@@ -1,11 +1,12 @@
 <template>
-  <div class="p-3 space-y-5" v-for="(value, i) in recordWidget">
+  <div class="flex flex-wrap p-2">
     <div
-      v-if="fetchForm(i)"
-      class="p-5 w-full rounded-2xl shadow-md border hover:shadow-xl transition-all duration-300"
+      v-for="(value, i) in recordWidget"
+      :key="i"
+      :class="value.webformat"
     >
-      <FormRender :schema="fetchForm(i)" formType="widget" />
-    </div>
+        <FormRender :schema="value.widgetform" formType="widget" />
+  </div>
   </div>
 </template>
 
@@ -20,12 +21,18 @@ definePageMeta({
 const { fetchWidgets } = useWidgets();
 const recordWidget = ref<Record<string, any> | null>(null);
 let res: any;
+let schema: any;
 
 const fetchData = async () => {
   try {
     res = await fetchWidgets('admin');
     if (res?.code === 200) {
       recordWidget.value = res?.data.data;
+      for (let index = 0; index < recordWidget.value.length; index++) {
+        const element = recordWidget.value[index];
+        recordWidget.value[index].widgetform = JSON.parse(element.widgetform);
+        console.log ('widg', recordWidget)
+      }
     } else {
       console.error('Invalid response from /auth/me', res);
     }

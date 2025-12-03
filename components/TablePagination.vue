@@ -45,7 +45,7 @@
     </div>
 
     <!-- Table -->
-    <div class="w-full rounded-xl">
+    <div class="w-full rounded-xl overflow-x-auto">
       <table class="w-full">
         <thead class="text-sm uppercase font-semibold">
           <tr>
