@@ -8,7 +8,9 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     output: {
-      publicDir: '../erp6-be-golang-dist/public', // folder tujuan generate
+      publicDir: process.env.MODE === 'production'
+        ? '../erp6-be-golang-dist/public'
+        : './.output/public', // default folder Nuxt
     },
   },
   compatibilityDate: '2025-07-15',
