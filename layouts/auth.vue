@@ -60,7 +60,7 @@ const toggleExpand = (id: number) => {
         <!-- SIDEBAR -->
         <aside :class="['flex flex-col transition-all duration-300 border-r', isCollapsed ? 'w-20' : 'w-64']">
           <!-- HEADER -->
-          <div class="flex items-center justify-between p-4 border-b">
+          <div class="flex items-center justify-between p-4 border-b navbar-admin">
             <h2 v-if="!isCollapsed" class="text-xl font-bold truncate">
               {{ config.public.appName }}
             </h2>
@@ -120,7 +120,7 @@ const toggleExpand = (id: number) => {
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col">
-          <NavbarAdmin class="sticky top-0 z-50 shadow-md border-b">
+          <NavbarAdmin class="navbar-admin sticky top-0 z-50 shadow-md border-b">
             <template #right>
               <!-- THEME TOGGLE -->
               <button @click="themeStore.toggleTheme()" class="p-2 rounded-md transition-colors"></button>

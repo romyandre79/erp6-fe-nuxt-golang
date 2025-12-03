@@ -1,6 +1,6 @@
 <template>
   <header
-    class="flex items-center justify-between sticky top-0 z-1000 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
+    class="navbar-admin flex items-center justify-between sticky top-0 z-1000 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
   >
     <!-- LEFT: Title -->
     <div class="flex items-center gap-3"></div>
