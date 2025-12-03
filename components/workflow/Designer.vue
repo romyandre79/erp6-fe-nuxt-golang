@@ -5,6 +5,8 @@
       id="test-result-overlay"
       class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
     >
+      <h3 class="font-bold text-lg">Payload (Form Data)</h3>
+      <pre class="text-sm whitespace-pre-wrap">{{ payload }}</pre>
       <h3 class="font-bold text-lg">Test Result</h3>
       <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
     </div>
@@ -31,6 +33,7 @@ import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
 const store = useWorkflowStore();
 const toast = useToast();
 const testResult = ref('');
+const payload = ref('');
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -228,6 +231,14 @@ async function exportImage() {
 const route = useRoute();
 const Api = useApi();
 
+function formDataToObject(fd: FormData) {
+  const obj: Record<string, any> = {};
+  for (const [key, value] of fd.entries()) {
+    obj[key] = value instanceof File ? value.name : value;
+  }
+  return obj;
+}
+
 async function testFlow() {
   try {
     const dataForm = new FormData();
@@ -239,6 +250,7 @@ async function testFlow() {
       dataForm.append(element.parametername, element.parametervalue);
     }
     const res = await Api.post('admin/execute-flow', dataForm);
+    payload.value = JSON.stringify(formDataToObject(dataForm), null, 2);
 
     if (res?.code == 200) {
       testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
