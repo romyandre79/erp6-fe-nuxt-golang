@@ -4,6 +4,7 @@ import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect, defineComponent } from 'vue';
 import CardWrapper from './CardWrapper.vue';
+import ChartWrapper from './ChartWrapper.vue';
 import { useFormValidation } from '../composables/useFormValidation';
 
 const props = defineProps({
@@ -669,6 +670,11 @@ function renderCard(container: any) {
   return h(CardWrapper, { container, renderChild: renderContainer });
 }
 
+function renderChart(container: any) {
+  if (!container) return null;
+  return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
+}
+
 function renderContainer(container: any) {
   if (!container) return null;
 
@@ -692,6 +698,9 @@ function renderContainer(container: any) {
           case 'card':
           return renderCard(component);
 
+          case 'chart':
+          return renderChart(component);
+
         case 'master':
         case 'buttons':
         case 'tables':
@@ -700,6 +709,7 @@ function renderContainer(container: any) {
         case 'widget':
         case 'form':
           case 'cards':
+        case 'charts':
         case 'modals':
           return renderContainer(component);
         case 'action':

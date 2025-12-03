@@ -369,6 +369,22 @@ export const layoutContainers = [
     children: [],
   },
   {
+    type: 'chart',
+    label: 'Chart',
+    component: 'div',
+    props: {
+      key: '',
+      class: 'flex flex-wrap gap-2 mb-3',
+      charttype: '',
+      searchflow: '',
+      title: '',
+      description: '',
+      xaxis: '',
+      yaxis: '',      
+    },
+    children: [],
+  },
+  {
     type: 'charts',
     label: 'Charts',
     component: 'div',

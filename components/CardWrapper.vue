@@ -52,8 +52,7 @@ export default defineComponent({
             children.map((child: any) => {
               if (child.props?.key === 'data') {
                 return h('div', { class: child.props.class }, [
-                  child.props.text ? h('div', child.props.text) : null,
-                  data.value ? h('div', typeof data.value === 'object' ? JSON.stringify(data.value) : data.value) : null,
+                  child.props.text ? h('div', data.value + ' ' +child.props.text) : null
                 ]);
               }
               return props.renderChild(child);
