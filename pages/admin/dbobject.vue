@@ -6,7 +6,7 @@
       </div>
       <div class="flex items-center gap-2">
         <UButton icon="heroicons:table-cells" @click="addTableAtNextPosition" class="px-3 py-2 rounded bg-green-600 text-white">Add Table</UButton>
-        <UButton icon="heroicons:square-3-stack-3d" @click="addArea" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</UButton>
+        <UButton icon="heroicons:square-3-stack-3d" @click="addArea($event)" class="px-3 py-2 rounded bg-purple-600 text-white">Add Area</UButton>
         <UButton icon="heroicons:bookmark-square" @click="saveToBackend" class="px-3 py-1 rounded bg-green-600 text-white">Save</UButton>
         <UButton icon="heroicons:arrows-right-left" @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white">Reset</UButton>
         <UButton icon="heroicons:building-library" @click="aiSuggestRelations()" class="px-3 py-1 bg-purple-500 text-white rounded">
@@ -289,7 +289,17 @@ function resetZoom() {
 }
 
 
-function addTableAt(x = 40, y = 40) {
+function addTableAt() {
+  let x = 40;
+  let y = 40;
+
+  if (activeArea.value) {
+    const area = activeArea.value;
+
+    // Tempatkan table di dalam area tersebut
+    x = area.x + 40; 
+    y = area.y + 40; 
+  }
   const table = {
     id: idSeq++,
     dbid: '',
@@ -494,46 +504,31 @@ async function resetDesign() {
 
 function loadRelationsFromObjects(dbobjects, idMap) {
   relations.splice(0, relations.length);
+
+  const seenKeys = new Set();
+
   dbobjects.forEach((obj) => {
     if (!obj.objectcontent) return;
-    let parsed;
 
-    try {
-      parsed = JSON.parse(obj.objectcontent);
-    } catch {
-      return;
-    }
+    let parsed = null;
+    try { parsed = JSON.parse(obj.objectcontent); } catch { return; }
 
-    if (!parsed.relations || !Array.isArray(parsed.relations)) return;
+    if (!Array.isArray(parsed.relations)) return;
 
     parsed.relations.forEach((rel) => {
       const newFromTable = idMap[rel.from.table];
       const newToTable = idMap[rel.to.table];
-
       if (!newFromTable || !newToTable) return;
 
-      const exists = relations.some(
-        (r) =>
-          r.from.table === newFromTable &&
-          r.from.col === rel.from.col &&
-          r.to.table === newToTable &&
-          r.to.col === rel.to.col,
-      );
+      const key = `${newFromTable}|${rel.from.col}|${newToTable}|${rel.to.col}`;
 
-      if (exists) return;
+      if (seenKeys.has(key)) return;
+      seenKeys.add(key);
 
       relations.push({
         id: relSeq++,
-        from: {
-          table: newFromTable,
-          col: rel.from.col,
-          colName: rel.from.colName,
-        },
-        to: {
-          table: newToTable,
-          col: rel.to.col,
-          colName: rel.to.colName,
-        },
+        from: { table: newFromTable, col: rel.from.col, colName: rel.from.colName },
+        to: { table: newToTable, col: rel.to.col, colName: rel.to.colName },
         path: '',
       });
     });
@@ -541,6 +536,7 @@ function loadRelationsFromObjects(dbobjects, idMap) {
 
   computeRelationsPaths();
 }
+
 
 async function loadDesign() {
   // reset local arrays
@@ -639,6 +635,20 @@ function finishLink(ev, moveHandler, upHandler) {
       },
       path: '',
     };
+
+    const already = relations.some(
+  (r) =>
+    r.from.table === linkPreview.from.table &&
+    r.from.col === linkPreview.from.col &&
+    r.to.table === target.table &&
+    r.to.col === target.col
+);
+
+if (already) {
+  linkPreview.active = false;
+  linkPreview.path = '';
+  return; // jangan tambah relasi baru
+}
     relations.push(rel);
     computeRelationsPaths();
   }
@@ -724,17 +734,30 @@ onMounted(async () => {
   await loadDesign();
 });
 
-function addArea() {
-  ((areaSeq = areaSeq + 1),
-    areas.push({
-      id: areaSeq,
-      name: 'Area ' + areaSeq,
-      x: 100,
-      y: 100,
-      width: 400,
-      height: 300,
-      color: '#e3e9ff',
-    }));
+function addArea(ev) {
+ let x = 100;
+  let y = 100;
+
+  if (areas.length > 0) {
+    // Ambil area terakhir
+    const last = areas[areas.length - 1];
+    
+    // Geser sedikit ke kanan (atau bawah jika mau)
+    x = last.x + last.width + 40; // 40px gap
+    y = last.y;
+  }
+
+  areaSeq++;
+
+  areas.push({
+    id: areaSeq,
+    name: "Area " + areaSeq,
+    x: x,
+    y: y,
+    width: 400,
+    height: 300,
+    color: "#e3e9ff",
+  });
 }
 
 const activeAreaTables = ref<any[]>([]);
@@ -757,6 +780,7 @@ function startAreaDrag(area, ev) {
     );
   });
 
+  console.log(activeArea.value)
   window.addEventListener('mousemove', onAreaMouseMove);
   window.addEventListener('mouseup', stopAreaInteraction);
 }
@@ -893,13 +917,25 @@ function aiGenerateTableFromDescription(description: string) {
   columnsPart = columnsPart.replace(/and/g, ','); // normalize
   const colNames = columnsPart.split(',').map(c => c.trim()).filter(c => c);
 
+  let x = 40 ;
+  let y = 40 ;
+  console.log('activeArea ',activeArea.value)
+
+  if (activeArea.value) {
+    const area = activeArea.value;
+
+    // Tempatkan table di dalam area tersebut
+    x = area.x + 40; 
+    y = area.y + 40; 
+  }
+
   // buat tabel object
   const newTable = {
     id: idSeq++,
     dbid: '',
     name: tableName,
-    x: 40 + (tables.length % 4) * 340,
-    y: 40 + Math.floor(tables.length / 4) * 200,
+    x,
+    y,
     width: 240,
     columns: colNames.map(name => {
       let type = 'text';
