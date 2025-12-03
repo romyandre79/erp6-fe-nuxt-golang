@@ -119,7 +119,7 @@ const toggleExpand = (id: number) => {
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col">
+        <main class="flex-1 flex flex-col h-full min-h-screen">
           <NavbarAdmin class="navbar-admin sticky top-0 z-50 shadow-md border-b">
             <template #right>
               <!-- THEME TOGGLE -->
@@ -127,7 +127,7 @@ const toggleExpand = (id: number) => {
             </template>
           </NavbarAdmin>
 
-          <div class="flex-1 overflow-auto transition-colors duration-300">
+          <div class="transition-colors duration-300">
             <NuxtPage />
           </div>
         </main>

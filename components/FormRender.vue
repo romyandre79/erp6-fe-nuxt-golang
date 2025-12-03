@@ -361,7 +361,7 @@ function renderComponent(component: any) {
           //validateField(component, val)
         },
       });
-      return h('div', { class: 'flex flex-col mb-3' }, [
+      return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
         component.type != 'hidden'
           ? component.props.text
             ? h('label', { class: 'mb-1 font-medium' }, $t(component.props.text.toUpperCase()))
@@ -395,7 +395,7 @@ function renderComponent(component: any) {
           formData.value[component.props.key] = val;
         },
       });
-      return h('div', { class: component.props.class || 'flex flex-col mb-3' }, [
+      return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
         component.type != 'hidden'
           ? component.props.text
             ? h('label', { class: 'text-sm mb-1 font-medium text-gray-400' }, $t(component.props.text.toUpperCase()))
@@ -421,6 +421,7 @@ function renderComponent(component: any) {
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       return h(FormSelect, {
+        class: component.props.class,
         component: component.props,
         formData,
         validationErrors,
@@ -437,7 +438,7 @@ function renderComponent(component: any) {
           validateField(component.props, val);
         },
       });
-      return h('div', { class: 'flex items-center mb-3 space-x-2' }, [
+      return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
         h('input', {
           type: 'checkbox',
           checked: modelCheckbox.value,
@@ -450,7 +451,7 @@ function renderComponent(component: any) {
 
     case 'button':
       return h(UButton, {
-        class: 'rounded px-4 py-2 mr-2 transition mb-3',
+        class: [component.props.class, 'rounded px-4 py-2 mr-2 transition mb-3'],
         icon: component.props.icon || '',
         onClick: async () => {
           const eventName = component.props.onClick.toLowerCase();
@@ -587,7 +588,7 @@ function renderContainer(container: any) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.children || [];
-
+          console.log('comp type',container)
   return h(
     'div',
     {
@@ -610,7 +611,7 @@ function renderContainer(container: any) {
         case 'widget':
         case 'form':
         case 'modals':
-          return h('div', { class: component.props.class }, [renderContainer(component)]);
+          return renderContainer(component);
         case 'action':
           break;
 
@@ -742,7 +743,7 @@ function renderTable(component: any) {
 
     getData();
 
-    return h('div', { key: key }, [
+    return h('div', { key: key, class: component.props.class || "" }, [
       h(TablePagination, {
         ref: tableRef,
         columns:
@@ -963,9 +964,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div v-for="(value, index) in parsedSchema">
-    <component :is="renderContainer(value)"></component>
-  </div>
+  <component :is="renderContainer(value)" v-for="(value, index) in parsedSchema"></component>
 
   <div v-if="isUploading" class="mt-2 w-full bg-gray-200 h-2 rounded overflow-hidden">
     <div class="bg-green-500 h-2" :style="{ width: uploadProgress + '%' }"></div>
