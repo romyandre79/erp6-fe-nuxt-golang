@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import draggable from 'vuedraggable';
-import Sidebar from '~/components/widget/Sidebar.vue';
+import Sidebar from '~/components/widget/WidgetSidebar.vue';
 import RenderNode from '~/components/RenderNode.vue';
 import TreeView from '~/components/TreeView.vue';
 import PropertyEditor from '~/components/PropertyEditor.vue';

@@ -90,7 +90,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useThemeStore } from '~/store/theme';
-import Sidebar from '~/components/theme/Sidebar.vue';
+import Sidebar from '~/components/theme/ThemeSidebar.vue';
 import { useToast, useRoute } from '#imports';
 
 definePageMeta({
