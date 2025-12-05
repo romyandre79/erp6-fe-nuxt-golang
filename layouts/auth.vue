@@ -4,9 +4,11 @@ import { useUserStore } from '~/store/user';
 import NavbarAdmin from '~/components/NavbarAdmin.vue';
 import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '~/store/theme';
+import { useNotificationStore } from '~/store/notification';
 import { useAuth } from '~/composables/useAuth';
 
 const themeStore = useThemeStore();
+const notificationStore = useNotificationStore();
 const { t } = useI18n();
 const userStore = useUserStore();
 const { me } = useAuth();
@@ -20,8 +22,13 @@ const menus = ref<any[]>([]);
 
 onMounted(async () => {
   themeStore.applyCurrentTheme();
+  
+  // Connect Notifications
+  await notificationStore.connect();
+  await notificationStore.fetchUnread();
+
   try {
-    const res = await me();
+    const res: any = await me();
     if (res?.code === 200 && res.data?.menus) {
       menus.value = res.data.menus;
     } else {
@@ -123,7 +130,7 @@ const toggleExpand = (id: number) => {
           <NavbarAdmin class="navbar-admin sticky top-0 z-50 shadow-md border-b">
             <template #right>
               <!-- THEME TOGGLE -->
-              <button @click="themeStore.toggleTheme()" class="p-2 rounded-md transition-colors"></button>
+              <ThemeToggle />
             </template>
           </NavbarAdmin>
 

@@ -7,6 +7,7 @@
 
     <!-- RIGHT: Theme + User -->
     <div class="flex items-center gap-4 relative">
+      <NotificationBell />
       <ThemeToggle />
 
       <!-- USER DROPDOWN -->
@@ -81,6 +82,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import ThemeToggle from '~/components/ThemeToggle.vue';
+import NotificationBell from '~/components/NotificationBell.vue';
 import { useUserStore } from '~/store/user';
 import { useAuth } from '~/composables/useAuth';
 import { useThemeStore } from '~/store/theme';
