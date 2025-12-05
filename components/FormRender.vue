@@ -147,39 +147,112 @@ function getPrimary() {
 }
 
 async function edit(key: string) {
-  const flow = getAction('get');
-  if (flow && selectedRows.value.length > 0) {
-    const primary = getPrimary();
-    modalTitle.value = 'Edit Data';
-    modalDescription.value = '';
-    modalRefs[key].value = true;
-    const dataForm = new FormData();
-    dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    dataForm.append(primary, selectedRows.value[0][primary]);
-    try {
-      const res = await Api.post('admin/execute-flow', dataForm);
-      if (res.code == 200) {
-        const record = res.data.data;
-        for (const key in record) {
-          formData.value[key] = record[key];
-        }
-        tableRef.value.setData(primary, selectedRows.value[0][primary]);
-      } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
-        navigateTo('/login');
+  // Check if this is a detail modal by looking for the modal in the schema
+  const modal = modals.value.find((m: any) => m.props.key === key);
+  
+  // Determine if this is a detail modal by checking if the key contains "detail"
+  const isDetailModal = modal && key.toLowerCase().includes('detail');
+  
+  console.log('edit debug:', { key, isDetailModal, modalFound: !!modal });
+  
+  if (isDetailModal) {
+    // Handle detail modal edit
+    // Get the detail table that this modal is associated with
+    // Find which table's selected row we should use
+    const detailTableKey = key.replace('modal', 'table').replace('form', ''); // e.g., modaldetailform -> table
+    
+    // Get onGetDetail flows
+    let actionNode: any;
+    parsedSchema.value.forEach((element: any) => {
+      if (element.type == 'action') {
+        actionNode = element;
       }
-    } catch (err) {
-      console.error('Gagal ambil data:', err);
+    });
+    const detailFlows = actionNode?.props?.onGetDetail || []; // Fixed: use onGetDetail instead of ongetdetail
+    
+    // Find the index of this detail modal to get the correct flow
+    // Filter modals that are actually detail modals (contain 'detail' in key)
+    const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
+    const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
+    const flow = detailFlows[modalIndex];
+    
+    if (flow && selectedRows.value.length > 0) {
+      modalTitle.value = 'Edit Data';
+      modalDescription.value = '';
+      modalRefs[key].value = true;
+      
+      const dataForm = new FormData();
+      dataForm.append('flowname', flow);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      
+      // Append all selected row data as search parameters
+      const selectedRow = selectedRows.value[0];
+      for (const rowKey in selectedRow) {
+        if (selectedRow[rowKey] !== null && selectedRow[rowKey] !== undefined && typeof selectedRow[rowKey] !== 'object') {
+          dataForm.append(rowKey, selectedRow[rowKey]);
+        }
+      }
+      
+      try {
+        const res = await Api.post('admin/execute-flow', dataForm);
+        if (res.code == 200) {
+          const record = res.data.data;
+          for (const key in record) {
+            formData.value[key] = record[key];
+          }
+        } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
+      } catch (err) {
+        console.error('Gagal ambil data:', err);
+      }
+    }
+  } else {
+    // Handle master modal edit (existing logic)
+    const flow = getAction('get');
+    if (flow && selectedRows.value.length > 0) {
+      const primary = getPrimary();
+      modalTitle.value = 'Edit Data';
+      modalDescription.value = '';
+      modalRefs[key].value = true;
+      const dataForm = new FormData();
+      dataForm.append('flowname', flow);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      dataForm.append(primary, selectedRows.value[0][primary]);
+      try {
+        const res = await Api.post('admin/execute-flow', dataForm);
+        if (res.code == 200) {
+          const record = res.data.data;
+          for (const key in record) {
+            formData.value[key] = record[key];
+          }
+          tableRef.value.setData(primary, selectedRows.value[0][primary]);
+        } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
+      } catch (err) {
+        console.error('Gagal ambil data:', err);
+      }
     }
   }
 }
 
 function close(key: string) {
-  const primary = getPrimary();
-  tableRef.value.setData(primary, selectedRows.value[0][primary]);
-  tableRef.value.setDataIsDetail(false);
-  modalRefs[key].value = false;
+  try {
+    const primary = getPrimary();
+    if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
+      tableRef.value.setData(primary, selectedRows.value[0][primary]);
+    }
+    tableRef.value.setDataIsDetail(false);
+  } catch (e) {
+    console.error('Error closing modal:', e);
+  } finally {
+    if (modalRefs[key]) {
+      modalRefs[key].value = false;
+    }
+  }
   //window.location.reload(true); // TODO: next only refresh grid
 }
 
@@ -936,29 +1009,105 @@ async function saveData(key: any) {
   try {
     let flow = '';
 
-    if (modalTitle.value == 'New Data') {
-      flow = getAction('create');
+    // Check if this is a detail modal
+    const modal = modals.value.find((m: any) => m.props.key === key);
+    // Determine if this is a detail modal by checking if the key contains "detail"
+    const isDetailModal = modal && key.toLowerCase().includes('detail');
+
+    console.log('saveData debug:', { key, isDetailModal, modalFound: !!modal });
+
+    if (isDetailModal) {
+      // Handle detail modal save
+      let actionNode: any;
+      parsedSchema.value.forEach((element: any) => {
+        if (element.type == 'action') {
+          actionNode = element;
+        }
+      });
+
+      // Find the index of this detail modal
+      // Filter modals that are actually detail modals (contain 'detail' in key)
+      const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
+      const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
+      
+      console.log('saveData detail debug:', { modalIndex, detailModalsCount: detailModals.length });
+
+      if (modalTitle.value == 'New Data') {
+        const createFlows = actionNode?.props?.onCreateDetail || [];
+        flow = createFlows[modalIndex];
+      } else {
+        const updateFlows = actionNode?.props?.onUpdateDetail || [];
+        flow = updateFlows[modalIndex];
+      }
     } else {
-      flow = getAction('update');
+      // Handle master modal save (existing logic)
+      if (modalTitle.value == 'New Data') {
+        flow = getAction('create');
+      } else {
+        flow = getAction('update');
+      }
     }
+
+    // Helper to find all input keys in a modal
+    function getModalFields(nodes: any[]): string[] {
+      let fields: string[] = [];
+      nodes.forEach((node) => {
+        if (node.props?.key) {
+          fields.push(node.props.key);
+        }
+        if (node.children) {
+          fields = fields.concat(getModalFields(node.children));
+        }
+      });
+      return fields;
+    }
+
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
+    
     const payload = { ...toRaw(formData.value) };
-    for (const key in payload) {
-      const val = payload[key];
-      if (val !== undefined && val !== null) {
-        if (typeof val === 'object') {
-          dataForm.append(key, JSON.stringify(val));
-        } else if (typeof val === 'boolean') {
-          // 🟢 ubah boolean ke 1 / 0 agar MySQL bisa terima
-          dataForm.append(key, val ? 1 : 0);
-        } else {
-          dataForm.append(key, val);
+    
+    // If detail modal, filter payload to only include modal fields + master ID
+    if (isDetailModal && modal) {
+      const modalFields = getModalFields(modal.children || []);
+      const primary = getPrimary(); // Master ID key
+      
+      // Add Master ID if it exists
+      if (primary && payload[primary]) {
+        dataForm.append(primary, payload[primary]);
+      }
+      
+      // Add only fields present in the modal
+      for (const key of modalFields) {
+        const val = payload[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === 'object') {
+            dataForm.append(key, JSON.stringify(val));
+          } else if (typeof val === 'boolean') {
+            dataForm.append(key, val ? '1' : '0');
+          } else {
+            dataForm.append(key, val);
+          }
+        }
+      }
+    } else {
+      // Master modal or other: send everything (existing logic)
+      for (const key in payload) {
+        const val = payload[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === 'object') {
+            dataForm.append(key, JSON.stringify(val));
+          } else if (typeof val === 'boolean') {
+            dataForm.append(key, val ? '1' : '0');
+          } else {
+            dataForm.append(key, val);
+          }
         }
       }
     }
+
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({

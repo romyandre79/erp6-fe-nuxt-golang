@@ -32,4 +32,13 @@ onMounted(async () => {
   if (!id) return;
   await store.loadWorkflow(id);
 });
+
+watch(
+  () => route.params.slug,
+  async (newSlug) => {
+    const id = (newSlug ?? route.params.id ?? route.query.id) as string;
+    if (!id) return;
+    await store.loadWorkflow(id);
+  }
+);
 </script>
