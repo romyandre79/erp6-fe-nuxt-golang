@@ -113,7 +113,7 @@ import { ref, computed, toRaw, onMounted } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
-import Sidebar from '~/components/dbobject/Sidebar.vue';
+import Sidebar from '~/components/dbobject/DbObjectSidebar.vue';
 import CanvasTable from '~/components/canvas/CanvasTable.vue';
 import CanvasArea from '~/components/canvas/CanvasArea.vue';
 import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';

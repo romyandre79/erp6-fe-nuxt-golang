@@ -17,7 +17,7 @@ import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useWorkflowStore } from '~/store/workflow';
 import Designer from '~/components/workflow/Designer.vue';
-import Sidebar from '~/components/workflow/Sidebar.vue';
+import Sidebar from '~/components/workflow/WorkflowSidebar.vue';
 
 definePageMeta({
   middleware: ['auth'],
