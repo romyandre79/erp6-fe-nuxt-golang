@@ -1,11 +1,13 @@
 <template>
   <div class="h-screen flex overflow-hidden">
-    <div class="flex-1 relative bg-gray-100">
-      <Designer />
+    <!-- Sidebar on the left -->
+    <div class="flex-none bg-white border-r z-10">
+      <Sidebar />
     </div>
 
-    <div class="w-80 bg-white border-l">
-      <Sidebar />
+    <!-- Designer takes remaining space -->
+    <div class="flex-1 relative bg-gray-100">
+      <Designer />
     </div>
   </div>
 </template>

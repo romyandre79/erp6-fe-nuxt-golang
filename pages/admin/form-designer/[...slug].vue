@@ -293,6 +293,7 @@ const loadSchema = async () => {
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
+  console.log(name)
   if (name) {
     try {
       const res = await getMenuForm(name);

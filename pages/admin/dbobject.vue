@@ -27,13 +27,6 @@
           >Reset</UButton
         >
         <UButton
-          icon="heroicons:play"
-          @click="openExecuteModal"
-          :disabled="!selectedTable"
-          class="px-3 py-1 rounded bg-blue-600 text-white"
-          >Execute</UButton
-        >
-        <UButton
           icon="heroicons:building-library"
           @click="aiSuggestRelations()"
           class="px-3 py-1 bg-purple-500 text-white rounded"
@@ -143,8 +136,6 @@
       />
     </div>
 
-    <!-- Execute SQL Modal -->
-    <ExecuteSqlModal v-model="showExecuteModal" :table="selectedTable" @success="onExecuteSuccess" />
   </div>
 </template>
 
@@ -156,7 +147,6 @@ import { toPng } from 'html-to-image';
 import CanvasTable from '~/components/canvas/CanvasTable.vue';
 import CanvasArea from '~/components/canvas/CanvasArea.vue';
 import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';
-import ExecuteSqlModal from '~/components/canvas/ExecuteSqlModal.vue';
 import { useCanvas } from '~/composables/useCanvas';
 
 let idSeq = 1;

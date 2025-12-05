@@ -3,7 +3,7 @@
     <div
       v-if="testResult"
       id="test-result-overlay"
-      class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md"
+      class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md overflow-x-auto scroll-y-auto"
     >
       <h3 class="font-bold text-lg">Payload (Form Data)</h3>
       <pre class="text-sm whitespace-pre-wrap">{{ payload }}</pre>
