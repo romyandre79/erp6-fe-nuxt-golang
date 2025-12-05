@@ -633,15 +633,24 @@ function renderCallOther(component) {
 
   if (type === 'table') {
     const tableObj = tables.value.find((t) => t.props.key === key);
-    tableObj.props.isdetail = false;
-    tableObj.props.isexpand = false;
-    tableUsed.value.push(key);
-
+    
     if (!tableObj) {
       return h('div', `Table ${key} not found`);
     }
 
-    return renderTable(tableObj);
+    // 🆕 Clone object to avoid mutating the original schema
+    const clonedTable = {
+      ...tableObj,
+      props: {
+        ...tableObj.props,
+        isdetail: false,
+        isexpand: false,
+      }
+    };
+
+    tableUsed.value.push(key);
+
+    return renderTable(clonedTable);
   }
 
   return h('div', `Unknown other type: ${type}`);

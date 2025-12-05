@@ -4,61 +4,45 @@
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
       </div>
-      <div class="flex items-center gap-2">
-        <UButton
-          icon="heroicons:table-cells"
-          @click="addTableAtNextPosition"
-          class="px-3 py-2 rounded bg-green-600 text-white"
-          >Add Table</UButton
-        >
-        <UButton
-          icon="heroicons:square-3-stack-3d"
-          @click="addArea($event)"
-          class="px-3 py-2 rounded bg-purple-600 text-white"
-          >Add Area</UButton
-        >
-        <UButton
-          icon="heroicons:bookmark-square"
-          @click="saveToBackend"
-          class="px-3 py-1 rounded bg-green-600 text-white"
-          >Save</UButton
-        >
-        <UButton icon="heroicons:arrows-right-left" @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white"
-          >Reset</UButton
-        >
-        <UButton
-          icon="heroicons:building-library"
-          @click="aiSuggestRelations()"
-          class="px-3 py-1 bg-purple-500 text-white rounded"
-        >
-          AI Suggest Relations
-        </UButton>
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton icon="heroicons:bars-4" @click="exportCanvas" class="px-3 py-1 bg-indigo-500 text-white rounded"
-          >Export PNG</UButton
-        >
-        <UButton icon="heroicons:magnifying-glass-plus" @click="zoomIn" class="px-3 py-1 bg-blue-500 text-white rounded"
-          >Zoom In</UButton
-        >
-        <UButton
-          icon="heroicons:magnifying-glass-minus"
-          @click="zoomOut"
-          class="px-3 py-1 bg-blue-500 text-white rounded"
-          >Zoom Out</UButton
-        >
-        <UButton icon="heroicons:arrows-right-left" @click="resetZoom" class="px-3 py-1 bg-gray-500 text-white rounded"
-          >Reset Zoom</UButton
-        >
-      </div>
     </header>
 
-    <div class="flex-1 relative overflow-hidden">
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Sidebar -->
+      <div class="flex-none bg-white border-r z-10">
+        <Sidebar
+          :tables="tables"
+          :areas="areas"
+          :selectedTable="selectedTable"
+          :relations="relations"
+          :jsonPreview="jsonPreview"
+          :aiDescription="aiDescription"
+          @add-table="addTableAtNextPosition"
+          @add-area="addArea"
+          @save="saveToBackend"
+          @reset="resetDesign"
+          @ai-suggest="aiSuggestRelations"
+          @select-table="selectTable"
+          @zoom-in="zoomIn"
+          @zoom-out="zoomOut"
+          @reset-zoom="resetZoom"
+          @export-png="exportCanvas"
+          @update:jsonPreview="jsonPreview = $event"
+          @update:aiDescription="aiDescription = $event"
+          @ai-parse="aiParseNatural"
+          @remove-column="removeColumn"
+          @add-column="addColumn"
+          @ai-suggest-types="aiSuggestColumns"
+          @apply-json="applyJSONToSelected"
+          @copy-json="copyJSONToClipboard"
+          @remove-relation="removeRelation"
+        />
+      </div>
+
       <!-- canvas wrapper -->
-      <div class="absolute inset-0 overflow-auto">
+      <div class="flex-1 relative overflow-hidden bg-gray-100">
         <!-- canvas -->
         <div
-          class="relative p-4 bg-gray-100 min-w-[2000px] min-h-[2000px]"
+          class="relative p-4 min-w-[2000px] min-h-[2000px]"
           @dragover.prevent
           @drop="onDropCanvas"
           ref="canvasRef"
@@ -119,21 +103,6 @@
           <div class="absolute left-4 bottom-4"></div>
         </div>
       </div>
-
-      <!-- properties panel -->
-      <PropertiesPanel
-        :selectedTable="selectedTable"
-        :relations="relations"
-        v-model:jsonPreview="jsonPreview"
-        v-model:aiDescription="aiDescription"
-        @ai-parse="aiParseNatural"
-        @remove-column="removeColumn"
-        @add-column="addColumn"
-        @ai-suggest-types="aiSuggestColumns"
-        @apply-json="applyJSONToSelected"
-        @copy-json="copyJSONToClipboard"
-        @remove-relation="removeRelation"
-      />
     </div>
 
   </div>
@@ -144,10 +113,16 @@ import { ref, computed, toRaw, onMounted } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
+import Sidebar from '~/components/dbobject/Sidebar.vue';
 import CanvasTable from '~/components/canvas/CanvasTable.vue';
 import CanvasArea from '~/components/canvas/CanvasArea.vue';
 import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';
 import { useCanvas } from '~/composables/useCanvas';
+
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'auth'
+});
 
 let idSeq = 1;
 let relSeq = 1;

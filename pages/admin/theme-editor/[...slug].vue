@@ -1,103 +1,18 @@
 <template>
   <div class="flex h-full">
     <!-- LEFT: CATEGORY LIST -->
-    <aside class="w-120 border-r p-4 space-y-4">
-      <h1 class="font-bold text-lg mb-2">Theme Builder - {{ route.params.slug[0] || '' }}</h1>
-
-      <!-- Theme select & actions -->
-      <div class="space-y-2">
-        <div class="flex gap-2 mt-2">
-          <button class="py-2 px-3 bg-primary-600 rounded" @click="applyTheme">Save</button>
-          <button class="px-3 py-2 border rounded" @click="resetToDefault">Reset</button>
-        </div>
-      </div>
-
-      <!-- Category list -->
-      <div>
-        <h3 class="mt-4 font-semibold">Categories</h3>
-        <ul class="mt-2 space-y-1">
-          <li
-            v-for="cat in categories"
-            :key="cat.key"
-            @click="selectCategory(cat.key)"
-            :class="[
-              'cursor-pointer px-3 py-2 rounded',
-              selectedCategory === cat.key ? 'bg-primary-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-800',
-            ]"
-          >
-            {{ cat.label }}
-          </li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="font-semibold mb-3">Properties <span class="text-sm text-gray-500">(edit values below)</span></h3>
-
-        <div v-if="currentProps.length === 0" class="text-sm text-gray-500">Select a category to edit.</div>
-
-        <div
-          v-for="prop in currentProps"
-          :key="prop.key"
-          class="border rounded p-3 mb-3 flex items-center justify-between gap-4"
-        >
-          <div class="min-w-0">
-            <div class="font-medium truncate">{{ prop.label }}</div>
-            <div class="text-xs text-gray-500 truncate">{{ prop.key }}</div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <input
-              v-if="prop.type === 'color'"
-              type="color"
-              v-model="themeState[prop.key]"
-              @input="onChange(prop.key, $event.target.value)"
-              class="w-10 h-10 p-0 border rounded"
-            />
-            <input
-              v-else-if="prop.type === 'number'"
-              type="number"
-              v-model="themeState[prop.key]"
-              @input="onChange(prop.key, $event.target.value)"
-              class="border px-2 py-1 rounded w-28"
-            />
-            <select
-              v-else-if="prop.type === 'select'"
-              v-model="themeState[prop.key]"
-              @change="onChange(prop.key, $event.target.value)"
-              class="border px-2 py-1 rounded w-44"
-            >
-              <option v-for="opt in prop.options" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
-            <input
-              v-else
-              type="text"
-              v-model="themeState[prop.key]"
-              @input="onChange(prop.key, $event.target.value)"
-              class="border px-2 py-1 rounded w-44"
-            />
-          </div>
-        </div>
-
-        <!-- add custom property -->
-        <div class="mt-4 border-t pt-4">
-          <h4 class="font-semibold mb-2">Add custom property</h4>
-          <div class="flex gap-2">
-            <input v-model="newKey" placeholder="property-key" class="border px-2 py-1 rounded w-48" />
-            <input v-model="newValue" placeholder="value" class="border px-2 py-1 rounded w-32" />
-            <button class="px-3 py-1 bg-green-600 text-white rounded" @click="addCustom">Add</button>
-          </div>
-        </div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">CSS Output</label>
-        <textarea readonly class="w-full h-40 font-mono text-xs p-2 border rounded" :value="cssText"></textarea>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">JSON</label>
-        <textarea readonly class="w-full h-40 font-mono text-xs p-2 border rounded" :value="jsonText"></textarea>
-      </div>
-    </aside>
+    <!-- LEFT: SIDEBAR -->
+    <div class="flex-none bg-white border-r z-10">
+      <Sidebar
+        :themeState="themeState"
+        :cssText="cssText"
+        :jsonText="jsonText"
+        @save="applyTheme"
+        @reset="resetToDefault"
+        @update="onChange"
+        @add-custom="addCustom"
+      />
+    </div>
 
     <!-- RIGHT: PROPERTY EDITOR + PREVIEW -->
     <section class="flex-1 p-6 overflow-auto">
@@ -175,7 +90,13 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useThemeStore } from '~/store/theme';
+import Sidebar from '~/components/theme/Sidebar.vue';
 import { useToast, useRoute } from '#imports';
+
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'auth'
+});
 
 // integrate with Pinia theme store
 const store = useThemeStore();

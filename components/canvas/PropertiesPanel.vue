@@ -1,5 +1,5 @@
 <template>
-  <aside class="absolute right-0 top-0 bottom-0 w-96 border-l bg-white p-4 overflow-auto z-10 shadow-lg">
+  <div class="h-full flex flex-col bg-white p-4 overflow-auto">
     <div class="mt-4">
       <label class="text-sm font-semibold">AI Prompt</label>
       <div class="flex gap-2 mt-1">
@@ -109,18 +109,18 @@
       </div>
       <div v-else class="text-gray-400 text-sm">No relations</div>
     </div>
-  </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 
-const props = defineProps({
-  selectedTable: Object,
-  relations: { type: Array, default: () => [] },
-  jsonPreview: String,
-  aiDescription: String,
-});
+const props = defineProps<{
+  selectedTable: any;
+  relations: any[];
+  jsonPreview: string;
+  aiDescription: string;
+}>();
 
 const emit = defineEmits([
   'ai-parse',

@@ -21,32 +21,9 @@
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-1/5 bg-white border-r p-3 overflow-y-auto dark:bg-black">
-      <h2 class="font-bold text-lg mb-3">Elements</h2>
-
-      <!-- Komponen dasar -->
-      <div
-        v-for="(comp, idx) in availableComponents"
-        :key="idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
-        draggable="true"
-        @dragstart="onDragStart(comp)"
-      >
-        {{ comp.label }}
-      </div>
-
-      <!-- Kontainer layout -->
-      <h3 class="font-bold text-lg mb-3">Containers</h3>
-      <div
-        v-for="(group, idx) in layoutContainers"
-        :key="'grp-' + idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
-        draggable="true"
-        @dragstart="onDragStart(group)"
-      >
-        {{ group.label }}
-      </div>
-    </aside>
+    <div class="flex-none bg-white border-r z-10">
+      <Sidebar />
+    </div>
 
     <!-- 🔹 Canvas Tengah -->
     <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
@@ -112,6 +89,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import draggable from 'vuedraggable';
+import Sidebar from '~/components/widget/Sidebar.vue';
 import RenderNode from '~/components/RenderNode.vue';
 import TreeView from '~/components/TreeView.vue';
 import PropertyEditor from '~/components/PropertyEditor.vue';
@@ -119,6 +97,7 @@ import { availableComponents, layoutContainers } from '~/types/components';
 
 definePageMeta({
   middleware: ['auth'],
+  layout: 'auth'
 });
 
 const route = useRoute();

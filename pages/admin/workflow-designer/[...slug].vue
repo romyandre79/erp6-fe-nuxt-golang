@@ -21,6 +21,7 @@ import Sidebar from '~/components/workflow/Sidebar.vue';
 
 definePageMeta({
   middleware: ['auth'],
+  layout: 'auth'
 });
 
 const route = useRoute();
