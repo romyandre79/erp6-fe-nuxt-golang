@@ -52,7 +52,6 @@ export const useDbobjectStore = defineStore('dbobject', () => {
 
       res = await api.post('/admin/execute-flow', dataForm);
       dbobjects.value = res?.data?.data ?? {};
-
     } finally {
       loading.value = false;
     }
@@ -69,7 +68,6 @@ export const useDbobjectStore = defineStore('dbobject', () => {
 
       const res = await api.post('/admin/execute-flow', dataForm);
       dbobject.value = res?.data?.data ?? {};
-
     } finally {
       loading.value = false;
     }
@@ -89,7 +87,6 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('comment', dbobject.comment);
 
       await api.post('/admin/execute-flow', dataForm);
-
     } finally {
       loading.value = false;
     }
@@ -104,7 +101,21 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('dbobjectid', id);
 
       await api.post('/admin/execute-flow', dataForm);
+    } finally {
+      loading.value = false;
+    }
+  }
 
+  async function executeTableOperation(operation: string, tableData: any) {
+    loading.value = true;
+    try {
+      const dataForm = new FormData();
+      dataForm.append('menu', 'admin');
+      dataForm.append('operation', operation);
+      dataForm.append('table', JSON.stringify(tableData));
+
+      const res = await api.post('/admin/execute-table-operation', dataForm);
+      return res?.data ?? res;
     } finally {
       loading.value = false;
     }
@@ -115,6 +126,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
     fetch,
     saveTable,
     purgeTable,
+    executeTableOperation,
     dbobject,
     dbobjects,
     loading,

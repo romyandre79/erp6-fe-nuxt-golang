@@ -2,7 +2,18 @@
 import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
-import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect, defineComponent } from 'vue';
+import {
+  ref,
+  reactive,
+  computed,
+  nextTick,
+  shallowReactive,
+  watch,
+  h,
+  resolveComponent,
+  watchEffect,
+  defineComponent,
+} from 'vue';
 import CardWrapper from './CardWrapper.vue';
 import ChartWrapper from './ChartWrapper.vue';
 import { useFormValidation } from '../composables/useFormValidation';
@@ -333,8 +344,6 @@ let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 const { validateField } = useFormValidation();
 
-
-
 function renderComponent(component: any) {
   switch ((component.type || '').toLowerCase()) {
     case 'callother':
@@ -358,10 +367,14 @@ function renderComponent(component: any) {
     case 'label': {
       const text = component.props?.text || '';
 
-      return h('label', {
-        class: `block mb-1 font-medium ${component.props?.class ?? ''}`,
-        for: component.props?.for ?? null
-      }, $t(text.toUpperCase()) + required);
+      return h(
+        'label',
+        {
+          class: `block mb-1 font-medium ${component.props?.class ?? ''}`,
+          for: component.props?.for ?? null,
+        },
+        $t(text.toUpperCase()) + required,
+      );
     }
 
     case 'longtext': {
@@ -397,73 +410,71 @@ function renderComponent(component: any) {
       ]);
     }
     case 'image':
-    const modelInputArea = computed({
+      const modelInputArea = computed({
         get: () => formData.value[component.props.key] || component.props.src,
         set: (val) => {
           formData.value[component.props.key] = val;
           //validateField(component, val)
         },
       });
-  return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
-    // ============================
-    // MODE INPUT (ada label + input)
-    // ============================
-    component.props.isinput
-      ? [
-          // Label
-          component.type != 'hidden' && component.props.text
-            ? h(
-                'label',
-                { class: 'text-sm mb-1 font-medium text-gray-400' },
-                $t(component.props.text.toUpperCase())
-              )
-            : null,
+      return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
+        // ============================
+        // MODE INPUT (ada label + input)
+        // ============================
+        component.props.isinput
+          ? [
+              // Label
+              component.type != 'hidden' && component.props.text
+                ? h(
+                    'label',
+                    { class: 'text-sm mb-1 font-medium text-gray-400' },
+                    $t(component.props.text.toUpperCase()),
+                  )
+                : null,
 
-          // Input file
-          h('input', {
-            type: 'file',
-            accept: 'image/*',
-            class:
-              'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
-              (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
+              // Input file
+              h('input', {
+                type: 'file',
+                accept: 'image/*',
+                class:
+                  'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+                  (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
 
-            onChange: (e: any) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
+                onChange: (e: any) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
 
-              const reader = new FileReader();
-              reader.onload = () => {
-                modelInputArea.value = reader.result; // base64 image
-              };
-              reader.readAsDataURL(file);
-            },
-          }),
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    modelInputArea.value = reader.result; // base64 image
+                  };
+                  reader.readAsDataURL(file);
+                },
+              }),
 
-          // Preview image jika ada
-          modelInputArea.value
+              // Preview image jika ada
+              modelInputArea.value
+                ? h('img', {
+                    src: modelInputArea.value,
+                    class: 'mt-2 w-32 h-auto rounded border',
+                  })
+                : null,
+
+              // Error message
+              validationErrors[component.props.key]
+                ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
+                : null,
+            ]
+          : // ============================
+            // MODE VIEW (gambar saja)
+            // ============================
+            modelInputArea.value
             ? h('img', {
                 src: modelInputArea.value,
-                class: 'mt-2 w-32 h-auto rounded border',
+                class: 'w-32 h-auto rounded border',
               })
             : null,
-
-          // Error message
-          validationErrors[component.props.key]
-            ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
-            : null,
-        ]
-      : 
-
-      // ============================
-      // MODE VIEW (gambar saja)
-      // ============================
-      modelInputArea.value
-      ? h('img', {
-          src: modelInputArea.value,
-          class: 'w-32 h-auto rounded border',
-        })
-      : null,
-  ]);
+      ]);
 
     case 'text':
     case 'hidden':
@@ -679,7 +690,7 @@ function renderContainer(container: any) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.children || [];
-          console.log('comp type',container)
+  console.log('comp type', container);
   return h(
     'div',
     {
@@ -695,10 +706,10 @@ function renderContainer(container: any) {
         case 'wizard':
           return renderWizard(component);
 
-          case 'card':
+        case 'card':
           return renderCard(component);
 
-          case 'chart':
+        case 'chart':
           return renderChart(component);
 
         case 'master':
@@ -708,7 +719,7 @@ function renderContainer(container: any) {
         case 'search':
         case 'widget':
         case 'form':
-          case 'cards':
+        case 'cards':
         case 'charts':
         case 'modals':
           return renderContainer(component);
@@ -721,8 +732,6 @@ function renderContainer(container: any) {
     }),
   );
 }
-
-
 
 /* 🧩 Validasi semua field */
 function validateAllFields() {
@@ -758,7 +767,7 @@ function renderTable(component: any) {
 
     getData();
 
-    return h('div', { key: key, class: component.props.class || "" }, [
+    return h('div', { key: key, class: component.props.class || '' }, [
       h(TablePagination, {
         ref: tableRef,
         columns:

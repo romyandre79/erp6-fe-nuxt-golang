@@ -6,12 +6,12 @@ export default defineComponent({
   props: {
     container: {
       type: Object,
-      required: true
+      required: true,
     },
     renderChild: {
       type: Function as PropType<(child: any) => any>,
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props) {
     const Api = useApi();
@@ -52,12 +52,12 @@ export default defineComponent({
             children.map((child: any) => {
               if (child.props?.key === 'data') {
                 return h('div', { class: child.props.class }, [
-                  child.props.text ? h('div', data.value + ' ' +child.props.text) : null
+                  child.props.text ? h('div', data.value + ' ' + child.props.text) : null,
                 ]);
               }
               return props.renderChild(child);
             }),
-        }
+        },
       );
     };
   },

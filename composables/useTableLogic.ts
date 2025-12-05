@@ -1,9 +1,6 @@
-import { ref, watch, computed } from 'vue';
-import { useApi } from '#imports';
+import { ref, watch } from 'vue';
 
 export function useTableLogic(props: any, emit: any) {
-  const Api = useApi();
-
   // States
   const currentPage = ref(1);
   const totalPages = ref(1);
@@ -43,7 +40,7 @@ export function useTableLogic(props: any, emit: any) {
       const selectedRows = rowsData.value.filter((r) => val.includes(r[props.rowKey]));
       emit('selection-change', selectedRows);
     },
-    { deep: true }
+    { deep: true },
   );
 
   // Expanded
@@ -64,7 +61,7 @@ export function useTableLogic(props: any, emit: any) {
         : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
     if (col.type === 'currency')
       return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
-        value || 0
+        value || 0,
       );
     if (col.type === 'number') return new Intl.NumberFormat('id-ID').format(value || 0);
     return value ?? '';

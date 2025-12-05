@@ -1,5 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import colors from 'tailwindcss/colors';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineNuxtConfig({
@@ -8,9 +7,7 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     output: {
-      publicDir: process.env.MODE === 'prod'
-        ? '../erp6-be-golang-dist/public'
-        : './.output/public', // default folder Nuxt
+      publicDir: process.env.MODE === 'prod' ? '../erp6-be-golang-dist/public' : './.output/public', // default folder Nuxt
     },
   },
   compatibilityDate: '2025-07-15',

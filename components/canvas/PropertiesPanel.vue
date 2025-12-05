@@ -61,7 +61,10 @@
           </div>
           <div class="flex gap-2">
             <button @click="$emit('add-column')" class="px-3 py-1 bg-blue-600 text-white rounded">Add Column</button>
-            <button @click="$emit('ai-suggest-types', selectedTable)" class="px-3 py-1 bg-yellow-500 text-white rounded">
+            <button
+              @click="$emit('ai-suggest-types', selectedTable)"
+              class="px-3 py-1 bg-yellow-500 text-white rounded"
+            >
               AI Suggest Types
             </button>
           </div>
@@ -76,10 +79,16 @@
           class="w-full p-2 border rounded mt-1 text-xs font-mono"
         ></textarea>
         <div class="flex gap-2 mt-1">
-          <button @click="$emit('apply-json', jsonPreviewModel)" class="px-3 py-1 bg-green-600 text-white rounded text-xs">
+          <button
+            @click="$emit('apply-json', jsonPreviewModel)"
+            class="px-3 py-1 bg-green-600 text-white rounded text-xs"
+          >
             Apply
           </button>
-          <button @click="$emit('copy-json', jsonPreviewModel)" class="px-3 py-1 bg-gray-500 text-white rounded text-xs">
+          <button
+            @click="$emit('copy-json', jsonPreviewModel)"
+            class="px-3 py-1 bg-gray-500 text-white rounded text-xs"
+          >
             Copy
           </button>
         </div>

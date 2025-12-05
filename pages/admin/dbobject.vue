@@ -23,11 +23,15 @@
           class="px-3 py-1 rounded bg-green-600 text-white"
           >Save</UButton
         >
-        <UButton
-          icon="heroicons:arrows-right-left"
-          @click="resetDesign"
-          class="px-3 py-1 rounded bg-red-500 text-white"
+        <UButton icon="heroicons:arrows-right-left" @click="resetDesign" class="px-3 py-1 rounded bg-red-500 text-white"
           >Reset</UButton
+        >
+        <UButton
+          icon="heroicons:play"
+          @click="openExecuteModal"
+          :disabled="!selectedTable"
+          class="px-3 py-1 rounded bg-blue-600 text-white"
+          >Execute</UButton
         >
         <UButton
           icon="heroicons:building-library"
@@ -138,17 +142,21 @@
         @remove-relation="removeRelation"
       />
     </div>
+
+    <!-- Execute SQL Modal -->
+    <ExecuteSqlModal v-model="showExecuteModal" :table="selectedTable" @success="onExecuteSuccess" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, toRaw, onMounted } from 'vue';
+import { ref, computed, toRaw, onMounted } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
 import CanvasTable from '~/components/canvas/CanvasTable.vue';
 import CanvasArea from '~/components/canvas/CanvasArea.vue';
 import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';
+import ExecuteSqlModal from '~/components/canvas/ExecuteSqlModal.vue';
 import { useCanvas } from '~/composables/useCanvas';
 
 let idSeq = 1;
@@ -181,6 +189,7 @@ const {
 const selectedId = ref(null);
 const jsonPreview = ref('');
 const aiDescription = ref('');
+const showExecuteModal = ref(false);
 
 const selectedTable = computed(() => tables.find((t) => t.id === selectedId.value) || null);
 
@@ -252,7 +261,7 @@ function onDropCanvas(ev: any) {
 }
 
 // Area Logic
-function addArea(ev: any) {
+function addArea() {
   let x = 100;
   let y = 100;
 
@@ -284,9 +293,7 @@ function startAreaDrag(area: any, ev: any) {
   };
 
   activeAreaTables.value = tables.filter((t) => {
-    return (
-      t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height
-    );
+    return t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height;
   });
 
   window.addEventListener('mousemove', onAreaMouseMove);
@@ -398,7 +405,7 @@ function finishLink(ev: any, moveHandler: any, upHandler: any) {
         r.from.table === linkPreview.from.table &&
         r.from.col === linkPreview.from.col &&
         r.to.table === target.table &&
-        r.to.col === target.col
+        r.to.col === target.col,
     );
 
     if (!already) {
@@ -464,7 +471,8 @@ function applyJSONToSelected(json: string) {
     if (Array.isArray(obj.columns)) selectedTable.value.columns = obj.columns;
     computeRelationsPaths();
     alert('Applied to selected table');
-  } catch (e) {
+  } catch (err) {
+    console.error(err);
     alert('Invalid JSON');
   }
 }
@@ -513,7 +521,49 @@ function exportCanvas() {
 }
 
 function exportArea(area: any) {
-    // ... implementation
+  // buat container sementara
+  const tempDiv = document.createElement('div');
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '0';
+  tempDiv.style.top = '0';
+  tempDiv.style.background = 'white';
+  tempDiv.style.padding = '10px';
+
+  // clone area
+  const areaEl = document.querySelector(`[data-area-id="${area.id}"]`);
+  if (!areaEl) return;
+
+  const areaClone = areaEl.cloneNode(true) as HTMLElement;
+  areaClone.style.position = 'relative';
+  areaClone.style.left = '0';
+  areaClone.style.top = '0';
+  tempDiv.appendChild(areaClone);
+
+  // clone tables yang masuk area
+  tables.forEach((t) => {
+    if (t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height) {
+      const tableEl = document.querySelector(`[data-table-id="${t.id}"]`);
+      if (tableEl) {
+        const clone = tableEl.cloneNode(true) as HTMLElement;
+        // adjust posisi relatif terhadap area
+        clone.style.position = 'absolute';
+        clone.style.left = t.x - area.x + 'px';
+        clone.style.top = t.y - area.y + 'px';
+        tempDiv.appendChild(clone);
+      }
+    }
+  });
+
+  // tambahkan ke body sementara untuk render
+  document.body.appendChild(tempDiv);
+
+  toPng(tempDiv, { cacheBust: true }).then((dataUrl) => {
+    const link = document.createElement('a');
+    link.download = `${area.name}.png`;
+    link.href = dataUrl;
+    link.click();
+    document.body.removeChild(tempDiv);
+  });
 }
 
 // Load/Save Logic
@@ -575,7 +625,7 @@ async function loadDesign() {
   const idMap = {};
 
   (store.dbobjects || []).forEach((obj: any) => {
-    const key = obj?.dbobjectid ? String(obj.dbobjectid) : obj?.objectname ?? '';
+    const key = obj?.dbobjectid ? String(obj.dbobjectid) : (obj?.objectname ?? '');
     if (!key) return;
     if (!seen.has(key)) {
       seen.add(key);
@@ -693,6 +743,17 @@ function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
   });
 
   computeRelationsPaths();
+}
+
+function openExecuteModal() {
+  if (selectedTable.value) {
+    showExecuteModal.value = true;
+  }
+}
+
+function onExecuteSuccess() {
+  // Optionally reload design after successful execution
+  toast.add({ title: 'Success', description: 'Table operation executed successfully', color: 'success' });
 }
 
 onMounted(async () => {

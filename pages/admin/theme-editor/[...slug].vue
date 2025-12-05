@@ -337,7 +337,7 @@ const categories = [
         label: 'Nav Color',
         type: 'color',
       },
-    ]
+    ],
   },
   {
     key: 'navbar-admin',
@@ -353,7 +353,7 @@ const categories = [
         label: 'Navbar Admin Color',
         type: 'color',
       },
-    ]
+    ],
   },
   {
     key: 'link',
@@ -904,12 +904,12 @@ const pStyle = computed(() => ({
 
 const buttonStyle = computed(() => ({
   button: {
-  background: `var(--button-background, #4f46e5)`,
-  color: `var(--button-color, #fff)`,
-  borderRadius: `var(--button-radius)`,
-  borderColor: `var(--button-border-color)`,
-  padding: `var(--button-padding)`,
-  border: `var(--border)`,
+    background: `var(--button-background, #4f46e5)`,
+    color: `var(--button-color, #fff)`,
+    borderRadius: `var(--button-radius)`,
+    borderColor: `var(--button-border-color)`,
+    padding: `var(--button-padding)`,
+    border: `var(--border)`,
   },
   hover: {
     background: `var(--button-hover-background, #4f46e5)`,
@@ -960,24 +960,24 @@ const labelStyle = computed(() => ({
 
 const linkStyle = computed(() => ({
   a: {
-  background: `var(--a-background, #f9fafb)`,
-  color: `var(--a-color, #111827)`
+    background: `var(--a-background, #f9fafb)`,
+    color: `var(--a-color, #111827)`,
   },
   hover: {
-  background: `var(--a-hover-background, #f9fafb)`,
-  color: `var(--a-hover-color, #111827)`,
-  }
+    background: `var(--a-hover-background, #f9fafb)`,
+    color: `var(--a-hover-color, #111827)`,
+  },
 }));
 
 const inputStyle = computed(() => ({
   input: {
-  background: `var(--input-background, #f9fafb)`,
-  color: `var(--input-color, #111827)`,
-  borderStyle: `var(--input-border-style)`,
-  borderSize: `var(--input-border-size)`,
-  borderFocusColor: `var(--input-focus-border-color)`,
-  borderRadius: `var(--border-radius)`,
-  border: `var(--border, 6)`,
-  }
+    background: `var(--input-background, #f9fafb)`,
+    color: `var(--input-color, #111827)`,
+    borderStyle: `var(--input-border-style)`,
+    borderSize: `var(--input-border-size)`,
+    borderFocusColor: `var(--input-focus-border-color)`,
+    borderRadius: `var(--border-radius)`,
+    border: `var(--border, 6)`,
+  },
 }));
 </script>

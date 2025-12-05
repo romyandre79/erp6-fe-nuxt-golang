@@ -323,7 +323,9 @@ const debugText = computed({
   set(v: string) {
     try {
       canvasComponents.value = JSON.parse(v);
-    } catch {}
+    } catch (err) {
+      console.error(err);
+    }
   },
 });
 

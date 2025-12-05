@@ -9,14 +9,75 @@
       <pre class="text-sm whitespace-pre-wrap">{{ payload }}</pre>
       <h3 class="font-bold text-lg">Test Result</h3>
       <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
+      <button @click="testResult = ''" class="mt-2 px-3 py-1 bg-gray-200 rounded text-sm">Close</button>
     </div>
+
+    <!-- Upload Plugin Modal -->
+    <div v-if="showUploadModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-black/50">
+      <div class="bg-white p-6 rounded shadow-xl w-96">
+        <h3 class="text-lg font-bold mb-4">Upload Component Plugin</h3>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Select Plugin ZIP</label>
+          <input type="file" accept=".zip" @change="onFileSelected" class="w-full border rounded p-2 text-sm" />
+        </div>
+
+        <div v-if="uploadProgress >= 0" class="mb-4">
+          <div class="flex justify-between text-xs mb-1">
+            <span>{{ uploadStatus }}</span>
+            <span>{{ uploadProgress }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              :style="{ width: uploadProgress + '%' }"
+            ></div>
+          </div>
+        </div>
+
+        <div v-if="uploadError" class="mb-4 text-red-500 text-sm">
+          {{ uploadError }}
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button @click="closeUploadModal" class="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+          <button
+            @click="uploadPlugin"
+            :disabled="!selectedFile || isUploading"
+            class="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ isUploading ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
     <div class="absolute right-6 top-6 flex flex-row gap-2 z-50">
-      <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black">-</button>
-      <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black">Reset</button>
-      <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black">+</button>
+      <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
+      <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
+      <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
+      <div class="w-px bg-gray-300 mx-1"></div>
+      <button @click="showUploadModal = true" class="p-2 rounded shadow bg-white text-black flex items-center gap-1">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        Upload Plugin
+      </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
@@ -34,6 +95,14 @@ const store = useWorkflowStore();
 const toast = useToast();
 const testResult = ref('');
 const payload = ref('');
+
+// Upload State
+const showUploadModal = ref(false);
+const selectedFile = ref<File | null>(null);
+const uploadProgress = ref(-1);
+const uploadStatus = ref('');
+const uploadError = ref('');
+const isUploading = ref(false);
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -100,6 +169,102 @@ async function Save() {
     }
   } catch (e) {
     console.error('❌ saveFlow error', e);
+  }
+}
+
+/* ======================================================
+   Upload Plugin Logic
+   ======================================================*/
+function onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    selectedFile.value = input.files[0];
+    uploadError.value = '';
+  }
+}
+
+function closeUploadModal() {
+  showUploadModal.value = false;
+  selectedFile.value = null;
+  uploadProgress.value = -1;
+  uploadStatus.value = '';
+  uploadError.value = '';
+  isUploading.value = false;
+}
+
+async function uploadPlugin() {
+  if (!selectedFile.value) return;
+
+  isUploading.value = true;
+  uploadProgress.value = 0;
+  uploadStatus.value = 'Starting upload...';
+  uploadError.value = '';
+
+  const formData = new FormData();
+  formData.append('plugin', selectedFile.value);
+
+  try {
+    // Use XMLHttpRequest for progress tracking since fetch doesn't support it natively
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        uploadProgress.value = percent;
+        uploadStatus.value = `Uploading... ${percent}%`;
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        uploadProgress.value = 100;
+        uploadStatus.value = 'Upload complete! Processing...';
+
+        try {
+          const response = JSON.parse(xhr.responseText);
+          toast.add({
+            title: 'Success',
+            description: 'Plugin uploaded successfully',
+            color: 'green',
+          });
+
+          // Refresh components list
+          store.loadComponents();
+
+          setTimeout(() => {
+            closeUploadModal();
+          }, 1000);
+        } catch (e) {
+          uploadError.value = 'Invalid response from server';
+        }
+      } else {
+        uploadError.value = `Upload failed: ${xhr.statusText || 'Unknown error'}`;
+      }
+      isUploading.value = false;
+    });
+
+    xhr.addEventListener('error', () => {
+      uploadError.value = 'Network error during upload';
+      isUploading.value = false;
+    });
+
+    // Get API base URL from runtime config or use relative path
+    const config = useRuntimeConfig();
+    const apiBase = config.public.apiBase || '/api';
+
+    xhr.open('POST', `${apiBase}/plugins/upload`);
+
+    // Add auth token if needed
+    const token = useCookie('token');
+    if (token.value) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token.value}`);
+    }
+
+    xhr.send(formData);
+  } catch (err) {
+    console.error('Upload error:', err);
+    uploadError.value = `Exception: ${err}`;
+    isUploading.value = false;
   }
 }
 
@@ -217,10 +382,10 @@ async function exportImage() {
 
   fixColors(container);
 
-    const canvas = await toPng(el, {
-      cacheBust: true, // optional: mencegah cache gambar lama
-      pixelRatio: 2,   // optional: resolusi lebih tinggi
-    });
+  const canvas = await toPng(container, {
+    cacheBust: true, // optional: mencegah cache gambar lama
+    pixelRatio: 2, // optional: resolusi lebih tinggi
+  });
 
   const link = document.createElement('a');
   link.download = 'workflow.png';

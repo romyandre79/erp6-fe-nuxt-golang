@@ -2,7 +2,7 @@
   <div :class="container.props.class">
     <!-- Render Filters (Children) -->
     <div v-if="container.children && container.children.length > 0" class="mb-4 flex flex-wrap gap-2">
-       <component :is="renderChild(child)" v-for="(child, i) in container.children" :key="i" />
+      <component :is="renderChild(child)" v-for="(child, i) in container.children" :key="i" />
     </div>
 
     <!-- Render Chart -->
@@ -25,7 +25,7 @@ import {
   LegendComponent,
   GridComponent,
   DatasetComponent,
-  TransformComponent
+  TransformComponent,
 } from 'echarts/components';
 
 use([
@@ -38,7 +38,7 @@ use([
   LegendComponent,
   GridComponent,
   DatasetComponent,
-  TransformComponent
+  TransformComponent,
 ]);
 
 provide(THEME_KEY, 'light');
@@ -46,7 +46,7 @@ provide(THEME_KEY, 'light');
 const props = defineProps({
   container: { type: Object, required: true },
   renderChild: { type: Function, required: true },
-  formData: { type: Object, required: true }
+  formData: { type: Object, required: true },
 });
 
 const Api = useApi();
@@ -78,14 +78,14 @@ async function fetchData() {
   dataForm.append('search', 'true');
 
   // Append filters
-  filterKeys.value.forEach(key => {
+  filterKeys.value.forEach((key) => {
     if (props.formData[key] !== undefined) {
       dataForm.append(key, props.formData[key]);
     }
   });
 
   try {
-    const res = await Api.post('admin/execute-flow', dataForm) as any;
+    const res = (await Api.post('admin/execute-flow', dataForm)) as any;
     if (res.code === 200) {
       chartOption.value = res.data.data;
     }
@@ -99,10 +99,13 @@ onMounted(() => {
 });
 
 // Watch specific filter keys in formData
-watch(() => filterKeys.value.map(key => props.formData[key]), () => {
-   fetchData();
-}, { deep: true });
-
+watch(
+  () => filterKeys.value.map((key) => props.formData[key]),
+  () => {
+    fetchData();
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped>
