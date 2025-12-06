@@ -13,11 +13,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { useWorkflowStore } from '~/store/workflow';
-import Designer from '~/components/workflow/Designer.vue';
-import Sidebar from '~/components/workflow/WorkflowSidebar.vue';
+
+// Lazy load heavy components for code splitting
+const Designer = defineAsyncComponent(() => import('~/components/workflow/Designer.vue'));
+const Sidebar = defineAsyncComponent(() => import('~/components/workflow/WorkflowSidebar.vue'));
 
 definePageMeta({
   middleware: ['auth'],

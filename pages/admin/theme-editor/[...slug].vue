@@ -88,10 +88,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useThemeStore } from '~/store/theme';
-import Sidebar from '~/components/theme/ThemeSidebar.vue';
 import { useToast, useRoute } from '#imports';
+
+// Lazy load heavy components for code splitting
+const Sidebar = defineAsyncComponent(() => import('~/components/theme/ThemeSidebar.vue'));
 
 definePageMeta({
   middleware: ['auth'],

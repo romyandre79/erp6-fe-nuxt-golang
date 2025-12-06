@@ -87,13 +87,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
 import draggable from 'vuedraggable';
-import Sidebar from '~/components/form/FormSidebar.vue';
-import RenderNode from '~/components/RenderNode.vue';
-import TreeView from '~/components/TreeView.vue';
-import PropertyEditor from '~/components/PropertyEditor.vue';
 import { availableComponents, layoutContainers } from '~/types/components';
+
+// Lazy load heavy components for code splitting
+const Sidebar = defineAsyncComponent(() => import('~/components/form/FormSidebar.vue'));
+const RenderNode = defineAsyncComponent(() => import('~/components/RenderNode.vue'));
+const TreeView = defineAsyncComponent(() => import('~/components/TreeView.vue'));
+const PropertyEditor = defineAsyncComponent(() => import('~/components/PropertyEditor.vue'));
 
 definePageMeta({
   middleware: ['auth'],

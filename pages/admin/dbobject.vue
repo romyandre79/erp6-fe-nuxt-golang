@@ -109,15 +109,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRaw, onMounted } from 'vue';
+import { ref, computed, toRaw, onMounted, defineAsyncComponent } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
-import Sidebar from '~/components/dbobject/DbObjectSidebar.vue';
-import CanvasTable from '~/components/canvas/CanvasTable.vue';
-import CanvasArea from '~/components/canvas/CanvasArea.vue';
-import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';
 import { useCanvas } from '~/composables/useCanvas';
+
+// Lazy load heavy components for code splitting
+const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjectSidebar.vue'));
+const CanvasTable = defineAsyncComponent(() => import('~/components/canvas/CanvasTable.vue'));
+const CanvasArea = defineAsyncComponent(() => import('~/components/canvas/CanvasArea.vue'));
+const PropertiesPanel = defineAsyncComponent(() => import('~/components/canvas/PropertiesPanel.vue'));
 
 definePageMeta({
   middleware: ['auth'],

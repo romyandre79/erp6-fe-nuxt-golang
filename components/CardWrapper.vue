@@ -1,5 +1,6 @@
 <script lang="ts">
-import { defineComponent, h, resolveComponent, ref, onMounted, PropType } from 'vue';
+import { defineComponent, h, resolveComponent, ref, onMounted } from 'vue';
+import type { PropType } from 'vue';
 import { useApi } from '#imports';
 
 export default defineComponent({
