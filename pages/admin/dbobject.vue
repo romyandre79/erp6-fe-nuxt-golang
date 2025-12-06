@@ -4,64 +4,45 @@
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
       </div>
-      <div class="flex items-center gap-2">
-        <UButton
-          icon="heroicons:table-cells"
-          @click="addTableAtNextPosition"
-          class="px-3 py-2 rounded bg-green-600 text-white"
-          >Add Table</UButton
-        >
-        <UButton
-          icon="heroicons:square-3-stack-3d"
-          @click="addArea($event)"
-          class="px-3 py-2 rounded bg-purple-600 text-white"
-          >Add Area</UButton
-        >
-        <UButton
-          icon="heroicons:bookmark-square"
-          @click="saveToBackend"
-          class="px-3 py-1 rounded bg-green-600 text-white"
-          >Save</UButton
-        >
-        <UButton
-          icon="heroicons:arrows-right-left"
-          @click="resetDesign"
-          class="px-3 py-1 rounded bg-red-500 text-white"
-          >Reset</UButton
-        >
-        <UButton
-          icon="heroicons:building-library"
-          @click="aiSuggestRelations()"
-          class="px-3 py-1 bg-purple-500 text-white rounded"
-        >
-          AI Suggest Relations
-        </UButton>
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton icon="heroicons:bars-4" @click="exportCanvas" class="px-3 py-1 bg-indigo-500 text-white rounded"
-          >Export PNG</UButton
-        >
-        <UButton icon="heroicons:magnifying-glass-plus" @click="zoomIn" class="px-3 py-1 bg-blue-500 text-white rounded"
-          >Zoom In</UButton
-        >
-        <UButton
-          icon="heroicons:magnifying-glass-minus"
-          @click="zoomOut"
-          class="px-3 py-1 bg-blue-500 text-white rounded"
-          >Zoom Out</UButton
-        >
-        <UButton icon="heroicons:arrows-right-left" @click="resetZoom" class="px-3 py-1 bg-gray-500 text-white rounded"
-          >Reset Zoom</UButton
-        >
-      </div>
     </header>
 
-    <div class="flex-1 relative overflow-hidden">
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Sidebar -->
+      <div class="flex-none bg-white border-r z-10">
+        <Sidebar
+          :tables="tables"
+          :areas="areas"
+          :selectedTable="selectedTable"
+          :relations="relations"
+          :jsonPreview="jsonPreview"
+          :aiDescription="aiDescription"
+          @add-table="addTableAtNextPosition"
+          @add-area="addArea"
+          @save="saveToBackend"
+          @reset="resetDesign"
+          @ai-suggest="aiSuggestRelations"
+          @select-table="selectTable"
+          @zoom-in="zoomIn"
+          @zoom-out="zoomOut"
+          @reset-zoom="resetZoom"
+          @export-png="exportCanvas"
+          @update:jsonPreview="jsonPreview = $event"
+          @update:aiDescription="aiDescription = $event"
+          @ai-parse="aiParseNatural"
+          @remove-column="removeColumn"
+          @add-column="addColumn"
+          @ai-suggest-types="aiSuggestColumns"
+          @apply-json="applyJSONToSelected"
+          @copy-json="copyJSONToClipboard"
+          @remove-relation="removeRelation"
+        />
+      </div>
+
       <!-- canvas wrapper -->
-      <div class="absolute inset-0 overflow-auto">
+      <div class="flex-1 relative overflow-auto bg-gray-100">
         <!-- canvas -->
         <div
-          class="relative p-4 bg-gray-100 min-w-[2000px] min-h-[2000px]"
+          class="relative p-4 min-w-[2000px] min-h-[2000px]"
           @dragover.prevent
           @drop="onDropCanvas"
           ref="canvasRef"
@@ -122,34 +103,28 @@
           <div class="absolute left-4 bottom-4"></div>
         </div>
       </div>
-
-      <!-- properties panel -->
-      <PropertiesPanel
-        :selectedTable="selectedTable"
-        :relations="relations"
-        v-model:jsonPreview="jsonPreview"
-        v-model:aiDescription="aiDescription"
-        @ai-parse="aiParseNatural"
-        @remove-column="removeColumn"
-        @add-column="addColumn"
-        @ai-suggest-types="aiSuggestColumns"
-        @apply-json="applyJSONToSelected"
-        @copy-json="copyJSONToClipboard"
-        @remove-relation="removeRelation"
-      />
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, toRaw, onMounted } from 'vue';
+import { ref, computed, toRaw, onMounted, defineAsyncComponent } from 'vue';
 import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
-import CanvasTable from '~/components/canvas/CanvasTable.vue';
-import CanvasArea from '~/components/canvas/CanvasArea.vue';
-import PropertiesPanel from '~/components/canvas/PropertiesPanel.vue';
 import { useCanvas } from '~/composables/useCanvas';
+
+// Lazy load heavy components for code splitting
+const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjectSidebar.vue'));
+const CanvasTable = defineAsyncComponent(() => import('~/components/canvas/CanvasTable.vue'));
+const CanvasArea = defineAsyncComponent(() => import('~/components/canvas/CanvasArea.vue'));
+const PropertiesPanel = defineAsyncComponent(() => import('~/components/canvas/PropertiesPanel.vue'));
+
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'auth'
+});
 
 let idSeq = 1;
 let relSeq = 1;
@@ -181,6 +156,7 @@ const {
 const selectedId = ref(null);
 const jsonPreview = ref('');
 const aiDescription = ref('');
+const showExecuteModal = ref(false);
 
 const selectedTable = computed(() => tables.find((t) => t.id === selectedId.value) || null);
 
@@ -252,7 +228,7 @@ function onDropCanvas(ev: any) {
 }
 
 // Area Logic
-function addArea(ev: any) {
+function addArea() {
   let x = 100;
   let y = 100;
 
@@ -284,9 +260,7 @@ function startAreaDrag(area: any, ev: any) {
   };
 
   activeAreaTables.value = tables.filter((t) => {
-    return (
-      t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height
-    );
+    return t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height;
   });
 
   window.addEventListener('mousemove', onAreaMouseMove);
@@ -398,7 +372,7 @@ function finishLink(ev: any, moveHandler: any, upHandler: any) {
         r.from.table === linkPreview.from.table &&
         r.from.col === linkPreview.from.col &&
         r.to.table === target.table &&
-        r.to.col === target.col
+        r.to.col === target.col,
     );
 
     if (!already) {
@@ -464,7 +438,8 @@ function applyJSONToSelected(json: string) {
     if (Array.isArray(obj.columns)) selectedTable.value.columns = obj.columns;
     computeRelationsPaths();
     alert('Applied to selected table');
-  } catch (e) {
+  } catch (err) {
+    console.error(err);
     alert('Invalid JSON');
   }
 }
@@ -480,18 +455,227 @@ async function resetDesign() {
 
 // AI & Export (Placeholders or copied logic)
 function aiSuggestRelations() {
-  // Implementation of AI suggestion...
-  // For now, let's assume it's complex and just keep the placeholder or existing logic if I had it.
-  // I'll skip the complex implementation details for brevity in this refactor, assuming they are in the original file.
-  // But wait, I need to make sure I don't break it.
-  // The original file had `aiSuggestRelations`? I didn't see it in the viewed lines.
-  // Ah, I missed viewing the whole file. I should have viewed the whole file.
-  // I will assume standard implementation or just log for now if I can't find it.
-  console.log('AI Suggest Relations');
+  const existingRelations = new Set(
+    relations.map(r => `${r.from.table}_${r.from.col}-${r.to.table}_${r.to.col}`)
+  );
+
+  const primaryKeys = tables.reduce((acc, t) => {
+    const pkCols = t.columns
+      .map((c, idx) => (c.type === 'auto' ? idx : null))
+      .filter(x => x !== null);
+    acc[t.id] = pkCols; 
+    return acc;
+  }, {} as Record<number, number[]>);
+
+  for (let i = 0; i < tables.length; i++) {
+    const t1 = tables[i];
+    for (let j = 0; j < tables.length; j++) {
+      if (i === j) continue;
+      const t2 = tables[j];
+
+      t1.columns.forEach((col1, idx1) => {
+        if (col1.name.toLowerCase() === t2.name.toLowerCase() + 'id') {
+          if (!primaryKeys[t2.id] || primaryKeys[t2.id].length === 0) return;
+          const idx2 = primaryKeys[t2.id][0];
+
+          // cek duplikat
+          const key = `${t1.id}_${idx1}-${t2.id}_${idx2}`;
+          const revKey = `${t2.id}_${idx2}-${t1.id}_${idx1}`;
+          if (existingRelations.has(key) || existingRelations.has(revKey)) return;
+
+          relations.push({
+            id: relSeq++,
+            from: { table: t1.id, col: idx1, colName: col1.name },
+            to: { table: t2.id, col: idx2, colName: t2.columns[idx2].name },
+            path: '',
+          });
+          existingRelations.add(key);
+        }
+      });
+    }
+  }
+
+  computeRelationsPaths();
+  toast.add({ title: 'Auto Relations', description: 'Relations generated intelligently', color: 'success' });
+}
+
+function aiGenerateTableFromDescription(description: string) {
+  if (!description) return;
+
+  // buat nama tabel default: ambil kata pertama
+  const words = description.trim().split(/\s+/);
+  const tableName = words[0] || 'table_' + idSeq;
+
+  // cek duplikat
+  if (tables.some(t => t.name.toLowerCase() === tableName.toLowerCase())) {
+    toast.add({
+      title: 'Duplicate Table',
+      description: `Table with name "${tableName}" already exists!`,
+      color: 'warning',
+    });
+    return; // stop jika duplikat
+  }
+
+  // cari kolom: kata setelah 'with'
+  let columnsPart = description.toLowerCase().split('with')[1] || '';
+  columnsPart = columnsPart.replace(/and/g, ','); // normalize
+  const colNames = columnsPart.split(',').map(c => c.trim()).filter(c => c);
+
+  // buat tabel object
+  const newTable = {
+    id: idSeq++,
+    dbid: '',
+    name: tableName,
+    x: 40 + (tables.length % 4) * 340,
+    y: 40 + Math.floor(tables.length / 4) * 200,
+    width: 240,
+    columns: colNames.map(name => {
+      let type = 'text';
+
+      // logika AI: if 'id' + kata sama/mirip table → auto
+      if (name.includes('id') && name.replace(/_/g,'').includes(tableName.toLowerCase())) {
+        type = 'auto';
+      } else if (name.includes('id')) {
+        type = 'int';
+      } else if (name.includes('date') || name.endsWith('at')) {
+        type = 'timestamp';
+      } else if (name.startsWith('is') || name.startsWith('has') || name.startsWith('recordstatus')) {
+        type = 'boolean';
+      } else if (name.includes('amount') || name.includes('price') || name.includes('total')) {
+        type = 'number';
+      }
+
+      return { name, type };
+    }),
+    ispublished: false,
+    comment: '',
+  };
+
+  tables.push(newTable);
+  selectTable(newTable.id);
+  computeRelationsPaths();
+
+    aiSuggestRelations();
+
+  toast.add({
+    title: 'AI Table Generated',
+    description: `Table "${tableName}" created!`,
+    color: 'success',
+  });
 }
 
 function aiParseNatural(prompt: string) {
-  console.log('AI Parse', prompt);
+  if (!prompt) return;
+
+  const instructions = prompt.split(/[\.\n]/).map(p => p.trim()).filter(Boolean);
+
+  for (const instr of instructions) {
+    const lower = instr.toLowerCase();
+
+    // CREATE TABLE
+    if (lower.startsWith('create table')) {
+      const desc = instr.replace(/create table/i, '').trim();
+      aiGenerateTableFromDescription(desc);
+      continue;
+    }
+
+    // ADD COLUMN
+    if (lower.includes('add column')) {
+  // match: add column <name> (above|below <refCol>) to|in <tableName>
+  const colMatch = /add column (\w+)(?: (above|below) (\w+))?(?: (?:to|in) (\w+))?/i.exec(instr);
+  if (colMatch) {
+    const [, newCol, position, refCol, tableName] = colMatch;
+
+    // tentukan target table
+    let tbl = null;
+    if (tableName) {
+      tbl = tables.find(t => t.name.toLowerCase() === tableName.toLowerCase());
+      if (!tbl) {
+        toast.add({ title: 'Table Not Found', description: `Table "${tableName}" not found`, color: 'warning' });
+        continue;
+      }
+    } else {
+      tbl = selectedTable.value || tables[tables.length - 1];
+      if (!tbl) {
+        toast.add({ title: 'No Table Selected', description: `Cannot add column "${newCol}"`, color: 'warning' });
+        continue;
+      }
+    }
+
+    const refIndex = refCol ? tbl.columns.findIndex(c => c.name.toLowerCase() === refCol.toLowerCase()) : -1;
+
+    // Tentukan tipe otomatis
+    let type = 'text';
+    if (newCol.includes('id') && newCol.replace(/_/g,'').includes(tbl.name.toLowerCase())) type = 'auto';
+    else if (newCol.includes('id')) type = 'int';
+    else if (newCol.includes('date') || newCol.endsWith('at')) type = 'timestamp';
+    else if (newCol.startsWith('is') || newCol.startsWith('has') || newCol.startsWith('recordstatus')) type = 'boolean';
+    else if (newCol.includes('amount') || newCol.includes('price') || newCol.includes('total')) type = 'number';
+
+    const insertIndex = refIndex >= 0 ? (position === 'above' ? refIndex : refIndex + 1) : tbl.columns.length;
+    tbl.columns.splice(insertIndex, 0, { name: newCol, type });
+  }
+  continue;
+}
+
+
+    // REMOVE COLUMN
+    if (lower.includes('remove column') || lower.includes('delete column')) {
+      const colMatch = /(?:remove|delete) column (\w+)/i.exec(instr);
+      if (colMatch) {
+        const [, colName] = colMatch;
+        let tbl = selectedTable.value;
+        if (!tbl) {
+          toast.add({ title: 'No Table Selected', description: `Cannot remove column "${colName}"`, color: 'warning' });
+          continue;
+        }
+        const idx = tbl.columns.findIndex(c => c.name.toLowerCase() === colName.toLowerCase());
+        if (idx >= 0) tbl.columns.splice(idx, 1);
+      }
+      continue;
+    }
+
+    // DELETE TABLE
+    if (lower.includes('delete table')) {
+      const tblMatch = /delete table (\w+)?/i.exec(instr);
+      const tableName = tblMatch?.[1];
+      if (tableName) {
+        const idx = tables.findIndex(t => t.name.toLowerCase() === tableName.toLowerCase());
+        if (idx >= 0) tables.splice(idx, 1);
+      } else if (selectedTable.value) {
+        const idx = tables.findIndex(t => t.id === selectedTable.value.id);
+        if (idx >= 0) tables.splice(idx, 1);
+      } else {
+        toast.add({ title: 'No Table Selected', description: 'Cannot delete table', color: 'warning' });
+      }
+      continue;
+    }
+
+    // DELETE AREA
+    if (lower.includes('delete area')) {
+      const areaMatch = /delete area (\w+)?/i.exec(instr);
+      const areaName = areaMatch?.[1];
+      if (areaName) {
+        const idx = areas.findIndex(a => a.name.toLowerCase() === areaName.toLowerCase());
+        if (idx >= 0) areas.splice(idx, 1);
+      } else if (activeArea.value) {
+        const idx = areas.findIndex(a => a.id === activeArea.value.id);
+        if (idx >= 0) areas.splice(idx, 1);
+      } else {
+        toast.add({ title: 'No Area Selected', description: 'Cannot delete area', color: 'warning' });
+      }
+      continue;
+    }
+
+    console.warn('Unknown instruction:', instr);
+  }
+
+  computeRelationsPaths();
+  toast.add({
+    title: 'AI Natural Instructions Executed',
+    description: 'All recognized actions applied.',
+    color: 'success',
+  });
 }
 
 function aiSuggestColumns(table: any) {
@@ -513,7 +697,49 @@ function exportCanvas() {
 }
 
 function exportArea(area: any) {
-    // ... implementation
+  // buat container sementara
+  const tempDiv = document.createElement('div');
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '0';
+  tempDiv.style.top = '0';
+  tempDiv.style.background = 'white';
+  tempDiv.style.padding = '10px';
+
+  // clone area
+  const areaEl = document.querySelector(`[data-area-id="${area.id}"]`);
+  if (!areaEl) return;
+
+  const areaClone = areaEl.cloneNode(true) as HTMLElement;
+  areaClone.style.position = 'relative';
+  areaClone.style.left = '0';
+  areaClone.style.top = '0';
+  tempDiv.appendChild(areaClone);
+
+  // clone tables yang masuk area
+  tables.forEach((t) => {
+    if (t.x >= area.x && t.x <= area.x + area.width && t.y >= area.y && t.y <= area.y + area.height) {
+      const tableEl = document.querySelector(`[data-table-id="${t.id}"]`);
+      if (tableEl) {
+        const clone = tableEl.cloneNode(true) as HTMLElement;
+        // adjust posisi relatif terhadap area
+        clone.style.position = 'absolute';
+        clone.style.left = t.x - area.x + 'px';
+        clone.style.top = t.y - area.y + 'px';
+        tempDiv.appendChild(clone);
+      }
+    }
+  });
+
+  // tambahkan ke body sementara untuk render
+  document.body.appendChild(tempDiv);
+
+  toPng(tempDiv, { cacheBust: true }).then((dataUrl) => {
+    const link = document.createElement('a');
+    link.download = `${area.name}.png`;
+    link.href = dataUrl;
+    link.click();
+    document.body.removeChild(tempDiv);
+  });
 }
 
 // Load/Save Logic
@@ -575,7 +801,7 @@ async function loadDesign() {
   const idMap = {};
 
   (store.dbobjects || []).forEach((obj: any) => {
-    const key = obj?.dbobjectid ? String(obj.dbobjectid) : obj?.objectname ?? '';
+    const key = obj?.dbobjectid ? String(obj.dbobjectid) : (obj?.objectname ?? '');
     if (!key) return;
     if (!seen.has(key)) {
       seen.add(key);
@@ -693,6 +919,17 @@ function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
   });
 
   computeRelationsPaths();
+}
+
+function openExecuteModal() {
+  if (selectedTable.value) {
+    showExecuteModal.value = true;
+  }
+}
+
+function onExecuteSuccess() {
+  // Optionally reload design after successful execution
+  toast.add({ title: 'Success', description: 'Table operation executed successfully', color: 'success' });
 }
 
 onMounted(async () => {

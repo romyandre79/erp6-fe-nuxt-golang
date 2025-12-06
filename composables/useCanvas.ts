@@ -4,7 +4,7 @@ export function useCanvas() {
   const tables = reactive<any[]>([]);
   const relations = reactive<any[]>([]);
   const areas = reactive<any[]>([]);
-  
+
   const zoom = ref(1);
   const zoomStep = 0.1;
   const minZoom = 0.2;

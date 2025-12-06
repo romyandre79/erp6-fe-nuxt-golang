@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useApi } from '#imports';
 
 export function useMediaManager() {
   const files = ref<any[]>([]);

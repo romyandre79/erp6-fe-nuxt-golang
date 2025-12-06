@@ -138,7 +138,7 @@ const onChildChange = () => emit('select', props.node);
 
 // 🔹 Component resolver
 const componentMap: Record<string, any> = {};
-availableComponents.forEach(item => {
+availableComponents.forEach((item) => {
   // Jika component berupa string → native element
   // Jika berupa komponen Vue → #components otomatis resolve
   componentMap[item.type] = item.component;
@@ -173,7 +173,7 @@ const getComponentProps = (node: any) => {
       return { ...base, type: 'checkbox' };
 
     default:
-      return { ...base, class: 'panel'  };
+      return { ...base, class: 'panel' };
   }
 };
 </script>

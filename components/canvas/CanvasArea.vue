@@ -10,9 +10,7 @@
     @mousedown="$emit('start-drag', area, $event)"
   >
     <!-- header -->
-    <div
-      class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between"
-    >
+    <div class="bg-purple-600 text-white text-xs px-2 py-1 rounded-t-xl cursor-move flex items-center justify-between">
       <input v-model="area.name" class="bg-purple-600 outline-none flex-1 rounded px-2" />
 
       <div class="flex items-center">

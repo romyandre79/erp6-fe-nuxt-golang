@@ -21,32 +21,9 @@
   </div>
   <div class="flex h-screen overflow-hidden bg-gray-100">
     <!-- 🔹 Sidebar kiri -->
-    <aside class="w-min-100 bg-white border-r p-3 overflow-y-auto dark:bg-black">
-      <h2 class="font-bold text-lg mb-3">Elements</h2>
-
-      <!-- Komponen dasar -->
-      <div
-        v-for="(comp, idx) in availableComponents"
-        :key="idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
-        draggable="true"
-        @dragstart="onDragStart(comp)"
-      >
-        {{ comp.label }}
-      </div>
-
-      <!-- Kontainer layout -->
-      <h3 class="font-bold text-lg mb-3">Containers</h3>
-      <div
-        v-for="(group, idx) in layoutContainers"
-        :key="'grp-' + idx"
-        class="border rounded p-2 mb-2 cursor-move hover:bg-gray-100 dark:hover:bg-white dark:hover:text-black"
-        draggable="true"
-        @dragstart="onDragStart(group)"
-      >
-        {{ group.label }}
-      </div>
-    </aside>
+    <div class="flex-none bg-white border-r z-10">
+      <Sidebar />
+    </div>
 
     <!-- 🔹 Canvas Tengah -->
     <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
@@ -110,15 +87,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
 import draggable from 'vuedraggable';
-import RenderNode from '~/components/RenderNode.vue';
-import TreeView from '~/components/TreeView.vue';
-import PropertyEditor from '~/components/PropertyEditor.vue';
 import { availableComponents, layoutContainers } from '~/types/components';
+
+// Lazy load heavy components for code splitting
+const Sidebar = defineAsyncComponent(() => import('~/components/form/FormSidebar.vue'));
+const RenderNode = defineAsyncComponent(() => import('~/components/RenderNode.vue'));
+const TreeView = defineAsyncComponent(() => import('~/components/TreeView.vue'));
+const PropertyEditor = defineAsyncComponent(() => import('~/components/PropertyEditor.vue'));
 
 definePageMeta({
   middleware: ['auth'],
+  layout: 'auth'
 });
 
 const route = useRoute();
@@ -241,7 +222,7 @@ const saveSchema = async () => {
   try {
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res?.code == 200) {
-      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'ssuccess' });
+      toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
@@ -293,6 +274,7 @@ const loadSchema = async () => {
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
+  console.log(name)
   if (name) {
     try {
       const res = await getMenuForm(name);
@@ -323,7 +305,9 @@ const debugText = computed({
   set(v: string) {
     try {
       canvasComponents.value = JSON.parse(v);
-    } catch {}
+    } catch (err) {
+      console.error(err);
+    }
   },
 });
 

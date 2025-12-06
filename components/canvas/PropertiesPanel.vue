@@ -1,19 +1,6 @@
 <template>
-  <aside class="absolute right-0 top-0 bottom-0 w-96 border-l bg-white p-4 overflow-auto z-10 shadow-lg">
-    <div class="mt-4">
-      <label class="text-sm font-semibold">AI Prompt</label>
-      <div class="flex gap-2 mt-1">
-        <textarea
-          v-model="aiDescriptionModel"
-          placeholder="e.g. Customer table with id, name, email"
-          class="flex-1 p-2 border rounded"
-        />
-        <button @click="$emit('ai-parse', aiDescriptionModel)" class="px-3 py-1 bg-yellow-500 text-white rounded">
-          Generate
-        </button>
-      </div>
-    </div>
-
+  <div class="h-full flex flex-col bg-white p-4 overflow-auto">
+  
     <div v-if="selectedTable" class="space-y-4">
       <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
 
@@ -61,7 +48,10 @@
           </div>
           <div class="flex gap-2">
             <button @click="$emit('add-column')" class="px-3 py-1 bg-blue-600 text-white rounded">Add Column</button>
-            <button @click="$emit('ai-suggest-types', selectedTable)" class="px-3 py-1 bg-yellow-500 text-white rounded">
+            <button
+              @click="$emit('ai-suggest-types', selectedTable)"
+              class="px-3 py-1 bg-yellow-500 text-white rounded"
+            >
               AI Suggest Types
             </button>
           </div>
@@ -76,10 +66,16 @@
           class="w-full p-2 border rounded mt-1 text-xs font-mono"
         ></textarea>
         <div class="flex gap-2 mt-1">
-          <button @click="$emit('apply-json', jsonPreviewModel)" class="px-3 py-1 bg-green-600 text-white rounded text-xs">
+          <button
+            @click="$emit('apply-json', jsonPreviewModel)"
+            class="px-3 py-1 bg-green-600 text-white rounded text-xs"
+          >
             Apply
           </button>
-          <button @click="$emit('copy-json', jsonPreviewModel)" class="px-3 py-1 bg-gray-500 text-white rounded text-xs">
+          <button
+            @click="$emit('copy-json', jsonPreviewModel)"
+            class="px-3 py-1 bg-gray-500 text-white rounded text-xs"
+          >
             Copy
           </button>
         </div>
@@ -100,18 +96,17 @@
       </div>
       <div v-else class="text-gray-400 text-sm">No relations</div>
     </div>
-  </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 
-const props = defineProps({
-  selectedTable: Object,
-  relations: { type: Array, default: () => [] },
-  jsonPreview: String,
-  aiDescription: String,
-});
+const props = defineProps<{
+  selectedTable: any;
+  relations: any[];
+  jsonPreview: string;
+}>();
 
 const emit = defineEmits([
   'ai-parse',
@@ -122,13 +117,8 @@ const emit = defineEmits([
   'copy-json',
   'remove-relation',
   'update:jsonPreview',
-  'update:aiDescription',
 ]);
 
-const aiDescriptionModel = computed({
-  get: () => props.aiDescription,
-  set: (val) => emit('update:aiDescription', val),
-});
 
 const jsonPreviewModel = computed({
   get: () => props.jsonPreview,

@@ -1,24 +1,29 @@
 <template>
   <div class="h-screen flex overflow-hidden">
-    <div class="flex-1 relative bg-gray-100">
-      <Designer />
+    <!-- Sidebar on the left -->
+    <div class="flex-none bg-white border-r z-10">
+      <Sidebar />
     </div>
 
-    <div class="w-80 bg-white border-l">
-      <Sidebar />
+    <!-- Designer takes remaining space -->
+    <div class="flex-1 relative bg-gray-100">
+      <Designer />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { useWorkflowStore } from '~/store/workflow';
-import Designer from '~/components/workflow/Designer.vue';
-import Sidebar from '~/components/workflow/Sidebar.vue';
+
+// Lazy load heavy components for code splitting
+const Designer = defineAsyncComponent(() => import('~/components/workflow/Designer.vue'));
+const Sidebar = defineAsyncComponent(() => import('~/components/workflow/WorkflowSidebar.vue'));
 
 definePageMeta({
   middleware: ['auth'],
+  layout: 'auth'
 });
 
 const route = useRoute();
@@ -29,4 +34,13 @@ onMounted(async () => {
   if (!id) return;
   await store.loadWorkflow(id);
 });
+
+watch(
+  () => route.params.slug,
+  async (newSlug) => {
+    const id = (newSlug ?? route.params.id ?? route.query.id) as string;
+    if (!id) return;
+    await store.loadWorkflow(id);
+  }
+);
 </script>

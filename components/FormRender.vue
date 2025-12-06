@@ -2,7 +2,18 @@
 import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
-import { ref, reactive, computed, nextTick, shallowReactive, watch, h, resolveComponent, watchEffect, defineComponent } from 'vue';
+import {
+  ref,
+  reactive,
+  computed,
+  nextTick,
+  shallowReactive,
+  watch,
+  h,
+  resolveComponent,
+  watchEffect,
+  defineComponent,
+} from 'vue';
 import CardWrapper from './CardWrapper.vue';
 import ChartWrapper from './ChartWrapper.vue';
 import { useFormValidation } from '../composables/useFormValidation';
@@ -136,39 +147,112 @@ function getPrimary() {
 }
 
 async function edit(key: string) {
-  const flow = getAction('get');
-  if (flow && selectedRows.value.length > 0) {
-    const primary = getPrimary();
-    modalTitle.value = 'Edit Data';
-    modalDescription.value = '';
-    modalRefs[key].value = true;
-    const dataForm = new FormData();
-    dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    dataForm.append(primary, selectedRows.value[0][primary]);
-    try {
-      const res = await Api.post('admin/execute-flow', dataForm);
-      if (res.code == 200) {
-        const record = res.data.data;
-        for (const key in record) {
-          formData.value[key] = record[key];
-        }
-        tableRef.value.setData(primary, selectedRows.value[0][primary]);
-      } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
-        navigateTo('/login');
+  // Check if this is a detail modal by looking for the modal in the schema
+  const modal = modals.value.find((m: any) => m.props.key === key);
+  
+  // Determine if this is a detail modal by checking if the key contains "detail"
+  const isDetailModal = modal && key.toLowerCase().includes('detail');
+  
+  console.log('edit debug:', { key, isDetailModal, modalFound: !!modal });
+  
+  if (isDetailModal) {
+    // Handle detail modal edit
+    // Get the detail table that this modal is associated with
+    // Find which table's selected row we should use
+    const detailTableKey = key.replace('modal', 'table').replace('form', ''); // e.g., modaldetailform -> table
+    
+    // Get onGetDetail flows
+    let actionNode: any;
+    parsedSchema.value.forEach((element: any) => {
+      if (element.type == 'action') {
+        actionNode = element;
       }
-    } catch (err) {
-      console.error('Gagal ambil data:', err);
+    });
+    const detailFlows = actionNode?.props?.onGetDetail || []; // Fixed: use onGetDetail instead of ongetdetail
+    
+    // Find the index of this detail modal to get the correct flow
+    // Filter modals that are actually detail modals (contain 'detail' in key)
+    const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
+    const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
+    const flow = detailFlows[modalIndex];
+    
+    if (flow && selectedRows.value.length > 0) {
+      modalTitle.value = 'Edit Data';
+      modalDescription.value = '';
+      modalRefs[key].value = true;
+      
+      const dataForm = new FormData();
+      dataForm.append('flowname', flow);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      
+      // Append all selected row data as search parameters
+      const selectedRow = selectedRows.value[0];
+      for (const rowKey in selectedRow) {
+        if (selectedRow[rowKey] !== null && selectedRow[rowKey] !== undefined && typeof selectedRow[rowKey] !== 'object') {
+          dataForm.append(rowKey, selectedRow[rowKey]);
+        }
+      }
+      
+      try {
+        const res = await Api.post('admin/execute-flow', dataForm);
+        if (res.code == 200) {
+          const record = res.data.data;
+          for (const key in record) {
+            formData.value[key] = record[key];
+          }
+        } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
+      } catch (err) {
+        console.error('Gagal ambil data:', err);
+      }
+    }
+  } else {
+    // Handle master modal edit (existing logic)
+    const flow = getAction('get');
+    if (flow && selectedRows.value.length > 0) {
+      const primary = getPrimary();
+      modalTitle.value = 'Edit Data';
+      modalDescription.value = '';
+      modalRefs[key].value = true;
+      const dataForm = new FormData();
+      dataForm.append('flowname', flow);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      dataForm.append(primary, selectedRows.value[0][primary]);
+      try {
+        const res = await Api.post('admin/execute-flow', dataForm);
+        if (res.code == 200) {
+          const record = res.data.data;
+          for (const key in record) {
+            formData.value[key] = record[key];
+          }
+          tableRef.value.setData(primary, selectedRows.value[0][primary]);
+        } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
+      } catch (err) {
+        console.error('Gagal ambil data:', err);
+      }
     }
   }
 }
 
 function close(key: string) {
-  const primary = getPrimary();
-  tableRef.value.setData(primary, selectedRows.value[0][primary]);
-  tableRef.value.setDataIsDetail(false);
-  modalRefs[key].value = false;
+  try {
+    const primary = getPrimary();
+    if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
+      tableRef.value.setData(primary, selectedRows.value[0][primary]);
+    }
+    tableRef.value.setDataIsDetail(false);
+  } catch (e) {
+    console.error('Error closing modal:', e);
+  } finally {
+    if (modalRefs[key]) {
+      modalRefs[key].value = false;
+    }
+  }
   //window.location.reload(true); // TODO: next only refresh grid
 }
 
@@ -333,8 +417,6 @@ let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 const { validateField } = useFormValidation();
 
-
-
 function renderComponent(component: any) {
   switch ((component.type || '').toLowerCase()) {
     case 'callother':
@@ -358,10 +440,14 @@ function renderComponent(component: any) {
     case 'label': {
       const text = component.props?.text || '';
 
-      return h('label', {
-        class: `block mb-1 font-medium ${component.props?.class ?? ''}`,
-        for: component.props?.for ?? null
-      }, $t(text.toUpperCase()) + required);
+      return h(
+        'label',
+        {
+          class: `block mb-1 font-medium ${component.props?.class ?? ''}`,
+          for: component.props?.for ?? null,
+        },
+        $t(text.toUpperCase()) + required,
+      );
     }
 
     case 'longtext': {
@@ -397,73 +483,71 @@ function renderComponent(component: any) {
       ]);
     }
     case 'image':
-    const modelInputArea = computed({
+      const modelInputArea = computed({
         get: () => formData.value[component.props.key] || component.props.src,
         set: (val) => {
           formData.value[component.props.key] = val;
           //validateField(component, val)
         },
       });
-  return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
-    // ============================
-    // MODE INPUT (ada label + input)
-    // ============================
-    component.props.isinput
-      ? [
-          // Label
-          component.type != 'hidden' && component.props.text
-            ? h(
-                'label',
-                { class: 'text-sm mb-1 font-medium text-gray-400' },
-                $t(component.props.text.toUpperCase())
-              )
-            : null,
+      return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
+        // ============================
+        // MODE INPUT (ada label + input)
+        // ============================
+        component.props.isinput
+          ? [
+              // Label
+              component.type != 'hidden' && component.props.text
+                ? h(
+                    'label',
+                    { class: 'text-sm mb-1 font-medium text-gray-400' },
+                    $t(component.props.text.toUpperCase()),
+                  )
+                : null,
 
-          // Input file
-          h('input', {
-            type: 'file',
-            accept: 'image/*',
-            class:
-              'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
-              (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
+              // Input file
+              h('input', {
+                type: 'file',
+                accept: 'image/*',
+                class:
+                  'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+                  (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
 
-            onChange: (e: any) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
+                onChange: (e: any) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
 
-              const reader = new FileReader();
-              reader.onload = () => {
-                modelInputArea.value = reader.result; // base64 image
-              };
-              reader.readAsDataURL(file);
-            },
-          }),
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    modelInputArea.value = reader.result; // base64 image
+                  };
+                  reader.readAsDataURL(file);
+                },
+              }),
 
-          // Preview image jika ada
-          modelInputArea.value
+              // Preview image jika ada
+              modelInputArea.value
+                ? h('img', {
+                    src: modelInputArea.value,
+                    class: 'mt-2 w-32 h-auto rounded border',
+                  })
+                : null,
+
+              // Error message
+              validationErrors[component.props.key]
+                ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
+                : null,
+            ]
+          : // ============================
+            // MODE VIEW (gambar saja)
+            // ============================
+            modelInputArea.value
             ? h('img', {
                 src: modelInputArea.value,
-                class: 'mt-2 w-32 h-auto rounded border',
+                class: 'w-32 h-auto rounded border',
               })
             : null,
-
-          // Error message
-          validationErrors[component.props.key]
-            ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
-            : null,
-        ]
-      : 
-
-      // ============================
-      // MODE VIEW (gambar saja)
-      // ============================
-      modelInputArea.value
-      ? h('img', {
-          src: modelInputArea.value,
-          class: 'w-32 h-auto rounded border',
-        })
-      : null,
-  ]);
+      ]);
 
     case 'text':
     case 'hidden':
@@ -622,15 +706,24 @@ function renderCallOther(component) {
 
   if (type === 'table') {
     const tableObj = tables.value.find((t) => t.props.key === key);
-    tableObj.props.isdetail = false;
-    tableObj.props.isexpand = false;
-    tableUsed.value.push(key);
-
+    
     if (!tableObj) {
       return h('div', `Table ${key} not found`);
     }
 
-    return renderTable(tableObj);
+    // 🆕 Clone object to avoid mutating the original schema
+    const clonedTable = {
+      ...tableObj,
+      props: {
+        ...tableObj.props,
+        isdetail: false,
+        isexpand: false,
+      }
+    };
+
+    tableUsed.value.push(key);
+
+    return renderTable(clonedTable);
   }
 
   return h('div', `Unknown other type: ${type}`);
@@ -679,7 +772,7 @@ function renderContainer(container: any) {
   if (!container) return null;
 
   let children = Array.isArray(container) ? container : container.children || [];
-          console.log('comp type',container)
+  console.log('comp type', container);
   return h(
     'div',
     {
@@ -695,10 +788,10 @@ function renderContainer(container: any) {
         case 'wizard':
           return renderWizard(component);
 
-          case 'card':
+        case 'card':
           return renderCard(component);
 
-          case 'chart':
+        case 'chart':
           return renderChart(component);
 
         case 'master':
@@ -708,7 +801,7 @@ function renderContainer(container: any) {
         case 'search':
         case 'widget':
         case 'form':
-          case 'cards':
+        case 'cards':
         case 'charts':
         case 'modals':
           return renderContainer(component);
@@ -721,8 +814,6 @@ function renderContainer(container: any) {
     }),
   );
 }
-
-
 
 /* 🧩 Validasi semua field */
 function validateAllFields() {
@@ -758,7 +849,7 @@ function renderTable(component: any) {
 
     getData();
 
-    return h('div', { key: key, class: component.props.class || "" }, [
+    return h('div', { key: key, class: component.props.class || '' }, [
       h(TablePagination, {
         ref: tableRef,
         columns:
@@ -918,29 +1009,105 @@ async function saveData(key: any) {
   try {
     let flow = '';
 
-    if (modalTitle.value == 'New Data') {
-      flow = getAction('create');
+    // Check if this is a detail modal
+    const modal = modals.value.find((m: any) => m.props.key === key);
+    // Determine if this is a detail modal by checking if the key contains "detail"
+    const isDetailModal = modal && key.toLowerCase().includes('detail');
+
+    console.log('saveData debug:', { key, isDetailModal, modalFound: !!modal });
+
+    if (isDetailModal) {
+      // Handle detail modal save
+      let actionNode: any;
+      parsedSchema.value.forEach((element: any) => {
+        if (element.type == 'action') {
+          actionNode = element;
+        }
+      });
+
+      // Find the index of this detail modal
+      // Filter modals that are actually detail modals (contain 'detail' in key)
+      const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
+      const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
+      
+      console.log('saveData detail debug:', { modalIndex, detailModalsCount: detailModals.length });
+
+      if (modalTitle.value == 'New Data') {
+        const createFlows = actionNode?.props?.onCreateDetail || [];
+        flow = createFlows[modalIndex];
+      } else {
+        const updateFlows = actionNode?.props?.onUpdateDetail || [];
+        flow = updateFlows[modalIndex];
+      }
     } else {
-      flow = getAction('update');
+      // Handle master modal save (existing logic)
+      if (modalTitle.value == 'New Data') {
+        flow = getAction('create');
+      } else {
+        flow = getAction('update');
+      }
     }
+
+    // Helper to find all input keys in a modal
+    function getModalFields(nodes: any[]): string[] {
+      let fields: string[] = [];
+      nodes.forEach((node) => {
+        if (node.props?.key) {
+          fields.push(node.props.key);
+        }
+        if (node.children) {
+          fields = fields.concat(getModalFields(node.children));
+        }
+      });
+      return fields;
+    }
+
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
+    
     const payload = { ...toRaw(formData.value) };
-    for (const key in payload) {
-      const val = payload[key];
-      if (val !== undefined && val !== null) {
-        if (typeof val === 'object') {
-          dataForm.append(key, JSON.stringify(val));
-        } else if (typeof val === 'boolean') {
-          // 🟢 ubah boolean ke 1 / 0 agar MySQL bisa terima
-          dataForm.append(key, val ? 1 : 0);
-        } else {
-          dataForm.append(key, val);
+    
+    // If detail modal, filter payload to only include modal fields + master ID
+    if (isDetailModal && modal) {
+      const modalFields = getModalFields(modal.children || []);
+      const primary = getPrimary(); // Master ID key
+      
+      // Add Master ID if it exists
+      if (primary && payload[primary]) {
+        dataForm.append(primary, payload[primary]);
+      }
+      
+      // Add only fields present in the modal
+      for (const key of modalFields) {
+        const val = payload[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === 'object') {
+            dataForm.append(key, JSON.stringify(val));
+          } else if (typeof val === 'boolean') {
+            dataForm.append(key, val ? '1' : '0');
+          } else {
+            dataForm.append(key, val);
+          }
+        }
+      }
+    } else {
+      // Master modal or other: send everything (existing logic)
+      for (const key in payload) {
+        const val = payload[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === 'object') {
+            dataForm.append(key, JSON.stringify(val));
+          } else if (typeof val === 'boolean') {
+            dataForm.append(key, val ? '1' : '0');
+          } else {
+            dataForm.append(key, val);
+          }
         }
       }
     }
+
     const res = await Api.post('admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({

@@ -1,20 +1,10 @@
 <template>
-<div
-  v-for="group in groupedWidgets"
-  :key="group.key"
-  class="flex flex-row flex-nowrap gap-3 p-2"
->
-  <div
-    v-for="(value, i) in group.items"
-    :key="i"
-    class="flex-1 min-w-0 p-"
-  >
+  <div v-for="group in groupedWidgets" :key="group.key" class="flex flex-row flex-nowrap gap-3 p-2">
+    <div v-for="(value, i) in group.items" :key="i" class="flex-1 min-w-0 p-">
       <FormRender :schema="value.widgetform" formType="widget" />
+    </div>
   </div>
-</div>
-
 </template>
-
 
 <script setup lang="ts">
 import FormRender from '~/components/FormRender.vue';
@@ -60,13 +50,11 @@ const groupedWidgets = computed(() => {
 
   // Return array berurutan:
   // [ { groupKey: "...", items: [...] }, ... ]
-  return sortedGroupKeys.map(key => ({
+  return sortedGroupKeys.map((key) => ({
     key,
     items: groups[key],
   }));
 });
-
-
 
 const fetchData = async () => {
   try {
@@ -76,7 +64,7 @@ const fetchData = async () => {
       for (let index = 0; index < recordWidget.value.length; index++) {
         const element = recordWidget.value[index];
         recordWidget.value[index].widgetform = JSON.parse(element.widgetform);
-        console.log ('widg', recordWidget)
+        console.log('widg', recordWidget);
       }
     } else {
       console.error('Invalid response from /auth/me', res);

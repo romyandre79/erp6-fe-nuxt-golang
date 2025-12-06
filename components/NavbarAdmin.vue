@@ -1,76 +1,96 @@
 <template>
-  <header
-    class="navbar-admin flex items-center justify-between sticky top-0 z-1000 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
-  >
-    <!-- LEFT: Title -->
-    <div class="flex items-center gap-3"></div>
+  <header class="flex items-center justify-between px-6 py-3 transition-colors duration-300">
+    <!-- LEFT: Breadcrumb or empty -->
+    <div class="flex items-center gap-3">
+      <!-- Can add breadcrumbs here if needed -->
+    </div>
 
-    <!-- RIGHT: Theme + User -->
-    <div class="flex items-center gap-4 relative">
+    <!-- RIGHT: Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Notification Bell -->
+      <NotificationBell />
+      
+      <!-- Theme Toggle -->
       <ThemeToggle />
+
+      <!-- Divider -->
+      <div class="h-8 w-px bg-slate-200 dark:bg-gray-700 mx-1"></div>
 
       <!-- USER DROPDOWN -->
       <div ref="userMenu" class="relative">
         <!-- Trigger -->
         <button
           @click.stop="toggleDropdown"
-          class="flex items-center gap-2 cursor-pointer hover:bg-base-200 rounded-xl px-3 py-2 transition-all"
+          class="profile-trigger flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2 transition-all duration-200 group"
         >
-          <img
-            :src="userPhoto || '/default-avatar.png'"
-            alt="user avatar"
-            class="w-9 h-9 rounded-full border shadow-sm"
-          />
-          <div class="hidden sm:block text-left leading-tight">
-            <p class="text-sm font-semibold text-base-content">
+          <!-- Avatar -->
+          <div class="w-9 h-9 flex items-center justify-center" style="color: var(--sidebar-profile-icon-color, #6366f1);">
+            <i class="fa-solid fa-user-circle text-2xl"></i>
+          </div>
+          
+          <!-- Name & Email -->
+          <div class="hidden sm:block text-left">
+            <p class="text-sm font-semibold leading-tight" style="color: var(--navbar-admin-color, #1f2937);">
               {{ userName }}
             </p>
-            <p class="text-xs">{{ userEmail }}</p>
+            <p class="text-xs" style="color: var(--sidebar-profile-email-color, #6b7280);">{{ userEmail }}</p>
           </div>
+          
+          <!-- Chevron -->
           <i
-            class="fa-solid fa-chevron-down text-xs ml-1 text-gray-400 transition-transform duration-200"
+            class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200 ml-1"
             :class="{ 'rotate-180': isOpen }"
+            style="color: var(--navbar-icon-color, #9ca3af);"
           ></i>
         </button>
 
         <!-- Dropdown -->
-        <transition name="fade">
+        <transition name="dropdown">
           <div
             v-if="isOpen"
-            class="absolute right-0 mt-2 w-56 border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-sm transition-all"
-            :class="[theme === 'dark' ? 'bg-gray-900/90 border-gray-700' : 'bg-white/90 border-gray-200']"
+            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
           >
-            <!-- User Info -->
-            <div class="px-4 py-3 border-b">
-              <p class="text-sm font-semibold">
-                {{ userName }}
-              </p>
-              <p class="text-xs truncate">
-                {{ userEmail }}
-              </p>
+            <!-- User Info Header -->
+            <div class="px-4 py-4 border-b border-slate-200 dark:border-gray-800">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <i class="fa-solid fa-user-circle text-3xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">
+                    {{ userName }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {{ userEmail }}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <!-- Menu -->
-            <ul class="divide-y">
-              <li>
-                <button
-                  @click.prevent="handleProfile"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left transition-colors"
-                >
-                  <i class="fa-regular fa-user w-5 text-primary"></i>
-                  <span>{{ $t('PROFILE') }}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  @click.prevent="handleLogout"
-                  class="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left transition-colors text-red-500"
-                >
-                  <i class="fa-solid fa-right-from-bracket w-5"></i>
-                  <span>{{ $t('LOGOUT') }}</span>
-                </button>
-              </li>
-            </ul>
+            <!-- Menu Items -->
+            <div class="py-2">
+              <button
+                @click.prevent="handleProfile"
+                class="flex items-center gap-3 w-full px-4 py-2.5 text-left transition-all duration-200 hover:bg-slate-50 dark:hover:bg-gray-800 group"
+              >
+                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 flex items-center justify-center transition-colors">
+                  <i class="fa-regular fa-user text-gray-500 group-hover:text-indigo-500 text-sm transition-colors"></i>
+                </div>
+                <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">{{ $t('PROFILE') }}</span>
+              </button>
+              
+              <div class="mx-3 my-1 h-px bg-slate-100 dark:bg-gray-800"></div>
+              
+              <button
+                @click.prevent="handleLogout"
+                class="flex items-center gap-3 w-full px-4 py-2.5 text-left transition-all duration-200 hover:bg-rose-50 dark:hover:bg-rose-900/20 group"
+              >
+                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/40 flex items-center justify-center transition-colors">
+                  <i class="fa-solid fa-right-from-bracket text-gray-500 group-hover:text-rose-500 text-sm transition-colors"></i>
+                </div>
+                <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-rose-600 dark:group-hover:text-rose-400">{{ $t('LOGOUT') }}</span>
+              </button>
+            </div>
           </div>
         </transition>
       </div>
@@ -81,6 +101,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import ThemeToggle from '~/components/ThemeToggle.vue';
+import NotificationBell from '~/components/NotificationBell.vue';
 import { useUserStore } from '~/store/user';
 import { useAuth } from '~/composables/useAuth';
 import { useThemeStore } from '~/store/theme';
@@ -124,15 +145,17 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease-out;
 }
-.fade-enter-from,
-.fade-leave-to {
+.dropdown-enter-from,
+.dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-5px);
+  transform: translateY(-8px) scale(0.95);
+}
+
+.profile-trigger:hover {
+  background: var(--sidebar-menu-hover-background, #f1f5f9);
 }
 </style>

@@ -14,12 +14,12 @@ export const useThemeStore = defineStore('theme', () => {
 
   // Load theme list dari API
 
-  async function loadThemes () {
+  async function loadThemes() {
     const dataForm = new FormData();
 
-    const res = await Api.post('auth/load-theme', dataForm) as any;
+    const res = (await Api.post('auth/load-theme', dataForm)) as any;
     themeList.value = res.data?.data || [];
-  };
+  }
 
   const loadSingleThemes = async (themename: string) => {
     const dataForm = new FormData();
@@ -28,7 +28,7 @@ export const useThemeStore = defineStore('theme', () => {
     dataForm.append('search', 'true');
     dataForm.append('themename', themename);
 
-    const res = await Api.post('admin/execute-flow', dataForm) as any;
+    const res = (await Api.post('admin/execute-flow', dataForm)) as any;
     themeData.value = res.data?.data || [];
   };
 
@@ -53,6 +53,11 @@ export const useThemeStore = defineStore('theme', () => {
 
   // Apply theme
   const applyTheme = async (key: string) => {
+    // Guard: prevent duplicate calls if theme is already applied and themes are loaded
+    if (theme.value === key && themeList.value.length > 0) {
+      return;
+    }
+
     await loadThemes();
     const found = themeList.value.find((t) => t.themeid === Number(key));
     if (!found) return;
@@ -67,7 +72,10 @@ export const useThemeStore = defineStore('theme', () => {
       }
     }
 
-    theme.value = key;
+    // Only update theme.value if it's different to prevent watcher trigger
+    if (theme.value !== key) {
+      theme.value = key;
+    }
     themeCookie.value = key;
     document.documentElement.setAttribute('data-theme', key);
   };
