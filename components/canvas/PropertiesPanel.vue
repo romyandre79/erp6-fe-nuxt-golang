@@ -106,7 +106,6 @@ const props = defineProps<{
   selectedTable: any;
   relations: any[];
   jsonPreview: string;
-  aiDescription: string;
 }>();
 
 const emit = defineEmits([
@@ -118,13 +117,8 @@ const emit = defineEmits([
   'copy-json',
   'remove-relation',
   'update:jsonPreview',
-  'update:aiDescription',
 ]);
 
-const aiDescriptionModel = computed({
-  get: () => props.aiDescription,
-  set: (val) => emit('update:aiDescription', val),
-});
 
 const jsonPreviewModel = computed({
   get: () => props.jsonPreview,

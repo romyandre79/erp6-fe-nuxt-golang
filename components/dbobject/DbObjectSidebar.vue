@@ -216,4 +216,10 @@ watch(() => props.selectedTable, (newVal) => {
     isPanelOpen.value = true;
   }
 });
+
+const aiDescriptionModel = computed({
+  get: () => props.aiDescription,
+  set: (val) => emit('update:aiDescription', val),
+});
+
 </script>

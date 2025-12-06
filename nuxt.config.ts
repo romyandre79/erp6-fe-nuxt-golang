@@ -55,7 +55,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: process.env.APP_NAME || 'Nuxt ERP CMS',
+      title: process.env.APP_NAME,
       meta: [{ name: 'description', content: 'CMS + Ecommerce ERP frontend SSR' }],
     },
   },
