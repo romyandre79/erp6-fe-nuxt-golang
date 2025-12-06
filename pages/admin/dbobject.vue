@@ -39,7 +39,7 @@
       </div>
 
       <!-- canvas wrapper -->
-      <div class="flex-1 relative overflow-hidden bg-gray-100">
+      <div class="flex-1 relative overflow-auto bg-gray-100">
         <!-- canvas -->
         <div
           class="relative p-4 min-w-[2000px] min-h-[2000px]"

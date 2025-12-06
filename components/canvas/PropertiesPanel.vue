@@ -1,19 +1,6 @@
 <template>
   <div class="h-full flex flex-col bg-white p-4 overflow-auto">
-    <div class="mt-4">
-      <label class="text-sm font-semibold">AI Prompt</label>
-      <div class="flex gap-2 mt-1">
-        <textarea
-          v-model="aiDescriptionModel"
-          placeholder="e.g. Customer table with id, name, email"
-          class="flex-1 p-2 border rounded"
-        />
-        <button @click="$emit('ai-parse', aiDescriptionModel)" class="px-3 py-1 bg-yellow-500 text-white rounded">
-          Generate
-        </button>
-      </div>
-    </div>
-
+  
     <div v-if="selectedTable" class="space-y-4">
       <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
 

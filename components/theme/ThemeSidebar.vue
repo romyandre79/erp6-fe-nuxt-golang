@@ -1,15 +1,19 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-12 flex flex-col items-center py-2 bg-gray-800 text-gray-400 border-r border-gray-700 z-20">
+    <div class="panel w-12 flex flex-col items-center py-2 border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"
-        class="p-3 mb-2 rounded hover:text-white transition-colors relative"
-        :class="{ 'text-white border-l-2 border-white bg-gray-700': activeActivity === item.id && isPanelOpen }"
+        class="w-full relative flex justify-center py-3 mb-1 hover:bg-gray-700 transition-colors"
+        :class="activeActivity === item.id && isPanelOpen ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
         @click="toggleActivity(item.id)"
         :title="item.label"
       >
+        <div
+          v-if="activeActivity === item.id && isPanelOpen"
+          class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"
+        ></div>
         <UIcon :name="item.icon" class="w-6 h-6" />
       </button>
     </div>
@@ -31,84 +35,70 @@
         <div v-if="activeActivity === 'design'" class="space-y-6">
           <!-- Actions -->
           <div class="flex gap-2">
-            <button class="flex-1 py-2 px-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition" @click="$emit('save')">
+            <button class="flex-1 py-2 px-3 rounded transition hover:bg-gray-100 border bg-white" @click="$emit('save')">
               Save
             </button>
-            <button class="flex-1 px-3 py-2 border rounded hover:bg-gray-100 transition" @click="$emit('reset')">
+            <button class="flex-1 px-3 py-2 rounded transition hover:bg-gray-100 border bg-white" @click="$emit('reset')">
               Reset
             </button>
           </div>
 
-          <!-- Categories -->
+          <!-- Categories via Accordion -->
           <div>
             <h3 class="font-semibold text-sm text-gray-700 mb-2 uppercase tracking-wider">Categories</h3>
-            <ul class="space-y-1">
-              <li
-                v-for="cat in categories"
-                :key="cat.key"
-                @click="selectedCategory = cat.key"
-                :class="[
-                  'cursor-pointer px-3 py-2 rounded text-sm transition',
-                  selectedCategory === cat.key ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-gray-200 text-gray-600',
-                ]"
-              >
-                {{ cat.label }}
-              </li>
-            </ul>
-          </div>
+            <UAccordion :items="accordionItems" :multiple="false">
+              <template #properties="{ item }">
+                <div class="px-2 py-3 space-y-3 bg-gray-50 border-t">
+                  <div class="text-sm text-gray-500 italic mb-2" v-if="!item.props || item.props.length === 0">
+                    No properties available.
+                  </div>
+                  <div
+                    v-for="prop in item.props"
+                    :key="prop.key"
+                    class="border rounded p-3 bg-white shadow-sm"
+                  >
+                    <div class="mb-2">
+                      <div class="font-medium text-sm text-gray-800">{{ prop.label }}</div>
+                      <div class="text-xs text-gray-400 font-mono">{{ prop.key }}</div>
+                    </div>
 
-          <!-- Properties -->
-          <div v-if="selectedCategory">
-            <h3 class="font-semibold text-sm text-gray-700 mb-3 uppercase tracking-wider border-t pt-4">
-              Properties
-            </h3>
-            
-            <div v-if="currentProps.length === 0" class="text-sm text-gray-500">Select a category to edit.</div>
-
-            <div
-              v-for="prop in currentProps"
-              :key="prop.key"
-              class="border rounded p-3 mb-3 bg-white shadow-sm"
-            >
-              <div class="mb-2">
-                <div class="font-medium text-sm text-gray-800">{{ prop.label }}</div>
-                <div class="text-xs text-gray-400 font-mono">{{ prop.key }}</div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <input
-                  v-if="prop.type === 'color'"
-                  type="color"
-                  :value="themeState[prop.key]"
-                  @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
-                  class="w-8 h-8 p-0 border rounded cursor-pointer"
-                />
-                <input
-                  v-else-if="prop.type === 'number'"
-                  type="number"
-                  :value="themeState[prop.key]"
-                  @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
-                  class="border px-2 py-1 rounded w-full text-sm"
-                />
-                <select
-                  v-else-if="prop.type === 'select'"
-                  :value="themeState[prop.key]"
-                  @change="updateTheme(prop.key, ($event.target as HTMLSelectElement).value)"
-                  class="border px-2 py-1 rounded w-full text-sm"
-                >
-                  <option v-for="opt in prop.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-                <input
-                  v-else
-                  type="text"
-                  :value="themeState[prop.key]"
-                  @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
-                  class="border px-2 py-1 rounded w-full text-sm"
-                />
-              </div>
-            </div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-if="prop.type === 'color'"
+                        type="color"
+                        :value="themeState[prop.key]"
+                        @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
+                        class="w-8 h-8 p-0 border rounded cursor-pointer"
+                      />
+                      <input
+                        v-else-if="prop.type === 'number'"
+                        type="number"
+                        :value="themeState[prop.key]"
+                        @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
+                        class="border px-2 py-1 rounded w-full text-sm"
+                      />
+                      <select
+                        v-else-if="prop.type === 'select'"
+                        :value="themeState[prop.key]"
+                        @change="updateTheme(prop.key, ($event.target as HTMLSelectElement).value)"
+                        class="border px-2 py-1 rounded w-full text-sm"
+                      >
+                        <option v-for="opt in prop.options" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <input
+                        v-else
+                        type="text"
+                        :value="themeState[prop.key]"
+                        @input="updateTheme(prop.key, ($event.target as HTMLInputElement).value)"
+                        class="border px-2 py-1 rounded w-full text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </UAccordion>
 
             <!-- Add Custom Property -->
             <div class="mt-4 border-t pt-4">
@@ -153,7 +143,6 @@ const emit = defineEmits(['save', 'reset', 'update', 'add-custom']);
 
 const activeActivity = ref('design');
 const isPanelOpen = ref(true);
-const selectedCategory = ref('sidebar');
 const newKey = ref('');
 const newValue = ref('');
 
@@ -427,9 +416,14 @@ const categories = [
   },
 ];
 
-const currentProps = computed(() => {
-  if (!selectedCategory.value) return [];
-  const cat = categories.find((c) => c.key === selectedCategory.value);
-  return cat ? cat.props : [];
+const accordionItems = computed(() => {
+  return categories.map((cat) => ({
+    label: cat.label,
+    icon: 'heroicons:squares-plus',
+    defaultOpen: false,
+    props: cat.props,
+    key: cat.key,
+    slot: 'properties'
+  }));
 });
 </script>

@@ -5,11 +5,15 @@
       <button
         v-for="item in activities"
         :key="item.id"
-        class="p-3 mb-2 rounded hover:text-white transition-colors relative"
-        :class="{ 'text-white border-l-2 border-white bg-gray-700': activeActivity === item.id && isPanelOpen }"
+        class="w-full relative flex justify-center py-3 mb-1 hover:bg-gray-700 transition-colors"
+        :class="activeActivity === item.id && isPanelOpen ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
         @click="toggleActivity(item.id)"
         :title="item.label"
       >
+        <div
+          v-if="activeActivity === item.id && isPanelOpen"
+          class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"
+        ></div>
         <UIcon :name="item.icon" class="w-6 h-6" />
       </button>
     </div>

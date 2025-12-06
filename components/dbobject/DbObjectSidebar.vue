@@ -1,15 +1,19 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-12 flex flex-col items-center py-2 bg-gray-800 text-gray-400 border-r border-gray-700 z-20">
+    <div class="panel w-12 flex flex-col items-center py-2 border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"
-        class="p-3 mb-2 rounded hover:text-white transition-colors relative"
-        :class="{ 'text-white border-l-2 border-white bg-gray-700': activeActivity === item.id && isPanelOpen }"
+        class="w-full relative flex justify-center py-3 mb-1 hover:bg-gray-700 transition-colors"
+        :class="activeActivity === item.id && isPanelOpen ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
         @click="toggleActivity(item.id)"
         :title="item.label"
       >
+        <div
+          v-if="activeActivity === item.id && isPanelOpen"
+          class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"
+        ></div>
         <UIcon :name="item.icon" class="w-6 h-6" />
       </button>
     </div>
@@ -17,9 +21,9 @@
     <!-- Side Panel -->
     <div
       v-show="isPanelOpen"
-      class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out"
+      class="w-80 flex flex-col border-r transition-all duration-300 ease-in-out"
     >
-      <div class="p-3 border-b bg-gray-100 flex justify-between items-center">
+      <div class="p-3 border-b  flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">
           <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -45,16 +49,28 @@
                 <span>AI Suggest Relations</span>
               </button>
             </div>
-          </div>
+<div class="mt-4">
+      <label class="text-sm font-semibold">AI Prompt</label>
+      <div class="flex gap-2 mt-1">
+        <textarea
+          v-model="aiDescriptionModel"
+          placeholder="e.g. Customer table with id, name, email"
+          class="flex-1 p-2 border rounded"
+        />
+        <button @click="$emit('ai-parse', aiDescriptionModel)" class="px-3 py-1 bg-yellow-500 text-white rounded">
+          Generate
+        </button>
+      </div>
+    </div>          </div>
 
           <div>
             <h3 class="font-semibold text-sm text-gray-700 mb-2 uppercase tracking-wider">Project</h3>
             <div class="grid grid-cols-2 gap-2">
-              <button @click="$emit('save')" class="flex flex-col items-center justify-center p-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+              <button @click="$emit('save')" class="flex flex-col border  items-center justify-center p-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
                 <UIcon name="heroicons:bookmark-square" class="w-5 h-5 mb-1" />
                 Save
               </button>
-              <button @click="$emit('reset')" class="flex flex-col items-center justify-center p-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
+              <button @click="$emit('reset')" class="flex flex-col border items-center justify-center p-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
                 <UIcon name="heroicons:arrows-right-left" class="w-5 h-5 mb-1" />
                 Reset
               </button>
@@ -73,7 +89,7 @@
               <button @click="$emit('reset-zoom')" class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center col-span-2">
                 <UIcon name="heroicons:arrows-right-left" class="w-4 h-4 mb-1" /> Reset Zoom
               </button>
-              <button @click="$emit('export-png')" class="p-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 text-xs flex flex-col items-center col-span-2">
+              <button @click="$emit('export-png')" class="p-2 bg-indigo-500 border text-white rounded hover:bg-indigo-600 text-xs flex flex-col items-center col-span-2">
                 <UIcon name="heroicons:bars-4" class="w-4 h-4 mb-1" /> Export PNG
               </button>
             </div>

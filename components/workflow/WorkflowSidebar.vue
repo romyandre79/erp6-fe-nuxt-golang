@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-12 flex flex-col items-center py-2 bg-gray-800 text-gray-400 border-r border-gray-700 z-20">
+    <div class="panel w-12 flex flex-col items-center py-2  border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"

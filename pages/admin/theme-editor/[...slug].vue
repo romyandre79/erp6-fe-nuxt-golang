@@ -15,8 +15,8 @@
     </div>
 
     <!-- RIGHT: PROPERTY EDITOR + PREVIEW -->
-    <section class="flex-1 p-6 overflow-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <section class="flex-1 p-3 overflow-auto">
+      <div class="gap-6">
         <!-- PROPERTY EDITOR -->
 
         <!-- LIVE PREVIEW -->
