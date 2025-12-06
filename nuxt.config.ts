@@ -15,6 +15,9 @@ export default defineNuxtConfig({
         if (warning.code === 'UNRESOLVED_IMPORT' && warning.exporter?.includes('cache-driver')) {
           return; // Ignore cache-driver warning
         }
+        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules'))) {
+          return; // Ignore circular dependencies in node_modules
+        }
         warn(warning);
       },
     },

@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '~/store/theme';
 import { useNotificationStore } from '~/store/notification';
 import { useAuth } from '~/composables/useAuth';
+import AiAssistant from '~/components/AiAssistant.vue';
 
 const themeStore = useThemeStore();
 const notificationStore = useNotificationStore();
@@ -236,6 +237,7 @@ const toggleExpand = (id: number) => {
           </div>
         </main>
       </div>
+      <AiAssistant />
     </UApp>
   </ClientOnly>
 </template>
