@@ -122,6 +122,118 @@ const optionRounded = [
 ];
 const categories = [
   {
+    key: 'sidebar',
+    label: 'Sidebar',
+    props: [
+      {
+        key: 'sidebar-background',
+        label: 'Sidebar Background',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-border-color',
+        label: 'Sidebar Border Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-title-color',
+        label: 'Sidebar Title Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-menu-color',
+        label: 'Menu Text Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-menu-hover-background',
+        label: 'Menu Hover Background',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-menu-hover-color',
+        label: 'Menu Hover Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-menu-active-background',
+        label: 'Menu Active Background',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-menu-active-color',
+        label: 'Menu Active Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-submenu-border-color',
+        label: 'Submenu Border Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-collapse-background',
+        label: 'Collapse Button Background',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-collapse-color',
+        label: 'Collapse Button Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-profile-icon-color',
+        label: 'Profile Icon Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-profile-name-color',
+        label: 'Profile Name Color',
+        type: 'color',
+      },
+      {
+        key: 'sidebar-profile-email-color',
+        label: 'Profile Email Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
+    key: 'layout',
+    label: 'Layout',
+    props: [
+      {
+        key: 'content-background',
+        label: 'Content Background',
+        type: 'color',
+      },
+      {
+        key: 'primary-color',
+        label: 'Primary Accent Color',
+        type: 'color',
+      },
+      {
+        key: 'primary-hover-color',
+        label: 'Primary Hover Color',
+        type: 'color',
+      },
+      {
+        key: 'primary-light',
+        label: 'Primary Light Color',
+        type: 'color',
+      },
+      {
+        key: 'navbar-icon-color',
+        label: 'Navbar Icon Color',
+        type: 'color',
+      },
+      {
+        key: 'navbar-icon-hover-color',
+        label: 'Navbar Icon Hover Color',
+        type: 'color',
+      },
+    ],
+  },
+  {
     key: 'button',
     label: 'Button',
     props: [

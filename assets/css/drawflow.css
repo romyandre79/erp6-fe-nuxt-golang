@@ -32,3 +32,112 @@ button * {
   color: #000 !important;
   font-weight: 600;
 }
+
+/* ===== ICON-BASED NODE STYLES ===== */
+.drawflow-node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-width: auto !important;
+  width: auto !important;
+}
+
+.drawflow-node .node-icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+}
+
+.drawflow-node .node-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  transition: all 0.2s ease;
+}
+
+.drawflow-node .node-icon i {
+  font-size: 20px;
+  color: #fff !important;
+}
+
+.drawflow-node .node-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151 !important;
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.2;
+  word-wrap: break-word;
+}
+
+/* Selected node state */
+.drawflow-node.selected .node-icon {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px #06b6d4;
+}
+
+/* Hover effect */
+.drawflow-node:hover .node-icon {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+
+/* Style for OLD nodes using title-box (legacy support) */
+.drawflow-node .title-box {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: #fff !important;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  min-width: 80px;
+}
+
+.drawflow-node.selected .title-box {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px #06b6d4;
+}
+
+.drawflow-node:hover .title-box {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+
+/* Adjust input/output positions for icon nodes */
+.drawflow-node .inputs,
+.drawflow-node .outputs {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.drawflow-node .inputs {
+  left: -10px;
+}
+
+.drawflow-node .outputs {
+  right: -10px;
+}
+
+.drawflow-node .input,
+.drawflow-node .output {
+  width: 14px;
+  height: 14px;
+  background: #fbbf24;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.drawflow-node .output {
+  background: #fff;
+  border: 2px solid #9ca3af;
+}

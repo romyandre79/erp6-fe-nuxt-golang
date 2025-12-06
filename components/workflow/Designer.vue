@@ -1,15 +1,16 @@
 <template>
   <div class="relative h-full">
+    <!-- Payload Display (top-left, minimal) -->
     <div
-      v-if="testResult"
-      id="test-result-overlay"
-      class="absolute top-6 left-6 p-4 bg-white shadow-xl rounded border z-50 max-w-md overflow-x-auto scroll-y-auto"
+      v-if="showPayload"
+      id="payload-overlay"
+      class="absolute top-6 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
     >
-      <h3 class="font-bold text-lg">Payload (Form Data)</h3>
-      <pre class="text-sm whitespace-pre-wrap">{{ payload }}</pre>
-      <h3 class="font-bold text-lg">Test Result</h3>
-      <pre class="text-sm whitespace-pre-wrap">{{ testResult }}</pre>
-      <button @click="testResult = ''" class="mt-2 px-3 py-1 bg-gray-200 rounded text-sm">Close</button>
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-bold text-sm">Test Payload</h3>
+        <button @click="showPayload = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+      </div>
+      <pre class="text-xs whitespace-pre-wrap bg-gray-50 p-2 rounded max-h-40 overflow-auto">{{ payload }}</pre>
     </div>
 
     <!-- Upload Plugin Modal -->
@@ -81,12 +82,13 @@
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
+      <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import { toPng } from 'html-to-image';
 import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
@@ -95,6 +97,11 @@ const store = useWorkflowStore();
 const toast = useToast();
 const testResult = ref('');
 const payload = ref('');
+const showPayload = ref(false);
+
+// Step Results State
+const stepResults = ref<any[]>([]);
+const hasTestResults = computed(() => stepResults.value.length > 0);
 
 // Upload State
 const showUploadModal = ref(false);
@@ -139,6 +146,9 @@ function initEditor(container: HTMLElement) {
       await store.loadComponentProperties(node.name, cleanId.toString());
       store.setSelectedNode(node);
     }
+    
+    // Collapse the result panel for this node when clicked
+    collapseNodeResultPanel(cleanId);
   });
 
   return ed;
@@ -287,6 +297,8 @@ onMounted(async () => {
   if (flowObj && editor) {
     try {
       editor.import(flowObj);
+      // Convert old nodes to new icon style
+      setTimeout(() => convertOldNodesToIcons(), 100);
     } catch (e) {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
@@ -301,12 +313,64 @@ watch(
     try {
       const parsed = typeof wf.flow === 'string' ? JSON.parse(wf.flow) : wf.flow;
       editor.import(parsed.drawflow ? parsed : parsed.flow);
+      // Convert old nodes to new icon style
+      setTimeout(() => convertOldNodesToIcons(), 100);
     } catch (e) {
       console.error('❌ Failed to import workflow', e);
     }
   },
   { immediate: true },
 );
+
+/* ======================================================
+   Convert old title-box nodes to icon-based nodes
+   ======================================================*/
+function convertOldNodesToIcons() {
+  if (!editor) return;
+  
+  // Find all nodes with title-box (old style)
+  const oldNodes = document.querySelectorAll('.drawflow-node .title-box');
+  
+  oldNodes.forEach((titleBox) => {
+    const nodeEl = titleBox.closest('.drawflow-node') as HTMLElement;
+    if (!nodeEl) return;
+    
+    // Get node ID
+    const nodeId = nodeEl.id?.replace('node-', '');
+    if (!nodeId) return;
+    
+    // Get node data from editor
+    const nodeData = editor.drawflow.drawflow?.Home?.data?.[nodeId];
+    if (!nodeData) return;
+    
+    // Get the title text
+    const title = titleBox.textContent || nodeData.name || 'Unknown';
+    
+    // Find component to get icon
+    const component = store.components.find(
+      (c: any) => (c.componentname || c.name)?.toLowerCase() === nodeData.name?.toLowerCase()
+    );
+    const iconClass = component?.componentclass || component?.icon || 'fa-solid fa-cube';
+    
+    // Create new icon-based HTML
+    const newHtml = `
+      <div class="node-icon-wrapper">
+        <div class="node-icon">
+          <i class="${iconClass}"></i>
+        </div>
+        <div class="node-label">${title}</div>
+      </div>
+    `;
+    
+    // Find the drawflow_content_node and replace its innerHTML
+    const contentNode = nodeEl.querySelector('.drawflow_content_node');
+    if (contentNode) {
+      contentNode.innerHTML = newHtml;
+    }
+  });
+  
+  console.log(`✅ Converted ${oldNodes.length} old nodes to icon style`);
+}
 
 /* ======================================================
    Destroy
@@ -349,6 +413,20 @@ function drop(ev: DragEvent) {
   const x = ev.clientX - rect.left;
   const y = ev.clientY - rect.top;
 
+  // Get icon class - use componentclass as icon, or fallback to common icon
+  const iconClass = cmp.componentclass || cmp.icon || 'fa-solid fa-cube';
+  const title = cmp.componenttitle ?? cmp.label ?? cmp.name;
+  
+  // Create icon-based node template
+  const nodeHtml = `
+    <div class="node-icon-wrapper">
+      <div class="node-icon">
+        <i class="${iconClass}"></i>
+      </div>
+      <div class="node-label">${title}</div>
+    </div>
+  `;
+
   editor.addNode(
     cmp.componentname ?? cmp.name ?? cmp.code,
     cmp.input ?? cmp.inputs ?? 1,
@@ -357,7 +435,7 @@ function drop(ev: DragEvent) {
     y,
     cmp.componentname ?? cmp.name,
     {},
-    `<div class='title-box'>${cmp.componenttitle ?? cmp.label ?? cmp.name}</div>`,
+    nodeHtml,
   );
 
   // auto save
@@ -404,26 +482,193 @@ function formDataToObject(fd: FormData) {
   return obj;
 }
 
+/* ======================================================
+   Inject result panel below each node
+   ======================================================*/
+function injectNodeResults(results: any[]) {
+  // Clear any existing result panels first
+  clearNodeResultPanels();
+  
+  // Get the drawflow parent container
+  const drawflowContainer = document.getElementById('drawflow');
+  if (!drawflowContainer) return;
+  
+  // Get the parent element that holds the nodes (drawflow_content)
+  const drawflowContent = drawflowContainer.querySelector('.drawflow') as HTMLElement;
+  if (!drawflowContent) return;
+  
+  results.forEach((step) => {
+    const nodeEl = document.getElementById(`node-${step.nodeId}`) as HTMLElement;
+    if (!nodeEl) return;
+    
+    // Get node position and dimensions
+    const nodeRect = nodeEl.getBoundingClientRect();
+    const containerRect = drawflowContent.getBoundingClientRect();
+    
+    // Calculate position relative to drawflow content
+    const nodeLeft = nodeEl.offsetLeft;
+    const nodeTop = nodeEl.offsetTop;
+    const nodeWidth = nodeEl.offsetWidth;
+    const nodeHeight = nodeEl.offsetHeight;
+    
+    // Create result panel element
+    const panel = document.createElement('div');
+    panel.className = 'node-result-panel';
+    panel.setAttribute('data-node-result', step.nodeId);
+    
+    // Determine status color
+    const bgColor = step.success ? '#dcfce7' : '#fee2e2';
+    const borderColor = step.success ? '#22c55e' : '#ef4444';
+    const icon = step.success ? '✓' : '✗';
+    const iconColor = step.success ? '#16a34a' : '#dc2626';
+    
+    // Use a minimum width of 200px for better readability
+    const panelWidth = Math.max(nodeWidth, 80);
+    
+    // Position panel below the node using fixed coordinates
+    panel.style.cssText = `
+      position: absolute;
+      left: ${nodeLeft}px;
+      top: ${nodeTop + nodeHeight + 4}px;
+      min-width: ${panelWidth}px;
+      background: ${bgColor};
+      border: 1px solid ${borderColor};
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      z-index: 10;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      pointer-events: auto;
+      resize: both;
+      overflow: auto;
+    `;
+    
+    // Create collapsed view
+    const summary = document.createElement('div');
+    summary.className = 'result-summary';
+    summary.style.cssText = 'display: flex; align-items: center; justify-content: space-between;';
+    summary.innerHTML = `
+      <span style="color: ${iconColor}; font-weight: bold; font-size: 14px;">${icon}</span>
+      <span style="margin-left: 8px; flex: 1; color: #374151; font-size: 12px;">${step.executionTime}ms</span>
+      <span style="color: #6b7280; font-size: 12px;">▼</span>
+    `;
+    
+    // Create expanded details
+    const details = document.createElement('div');
+    details.className = 'result-details';
+    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;';
+    
+    let detailsHtml = '';
+    if (step.input && Object.keys(step.input).length > 0) {
+      detailsHtml += `<div style="margin-bottom: 8px;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
+    }
+    detailsHtml += `<div><strong style="font-size: 12px;">Result:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 200px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.result, null, 2)}</pre></div>`;
+    if (step.error) {
+      detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px;"><strong>Error:</strong> ${step.error}</div>`;
+    }
+    details.innerHTML = detailsHtml;
+    
+    // Toggle expand/collapse
+    panel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanded = details.style.display !== 'none';
+      details.style.display = isExpanded ? 'none' : 'block';
+      summary.querySelector('span:last-child')!.textContent = isExpanded ? '▼' : '▲';
+      
+      // When expanding, make panel wider for better readability
+      if (!isExpanded) {
+        panel.style.minWidth = '250px';
+      }
+    });
+    
+    panel.appendChild(summary);
+    panel.appendChild(details);
+    
+    // Append to the drawflow content container (not inside node)
+    drawflowContent.appendChild(panel);
+  });
+}
+
+function clearNodeResultPanels() {
+  const panels = document.querySelectorAll('.node-result-panel');
+  panels.forEach(panel => panel.remove());
+}
+
+function collapseNodeResultPanel(nodeId: string) {
+  const panel = document.querySelector(`.node-result-panel[data-node-result="${nodeId}"]`) as HTMLElement;
+  if (!panel) return;
+  
+  const details = panel.querySelector('.result-details') as HTMLElement;
+  const summary = panel.querySelector('.result-summary') as HTMLElement;
+  
+  if (details && details.style.display !== 'none') {
+    // Collapse the panel
+    details.style.display = 'none';
+    // Reset the arrow
+    const arrow = summary?.querySelector('span:last-child');
+    if (arrow) arrow.textContent = '▼';
+    // Reset min-width to smaller size
+    panel.style.minWidth = '80px';
+  }
+}
+
+function clearTestResults() {
+  stepResults.value = [];
+  testResult.value = '';
+  payload.value = '';
+  showPayload.value = false;
+  clearNodeResultPanels();
+}
+
 async function testFlow() {
   try {
+    // Clear previous results
+    clearTestResults();
+    
     const dataForm = new FormData();
     dataForm.append('flowname', route.params.slug);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
+    dataForm.append('debug', 'true'); // Enable step-by-step results
     for (let index = 0; index < store.parameters.length; index++) {
       const element = store.parameters[index];
       dataForm.append(element.parametername, element.parametervalue);
     }
     const res = await Api.post('admin/execute-flow', dataForm);
     payload.value = JSON.stringify(formDataToObject(dataForm), null, 2);
+    showPayload.value = true;
 
     if (res?.code == 200) {
-      testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
+      // Check if we have step results
+      if (res.data?.stepResults && Array.isArray(res.data.stepResults)) {
+        stepResults.value = res.data.stepResults;
+        // Inject result panels below each node
+        injectNodeResults(res.data.stepResults);
+        
+        toast.add({
+          title: 'Test Complete',
+          description: `${res.data.stepResults.length} steps executed`,
+          color: 'green',
+        });
+      } else {
+        testResult.value = JSON.stringify(res.data ?? res.message, null, 2);
+      }
     } else {
       testResult.value = `Error: ${res.message}`;
+      toast.add({
+        title: 'Test Failed',
+        description: res.message,
+        color: 'red',
+      });
     }
   } catch (err) {
     testResult.value = `Exception: ${err}`;
+    toast.add({
+      title: 'Test Error',
+      description: String(err),
+      color: 'red',
+    });
   }
 }
 </script>

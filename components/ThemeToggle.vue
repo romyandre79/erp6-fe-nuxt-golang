@@ -1,19 +1,18 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <div class="relative">
-      <select v-model="localTheme" class="w-full px-3 py-2 rounded-lg border bg-base-200">
-        <option v-for="t in store.themeList" :key="t.themeid" :value="t.themeid">
-          {{ t.description || t.themename }}
-        </option>
-      </select>
-
-      <!-- Preview color bubble -->
-      <div
-        v-if="previewColor"
-        class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border shadow"
-        :style="{ backgroundColor: previewColor }"
-      ></div>
-    </div>
+  <div class="relative w-10 h-10 flex items-center justify-center cursor-pointer group navbar-icon-wrapper">
+    <!-- Hidden select (interactive) -->
+    <select 
+      v-model="localTheme" 
+      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+      :title="selectedThemeName"
+    >
+      <option v-for="t in store.themeList" :key="t.themeid" :value="t.themeid">
+        {{ t.description || t.themename }}
+      </option>
+    </select>
+    
+    <!-- Visible icon -->
+    <i class="fa-solid fa-palette text-lg transition-colors" style="color: var(--navbar-icon-color, #6b7280);"></i>
   </div>
 </template>
 
@@ -24,22 +23,15 @@ import { useAuth } from '#imports';
 
 const store = useThemeStore();
 const auth = useAuth();
-const localTheme = ref(store.theme); // two-way bind
+const localTheme = ref(store.theme);
 
-// preview color
-const previewColor = computed(() => {
+// Get selected theme name
+const selectedThemeName = computed(() => {
   const f = store.themeList.find((t) => t.themeid === localTheme.value);
-  if (!f) return null;
-
-  try {
-    const themedata = JSON.parse(f.themedata || '{}');
-    return themedata?.primary || null;
-  } catch {
-    return null;
-  }
+  return f?.description || f?.themename || 'Theme';
 });
 
-// ketika select berubah → apply theme
+// when select changes → apply theme
 watch(localTheme, (val) => {
   auth.updateUserTheme(val);
   store.loadSingleThemes(val);
