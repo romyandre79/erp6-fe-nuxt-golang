@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-12 flex flex-col items-center py-2  border-r border-gray-700 z-20">
+    <div class="panel w-14 flex flex-col items-center py-2  border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"
@@ -33,16 +33,20 @@
             <div class="font-semibold text-xs text-gray-500 uppercase mb-2 tracking-wider">
               {{ cat.categoryname ?? cat.label ?? cat.name }}
             </div>
-            <div>
+            <div class="grid grid-cols-3 gap-2">
               <div
                 v-for="cmp in compsByCategory(cat)"
                 :key="cmp.componentname ?? cmp.code ?? cmp.name"
                 draggable="true"
                 @dragstart="dragStart($event, cmp)"
-                class="p-2 bg-white border rounded mb-1 cursor-grab flex items-center gap-2 hover:border-blue-400 hover:shadow-sm transition-all text-sm"
+                class="toolbox-node cursor-grab hover:scale-105 transition-all"
               >
-                <i :class="cmp.componentclass ?? cmp.icon" class="text-gray-600"></i>
-                <span class="truncate">{{ cmp.componenttitle ?? cmp.label ?? cmp.name }}</span>
+                <div class="node-icon-wrapper">
+                  <div class="node-icon">
+                    <i :class="cmp.componentclass ?? cmp.icon ?? 'fa-solid fa-cube'"></i>
+                  </div>
+                  <div class="node-label">{{ cmp.componenttitle ?? cmp.label ?? cmp.name }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -107,3 +111,51 @@ function dragStart(ev: DragEvent, cmp: any) {
   ev.dataTransfer?.setData('node', JSON.stringify(cmp));
 }
 </script>
+
+<style scoped>
+.toolbox-node .node-icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+}
+
+.toolbox-node .node-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  transition: all 0.2s ease;
+}
+
+.toolbox-node .node-icon i {
+  font-size: 20px;
+  color: #fff !important;
+}
+
+.toolbox-node .node-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+  max-width: 70px;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.toolbox-node:hover .node-icon {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+</style>

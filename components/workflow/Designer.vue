@@ -297,8 +297,11 @@ onMounted(async () => {
   if (flowObj && editor) {
     try {
       editor.import(flowObj);
-      // Convert old nodes to new icon style
-      setTimeout(() => convertOldNodesToIcons(), 100);
+      // Convert old nodes to new icon style and update connections
+      setTimeout(() => {
+        convertOldNodesToIcons();
+        updateAllConnections();
+      }, 100);
     } catch (e) {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
@@ -313,8 +316,11 @@ watch(
     try {
       const parsed = typeof wf.flow === 'string' ? JSON.parse(wf.flow) : wf.flow;
       editor.import(parsed.drawflow ? parsed : parsed.flow);
-      // Convert old nodes to new icon style
-      setTimeout(() => convertOldNodesToIcons(), 100);
+      // Convert old nodes to new icon style and update connections
+      setTimeout(() => {
+        convertOldNodesToIcons();
+        updateAllConnections();
+      }, 100);
     } catch (e) {
       console.error('❌ Failed to import workflow', e);
     }
@@ -370,6 +376,31 @@ function convertOldNodesToIcons() {
   });
   
   console.log(`✅ Converted ${oldNodes.length} old nodes to icon style`);
+  
+  // Update all connection paths after DOM changes
+  updateAllConnections();
+}
+
+/* ======================================================
+   Update all connection paths to match current DOM positions
+   ======================================================*/
+function updateAllConnections() {
+  if (!editor) return;
+  
+  // Get all node IDs from the editor data
+  const nodes = editor.drawflow.drawflow?.Home?.data;
+  if (!nodes) return;
+  
+  // Update connections for each node
+  Object.keys(nodes).forEach((nodeId) => {
+    try {
+      editor.updateConnectionNodes(`node-${nodeId}`);
+    } catch (e) {
+      // Ignore errors for nodes without connections
+    }
+  });
+  
+  console.log('✅ Updated all connection paths');
 }
 
 /* ======================================================

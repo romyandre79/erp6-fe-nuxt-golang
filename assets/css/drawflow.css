@@ -111,33 +111,25 @@ button * {
   box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
 }
 
-/* Adjust input/output positions for icon nodes */
-.drawflow-node .inputs,
-.drawflow-node .outputs {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.drawflow-node .inputs {
-  left: -10px;
-}
-
-.drawflow-node .outputs {
-  right: -10px;
-}
-
+/* Style input/output circles - let Drawflow handle positioning */
 .drawflow-node .input,
 .drawflow-node .output {
   width: 14px;
   height: 14px;
-  background: #fbbf24;
-  border: 2px solid #fff;
-  border-radius: 50%;
+  background: #fbbf24 !important;
+  border: 2px solid #fff !important;
+  border-radius: 50% !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: crosshair;
 }
 
 .drawflow-node .output {
-  background: #fff;
-  border: 2px solid #9ca3af;
+  background: #fff !important;
+  border: 2px solid #9ca3af !important;
+}
+
+/* Fix SVG path connection points */
+.drawflow .connection .main-path {
+  stroke-width: 3px;
+  stroke: #06b6d4;
 }
