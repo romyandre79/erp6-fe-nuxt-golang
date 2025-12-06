@@ -45,7 +45,7 @@
     </div>
 
     <!-- Table -->
-    <div class="w-full rounded-xl">
+    <div class="w-full rounded-xl overflow-x-auto">
       <table class="w-full">
         <thead class="text-sm uppercase font-semibold">
           <tr>
@@ -126,55 +126,30 @@
       </table>
 
       <!-- Pagination -->
-      <div v-if="enablePaging" class="paging flex justify-center items-center gap-2">
-        <span class="text-base-content/70"> Page {{ currentPage }} / {{ totalPages }} </span>
-
-        <select
-          v-if="enablePageSize"
-          v-model.number="pageSize"
-          class="border rounded px-2 py-1 text-sm"
-          @change="handlePageSizeChange"
-        >
-          <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-        </select>
-
-        <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100"
-          :disabled="currentPage === 1 || loading || totalPages === 0"
-          @click="firstPage"
-        >
-          <<
-        </button>
-        <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100"
-          :disabled="currentPage === 1 || loading || totalPages === 0"
-          @click="prevPage"
-        >
-          <
-        </button>
-        <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100"
-          :disabled="currentPage === totalPages || loading"
-          @click="nextPage"
-        >
-          >
-        </button>
-        <button
-          class="px-3 py-1 rounded-lg border hover:bg-base-100"
-          :disabled="currentPage === totalPages || loading"
-          @click="lastPage"
-        >
-          >>
-        </button>
-      </div>
+      <TableControls
+        v-model:pageSize="pageSize"
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        :loading="loading"
+        :enablePaging="enablePaging"
+        :enablePageSize="enablePageSize"
+        :pageSizeOptions="pageSizeOptions"
+        @page-size-change="handlePageSizeChange(fetchData)"
+        @first-page="firstPage(fetchData)"
+        @prev-page="prevPage(fetchData)"
+        @next-page="nextPage(fetchData)"
+        @last-page="lastPage(fetchData)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, h } from 'vue';
+import { ref, onMounted, h } from 'vue';
 import { useApi } from '#imports';
 import { TablePagination } from '#components';
+import { useTableLogic } from '../composables/useTableLogic';
+import TableControls from './TableControls.vue';
 
 const props = defineProps({
   title: String,
@@ -203,67 +178,29 @@ const props = defineProps({
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
 
-// States
-const currentPage = ref(1);
-const totalPages = ref(1);
-const searchQuery = ref('');
-const searchComplexQuery = ref<Record<string, string>>({});
-const pageSize = ref(props.pageSize);
-const totalRecords = ref(0);
-const rowsData = ref<any[]>([]);
-const loading = ref(false);
-
-// Selection
-const selectedKeys = ref<any[]>([]);
-const toggleRowSelection = (row: any) => {
-  const key = row[props.rowKey];
-  const index = selectedKeys.value.indexOf(key);
-  if (props.isInput) {
-    selectedKeys.value = [];
-  }
-  if (index === -1) selectedKeys.value.push(key);
-  else selectedKeys.value.splice(index, 1);
-};
-const isSelected = (row: any) => selectedKeys.value.includes(row[props.rowKey]);
-const toggleSelectAll = () => {
-  const currentPageKeys = rowsData.value.map((r) => r[props.rowKey]);
-  const allSelected = currentPageKeys.every((k) => selectedKeys.value.includes(k));
-  selectedKeys.value = allSelected
-    ? selectedKeys.value.filter((k) => !currentPageKeys.includes(k))
-    : Array.from(new Set([...selectedKeys.value, ...currentPageKeys]));
-};
-watch(
+const {
+  currentPage,
+  totalPages,
+  searchQuery,
+  searchComplexQuery,
+  pageSize,
+  totalRecords,
+  rowsData,
+  loading,
   selectedKeys,
-  (val) => {
-    const selectedRows = rowsData.value.filter((r) => val.includes(r[props.rowKey]));
-    emit('selection-change', selectedRows);
-  },
-  { deep: true },
-);
-
-// Expanded
-const expandedKey = ref<any | null>(null);
-const toggleExpand = (row: any) => {
-  const key = row[props.rowKey];
-  expandedKey.value = expandedKey.value === key ? null : key;
-};
-const isExpanded = (row: any) => {
-  return row && expandedKey.value === row[props.rowKey];
-};
-
-// Formatter
-const formatCellValue = (col: any, value: any) => {
-  if (['boolean', 'bool', 'checkbox'].includes(col.type))
-    return value
-      ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
-      : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
-  if (col.type === 'currency')
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
-      value || 0,
-    );
-  if (col.type === 'number') return new Intl.NumberFormat('id-ID').format(value || 0);
-  return value ?? '';
-};
+  toggleRowSelection,
+  isSelected,
+  toggleSelectAll,
+  expandedKey,
+  toggleExpand,
+  isExpanded,
+  formatCellValue,
+  handlePageSizeChange,
+  firstPage,
+  nextPage,
+  prevPage,
+  lastPage,
+} = useTableLogic(props, emit);
 
 // Fetch data
 async function fetchData() {
@@ -369,35 +306,6 @@ function renderTable(component: any) {
 onMounted(() => {
   fetchData();
 });
-
-const handlePageSizeChange = () => {
-  currentPage.value = 1;
-  fetchData();
-};
-const firstPage = () => {
-  if (currentPage.value > 0) {
-    currentPage.value = 1;
-    fetchData();
-  }
-};
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-    fetchData();
-  }
-};
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-    fetchData();
-  }
-};
-const lastPage = () => {
-  if (totalPages.value > 0) {
-    currentPage.value = totalPages.value;
-    fetchData();
-  }
-};
 
 defineExpose({ refreshTable: fetchData });
 </script>

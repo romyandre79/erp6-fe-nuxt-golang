@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
-  >
+  <div class="p-6">
     <FormRender v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle" />
   </div>
 </template>
@@ -9,9 +7,7 @@
 <script setup lang="ts">
 //import FormRenderer from '~/components/FormRenderer.vue'
 import FormRender from '~/components/FormRender.vue';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
 const route = useRoute();
 const { getMenuForm } = useAuth();
 const formSchema = ref<Record<string, any> | null>(null);

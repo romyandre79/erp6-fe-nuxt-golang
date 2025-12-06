@@ -169,3 +169,13 @@ textarea {
   color: var(--panel-color);
   box-shadow: var(--panel-shadow);
 }
+
+nav, .nav {
+  background: var(--nav-background);
+  color: var(--nav-color);
+}
+
+.navbar-admin {
+  background: var(--navbar-admin-background);
+  color: var(--navbar-admin-color);
+}

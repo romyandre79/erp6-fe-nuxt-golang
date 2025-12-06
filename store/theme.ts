@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, watch, onMounted } from 'vue';
 import { useCookie } from '#app';
-import { useApi } from '~/composables/useApi';
+import { useUserStore, useApi } from '#imports';
 
 export const useThemeStore = defineStore('theme', () => {
   const Api = useApi();
@@ -13,15 +13,13 @@ export const useThemeStore = defineStore('theme', () => {
   const userStore = useUserStore();
 
   // Load theme list dari API
-  const loadThemes = async () => {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchcombotheme');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+  async function loadThemes() {
+    const dataForm = new FormData();
+
+    const res = (await Api.post('auth/load-theme', dataForm)) as any;
     themeList.value = res.data?.data || [];
-  };
+  }
 
   const loadSingleThemes = async (themename: string) => {
     const dataForm = new FormData();
@@ -30,11 +28,11 @@ export const useThemeStore = defineStore('theme', () => {
     dataForm.append('search', 'true');
     dataForm.append('themename', themename);
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = (await Api.post('admin/execute-flow', dataForm)) as any;
     themeData.value = res.data?.data || [];
   };
 
-  const saveActiveTheme = async (newData) => {
+  const saveActiveTheme = async (newData: any) => {
     const dataForm = new FormData();
     dataForm.append('flowname', 'modiftheme');
     dataForm.append('themedata', newData);
@@ -55,8 +53,13 @@ export const useThemeStore = defineStore('theme', () => {
 
   // Apply theme
   const applyTheme = async (key: string) => {
+    // Guard: prevent duplicate calls if theme is already applied and themes are loaded
+    if (theme.value === key && themeList.value.length > 0) {
+      return;
+    }
+
     await loadThemes();
-    const found = themeList.value.find((t) => t.themeid === key);
+    const found = themeList.value.find((t) => t.themeid === Number(key));
     if (!found) return;
 
     // themedata harus berupa objek key-value
@@ -69,14 +72,17 @@ export const useThemeStore = defineStore('theme', () => {
       }
     }
 
-    theme.value = key;
+    // Only update theme.value if it's different to prevent watcher trigger
+    if (theme.value !== key) {
+      theme.value = key;
+    }
     themeCookie.value = key;
     document.documentElement.setAttribute('data-theme', key);
   };
 
   // initialize
   onMounted(async () => {
-    userStore.loadAuth();
+    await userStore.loadAuth();
     if (userStore.token) {
       themeCookie.value = userStore.user?.themeid;
       await loadThemes();
@@ -97,6 +103,7 @@ export const useThemeStore = defineStore('theme', () => {
 
   return {
     theme,
+    themeCookie,
     themeData,
     themeList,
     applyTheme,
