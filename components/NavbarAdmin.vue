@@ -48,7 +48,7 @@
         <transition name="dropdown">
           <div
             v-if="isOpen"
-            class="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
           >
             <!-- User Info Header -->
             <div class="px-4 py-4 border-b border-slate-200 dark:border-gray-800">

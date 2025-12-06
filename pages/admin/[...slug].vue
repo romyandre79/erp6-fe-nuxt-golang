@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
-  >
+  <div class="p-6">
     <FormRender v-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle" />
   </div>
 </template>
