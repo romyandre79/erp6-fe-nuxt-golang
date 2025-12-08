@@ -134,16 +134,30 @@ function initEditor(container: HTMLElement) {
 
   /* -------- Register events --------*/
   ed.on('nodeCreated', () => scheduleSave());
-  ed.on('nodeRemoved', () => scheduleSave());
+  ed.on('nodeRemoved', (id: string) => {
+    // When node removed, cleanup its properties from DB
+    const cleanId = id.replace('node-', '');
+    if (typeof store.deleteNodeProperties === 'function') {
+      try {
+        store.deleteNodeProperties(cleanId);
+      } catch (err) {
+        console.error('Error deleteNodeProperties:', err);
+      }
+    }
+    scheduleSave();
+  });
   ed.on('connectionCreated', () => scheduleSave());
   ed.on('connectionRemoved', () => scheduleSave());
 
   ed.on('nodeSelected', async (id: string) => {
+    console.log('Designer: nodeSelected event', id);
     const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
+      console.log('Designer: Loading properties for node', cleanId, node.name);
       await store.loadComponentProperties(node.name, cleanId.toString());
+      console.log('Designer: Setting selected node in store');
       store.setSelectedNode(node);
     }
     
@@ -262,7 +276,7 @@ async function uploadPlugin() {
     const config = useRuntimeConfig();
     const apiBase = config.public.apiBase || '/api';
 
-    xhr.open('POST', `${apiBase}/plugins/upload`);
+    xhr.open('POST', `${apiBase}/admin/plugins/upload`);
 
     // Add auth token if needed
     const token = useCookie('token');
@@ -609,7 +623,10 @@ function injectNodeResults(results: any[]) {
       
       // When expanding, make panel wider for better readability
       if (!isExpanded) {
-        panel.style.minWidth = '250px';
+        panel.style.minWidth = '400px';
+      } else {
+        // When collapsing, reset to original width
+        panel.style.minWidth = `${panelWidth}px`;
       }
     });
     

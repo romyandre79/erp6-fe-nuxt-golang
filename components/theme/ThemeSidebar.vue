@@ -201,8 +201,11 @@ const categories = [
     props: [
       { key: 'sidebar-background', label: 'Sidebar Background', type: 'color' },
       { key: 'sidebar-border-color', label: 'Sidebar Border Color', type: 'color' },
+      { key: 'sidebar-logo-background', label: 'Sidebar Logo Background', type: 'text' },
+      { key: 'sidebar-logo-color', label: 'Sidebar Logo Color', type: 'color' },
       { key: 'sidebar-title-color', label: 'Sidebar Title Color', type: 'color' },
       { key: 'sidebar-menu-color', label: 'Menu Text Color', type: 'color' },
+      { key: 'sidebar-menu-radius', label: 'Menu Radius (e.g. 0.75rem)', type: 'text' },
       { key: 'sidebar-menu-hover-background', label: 'Menu Hover Background', type: 'color' },
       { key: 'sidebar-menu-hover-color', label: 'Menu Hover Color', type: 'color' },
       { key: 'sidebar-menu-active-background', label: 'Menu Active Background', type: 'color' },
@@ -210,9 +213,12 @@ const categories = [
       { key: 'sidebar-submenu-border-color', label: 'Submenu Border Color', type: 'color' },
       { key: 'sidebar-collapse-background', label: 'Collapse Button Background', type: 'color' },
       { key: 'sidebar-collapse-color', label: 'Collapse Button Color', type: 'color' },
+      { key: 'sidebar-collapse-radius', label: 'Collapse Button Radius', type: 'text' },
+      { key: 'sidebar-collapse-hover-background', label: 'Collapse Button Hover Background', type: 'color' },
       { key: 'sidebar-profile-icon-color', label: 'Profile Icon Color', type: 'color' },
       { key: 'sidebar-profile-name-color', label: 'Profile Name Color', type: 'color' },
       { key: 'sidebar-profile-email-color', label: 'Profile Email Color', type: 'color' },
+      { key: 'sidebar-radius', label: 'Sidebar Generic Radius', type: 'text' },
     ],
   },
   {
@@ -226,6 +232,7 @@ const categories = [
       { key: 'navbar-admin-border-color', label: 'Navbar Border Color', type: 'color' },
       { key: 'navbar-icon-color', label: 'Navbar Icon Color', type: 'color' },
       { key: 'navbar-icon-hover-color', label: 'Navbar Icon Hover Color', type: 'color' },
+      { key: 'primary-light', label: 'Primary Light Color', type: 'color' },
     ],
   },
   {
@@ -260,6 +267,12 @@ const categories = [
       { key: 'border', label: 'Common Border', type: 'select', options: optionBorder },
       { key: 'font-size', label: 'Common Font Size', type: 'text' },
       { key: 'font-family', label: 'Common Font Family', type: 'text' },
+      { key: 'color-bg', label: 'Tailwind Bg', type: 'color' },
+      { key: 'color-text', label: 'Tailwind Text', type: 'color' },
+      { key: 'color-primary', label: 'Tailwind Primary', type: 'color' },
+      { key: 'color-secondary', label: 'Tailwind Secondary', type: 'color' },
+      { key: 'background-color', label: 'Global Background', type: 'color' },
+      { key: 'text-color', label: 'Global Text', type: 'color' },
     ],
   },
   {
@@ -276,6 +289,11 @@ const categories = [
     props: [
       { key: 'navbar-admin-background', label: 'Navbar Admin Background', type: 'color' },
       { key: 'navbar-admin-color', label: 'Navbar Admin Color', type: 'color' },
+      { key: 'navbar-admin-border-color', label: 'Navbar Admin Border Color', type: 'color' },
+      { key: 'navbar-icon-color', label: 'Navbar Icon Color', type: 'color' },
+      { key: 'navbar-icon-hover-color', label: 'Navbar Icon Hover Color', type: 'color' },
+      { key: 'navbar-item-radius', label: 'Navbar Item Radius', type: 'text' },
+      { key: 'navbar-dropdown-radius', label: 'Navbar Dropdown Radius', type: 'text' },
     ],
   },
   {

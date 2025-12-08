@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import FlowParameter from './FlowParameter.vue';
 import PropertyForm from './PropertyForm.vue';
@@ -100,10 +100,28 @@ function toggleActivity(id: string) {
   }
 }
 
+// Auto-switch to property tab when a node is selected
+watch(
+  () => store.selectedNode,
+  (newNode) => {
+    if (newNode) {
+      activeActivity.value = 'property';
+      isPanelOpen.value = true;
+    }
+  }
+);
+
 function compsByCategory(cat: any) {
   return store.components.filter((c) => {
     if (!c) return false;
-    return c.categoryname === cat.categoryname;
+    // Match by categoryname if available
+    if (c.categoryname && cat.categoryname) {
+      return c.categoryname === cat.categoryname;
+    }
+    // Fallback to other properties
+    const catId = cat.id ?? cat.categoryid ?? cat.name;
+    const compCatId = c.categoryid ?? c.categoryname;
+    return compCatId === catId;
   });
 }
 

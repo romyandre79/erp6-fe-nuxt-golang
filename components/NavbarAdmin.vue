@@ -21,7 +21,8 @@
         <!-- Trigger -->
         <button
           @click.stop="toggleDropdown"
-          class="profile-trigger flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2 transition-all duration-200 group"
+          class="profile-trigger flex items-center gap-3 cursor-pointer px-3 py-2 transition-all duration-200 group"
+          style="border-radius: var(--navbar-item-radius);"
         >
           <!-- Avatar -->
           <div class="w-9 h-9 flex items-center justify-center" style="color: var(--sidebar-profile-icon-color, #6366f1);">
@@ -48,7 +49,8 @@
         <transition name="dropdown">
           <div
             v-if="isOpen"
-            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+            style="border-radius: var(--navbar-dropdown-radius);"
           >
             <!-- User Info Header -->
             <div class="px-4 py-4 border-b border-slate-200 dark:border-gray-800">

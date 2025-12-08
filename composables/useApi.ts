@@ -4,10 +4,9 @@ export const useApi = () => {
   const config = useRuntimeConfig();
   const userStore = useUserStore();
   userStore.loadAuth();
-  const token = userStore.token;
-
   const getHeaders = (body?: any) => {
     const headers: Record<string, string> = {};
+    const token = userStore.token; // Get token dynamically
 
     if (token) headers.Authorization = `Bearer ${token}`;
 

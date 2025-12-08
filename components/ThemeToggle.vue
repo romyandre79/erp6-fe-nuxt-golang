@@ -12,7 +12,7 @@
     </select>
     
     <!-- Visible icon -->
-    <i class="fa-solid fa-palette text-lg transition-colors" style="color: var(--navbar-icon-color, #6b7280);"></i>
+    <i class="fa-solid fa-palette text-lg transition-colors"></i>
   </div>
 </template>
 

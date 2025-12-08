@@ -22,10 +22,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
     try {
       // 1. get workflow instance (backend returns nested structure)
       const dataForm = new FormData();
-      dataForm.append('flowname', 'getworkflow');
+      dataForm.append('flowname', 'getworkflowbywfname');
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
-      dataForm.append('workflowid', id);
       dataForm.append('wfname', id);
 
       const res = await api.post('/admin/execute-flow', dataForm);
@@ -88,6 +87,28 @@ export const useWorkflowStore = defineStore('workflow', () => {
       componentDetails.value = r6.data?.data ?? [];
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function loadComponents() {
+    try {
+      // Load categories
+      const f2 = new FormData();
+      f2.append('flowname', 'searchcombocomponentcategory');
+      f2.append('menu', 'admin');
+      f2.append('search', 'true');
+      const r2: any = await api.post('/admin/execute-flow', f2);
+      categories.value = r2.data?.data ?? [];
+
+      // Load components
+      const f3 = new FormData();
+      f3.append('flowname', 'searchcombocomponent');
+      f3.append('menu', 'admin');
+      f3.append('search', 'true');
+      const r3: any = await api.post('/admin/execute-flow', f3);
+      components.value = r3.data?.data ?? [];
+    } catch (e) {
+      console.error('Failed to load components', e);
     }
   }
 
@@ -224,6 +245,49 @@ export const useWorkflowStore = defineStore('workflow', () => {
     saveFlow(editor.export());
   }
 
+  async function deleteNodeProperties(nodeId: string | number) {
+    // 1. Find all saved properties for this node
+    const propsToDelete = componentDetails.value.filter((x) => Number(x.nodeid) === Number(nodeId));
+
+    if (propsToDelete.length === 0) return;
+
+    // 2. Delete each one from backend
+    for (const prop of propsToDelete) {
+      if (!prop.workflowdetailid) {
+        console.warn('Property missing workflowdetailid', prop);
+        continue;
+      }
+
+      const fd = new FormData();
+      fd.append('flowname', 'table'); 
+      fd.append('menu', 'admin');
+      fd.append('search', 'false');
+      
+      // Generic table params
+      fd.append('method', 'purge');
+      fd.append('table', 'workflowdetail');
+      fd.append('tableparam', 'workflowdetailid');
+      fd.append('workflowdetailid', prop.workflowdetailid.toString());
+
+      try {
+        console.log(`Sending purge request for details ID: ${prop.workflowdetailid}`);
+        const res = await api.post('/admin/execute-flow', fd);
+        console.log(`Purge result for ${prop.workflowdetailid}:`, res);
+      } catch (e) {
+        console.error(`Failed to delete property ${prop.workflowdetailid}`, e);
+      }
+    }
+
+    // 3. Remove from local state
+    componentDetails.value = componentDetails.value.filter((x) => Number(x.nodeid) !== Number(nodeId));
+    
+    // Also clear from merged properties if current node
+    if (selectedNode.value && Number(selectedNode.value.id) === Number(nodeId)) {
+      componentProperties.value = [];
+      selectedNode.value = null;
+    }
+  }
+
   return {
     workflow,
     categories,
@@ -233,10 +297,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
     parameters,
     loading,
     loadWorkflow,
+    loadComponents,
     findComponentByName,
     loadComponentProperties,
     saveFlow,
     setSelectedNode,
     updateSelectedNodeData,
+    deleteNodeProperties,
   };
 });

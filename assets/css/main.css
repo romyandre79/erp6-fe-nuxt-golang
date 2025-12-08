@@ -9,6 +9,15 @@ body {
   border-radius: var(--border-radius);
   font-size: var(--font-size);
   font-family: var(--font-family);
+
+  /* Sidebar Radius Defaults */
+  --sidebar-radius: 0.75rem; /* rounded-xl */
+  --sidebar-menu-radius: 0.75rem; /* rounded-xl */
+  --sidebar-collapse-radius: 9999px; /* rounded-full */
+
+  /* Navbar Defaults */
+  --navbar-item-radius: 0.75rem; /* rounded-xl */
+  --navbar-dropdown-radius: 1rem; /* rounded-2xl */
 }
 
 button {

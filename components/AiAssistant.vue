@@ -248,10 +248,17 @@ const sendAiMessage = async () => {
     aiInput.value = '';
     await scrollToBottom(aiMessagesContainer.value);
 
-    // Call API
+    // Call execute-flow API with AI command
     try {
-        const { data }: any = await post('/admin/ai/command', { message: text });
-        const reply = data?.reply || data?.data?.reply || "Done";
+        const formData = new FormData();
+        formData.append('flowname', 'aicommand');
+        formData.append('menu', 'admin');
+        formData.append('search', 'false');
+        formData.append('command', text);
+        formData.append('user_id', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/admin/execute-flow', formData);
+        const reply = data?.reply || data?.data?.reply || data?.result?.reply || "Done";
         aiMessages.value.push({ text: reply, sender: 'ai' });
     } catch(e) {
         aiMessages.value.push({ text: "Error connecting to AI.", sender: 'ai' });
@@ -263,10 +270,18 @@ const sendAiMessage = async () => {
 const fetchUsers = async () => {
     loadingUsers.value = true;
     try {
-        const { data }: any = await get('/admin/users/list');
-        users.value = data || [];
+        // Use execute-flow to get user list
+        const formData = new FormData();
+        formData.append('flowname', 'getuserlist');
+        formData.append('menu', 'admin');
+        formData.append('search', 'true');
+        formData.append('action', 'getuserlist');
+        formData.append('senderid', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/admin/execute-flow', formData);
+        users.value = data?.result || data?.data || data || [];
         // Init unread counts if needed
-        users.value.forEach(u => {
+        users.value.forEach((u: any) => {
             if (!unreadCounts.value[u.useraccessid]) unreadCounts.value[u.useraccessid] = 0;
         });
     } catch(e) {
@@ -290,12 +305,22 @@ const selectUser = (user: any) => {
 
 const fetchChatHistory = async (targetId: number) => {
     try {
-        const { data }: any = await get(`/admin/chat/history?target_id=${targetId}`);
-        if(data) {
+        // Use execute-flow to get chat history
+        const formData = new FormData();
+        formData.append('flowname', 'chat');
+        formData.append('menu', 'admin');
+        formData.append('search', 'true');
+        formData.append('action', 'gethistory');
+        formData.append('targetid', String(targetId));
+        formData.append('senderid', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/admin/execute-flow', formData);
+        const history = data?.result || data?.data || data || [];
+        if(history) {
              // Map backend definition: senderid -> senderId, created_at -> timestamp
-             chatHistory.value[targetId] = data.map((d: any) => ({
+             chatHistory.value[targetId] = history.map((d: any) => ({
                  text: d.message,
-                 senderId: d.sender_id,
+                 senderId: d.senderid,
                  timestamp: d.created_at
              }));
         }
@@ -382,7 +407,7 @@ const handleWsMessage = async (payload: any) => {
     
     // Chat Message
     if (payload.type === 'chat') {
-        const senderId = payload.sender_id;
+        const senderId = payload.senderid;
         
         // Ensure reactivity for new keys
         if (!chatHistory.value[senderId]) {
@@ -404,8 +429,15 @@ const handleWsMessage = async (payload: any) => {
              unreadCounts.value[senderId]++;
         }
     }
-// ...
     
+    // Status Update
+    else if (payload.type === 'status_update') {
+        const user = users.value.find(u => u.useraccessid === payload.user_id);
+        if (user) {
+            user.isonline = payload.isonline;
+        }
+    }
+
     // WebRTC Signals
     else if (payload.type === 'offer') {
         handleIncomingOffer(payload);
@@ -428,7 +460,7 @@ const sendChatMessage = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const payload = JSON.stringify({
             type: 'chat',
-            target_id: targetId,
+            targetid: targetId,
             data: { text, timestamp }
         });
         socket.send(payload);
@@ -518,11 +550,11 @@ const createPeerConnection = (targetUserId: number) => {
 };
 
 const sendSignal = (type: string, data: any, targetId?: number) => {
-    const target = targetId || selectedUser.value?.useraccessid || incomingCall.value?.sender_id;
+    const target = targetId || selectedUser.value?.useraccessid || incomingCall.value?.senderid;
     if (socket && target) {
         socket.send(JSON.stringify({
             type,
-            target_id: target,
+            targetid: target,
             data
         }));
     }
@@ -531,11 +563,11 @@ const sendSignal = (type: string, data: any, targetId?: number) => {
 // Handle Incoming Signals
 const handleIncomingOffer = async (payload: any) => {
     // Show Incoming Call Modal
-    const callerId = payload.sender_id;
+    const callerId = payload.senderid;
     const callerName = users.value.find(u => u.useraccessid === callerId)?.realname || 'Unknown User';
     
     incomingCall.value = {
-        sender_id: callerId,
+        senderid: callerId,
         callerName,
         offer: payload.data
     };
@@ -543,7 +575,7 @@ const handleIncomingOffer = async (payload: any) => {
 
 const answerCall = async () => {
     if (!incomingCall.value) return;
-    const callerId = incomingCall.value.sender_id;
+    const callerId = incomingCall.value.senderid;
     const offer = incomingCall.value.offer;
     incomingCall.value = null; // Hide modal
     
