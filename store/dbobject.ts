@@ -42,7 +42,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
 
-      let res = await api.post('/admin/execute-flow', dataForm);
+      let res = await api.post('/api/admin/execute-flow', dataForm);
       dbobjects.value = res?.data?.data ?? {};
 
       dataForm = new FormData();
@@ -50,7 +50,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
 
-      res = await api.post('/admin/execute-flow', dataForm);
+      res = await api.post('/api/admin/execute-flow', dataForm);
       dbobjects.value = res?.data?.data ?? {};
     } finally {
       loading.value = false;
@@ -66,7 +66,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('search', 'true');
       dataForm.append('dbobjectid', id);
 
-      const res = await api.post('/admin/execute-flow', dataForm);
+      const res = await api.post('/api/admin/execute-flow', dataForm);
       dbobject.value = res?.data?.data ?? {};
     } finally {
       loading.value = false;
@@ -86,7 +86,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('ispublished', dbobject.ispublished);
       dataForm.append('comment', dbobject.comment);
 
-      await api.post('/admin/execute-flow', dataForm);
+      await api.post('/api/admin/execute-flow', dataForm);
     } finally {
       loading.value = false;
     }
@@ -100,7 +100,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('search', 'true');
       dataForm.append('dbobjectid', id);
 
-      await api.post('/admin/execute-flow', dataForm);
+      await api.post('/api/admin/execute-flow', dataForm);
     } finally {
       loading.value = false;
     }
@@ -114,7 +114,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('operation', operation);
       dataForm.append('table', JSON.stringify(tableData));
 
-      const res = await api.post('/admin/execute-table-operation', dataForm);
+      const res = await api.post('/api/admin/execute-table-operation', dataForm);
       return res?.data ?? res;
     } finally {
       loading.value = false;

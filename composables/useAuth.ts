@@ -9,10 +9,10 @@ export const useAuth = () => {
 
   const login = async (payload: { username: string; password: string }) => {
     try {
-      const res = await post('/auth/login', payload);
+      const res = await post('/api/auth/login', payload);
       if (res.code == 200) {
         userStore.setAuth(res.data?.token, res.data.user);
-        navigateTo('/admin/dashboard');
+        navigateTo('/api/admin/dashboard');
       } else {
         throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }
@@ -24,7 +24,7 @@ export const useAuth = () => {
 
   const me = async () => {
     try {
-      const res = await get('/auth/me');
+      const res = await get('/api/auth/me');
       if (res.code == 200) {
         return res;
       } else {
@@ -47,7 +47,7 @@ export const useAuth = () => {
       dataForm.append('themeid', themeid);
       dataForm.append('useraccessid', userStore.user?.userid);
       dataForm.append('languageid', userStore.user?.languageid);
-      const res = await post('admin/execute-flow', dataForm);
+      const res = await post('api/admin/execute-flow', dataForm);
       if (res.code == 200) {
         userStore.setAuth(userStore.token, {
           ...userStore.user,
@@ -73,7 +73,7 @@ export const useAuth = () => {
       dataForm.append('themeid', userStore.user?.themeid);
       dataForm.append('useraccessid', userStore.user?.userid);
       dataForm.append('languageid', languageid);
-      const res = await post('admin/execute-flow', dataForm);
+      const res = await post('api/admin/execute-flow', dataForm);
       if (res.code == 200) {
         return res;
       } else {
@@ -93,7 +93,7 @@ export const useAuth = () => {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
       dataForm.append('menuname', slug);
-      const res = await post('admin/execute-flow', dataForm);
+      const res = await post('api/admin/execute-flow', dataForm);
       if (res.code == 200) {
         return res;
       } else {

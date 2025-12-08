@@ -81,7 +81,7 @@ export default defineNuxtConfig({
     public: {
       appName: process.env.APP_NAME,
       companyId: process.env.COMPANY_ID,
-      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
+      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888/api',
       apiToken: process.env.PUBLIC_API_TOKEN || '',
       mode: process.env.MODE || 'development',
     },

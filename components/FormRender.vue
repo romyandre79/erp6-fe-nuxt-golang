@@ -195,7 +195,7 @@ async function edit(key: string) {
       }
       
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res.code == 200) {
           const record = res.data.data;
           for (const key in record) {
@@ -222,7 +222,7 @@ async function edit(key: string) {
       dataForm.append('search', 'true');
       dataForm.append(primary, selectedRows.value[0][primary]);
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res.code == 200) {
           const record = res.data.data;
           for (const key in record) {
@@ -267,7 +267,7 @@ async function deleteData(table: any) {
       dataForm.append('search', 'true');
       dataForm.append(parsedSchema.value.primary, selectedRows.value[index][parsedSchema.value.primary]);
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res?.code == 200) {
           tableRef.value.refreshTable();
         } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
@@ -295,7 +295,7 @@ async function downForm(mode: any) {
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
     }
-    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName + '.' + mode);
+    await Api.donlotFile('/api/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
 }
 
@@ -303,7 +303,7 @@ async function downTemplate() {
   let dataForm = new FormData();
 
   dataForm.append('menu', props.menuName);
-  await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
+  await Api.donlotFile('/api/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
 function navigate(key: any) {
@@ -388,7 +388,7 @@ async function handleFileChange(e: Event) {
     isUploading.value = true;
     uploadProgress.value = 0;
 
-    const res = await Api.post('admin/execute-flow', form);
+    const res = await Api.post('api/admin/execute-flow', form);
 
     if (res.code === 200) {
       toast.add({
@@ -903,7 +903,7 @@ const ReadHandler = async () => {
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     formData.value = {};
     if (res?.data?.data) {
       const firstRow = res?.data?.data;
@@ -929,7 +929,7 @@ const CreateHandler = async () => {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
         title: $t('TITLE UPDATE'),
@@ -959,7 +959,7 @@ const UpdateHandler = async () => {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
         title: $t('TITLE UPDATE'),
@@ -988,7 +988,7 @@ const DeleteHandler = async () => {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
         title: $t('TITLE DELETE'),
@@ -1108,7 +1108,7 @@ async function saveData(key: any) {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
         title: $t('TITLE UPDATE'),

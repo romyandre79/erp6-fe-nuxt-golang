@@ -220,7 +220,7 @@ const saveSchema = async () => {
   dataForm.append('recordstatus', dataMenu.recordStatus);
   dataForm.append('menuform', JSON.stringify(formattedJson.value));
   try {
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
       toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
     } else {

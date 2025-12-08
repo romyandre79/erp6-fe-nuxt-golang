@@ -1,9 +1,11 @@
 <script setup>
 import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
+import { useUserStore } from '../store/user';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
+const userStore = useUserStore();
 
 onMounted(async () => {
   themeStore.applyCurrentTheme();
@@ -49,6 +51,7 @@ onMounted(async () => {
           </div>
         </footer>
       </div>
+      <AiAssistant v-if="userStore.token" />
     </UApp>
   </ClientOnly>
 </template>

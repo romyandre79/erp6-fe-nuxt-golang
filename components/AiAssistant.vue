@@ -257,7 +257,7 @@ const sendAiMessage = async () => {
         formData.append('command', text);
         formData.append('user_id', String(myUserId.value || ''));
         
-        const { data }: any = await post('/admin/execute-flow', formData);
+        const { data }: any = await post('/api/admin/execute-flow', formData);
         const reply = data?.reply || data?.data?.reply || data?.result?.reply || "Done";
         aiMessages.value.push({ text: reply, sender: 'ai' });
     } catch(e) {
@@ -278,7 +278,7 @@ const fetchUsers = async () => {
         formData.append('action', 'getuserlist');
         formData.append('senderid', String(myUserId.value || ''));
         
-        const { data }: any = await post('/admin/execute-flow', formData);
+        const { data }: any = await post('/api/admin/execute-flow', formData);
         users.value = data?.result || data?.data || data || [];
         // Init unread counts if needed
         users.value.forEach((u: any) => {
@@ -314,7 +314,7 @@ const fetchChatHistory = async (targetId: number) => {
         formData.append('targetid', String(targetId));
         formData.append('senderid', String(myUserId.value || ''));
         
-        const { data }: any = await post('/admin/execute-flow', formData);
+        const { data }: any = await post('/api/admin/execute-flow', formData);
         const history = data?.result || data?.data || data || [];
         if(history) {
              // Map backend definition: senderid -> senderId, created_at -> timestamp

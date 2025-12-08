@@ -238,7 +238,7 @@ async function fetchData() {
       if (internalRelationKey.value) {
         dataForm.append(internalRelationKey.value, internalSelectedKeyData.value);
       }
-      res = await Api.post('/admin/execute-flow', dataForm);
+      res = await Api.post('/api/admin/execute-flow', dataForm);
     } else {
       const params = { page: currentPage.value, limit: pageSize.value, search: searchQuery.value };
       emit('fetch-params', params);

@@ -139,7 +139,7 @@ const handleLogout = async () => {
 
 const handleProfile = () => {
   isOpen.value = false;
-  navigateTo('/admin/profile');
+  navigateTo('/api/admin/profile');
 };
 
 onMounted(() => document.addEventListener('click', handleClickOutside));

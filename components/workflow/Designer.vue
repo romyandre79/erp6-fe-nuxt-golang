@@ -276,7 +276,7 @@ async function uploadPlugin() {
     const config = useRuntimeConfig();
     const apiBase = config.public.apiBase || '/api';
 
-    xhr.open('POST', `${apiBase}/admin/plugins/upload`);
+    xhr.open('POST', `${apiBase}/api/admin/plugins/upload`);
 
     // Add auth token if needed
     const token = useCookie('token');
@@ -683,7 +683,7 @@ async function testFlow() {
       const element = store.parameters[index];
       dataForm.append(element.parametername, element.parametervalue);
     }
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     payload.value = JSON.stringify(formDataToObject(dataForm), null, 2);
     showPayload.value = true;
 
