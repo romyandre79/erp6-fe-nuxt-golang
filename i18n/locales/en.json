@@ -357,5 +357,71 @@
   "ENTER A GROUP": "Enter A Group",
   "SEARCH A PROVINCE CODE": "Search A Province Code",
   "SEARCH A PROVINCE NAME": "Search A Province Name",
-  "ENTER A COUNTRY CODE": "Enter A Country Code"
+  "ENTER A COUNTRY CODE": "Enter A Country Code",
+  "LANDING": {
+    "NAV": {
+      "FEATURES": "Features",
+      "AUTOMATION": "Automation",
+      "PRICING": "Pricing",
+      "CONTACT": "Contact",
+      "GET_STARTED": "Get Started",
+      "LOGIN": "Login"
+    },
+    "HERO": {
+      "TITLE_PREFIX": "Automate Everything with",
+      "TITLE_SUFFIX": "Capella ERP v6",
+      "SUBTITLE": "Modern ERP platform with integrated workflow automation. Build complex business processes with visual flow builder like n8n.",
+      "START_TRIAL": "Start Free Trial",
+      "WATCH_DEMO": "Watch Demo"
+    },
+    "STATS": {
+      "TEMPLATES": "Workflow Templates",
+      "UPTIME": "Uptime SLA",
+      "INTEGRATIONS": "Integrations",
+      "SUPPORT": "Support"
+    },
+    "FEATURES": {
+      "TITLE": "Powerful Features",
+      "SUBTITLE": "Everything you need to run a modern business",
+      "VISUAL_BUILDER": { "TITLE": "Visual Workflow Builder", "DESC": "Drag-and-drop interface to build complex automation workflows without coding" },
+      "REALTIME": { "TITLE": "Real-time Processing", "DESC": "Execute workflows in real-time with live monitoring" },
+      "SECURITY": { "TITLE": "Enterprise Security", "DESC": "End-to-end encryption, role-based access, and complete audit trails" },
+      "ANALYTICS": { "TITLE": "Advanced Analytics", "DESC": "Interactive dashboards with real-time insights for decision making" },
+      "MODULAR": { "TITLE": "Modular Architecture", "DESC": "Activate only modules you need, scale as required" },
+      "CUSTOM_NODES": { "TITLE": "Custom Nodes", "DESC": "Create your own custom nodes with JavaScript or Python" }
+    },
+    "AUTOMATION": {
+      "TITLE_PREFIX": "Automation Made",
+      "TITLE_SUFFIX": "Simple",
+      "SUBTITLE": "Workflow builder inspired by n8n for limitless automation",
+      "COMPLEX_WORKFLOWS": "Build Complex Workflows Visually",
+      "TRIGGER": { "TITLE": "Trigger Events", "DESC": "Webhook, Schedule, Manual, Database change, and more" },
+      "LOGIC": { "TITLE": "Conditional Logic", "DESC": "IF/ELSE, Switch, Filter, and conditional routing" },
+      "TRANSFORM": { "TITLE": "Data Transformation", "DESC": "Map, merge, split, aggregate data easily" },
+      "INTEGRATION": { "TITLE": "Integration Ready", "DESC": "Connect to 1000+ apps and services" }
+    },
+    "CTA": {
+      "TITLE": "Ready to Transform Your Business?",
+      "SUBTITLE": "Join thousands of companies already using Capella ERP v6",
+      "START_TRIAL": "Start 30-Day Free Trial",
+      "SCHEDULE_DEMO": "Schedule Demo"
+    },
+    "FOOTER": {
+      "TAGLINE": "Modern ERP platform with automation excellence",
+      "PRODUCT": "Product",
+      "COMPANY": "Company",
+      "LEGAL": "Legal",
+      "COPYRIGHT": "© 2024 Capella ERP. All rights reserved.",
+      "LINKS": {
+        "ABOUT": "About",
+        "BLOG": "Blog",
+        "CAREERS": "Careers",
+        "PRIVACY": "Privacy",
+        "TERMS": "Terms",
+        "SECURITY": "Security",
+        "DOCUMENTATION": "Documentation",
+        "API": "API"
+      }
+    }
+  }
 }

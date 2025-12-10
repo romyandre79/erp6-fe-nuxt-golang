@@ -220,7 +220,7 @@ const saveSchema = async () => {
   dataForm.append('recordstatus', dataMenu.recordStatus);
   dataForm.append('menuform', JSON.stringify(formattedJson.value));
   try {
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
       toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
     } else {
@@ -245,6 +245,24 @@ const dataMenu = reactive({
   recordStatus: Number,
 });
 
+const hydrateNodeProps = (nodes: NodeSchema[]) => {
+  nodes.forEach((node) => {
+    const defaults = getDefaultProps(node.type);
+    // Merge defaults with existing props, preserving existing values but adding missing keys
+    node.props = { ...defaults, ...node.props };
+    
+    // Explicitly ensure key exists if it's in defaults, even if it was lost
+    if ('key' in defaults && !('key' in node.props)) {
+      node.props.key = defaults.key;
+    }
+
+    if (node.children && node.children.length > 0) {
+      hydrateNodeProps(node.children);
+    }
+  });
+  return nodes;
+};
+
 const loadSchema = async () => {
   try {
     const res = await getMenuForm(route.params.slug);
@@ -262,7 +280,8 @@ const loadSchema = async () => {
       dataMenu.recordStatus = res?.data.data.recordstatus;
       if (res?.data.data.menuform != '') {
         formSchema.value = res?.data?.data.menuform;
-        canvasComponents.value = JSON.parse(res?.data?.data.menuform);
+        let parsed = JSON.parse(res?.data?.data.menuform);
+        canvasComponents.value = hydrateNodeProps(parsed);
       }
     } else {
       console.error('Invalid response from ', res);
@@ -281,7 +300,8 @@ const copySchema = async () => {
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
           formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = JSON.parse(res?.data?.data.menuform);
+          let parsed = JSON.parse(res?.data?.data.menuform);
+          canvasComponents.value = hydrateNodeProps(parsed);
         }
       } else {
         console.error('Invalid response from ', res);

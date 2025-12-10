@@ -57,6 +57,50 @@ const getMenuIcon = (menuName: string) => {
   return menuIcons[name] || menuIcons.default;
 };
 
+const route = useRoute();
+
+// Auto expand active menu
+const expandActiveMenu = () => {
+  const decodedPath = decodeURIComponent(route.path);
+  
+  // Only process if in admin section
+  if (!decodedPath.startsWith('/admin/')) return;
+
+  // Filter for child menus only
+  const childMenus = allMenus.value.filter(m => m.parentid !== 0 && m.menuname);
+  
+  // Find all matches where the current path starts with the menu link
+  const matches = childMenus.filter(m => {
+    // Construct expected link: /admin/menuname
+    // Handle potential spaces in menuname
+    const menuLink = `/admin/${m.menuname.toLowerCase()}`;
+    return decodedPath.toLowerCase().startsWith(menuLink);
+  });
+
+  if (matches.length === 0) {
+    // No match found - do NOT collapse or change state
+    return; 
+  }
+
+  // If multiple matches (e.g. /admin/user vs /admin/users), pick the longest one
+  // This ensures specific routes are matched over prefixes
+  matches.sort((a, b) => b.menuname.length - a.menuname.length);
+  
+  const bestMatch = matches[0];
+
+  if (bestMatch && bestMatch.parentid) {
+    // Collapse others? No, usually we just want to ensure THIS one is open.
+    // But if we want 'accordion' style, we might close others. 
+    // For now, let's just ensure the active one is open as requested.
+    expanded.value[bestMatch.parentid] = true;
+  }
+};
+
+// Watch for route changes
+watch(() => route.path, () => {
+  expandActiveMenu();
+});
+
 onMounted(async () => {
   themeStore.applyCurrentTheme();
   
@@ -68,6 +112,7 @@ onMounted(async () => {
     const res: any = await me();
     if (res?.code === 200 && res.data?.menus) {
       menus.value = res.data.menus;
+      expandActiveMenu();
     } else {
       console.error('Invalid response from /auth/me', res);
     }
@@ -112,7 +157,7 @@ const toggleExpand = (id: number) => {
           <!-- SIDEBAR HEADER -->
           <div class="flex items-center h-16 px-4" style="border-bottom: 1px solid var(--sidebar-border-color);">
             <div v-if="!isCollapsed" class="flex items-center gap-3 flex-1">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style="background: var(--sidebar-logo-background, linear-gradient(135deg, #6366f1, #9333ea));">
+              <div class="w-9 h-9 flex items-center justify-center shadow-lg" style="border-radius: var(--sidebar-radius); background: var(--sidebar-logo-background, linear-gradient(135deg, #6366f1, #9333ea));">
                 <i class="fa-solid fa-cube text-sm" style="color: var(--sidebar-logo-color, #fff);"></i>
               </div>
               <h2 class="text-base font-bold tracking-tight truncate" style="color: var(--sidebar-title-color);">
@@ -120,7 +165,7 @@ const toggleExpand = (id: number) => {
               </h2>
             </div>
             <div v-else class="w-full flex justify-center">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style="background: var(--sidebar-logo-background, linear-gradient(135deg, #6366f1, #9333ea));">
+              <div class="w-9 h-9 flex items-center justify-center shadow-lg" style="border-radius: var(--sidebar-radius); background: var(--sidebar-logo-background, linear-gradient(135deg, #6366f1, #9333ea));">
                 <i class="fa-solid fa-cube text-sm" style="color: var(--sidebar-logo-color, #fff);"></i>
               </div>
             </div>
@@ -129,8 +174,8 @@ const toggleExpand = (id: number) => {
           <!-- Collapse Toggle Button - on sidebar edge, in front of main panel -->
           <button 
             @click="toggleSidebar"
-            class="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 collapse-btn"
-            style="background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 100;"
+            class="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center shadow-lg transition-all duration-200 collapse-btn"
+            style="border-radius: var(--sidebar-collapse-radius); background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 100;"
           >
             <i :class="[isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left', 'text-xs']"></i>
           </button>
@@ -141,7 +186,8 @@ const toggleExpand = (id: number) => {
               <!-- Parent Menu Item -->
               <button
                 @click="getChildren(parent.menuaccessid).length ? toggleExpand(parent.menuaccessid) : null"
-                class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group"
+                class="menu-item w-full flex items-center gap-3 px-3 py-2.5 transition-all duration-200 group"
+                :style="{ borderRadius: 'var(--sidebar-menu-radius)' }"
                 :class="expanded[parent.menuaccessid] ? 'active' : ''"
                 :title="isCollapsed ? t(parent.description.toUpperCase()) : ''"
               >
@@ -185,7 +231,8 @@ const toggleExpand = (id: number) => {
                     v-for="child in getChildren(parent.menuaccessid)"
                     :key="child.menuaccessid"
                     :to="`/admin/${child.menuname.toLowerCase()}`"
-                    class="submenu-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200"
+                    class="submenu-item flex items-center gap-2.5 px-3 py-2 transition-all duration-200"
+                    :style="{ borderRadius: 'var(--sidebar-menu-radius)' }"
                   >
                     <i :class="getMenuIcon(child.menuname)" class="text-[11px] opacity-70 w-4"></i>
                     <span class="text-sm truncate">
@@ -201,9 +248,10 @@ const toggleExpand = (id: number) => {
           <div class="p-3" style="border-top: 1px solid var(--sidebar-border-color);">
             <div 
               :class="[
-                'flex items-center gap-3 p-2 rounded-xl transition-all duration-200 cursor-pointer profile-item',
+                'flex items-center gap-3 p-2 transition-all duration-200 cursor-pointer profile-item',
                 isCollapsed ? 'justify-center' : ''
               ]"
+              style="border-radius: var(--sidebar-radius);"
             >
               <!-- Avatar -->
               <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style="color: var(--sidebar-profile-icon-color);">
@@ -243,6 +291,8 @@ const toggleExpand = (id: number) => {
 </template>
 
 <style>
+@import '@/assets/css/main.css';
+
 /* Submenu animation */
 .slide-fade-enter-active {
   transition: all 0.25s ease-out;

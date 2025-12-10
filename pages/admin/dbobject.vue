@@ -3,6 +3,39 @@
     <header class="flex items-center justify-between p-4 border-b bg-white sticky">
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
+        <!-- Restore File Input (Hidden) -->
+        <input
+          type="file"
+          ref="restoreInput"
+          class="hidden"
+          accept=".sql,.db"
+          @change="onFileSelected"
+        />
+        
+        <div class="flex items-center gap-2 ml-4">
+             <button
+            @click="backupDatabase"
+            :disabled="backupLoading"
+            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
+            Backup
+          </button>
+          
+          <button
+            @click="triggerRestore"
+            :disabled="backupLoading"
+            class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+          >
+             <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
+            Restore
+          </button>
+        </div>
+      </div>
+      
+      <!-- Progress Bar (Overlay or inline) -->
+      <div v-if="backupLoading" class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
+        <div class="h-full bg-blue-600 transition-all duration-300" :style="{ width: `${progress}%` }"></div>
       </div>
     </header>
 
@@ -35,6 +68,7 @@
           @apply-json="applyJSONToSelected"
           @copy-json="copyJSONToClipboard"
           @remove-relation="removeRelation"
+          @reverse-engineer="reverseEngineerDatabase"
         />
       </div>
 
@@ -114,6 +148,7 @@ import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
 import { useCanvas } from '~/composables/useCanvas';
+import { useBackupRestore } from '~/composables/useBackupRestore';
 
 // Lazy load heavy components for code splitting
 const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjectSidebar.vue'));
@@ -133,6 +168,43 @@ let areaSeq = 1;
 const toast = useToast();
 const store = useDbobjectStore();
 const canvasRef = ref(null);
+const restoreInput = ref(null);
+const api = useApi();
+
+const { 
+  backupDatabase, 
+  restoreDatabase, 
+  loading: backupLoading, 
+  progress, 
+  error: backupError, 
+  success: backupSuccess 
+} = useBackupRestore();
+
+// Watch for success/error to show toasts
+import { watch } from 'vue';
+watch(backupSuccess, (val) => {
+  if (val) toast.add({ title: 'Success', description: val, color: 'success' });
+});
+watch(backupError, (val) => {
+  if (val) toast.add({ title: 'Error', description: val, color: 'error' });
+});
+
+function triggerRestore() {
+  restoreInput.value?.click();
+}
+
+function onFileSelected(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    if(!confirm(`Are you sure you want to restore ${file.name}? This will overwrite existing data.`)) {
+        event.target.value = ''; // reset
+        return;
+    }
+    restoreDatabase(file);
+    event.target.value = ''; // reset after selection
+  }
+}
+
 
 const {
   tables,
@@ -924,6 +996,48 @@ function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
 function openExecuteModal() {
   if (selectedTable.value) {
     showExecuteModal.value = true;
+  }
+}
+
+async function reverseEngineerDatabase() {
+  if (!confirm('This will import all tables from the current database into the designer. Existing tables with the same name will be updated. Continue?')) {
+    return;
+  }
+
+  try {
+    toast.add({ 
+      title: 'Reverse Engineering', 
+      description: 'Extracting database schema...', 
+      color: 'info' 
+    });
+
+    const response = await api.post('/api/admin/db/reverse-engineer', {
+      auto_layout: true
+    });
+
+    if (response.success) {
+      toast.add({ 
+        title: 'Success', 
+        description: response.message, 
+        color: 'success' 
+      });
+      
+      // Reload the design to show imported tables
+      await loadDesign();
+    } else {
+      toast.add({ 
+        title: 'Error', 
+        description: response.error || 'Failed to reverse engineer database', 
+        color: 'error' 
+      });
+    }
+  } catch (err) {
+    console.error('Reverse engineering error:', err);
+    toast.add({ 
+      title: 'Error', 
+      description: String(err), 
+      color: 'error' 
+    });
   }
 }
 

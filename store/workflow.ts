@@ -22,13 +22,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
     try {
       // 1. get workflow instance (backend returns nested structure)
       const dataForm = new FormData();
-      dataForm.append('flowname', 'getworkflow');
+      dataForm.append('flowname', 'getworkflowbywfname');
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
-      dataForm.append('workflowid', id);
       dataForm.append('wfname', id);
 
-      const res = await api.post('/admin/execute-flow', dataForm);
+      const res = await api.post('/api/admin/execute-flow', dataForm);
       // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
       const wfObj = res?.data?.data ?? {};
 
@@ -51,7 +50,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f2.append('flowname', 'searchcombocomponentcategory');
       f2.append('menu', 'admin');
       f2.append('search', 'true');
-      const r2 = await api.post('/admin/execute-flow', f2);
+      const r2 = await api.post('/api/admin/execute-flow', f2);
       categories.value = r2.data?.data ?? [];
 
       // 3. load components
@@ -59,7 +58,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f3.append('flowname', 'searchcombocomponent');
       f3.append('menu', 'admin');
       f3.append('search', 'true');
-      const r3 = await api.post('/admin/execute-flow', f3);
+      const r3 = await api.post('/api/admin/execute-flow', f3);
       components.value = r3.data?.data ?? [];
 
       // 4. parameters
@@ -68,7 +67,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f4.append('menu', 'admin');
       f4.append('search', 'true');
       f4.append('wfname', id);
-      const r4 = await api.post('/admin/execute-flow', f4);
+      const r4 = await api.post('/api/admin/execute-flow', f4);
       parameters.value = r4.data?.data ?? [];
 
       // 5. component propertie
@@ -76,7 +75,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f5.append('flowname', 'searchcomponentdetails');
       f5.append('menu', 'admin');
       f5.append('search', 'true');
-      const r5 = await api.post('/admin/execute-flow', f5);
+      const r5 = await api.post('/api/admin/execute-flow', f5);
       componentDefaultDetails.value = r5.data?.data ?? [];
 
       const f6 = new FormData();
@@ -84,10 +83,70 @@ export const useWorkflowStore = defineStore('workflow', () => {
       f6.append('menu', 'admin');
       f6.append('search', 'true');
       f6.append('wfname', id);
-      const r6 = await api.post('/admin/execute-flow', f6);
+      const r6 = await api.post('/api/admin/execute-flow', f6);
       componentDetails.value = r6.data?.data ?? [];
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function copyFlow(name: string) {
+    loading.value = true;
+    try {
+      // 1. get workflow instance (backend returns nested structure)
+      const dataForm = new FormData();
+      dataForm.append('flowname', 'getworkflowbywfname');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      dataForm.append('wfname', name);
+
+      const res = await api.post('/api/admin/execute-flow', dataForm);
+      console.log('Copy flow response:', res);
+      
+      // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
+      const wfObj = res?.data?.data ?? {};
+
+      // try various locations
+      const flowString = wfObj?.flow;
+
+      if (flowString && typeof flowString === 'string') {
+        try {
+          wfObj.flow = JSON.parse(flowString);
+          console.log('Parsed flow:', wfObj.flow);
+        } catch (e) {
+          console.error('Failed parsing flow string', e);
+          wfObj.flow = null;
+        }
+      }
+
+      workflow.value = wfObj;
+      console.log('Workflow copied successfully:', workflow.value);
+    } catch (error) {
+      console.error('Error copying workflow:', error);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function loadComponents() {
+    try {
+      // Load categories
+      const f2 = new FormData();
+      f2.append('flowname', 'searchcombocomponentcategory');
+      f2.append('menu', 'admin');
+      f2.append('search', 'true');
+      const r2: any = await api.post('/api/admin/execute-flow', f2);
+      categories.value = r2.data?.data ?? [];
+
+      // Load components
+      const f3 = new FormData();
+      f3.append('flowname', 'searchcombocomponent');
+      f3.append('menu', 'admin');
+      f3.append('search', 'true');
+      const r3: any = await api.post('/api/admin/execute-flow', f3);
+      components.value = r3.data?.data ?? [];
+    } catch (e) {
+      console.error('Failed to load components', e);
     }
   }
 
@@ -167,7 +226,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         df.append('componentvalue', props[key]);
         df.append('nodeid', node.id);
 
-        await api.post('/admin/execute-flow', df);
+        await api.post('/api/admin/execute-flow', df);
       }
     }
   }
@@ -184,7 +243,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       df.append('parametername', element.parametername ?? '');
       df.append('parametervalue', element.parametervalue ?? '');
       df.append('parametertype', element.parametertype ?? '');
-      await api.post('/admin/execute-flow', df);
+      await api.post('/api/admin/execute-flow', df);
     }
   }
 
@@ -197,7 +256,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       df.append('search', 'false');
       df.append('workflowid', workflow.value?.workflowid ?? '');
       df.append('flow', JSON.stringify(flow));
-      const res = await api.post('/admin/execute-flow', df);
+      const res = await api.post('/api/admin/execute-flow', df);
       await saveFlowDetails(flow);
       await saveFlowParameter();
       await loadWorkflow(workflow.value?.wfname);
@@ -224,6 +283,49 @@ export const useWorkflowStore = defineStore('workflow', () => {
     saveFlow(editor.export());
   }
 
+  async function deleteNodeProperties(nodeId: string | number) {
+    // 1. Find all saved properties for this node
+    const propsToDelete = componentDetails.value.filter((x) => Number(x.nodeid) === Number(nodeId));
+
+    if (propsToDelete.length === 0) return;
+
+    // 2. Delete each one from backend
+    for (const prop of propsToDelete) {
+      if (!prop.workflowdetailid) {
+        console.warn('Property missing workflowdetailid', prop);
+        continue;
+      }
+
+      const fd = new FormData();
+      fd.append('flowname', 'table'); 
+      fd.append('menu', 'admin');
+      fd.append('search', 'false');
+      
+      // Generic table params
+      fd.append('method', 'purge');
+      fd.append('table', 'workflowdetail');
+      fd.append('tableparam', 'workflowdetailid');
+      fd.append('workflowdetailid', prop.workflowdetailid.toString());
+
+      try {
+        console.log(`Sending purge request for details ID: ${prop.workflowdetailid}`);
+        const res = await api.post('/api/admin/execute-flow', fd);
+        console.log(`Purge result for ${prop.workflowdetailid}:`, res);
+      } catch (e) {
+        console.error(`Failed to delete property ${prop.workflowdetailid}`, e);
+      }
+    }
+
+    // 3. Remove from local state
+    componentDetails.value = componentDetails.value.filter((x) => Number(x.nodeid) !== Number(nodeId));
+    
+    // Also clear from merged properties if current node
+    if (selectedNode.value && Number(selectedNode.value.id) === Number(nodeId)) {
+      componentProperties.value = [];
+      selectedNode.value = null;
+    }
+  }
+
   return {
     workflow,
     categories,
@@ -233,10 +335,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     parameters,
     loading,
     loadWorkflow,
+    loadComponents,
     findComponentByName,
     loadComponentProperties,
     saveFlow,
+    copyFlow,
     setSelectedNode,
     updateSelectedNodeData,
+    deleteNodeProperties,
   };
 });

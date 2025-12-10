@@ -284,6 +284,22 @@ export const availableComponents = [
     },
   },
   {
+    type: 'selectgroup',
+    label: 'Select Group',
+    component: 'div',
+    props: {
+      key: '',
+      text: '',
+      source: '',
+      label: '',
+      place: 'Choose a data',
+      class: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
     type: 'tel',
     label: 'Tel',
     component: 'input',

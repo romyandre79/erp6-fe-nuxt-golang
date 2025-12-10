@@ -81,6 +81,7 @@
       </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
       <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+      <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
       <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
     </div>
@@ -134,16 +135,30 @@ function initEditor(container: HTMLElement) {
 
   /* -------- Register events --------*/
   ed.on('nodeCreated', () => scheduleSave());
-  ed.on('nodeRemoved', () => scheduleSave());
+  ed.on('nodeRemoved', (id: string) => {
+    // When node removed, cleanup its properties from DB
+    const cleanId = id.replace('node-', '');
+    if (typeof store.deleteNodeProperties === 'function') {
+      try {
+        store.deleteNodeProperties(cleanId);
+      } catch (err) {
+        console.error('Error deleteNodeProperties:', err);
+      }
+    }
+    scheduleSave();
+  });
   ed.on('connectionCreated', () => scheduleSave());
   ed.on('connectionRemoved', () => scheduleSave());
 
   ed.on('nodeSelected', async (id: string) => {
+    console.log('Designer: nodeSelected event', id);
     const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
+      console.log('Designer: Loading properties for node', cleanId, node.name);
       await store.loadComponentProperties(node.name, cleanId.toString());
+      console.log('Designer: Setting selected node in store');
       store.setSelectedNode(node);
     }
     
@@ -262,7 +277,7 @@ async function uploadPlugin() {
     const config = useRuntimeConfig();
     const apiBase = config.public.apiBase || '/api';
 
-    xhr.open('POST', `${apiBase}/plugins/upload`);
+    xhr.open('POST', `${apiBase}/api/admin/plugins/upload`);
 
     // Add auth token if needed
     const token = useCookie('token');
@@ -502,6 +517,21 @@ async function exportImage() {
   link.click();
 }
 
+const copySchema = async () => {
+  const name = window.prompt('Copy Schema From ? ');
+  console.log(name)
+  if (name) {
+    try {
+      await store.copyFlow(name);
+      
+    } catch (err) {
+      console.error('Error loading :', err);
+    }
+  } else {
+    console.warn('Empty');
+  }
+};
+
 const route = useRoute();
 const Api = useApi();
 
@@ -588,28 +618,35 @@ function injectNodeResults(results: any[]) {
     // Create expanded details
     const details = document.createElement('div');
     details.className = 'result-details';
-    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;';
+    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px; height: calc(100% - 40px); overflow: hidden; display: flex; flex-direction: column;';
     
     let detailsHtml = '';
     if (step.input && Object.keys(step.input).length > 0) {
-      detailsHtml += `<div style="margin-bottom: 8px;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
+      detailsHtml += `<div style="margin-bottom: 8px; flex-shrink: 0;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
     }
-    detailsHtml += `<div><strong style="font-size: 12px;">Result:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 200px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.result, null, 2)}</pre></div>`;
+    detailsHtml += `<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;"><strong style="font-size: 12px;">Result:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; flex: 1; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.result, null, 2)}</pre></div>`;
     if (step.error) {
-      detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px;"><strong>Error:</strong> ${step.error}</div>`;
+      detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px; flex-shrink: 0;"><strong>Error:</strong> ${step.error}</div>`;
     }
     details.innerHTML = detailsHtml;
     
     // Toggle expand/collapse
     panel.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isExpanded = details.style.display !== 'none';
-      details.style.display = isExpanded ? 'none' : 'block';
-      summary.querySelector('span:last-child')!.textContent = isExpanded ? '▼' : '▲';
+      const isExpanded = details.style.display === 'none' || details.style.display === '';
       
-      // When expanding, make panel wider for better readability
-      if (!isExpanded) {
-        panel.style.minWidth = '250px';
+      if (isExpanded) {
+        // Expanding
+        details.style.display = 'flex';
+        summary.querySelector('span:last-child')!.textContent = '▲';
+        panel.style.minWidth = '400px';
+        panel.style.minHeight = '300px';
+      } else {
+        // Collapsing
+        details.style.display = 'none';
+        summary.querySelector('span:last-child')!.textContent = '▼';
+        panel.style.minWidth = `${panelWidth}px`;
+        panel.style.minHeight = 'auto';
       }
     });
     
@@ -666,7 +703,7 @@ async function testFlow() {
       const element = store.parameters[index];
       dataForm.append(element.parametername, element.parametervalue);
     }
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     payload.value = JSON.stringify(formDataToObject(dataForm), null, 2);
     showPayload.value = true;
 

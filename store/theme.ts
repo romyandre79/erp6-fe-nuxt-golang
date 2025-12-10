@@ -17,7 +17,7 @@ export const useThemeStore = defineStore('theme', () => {
   async function loadThemes() {
     const dataForm = new FormData();
 
-    const res = (await Api.post('auth/load-theme', dataForm)) as any;
+    const res = (await Api.post('api/auth/load-theme', dataForm)) as any;
     themeList.value = res.data?.data || [];
   }
 
@@ -28,7 +28,7 @@ export const useThemeStore = defineStore('theme', () => {
     dataForm.append('search', 'true');
     dataForm.append('themename', themename);
 
-    const res = (await Api.post('admin/execute-flow', dataForm)) as any;
+    const res = (await Api.post('api/admin/execute-flow', dataForm)) as any;
     themeData.value = res.data?.data || [];
   };
 
@@ -44,7 +44,7 @@ export const useThemeStore = defineStore('theme', () => {
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'false');
 
-    await Api.post('admin/execute-flow', dataForm);
+    await Api.post('api/admin/execute-flow', dataForm);
   };
 
   const applyCurrentTheme = async () => {
@@ -84,15 +84,13 @@ export const useThemeStore = defineStore('theme', () => {
   onMounted(async () => {
     await userStore.loadAuth();
     if (userStore.token) {
-      themeCookie.value = userStore.user?.themeid;
+      themeCookie.value = String(userStore.user?.themeid || '');
       await loadThemes();
 
       // cek cookie apakah theme valid
       if (themeCookie.value) {
         applyTheme(themeCookie.value); // skip update agar tidak trigger watch
       }
-    } else {
-      navigateTo('/login');
     }
   });
 

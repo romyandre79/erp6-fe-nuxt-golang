@@ -220,7 +220,7 @@ async function fetchData() {
       if (props.selectedKeyData) {
         dataForm.append(props.relationKey, props.selectedKeyData);
       }
-      res = await Api.post('/admin/execute-flow', dataForm);
+      res = await Api.post('/api/admin/execute-flow', dataForm);
     } else {
       const params = { page: currentPage.value, limit: pageSize.value, search: searchQuery.value };
       emit('fetch-params', params);

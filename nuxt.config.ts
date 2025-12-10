@@ -24,7 +24,6 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   css: [
-    'assets/css/main.css',
     '@fortawesome/fontawesome-free/css/all.min.css',
     'drawflow/dist/drawflow.min.css',
     'assets/css/drawflow.css',
@@ -35,13 +34,9 @@ export default defineNuxtConfig({
       chunkSizeWarningLimit: 1000, // Increase limit - chunks are already optimized with code splitting
       rollupOptions: {
         output: {
-          manualChunks: (id: string) => {
+      manualChunks: (id: string) => {
             // Separate node_modules into vendor chunks
             if (id.includes('node_modules')) {
-              // Vue ecosystem
-              if (id.includes('vue') || id.includes('@vue') || id.includes('pinia')) {
-                return 'vendor-vue';
-              }
               // Drawflow library
               if (id.includes('drawflow')) {
                 return 'vendor-drawflow';
@@ -49,14 +44,6 @@ export default defineNuxtConfig({
               // Chart libraries
               if (id.includes('chart.js') || id.includes('apexcharts') || id.includes('vue-chartjs')) {
                 return 'vendor-charts';
-              }
-              // UI libraries
-              if (id.includes('@nuxt/ui') || id.includes('@headlessui') || id.includes('radix')) {
-                return 'vendor-ui';
-              }
-              // i18n
-              if (id.includes('i18n') || id.includes('@intlify')) {
-                return 'vendor-i18n';
               }
               // Font Awesome
               if (id.includes('fortawesome')) {
@@ -66,8 +53,6 @@ export default defineNuxtConfig({
               if (id.includes('html-to-image')) {
                 return 'vendor-export';
               }
-              // Other large vendor libs
-              return 'vendor-misc';
             }
           },
         },
@@ -95,7 +80,7 @@ export default defineNuxtConfig({
     public: {
       appName: process.env.APP_NAME,
       companyId: process.env.COMPANY_ID,
-      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
+      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888/api',
       apiToken: process.env.PUBLIC_API_TOKEN || '',
       mode: process.env.MODE || 'development',
     },

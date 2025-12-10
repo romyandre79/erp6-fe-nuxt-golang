@@ -254,5 +254,71 @@
   "INVALID_ENTRY_NUMBER": "{entry} only number accepted",
   "INVALID_ENTRY_EMAIL": "{entry} only email accepted",
   "INVALID_ENTRY_FORMAT": "{entry} not match with current format",
-  "INVALID_ENTRY_MATCH": "{entry} not match with {field}"
+  "INVALID_ENTRY_MATCH": "{entry} not match with {field}",
+  "LANDING": {
+    "NAV": {
+      "FEATURES": "Fitur",
+      "AUTOMATION": "Otomatisasi",
+      "PRICING": "Harga",
+      "CONTACT": "Kontak",
+      "GET_STARTED": "Mulai Sekarang",
+      "LOGIN": "Masuk"
+    },
+    "HERO": {
+      "TITLE_PREFIX": "Otomatisasi Segalanya dengan",
+      "TITLE_SUFFIX": "Capella ERP v6",
+      "SUBTITLE": "Platform ERP modern dengan otomatisasi alur kerja terintegrasi. Bangun proses bisnis yang kompleks dengan pembangun alur visual seperti n8n.",
+      "START_TRIAL": "Mulai Uji Coba Gratis",
+      "WATCH_DEMO": "Lihat Demo"
+    },
+    "STATS": {
+      "TEMPLATES": "Template Alur Kerja",
+      "UPTIME": "Jaminan Uptime",
+      "INTEGRATIONS": "Integrasi",
+      "SUPPORT": "Dukungan"
+    },
+    "FEATURES": {
+      "TITLE": "Fitur Canggih",
+      "SUBTITLE": "Semua yang Anda butuhkan untuk menjalankan bisnis modern",
+      "VISUAL_BUILDER": { "TITLE": "Pembuat Alur Kerja Visual", "DESC": "Antarmuka seret-dan-lepas untuk membuat otomatisasi alur kerja kompleks tanpa koding" },
+      "REALTIME": { "TITLE": "Pemrosesan Real-time", "DESC": "Jalankan alur kerja secara real-time dengan pemantauan langsung" },
+      "SECURITY": { "TITLE": "Keamanan Tingkat Perusahaan", "DESC": "Enkripsi ujung-ke-ujung, akses berbasis peran, dan jejak audit lengkap" },
+      "ANALYTICS": { "TITLE": "Analisis Lanjutan", "DESC": "Dasbor interaktif dengan wawasan real-time untuk pengambilan keputusan" },
+      "MODULAR": { "TITLE": "Arsitektur Modular", "DESC": "Aktifkan hanya modul yang Anda butuhkan, skalakan sesuai kebutuhan" },
+      "CUSTOM_NODES": { "TITLE": "Node Kustom", "DESC": "Buat node kustom Anda sendiri dengan JavaScript atau Python" }
+    },
+    "AUTOMATION": {
+      "TITLE_PREFIX": "Otomatisasi Jadi",
+      "TITLE_SUFFIX": "Mudah",
+      "SUBTITLE": "Pembuat alur kerja yang terinspirasi oleh n8n untuk otomatisasi tanpa batas",
+      "COMPLEX_WORKFLOWS": "Bangun Alur Kerja Kompleks Secara Visual",
+      "TRIGGER": { "TITLE": "Peristiwa Pemicu", "DESC": "Webhook, Jadwal, Manual, Perubahan basis data, dan lainnya" },
+      "LOGIC": { "TITLE": "Logika Kondisional", "DESC": "IF/ELSE, Switch, Filter, dan perutean kondisional" },
+      "TRANSFORM": { "TITLE": "Transformasi Data", "DESC": "Petakan, gabungkan, pisahkan, agregasi data dengan mudah" },
+      "INTEGRATION": { "TITLE": "Siap Integrasi", "DESC": "Terhubung ke 1000+ aplikasi dan layanan" }
+    },
+    "CTA": {
+      "TITLE": "Siap Mengubah Bisnis Anda?",
+      "SUBTITLE": "Bergabunglah dengan ribuan perusahaan yang sudah menggunakan Capella ERP v6",
+      "START_TRIAL": "Mulai Uji Coba Gratis 30 Hari",
+      "SCHEDULE_DEMO": "Jadwalkan Demo"
+    },
+    "FOOTER": {
+      "TAGLINE": "Platform ERP modern dengan keunggulan otomatisasi",
+      "PRODUCT": "Produk",
+      "COMPANY": "Perusahaan",
+      "LEGAL": "Hukum",
+      "COPYRIGHT": "© 2024 Capella ERP. Hak cipta dilindungi undang-undang.",
+      "LINKS": {
+        "ABOUT": "Tentang",
+        "BLOG": "Blog",
+        "CAREERS": "Karir",
+        "PRIVACY": "Privasi",
+        "TERMS": "Syarat & Ketentuan",
+        "SECURITY": "Keamanan",
+        "DOCUMENTATION": "Dokumentasi",
+        "API": "API"
+      }
+    }
+  }
 }
