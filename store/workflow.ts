@@ -90,6 +90,44 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+  async function copyFlow(name: string) {
+    loading.value = true;
+    try {
+      // 1. get workflow instance (backend returns nested structure)
+      const dataForm = new FormData();
+      dataForm.append('flowname', 'getworkflowbywfname');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
+      dataForm.append('wfname', name);
+
+      const res = await api.post('/api/admin/execute-flow', dataForm);
+      console.log('Copy flow response:', res);
+      
+      // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
+      const wfObj = res?.data?.data ?? {};
+
+      // try various locations
+      const flowString = wfObj?.flow;
+
+      if (flowString && typeof flowString === 'string') {
+        try {
+          wfObj.flow = JSON.parse(flowString);
+          console.log('Parsed flow:', wfObj.flow);
+        } catch (e) {
+          console.error('Failed parsing flow string', e);
+          wfObj.flow = null;
+        }
+      }
+
+      workflow.value = wfObj;
+      console.log('Workflow copied successfully:', workflow.value);
+    } catch (error) {
+      console.error('Error copying workflow:', error);
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function loadComponents() {
     try {
       // Load categories
@@ -301,6 +339,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     findComponentByName,
     loadComponentProperties,
     saveFlow,
+    copyFlow,
     setSelectedNode,
     updateSelectedNodeData,
     deleteNodeProperties,

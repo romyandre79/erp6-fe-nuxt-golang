@@ -193,6 +193,7 @@ const isOpen = ref(false);
 const activeTab = ref<'ai' | 'people'>('ai');
 const aiInput = ref('');
 const aiMessages = ref<{text: string, sender: 'user'|'ai'}[]>([]);
+const aiConversationState = ref(''); // Track conversation state
 const users = ref<any[]>([]);
 const loadingUsers = ref(false);
 const selectedUser = ref<any>(null);
@@ -249,6 +250,7 @@ const sendAiMessage = async () => {
     await scrollToBottom(aiMessagesContainer.value);
 
     // Call execute-flow API with AI command
+    // Response will come via WebSocket, not from API response
     try {
         const formData = new FormData();
         formData.append('flowname', 'aicommand');
@@ -256,14 +258,13 @@ const sendAiMessage = async () => {
         formData.append('search', 'false');
         formData.append('command', text);
         formData.append('user_id', String(myUserId.value || ''));
+        formData.append('conversation_state', aiConversationState.value); // Send conversation state
         
-        const { data }: any = await post('/api/admin/execute-flow', formData);
-        const reply = data?.reply || data?.data?.reply || data?.result?.reply || "Done";
-        aiMessages.value.push({ text: reply, sender: 'ai' });
+        await post('/api/admin/execute-flow', formData);
+        // Don't add response here - it will come via WebSocket
     } catch(e) {
         aiMessages.value.push({ text: "Error connecting to AI.", sender: 'ai' });
     }
-    await scrollToBottom(aiMessagesContainer.value);
 };
 
 // --- People / Users ---
@@ -360,7 +361,7 @@ const initWebSocket = () => {
     if (socket) socket.close();
 
     let wsBase = config.public.apiBase.replace('http', 'ws');
-    const wsUrl = `${wsBase}/ws/notifications?token=${token.value}`;
+    const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
 
     console.log("Connecting to Chat WS:", wsUrl);
     
@@ -405,8 +406,33 @@ onMounted(() => {
 const handleWsMessage = async (payload: any) => {
     console.log("WS Msg:", payload);
     
-    // Chat Message
-    if (payload.type === 'chat') {
+    // AI Chat Message (from backend workflow)
+    if (payload.type === 'chat' && payload.message) {
+        // This is an AI response from the backend
+        aiMessages.value.push({ 
+            text: payload.message, 
+            sender: 'ai' 
+        });
+        
+        // Save conversation state for next message
+        if (payload.conversation_state) {
+            aiConversationState.value = payload.conversation_state;
+        }
+        
+        // Auto-open AI tab if closed
+        if (!isOpen.value) {
+            isOpen.value = true;
+            activeTab.value = 'ai';
+        } else if (activeTab.value !== 'ai') {
+            activeTab.value = 'ai';
+        }
+        
+        await scrollToBottom(aiMessagesContainer.value);
+        return;
+    }
+    
+    // Person-to-Person Chat Message
+    if (payload.type === 'chat' && payload.senderid) {
         const senderId = payload.senderid;
         
         // Ensure reactivity for new keys

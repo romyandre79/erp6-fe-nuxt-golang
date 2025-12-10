@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -586,6 +586,17 @@ function renderComponent(component: any) {
     case 'select':
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       return h(FormSelect, {
+        class: component.props.class,
+        component: component.props,
+        formData,
+        validationErrors,
+        validateField,
+      });
+
+
+    case 'selectgroup':
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
+      return h(FormSelectGroup, {
         class: component.props.class,
         component: component.props,
         formData,

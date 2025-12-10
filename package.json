@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "cp .env.dev .env && nuxt dev",
+    "build:dev": "cp .env.dev .env && nuxt build",
     "build:prod": "cp .env.prod .env && nuxt build",
     "build:generate": "cp .env.prod .env && nuxt generate",
     "generate": "nuxt generate",

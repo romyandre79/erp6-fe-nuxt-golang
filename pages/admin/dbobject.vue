@@ -68,6 +68,7 @@
           @apply-json="applyJSONToSelected"
           @copy-json="copyJSONToClipboard"
           @remove-relation="removeRelation"
+          @reverse-engineer="reverseEngineerDatabase"
         />
       </div>
 
@@ -168,6 +169,7 @@ const toast = useToast();
 const store = useDbobjectStore();
 const canvasRef = ref(null);
 const restoreInput = ref(null);
+const api = useApi();
 
 const { 
   backupDatabase, 
@@ -994,6 +996,48 @@ function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
 function openExecuteModal() {
   if (selectedTable.value) {
     showExecuteModal.value = true;
+  }
+}
+
+async function reverseEngineerDatabase() {
+  if (!confirm('This will import all tables from the current database into the designer. Existing tables with the same name will be updated. Continue?')) {
+    return;
+  }
+
+  try {
+    toast.add({ 
+      title: 'Reverse Engineering', 
+      description: 'Extracting database schema...', 
+      color: 'info' 
+    });
+
+    const response = await api.post('/api/admin/db/reverse-engineer', {
+      auto_layout: true
+    });
+
+    if (response.success) {
+      toast.add({ 
+        title: 'Success', 
+        description: response.message, 
+        color: 'success' 
+      });
+      
+      // Reload the design to show imported tables
+      await loadDesign();
+    } else {
+      toast.add({ 
+        title: 'Error', 
+        description: response.error || 'Failed to reverse engineer database', 
+        color: 'error' 
+      });
+    }
+  } catch (err) {
+    console.error('Reverse engineering error:', err);
+    toast.add({ 
+      title: 'Error', 
+      description: String(err), 
+      color: 'error' 
+    });
   }
 }
 

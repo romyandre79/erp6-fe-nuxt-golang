@@ -57,6 +57,50 @@ const getMenuIcon = (menuName: string) => {
   return menuIcons[name] || menuIcons.default;
 };
 
+const route = useRoute();
+
+// Auto expand active menu
+const expandActiveMenu = () => {
+  const decodedPath = decodeURIComponent(route.path);
+  
+  // Only process if in admin section
+  if (!decodedPath.startsWith('/admin/')) return;
+
+  // Filter for child menus only
+  const childMenus = allMenus.value.filter(m => m.parentid !== 0 && m.menuname);
+  
+  // Find all matches where the current path starts with the menu link
+  const matches = childMenus.filter(m => {
+    // Construct expected link: /admin/menuname
+    // Handle potential spaces in menuname
+    const menuLink = `/admin/${m.menuname.toLowerCase()}`;
+    return decodedPath.toLowerCase().startsWith(menuLink);
+  });
+
+  if (matches.length === 0) {
+    // No match found - do NOT collapse or change state
+    return; 
+  }
+
+  // If multiple matches (e.g. /admin/user vs /admin/users), pick the longest one
+  // This ensures specific routes are matched over prefixes
+  matches.sort((a, b) => b.menuname.length - a.menuname.length);
+  
+  const bestMatch = matches[0];
+
+  if (bestMatch && bestMatch.parentid) {
+    // Collapse others? No, usually we just want to ensure THIS one is open.
+    // But if we want 'accordion' style, we might close others. 
+    // For now, let's just ensure the active one is open as requested.
+    expanded.value[bestMatch.parentid] = true;
+  }
+};
+
+// Watch for route changes
+watch(() => route.path, () => {
+  expandActiveMenu();
+});
+
 onMounted(async () => {
   themeStore.applyCurrentTheme();
   
@@ -68,6 +112,7 @@ onMounted(async () => {
     const res: any = await me();
     if (res?.code === 200 && res.data?.menus) {
       menus.value = res.data.menus;
+      expandActiveMenu();
     } else {
       console.error('Invalid response from /auth/me', res);
     }
@@ -246,6 +291,8 @@ const toggleExpand = (id: number) => {
 </template>
 
 <style>
+@import '@/assets/css/main.css';
+
 /* Submenu animation */
 .slide-fade-enter-active {
   transition: all 0.25s ease-out;

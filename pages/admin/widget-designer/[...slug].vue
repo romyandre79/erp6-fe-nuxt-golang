@@ -228,6 +228,28 @@ const dataMenu = reactive({
   recordStatus: Number,
 });
 
+const getDefaultProps = (type: string) => {
+  const found = availableComponents.find((x) => x.type === type) || layoutContainers.find((x) => x.type === type);
+  return found ? JSON.parse(JSON.stringify(found.props || {})) : {};
+};
+
+const hydrateNodeProps = (nodes: NodeSchema[]) => {
+  nodes.forEach((node) => {
+    const defaults = getDefaultProps(node.type);
+    node.props = { ...defaults, ...node.props };
+        
+    // Explicitly ensure key exists if it's in defaults
+    if ('key' in defaults && !('key' in node.props)) {
+      node.props.key = defaults.key;
+    }
+
+    if (node.children && node.children.length > 0) {
+      hydrateNodeProps(node.children);
+    }
+  });
+  return nodes;
+};
+
 const loadSchema = async () => {
   try {
     const res = await getWidgetForm(route.params.slug);
@@ -244,7 +266,8 @@ const loadSchema = async () => {
         (dataMenu.recordStatus = res?.data.data.recordstatus));
       if (res?.data.data.widgetform != '') {
         formSchema.value = res?.data?.data.widgetform;
-        canvasComponents.value = JSON.parse(res?.data?.data.widgetform);
+        let parsed = JSON.parse(res?.data?.data.widgetform);
+        canvasComponents.value = hydrateNodeProps(parsed);
       }
     } else {
       console.error('Invalid response from ', res);
@@ -260,9 +283,10 @@ const copySchema = async () => {
     try {
       const res = await getWidgetForm(name);
       if (res?.code == 200) {
-        if (res?.data.data.menuform != '') {
-          formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = res?.data?.data.menuform;
+        if (res?.data.data.widgetform != '') {
+          formSchema.value = res?.data?.data.widgetform;
+          let parsed = JSON.parse(res?.data?.data.widgetform);
+          canvasComponents.value = hydrateNodeProps(parsed);
         }
       } else {
         console.error('Invalid response from ', res);

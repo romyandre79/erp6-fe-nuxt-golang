@@ -16,14 +16,16 @@ export const useNotificationStore = defineStore('notification', {
 
   actions: {
     async fetchUnread() {
-      const { data } = await useFetch('/api/admin/notifications/unread')
+      const api = useApi()
+      const { data } = await api.get(`/api/admin/notifications/unread`)
       if (data.value && data.value.status === 'success') {
         this.notifications = data.value.data || []
       }
     },
 
     async markAsRead(id: number) {
-      await useFetch(`/api/admin/notifications/${id}/read`, { method: 'POST' })
+      const api = useApi()
+      await api.post(`/api/admin/notifications/${id}/read`)
       // Optimistic update
       const n = this.notifications.find(x => x.usertodoid === id)
       if (n) n.isread = 1
@@ -42,7 +44,7 @@ export const useNotificationStore = defineStore('notification', {
       // If frontend/backend on same domain/proxy, usage window.location.host
       // But user has go run . (port usually 8888) and bun run dev (port 3000)
       
-      const url = `${protocol}//${host}/ws/notifications?token=${token}`
+      const url = `${protocol}//${host}/api/ws/notifications?token=${token}`
       
       console.log('Connecting WS:', url)
       this.ws = new WebSocket(url)

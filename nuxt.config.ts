@@ -24,7 +24,6 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   css: [
-    'assets/css/main.css',
     '@fortawesome/fontawesome-free/css/all.min.css',
     'drawflow/dist/drawflow.min.css',
     'assets/css/drawflow.css',

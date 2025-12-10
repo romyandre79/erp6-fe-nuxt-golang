@@ -15,7 +15,7 @@ const markRead = async (id: number) => {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative overflow-visible">
     <!-- Bell Button -->
     <button 
       @click="toggle" 
@@ -36,7 +36,8 @@ const markRead = async (id: number) => {
     <transition name="dropdown">
       <div 
         v-if="isOpen" 
-        class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+        class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden border border-slate-200/80 dark:border-gray-800"
+        style="z-index: 9999 !important;"
       >
         <!-- Header -->
         <div class="px-4 py-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center">

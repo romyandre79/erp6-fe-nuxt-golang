@@ -12,7 +12,7 @@ export const useAuth = () => {
       const res = await post('/api/auth/login', payload);
       if (res.code == 200) {
         userStore.setAuth(res.data?.token, res.data.user);
-        navigateTo('/api/admin/dashboard');
+        navigateTo('/admin/dashboard');
       } else {
         throw new Error(res.message || $t('INVALID CREDENTIAL'));
       }

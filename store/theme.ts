@@ -84,15 +84,13 @@ export const useThemeStore = defineStore('theme', () => {
   onMounted(async () => {
     await userStore.loadAuth();
     if (userStore.token) {
-      themeCookie.value = userStore.user?.themeid;
+      themeCookie.value = String(userStore.user?.themeid || '');
       await loadThemes();
 
       // cek cookie apakah theme valid
       if (themeCookie.value) {
         applyTheme(themeCookie.value); // skip update agar tidak trigger watch
       }
-    } else {
-      navigateTo('/login');
     }
   });
 

@@ -57,6 +57,8 @@ onMounted(async () => {
 </template>
 
 <style>
+@import '@/assets/css/default.css';
+
 @keyframes fade-in {
   from {
     opacity: 0;
