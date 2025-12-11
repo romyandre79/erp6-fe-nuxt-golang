@@ -52,7 +52,7 @@ onMounted(async () => {
   await store.loadWorkflow(id);
 });
 
-watch(
+/*watch(
   () => route.params.slug,
   async () => {
     console.log('Route slug changed:', route.params.slug);
@@ -62,5 +62,5 @@ watch(
     await store.loadWorkflow(id);
   },
   { deep: true }
-);
+);*/
 </script>

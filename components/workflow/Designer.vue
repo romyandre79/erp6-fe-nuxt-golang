@@ -56,7 +56,7 @@
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
-    <div class="absolute right-6 top-6 flex flex-row gap-2 z-50">
+    <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
       <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
       <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
@@ -80,11 +80,15 @@
         Upload Plugin
       </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
-      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+    </div>
+        <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
+                <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
       <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
       <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
-    </div>
+
+        </div>
+
   </div>
 </template>
 

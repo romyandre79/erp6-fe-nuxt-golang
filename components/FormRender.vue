@@ -260,12 +260,13 @@ async function deleteData(table: any) {
   const flow = getAction('purge');
   console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
-    let dataForm = new FormData();
+    const primary = getPrimary();
     for (let index = 0; index < selectedRows.value.length; index++) {
+      let dataForm = new FormData();
       dataForm.append('flowname', flow);
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
-      dataForm.append(parsedSchema.value.primary, selectedRows.value[index][parsedSchema.value.primary]);
+      dataForm.append(primary, selectedRows.value[index][primary]);
       try {
         const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res?.code == 200) {
@@ -289,11 +290,12 @@ async function downForm(mode: any) {
   }
   if (flow) {
     let dataForm = new FormData();
+    const primary = getPrimary();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
     for (let index = 0; index < selectedRows?.length; index++) {
-      dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
+      dataForm.append(primary + '[' + index + ']', selectedRows[index][primary]);
     }
     await Api.donlotFile('/api/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
