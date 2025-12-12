@@ -52,11 +52,7 @@
         </div>
       </div>
     </div>
-
-    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
-
-    <!-- Zoom Control -->
-    <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
+<div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
       <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
       <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
@@ -80,15 +76,16 @@
         Upload Plugin
       </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
-    </div>
-        <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
-                <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+                      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
       <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
       <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
       <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
 
-        </div>
+    </div>
+    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
+    <!-- Zoom Control -->
+    
   </div>
 </template>
 
@@ -100,6 +97,7 @@ import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
 
 const store = useWorkflowStore();
 const toast = useToast();
+const emit = defineEmits(['saved']); // Added emit definition
 const testResult = ref('');
 const payload = ref('');
 const showPayload = ref(false);
@@ -195,6 +193,13 @@ async function Save() {
         title: $t('TITLE UPDATE'),
         description: $t(res.message.replaceAll('_', ' ')),
       });
+      emit('saved');
+      // Emit saved event
+      // emit is not defined in script setup? I need to defineEmits.
+      // Wait, let's check if defineEmits is used. It's not.
+      // I can use `const emit = defineEmits(['saved'])`
+      // I need to add defineEmits first.
+
     }
   } catch (e) {
     console.error('❌ saveFlow error', e);
@@ -562,7 +567,13 @@ function injectNodeResults(results: any[]) {
   const drawflowContent = drawflowContainer.querySelector('.drawflow') as HTMLElement;
   if (!drawflowContent) return;
   
-  results.forEach((step) => {
+  // Filter duplicate results for same node (keep latest)
+  const uniqueResults = new Map();
+  results.forEach(step => {
+      uniqueResults.set(step.nodeId, step);
+  });
+
+  uniqueResults.forEach((step) => {
     const nodeEl = document.getElementById(`node-${step.nodeId}`) as HTMLElement;
     if (!nodeEl) return;
     

@@ -10,15 +10,15 @@ export function useCanvas() {
   const minZoom = 0.2;
   const maxZoom = 3;
 
-  const dragging = ref(null);
+  const dragging = ref<any>(null);
   const offset = ref({ x: 0, y: 0 });
-  const activeArea = ref(null);
-  const areaMode = ref(null);
+  const activeArea = ref<any>(null);
+  const areaMode = ref<string|null>(null);
   const areaOffset = ref({ x: 0, y: 0 });
   const activeAreaTables = ref<any[]>([]);
 
   // Linking state
-  const linkPreview = reactive({ active: false, from: null, sx: 0, sy: 0, path: '' });
+  const linkPreview = reactive<{active: boolean, from: any, sx: number, sy: number, path: string}>({ active: false, from: null, sx: 0, sy: 0, path: '' });
 
   // Zoom controls
   function zoomIn() {

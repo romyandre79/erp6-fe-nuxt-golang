@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '~/store/theme';
 import { useNotificationStore } from '~/store/notification';
 import { useAuth } from '~/composables/useAuth';
+import { useDevice } from '~/composables/useDevice';
 import AiAssistant from '~/components/AiAssistant.vue';
 
 const themeStore = useThemeStore();
@@ -17,11 +18,13 @@ const config = useRuntimeConfig();
 import { useAppStore } from '~/store/app';
 
 const appStore = useAppStore();
+const { isMobile, isTablet } = useDevice();
+
 const reloadPage = () => {
   window.location.reload();
 };
 
-// Sidebar collapse state
+// Sidebar collapse state - auto-collapse on mobile
 const isCollapsed = ref(false);
 // Track menu expand/collapse per parent
 const expanded = ref<Record<number, boolean>>({});
@@ -73,6 +76,11 @@ watch(() => route.path, () => {
 
 onMounted(async () => {
   themeStore.applyCurrentTheme();
+  
+  // Auto-collapse sidebar on mobile
+  if (isMobile.value) {
+    isCollapsed.value = true;
+  }
   
   // Connect Notifications
   await notificationStore.connect();
@@ -256,7 +264,7 @@ const toggleExpand = (id: number) => {
         </main>
       </div>
       <AiAssistant />
-      <AiAssistant />
+
       
       <!-- Connection Error Overlay -->
       <div v-if="appStore.connectionError" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm">

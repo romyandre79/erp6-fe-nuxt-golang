@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -228,6 +228,15 @@ async function edit(key: string) {
           for (const key in record) {
             formData.value[key] = record[key];
           }
+          
+          // 🔥 Load detail table data if exists
+          // Check for any array fields that might be detail tables
+          for (const key in record) {
+            if (Array.isArray(record[key]) && record[key].length > 0) {
+              formData.value[key] = [...record[key]];
+            }
+          }
+          
           tableRef.value.setData(primary, selectedRows.value[0][primary]);
         } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
           navigateTo('/login');
@@ -597,14 +606,7 @@ function renderComponent(component: any) {
 
 
     case 'selectgroup':
-      if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
-      return h(FormSelectGroup, {
-        class: component.props.class,
-        component: component.props,
-        formData,
-        validationErrors,
-        validateField,
-      });
+      return renderSelectGroup(component)
 
     case 'bool':
     case 'boolean': {
@@ -672,6 +674,9 @@ function renderComponent(component: any) {
         },
         label: component.props.text,
       });
+    
+    
+    
     case 'action':
       break;
   }
@@ -781,18 +786,73 @@ function renderChart(container: any) {
   return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
 }
 
+function renderDetailTable(container: any) {
+  const tableKey = container.props.key;
+    
+    if (!(tableKey in formData.value)) {
+      formData.value[tableKey] = [];
+    }
+
+    // Extract columns from component children
+    let columns: any[] = [];
+    if (container.children) {
+      container.children.forEach((child: any) => {
+        if (child.type === 'columns' && child.children) {
+          columns = child.children.map((col: any) => ({
+            ...col.props,
+            type: col.type,
+            text: col.props?.text,
+            label: col.props?.label,
+            key: col.props?.key,
+          }));
+        }
+      });
+    }
+
+    return h(DetailTableInline, {
+      columns,
+      tableKey,
+      formData: formData.value,
+      modelValue: formData.value[tableKey] || [],
+      'onUpdate:modelValue': (val: any) => {
+        formData.value[tableKey] = val;
+      },
+      class: container.props.class || 'mb-4',
+    });
+}
+
+function renderSelectGroup(component: any) {
+  if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
+console.log('comp ',component)
+      return h(FormSelectGroup, {
+        class: component.props.class,
+        component: component.props,
+        formData,
+        validationErrors,
+        validateField,
+      });
+}
+
 function renderContainer(container: any) {
   if (!container) return null;
+console.log('comp ',container)
+  // 🔥 Special handling for detailtable - render it as a component, not a container
+  // 🔥 Special handling for detailtable - render it as a component, not a container
+  if ((container.type || '').toLowerCase() === 'detailtable') {
+    return renderDetailTable(container)
+  } else 
+  if ((container.type || '').toLowerCase() === 'selectgroup') {
+    return renderSelectGroup(container)
+  }
 
   let children = Array.isArray(container) ? container : container.children || [];
-  console.log('comp type', container);
   return h(
     'div',
     {
       class: container.props?.class || '',
     },
     children.map((component: any) => {
-      switch (component.type) {
+      switch ((component.type || '').toLowerCase()) {
         case 'table':
           return renderTable(component);
         case 'tabs':
@@ -807,6 +867,45 @@ function renderContainer(container: any) {
         case 'chart':
           return renderChart(component);
 
+        case 'detailtable': {
+      // Initialize formData for this table if not exists
+      const tableKey = component.props.key;
+      console.log('🔍 Rendering detailtable:', { tableKey, component });
+      
+      if (!(tableKey in formData.value)) {
+        formData.value[tableKey] = [];
+      }
+
+      // Extract columns from component children
+      let columns: any[] = [];
+      if (component.children) {
+        component.children.forEach((child: any) => {
+          if (child.type === 'columns' && child.children) {
+            columns = child.children.map((col: any) => ({
+              ...col.props,
+              type: col.type,
+              text: col.props?.text,
+              label: col.props?.label,
+              key: col.props?.key,
+            }));
+          }
+        });
+      }
+
+      console.log('🔍 Detailtable columns:', columns);
+
+      return h(DetailTableInline, {
+        columns,
+        tableKey,
+        formData: formData.value,
+        modelValue: formData.value[tableKey],
+        'onUpdate:modelValue': (val: any) => {
+          formData.value[tableKey] = val;
+        },
+        class: component.props.class || 'mb-4',
+      });
+    }
+
         case 'master':
         case 'buttons':
         case 'tables':
@@ -817,6 +916,8 @@ function renderContainer(container: any) {
         case 'cards':
         case 'charts':
         case 'modals':
+        case 'row':
+        case 'col':
           return renderContainer(component);
         case 'action':
           break;
@@ -1167,7 +1268,12 @@ watchEffect(() => {
 
   <div v-for="(value, index) in modals" :key="value.props.key">
     <UModal
-      fullscreen
+    :ui="{
+    wrapper: 'items-center',
+    content: 'sm:max-w-none lg:max-w-none',
+    // Optionally remove padding if needed
+    // base: 'relative text-left rtl:text-right overflow-hidden shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6', 
+  }"
       v-if="modalRefs?.[value.props.key]"
       v-model:open="modalRefs[value.props.key]"
       :title="modalTitle"

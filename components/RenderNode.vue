@@ -1,5 +1,5 @@
 <template>
-  <div :class="['relative group transition-all duration-150', preview ? '' : 'hover:border-blue-400 hover:shadow-sm']">
+  <div :class="['relative group group/container transition-all duration-150', preview ? '' : 'hover:border-blue-400 hover:shadow-sm', node.props?.class]">
     <!-- ❌ Tombol Delete -->
     <button
       v-if="!preview"
@@ -12,16 +12,20 @@
     <!-- 🔹 Container node -->
     <div
       v-if="isContainer"
-      class="flex relative border-2 border-dashed rounded p-3 mb-2 bg-white dark:bg-black dark:text-white transition-colors duration-150"
-      :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'"
+      class="flex flex-col relative border border-transparent min-h-[50px] p-3 rounded bg-white dark:bg-black dark:text-white transition-all duration-150 group-hover/container:border-gray-200 hover:!border-blue-300 hover:bg-blue-50/10"
+      :class="[
+        isDragOver ? 'border-blue-400 bg-blue-50' : '',
+        node.type === 'search' ? '!border-dashed !border-green-200 bg-green-50/20' : '',
+        node.type === 'columns' ? '!border-dashed !border-purple-200 bg-purple-50/20' : ''
+      ]"
       @dragover.prevent="onDragOver"
       @dragenter.prevent="onDragEnter"
       @dragleave="onDragLeave"
       @drop="onDrop"
       @click.stop="emitSelect"
     >
-      <h4 v-if="node.label" class="text-gray-700 font-semibold text-sm mb-2 select-none dark:text-white">
-        {{ node.type + ': ' + node.label }}
+      <h4 v-if="node.label" class="text-xs text-gray-400 mb-1 select-none hidden group-hover/container:block absolute -top-5 left-0 bg-gray-100 px-1 rounded">
+        {{ node.type }}
       </h4>
 
       <!-- 🔹 Anak-anak draggable -->
@@ -30,7 +34,7 @@
         group="components"
         item-key="id"
         :disabled="preview"
-        class="space-y-2"
+        :class="node.props?.class || 'space-y-2'"
         ghost-class="draggable-ghost"
         chosen-class="hover-highlight"
         @change="onChildChange"
@@ -114,11 +118,16 @@ const onDrop = (event: DragEvent) => {
     const comp = JSON.parse(data);
 
     // ✅ Komponen valid → tambahkan
-    const newComp = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...comp,
-      children: comp.children || [],
-    };
+    const hydrateIds = (node: any) => {
+        return {
+            ...node,
+            id: Math.random().toString(36).substr(2, 9),
+            children: node.children ? node.children.map(hydrateIds) : []
+        }
+    }
+
+    const newComp = hydrateIds(comp)
+    
     emit('drop-child', [props.node.id, newComp]);
   } catch (err) {
     console.error('Invalid drop data', err);

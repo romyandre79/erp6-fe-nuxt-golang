@@ -2,6 +2,7 @@
 import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
 import { useUserStore } from '../store/user';
+import { useDevice } from '~/composables/useDevice';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
@@ -9,6 +10,8 @@ const userStore = useUserStore();
 import { useAppStore } from '~/store/app';
 
 const appStore = useAppStore();
+const { isMobile, isTablet, isDesktop, deviceType } = useDevice();
+
 const reloadPage = () => {
   window.location.reload();
 };
@@ -25,7 +28,7 @@ onMounted(async () => {
         
         <!-- Modern Glassmorphism Navbar -->
         <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-800/50 shadow-sm transition-all duration-300">
-          <div class="container mx-auto px-6">
+          <div class="container mx-auto" :class="isMobile ? 'px-4' : 'px-6'">
             <Navbar class="nav" />
           </div>
         </header>
@@ -41,8 +44,8 @@ onMounted(async () => {
           <!-- Top accent line -->
           <div class="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
           
-          <div class="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md py-6 px-4">
-            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md" :class="isMobile ? 'py-4 px-3' : 'py-6 px-4'">
+            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between" :class="isMobile ? 'gap-2' : 'gap-4'">
               <!-- Copyright -->
               <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 &copy; {{ new Date().getFullYear() }} Prisma Data Abadi
@@ -58,7 +61,7 @@ onMounted(async () => {
         </footer>
       </div>
       <AiAssistant v-if="userStore.token" />
-      <AiAssistant v-if="userStore.token" />
+
       
       <!-- Connection Error Overlay -->
       <div v-if="appStore.connectionError" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm">

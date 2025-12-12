@@ -2,11 +2,29 @@
   <div class="h-full flex flex-col bg-white p-4 overflow-auto">
   
     <div v-if="selectedTable" class="space-y-4">
-      <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
+      </div>
+      <div>
+        <button
+          @click="$emit('view-data')"
+          class="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+        >
+          <UIcon name="heroicons:table-cells" class="w-4 h-4" />
+          View Data
+        </button>
+      </div>
 
       <div>
         <label class="text-sm text-gray-600">Table Name</label>
         <input v-model="selectedTable.name" class="w-full mt-1 p-2 border rounded" />
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-600">View Flow <NuxtLink to="/admin/workflow" target="_blank">
+    (to Workflow)
+  </NuxtLink></label>
+        <input v-model="selectedTable.flow" class="w-full mt-1 p-2 border rounded" />
       </div>
 
       <div>
@@ -117,6 +135,7 @@ const emit = defineEmits([
   'copy-json',
   'remove-relation',
   'update:jsonPreview',
+  'view-data',
 ]);
 
 

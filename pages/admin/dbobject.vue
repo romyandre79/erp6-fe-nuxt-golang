@@ -43,6 +43,7 @@
       <!-- Sidebar -->
       <div class="flex-none bg-white border-r z-10">
         <Sidebar
+          ref="sidebarRef"
           :tables="tables"
           :areas="areas"
           :selectedTable="selectedTable"
@@ -69,6 +70,7 @@
           @copy-json="copyJSONToClipboard"
           @remove-relation="removeRelation"
           @reverse-engineer="reverseEngineerDatabase"
+          @view-data="openDataViewer"
         />
       </div>
 
@@ -138,6 +140,16 @@
         </div>
       </div>
     </div>
+    
+    <!-- Data Viewer Modal -->
+    <div v-if="showDataModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-xl overflow-hidden relative max-w-[90vw] max-h-[90vh]">
+        <DbObjectDataViewer 
+          :table="dataViewerTable" 
+          @close="showDataModal = false" 
+        />
+      </div>
+    </div>
 
   </div>
 </template>
@@ -155,6 +167,7 @@ const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjec
 const CanvasTable = defineAsyncComponent(() => import('~/components/canvas/CanvasTable.vue'));
 const CanvasArea = defineAsyncComponent(() => import('~/components/canvas/CanvasArea.vue'));
 const PropertiesPanel = defineAsyncComponent(() => import('~/components/canvas/PropertiesPanel.vue'));
+const DbObjectDataViewer = defineAsyncComponent(() => import('~/components/dbobject/DbObjectDataViewer.vue'));
 
 definePageMeta({
   middleware: ['auth'],
@@ -189,9 +202,13 @@ watch(backupError, (val) => {
   if (val) toast.add({ title: 'Error', description: val, color: 'error' });
 });
 
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
+
 function triggerRestore() {
   restoreInput.value?.click();
 }
+
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
 
 function onFileSelected(event: any) {
   const file = event.target.files[0];
@@ -201,6 +218,7 @@ function onFileSelected(event: any) {
         return;
     }
     restoreDatabase(file);
+    markClean(); // Clean state after restore
     event.target.value = ''; // reset after selection
   }
 }
@@ -229,17 +247,35 @@ const selectedId = ref(null);
 const jsonPreview = ref('');
 const aiDescription = ref('');
 const showExecuteModal = ref(false);
+const showDataModal = ref(false);
+const dataViewerTable = ref<any>(null);
+
+function openDataViewer(table: any) {
+  dataViewerTable.value = table;
+  showDataModal.value = true;
+}
 
 const selectedTable = computed(() => tables.find((t) => t.id === selectedId.value) || null);
 
+const sidebarRef = ref<any>(null); // Use any to avoid typing issues with async component
+
 function selectTable(id: any) {
   selectedId.value = id;
-  const t = tables.find((x) => x.id === id);
-  jsonPreview.value = t ? JSON.stringify(t, null, 2) : '';
+  // Force open properties panel
+  if (sidebarRef.value) {
+    sidebarRef.value.openProperties();
+  }
 }
 
-// ... (Rest of the logic needs to be adapted or moved)
-// Since the file was huge, I'll keep the specific logic here but use the composable state.
+watch(selectedTable, (newVal) => {
+  jsonPreview.value = newVal ? JSON.stringify(newVal, null, 2) : '';
+}, { deep: true });
+
+
+watch([tables, relations, areas], () => {
+  markDirty();
+}, { deep: true });
+
 
 function addTableAt() {
   let x = 40;
@@ -314,6 +350,7 @@ function addArea() {
 
   areas.push({
     id: areaSeq,
+    dbid: '', // New area has no DB ID
     name: 'Area ' + areaSeq,
     x: x,
     y: y,
@@ -426,6 +463,7 @@ function finishLink(ev: any, moveHandler: any, upHandler: any) {
   if (target) {
     const rel = {
       id: relSeq++,
+      dbid: '', // New relation has no DB ID
       from: {
         table: linkPreview.from.table,
         col: linkPreview.from.col,
@@ -507,6 +545,7 @@ function applyJSONToSelected(json: string) {
     selectedTable.value.x = Number(obj.x ?? selectedTable.value.x);
     selectedTable.value.y = Number(obj.y ?? selectedTable.value.y);
     selectedTable.value.width = Number(obj.width ?? selectedTable.value.width);
+    selectedTable.value.flow = obj.flow ?? selectedTable.value.flow;
     if (Array.isArray(obj.columns)) selectedTable.value.columns = obj.columns;
     computeRelationsPaths();
     alert('Applied to selected table');
@@ -557,6 +596,7 @@ function aiSuggestRelations() {
 
           relations.push({
             id: relSeq++,
+            dbid: '', // New relation has no DB ID
             from: { table: t1.id, col: idx1, colName: col1.name },
             to: { table: t2.id, col: idx2, colName: t2.columns[idx2].name },
             path: '',
@@ -816,23 +856,18 @@ function exportArea(area: any) {
 
 // Load/Save Logic
 async function saveToBackend() {
-  if (!tables.length) return alert('No tables to save');
+  if (!tables.length && !areas.length && !relations.length) return alert('Nothing to save');
 
   try {
+    // 1. Save Tables
     for (const table of toRaw(tables)) {
       const payloadObj = {
-        table,
-        relations: relations
-          .filter((r) => r.from.table === table.id || r.to.table === table.id)
-          .map((r) => ({
-            id: r.id,
-            from: { ...r.from, table: tables.find((t) => t.id === r.from.table)?.dbid },
-            to: { ...r.to, table: tables.find((t) => t.id === r.to.table)?.dbid },
-          })),
-        areas,
+          table: {
+              ...(toRaw(table)),
+          }
       };
 
-      const dbobj = {
+      const dbobj: any = {
         dbobjectid: table.dbid ? String(table.dbid) : '',
         objectname: table.name,
         dbobjecttypeid: '1',
@@ -844,14 +879,51 @@ async function saveToBackend() {
 
       const res = await store.saveTable(dbobj);
       const returned = res?.data?.data ?? res;
-      const newId = returned?.dbobjectid ?? returned?.dbobjectid ?? null;
+      const newId = returned?.dbobjectid ?? null;
       if (newId) {
         const local = tables.find((t) => t.id === table.id);
         if (local) local.dbid = newId;
       }
     }
-    toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
-  } catch (err) {
+
+    // 2. Save Relations
+    const relationsPayload = relations.map(r => ({
+        id: r.dbid ? parseInt(r.dbid) : 0, // Use stored DB ID if available
+        from_table_id: tables.find(t => t.id === r.from.table)?.dbid ? parseInt(tables.find(t => t.id === r.from.table)?.dbid) : 0,
+        from_col_index: r.from.col,
+        from_col_name: r.from.colName,
+        to_table_id: tables.find(t => t.id === r.to.table)?.dbid ? parseInt(tables.find(t => t.id === r.to.table)?.dbid) : 0,
+        to_col_index: r.to.col,
+        to_col_name: r.to.colName,
+        path: r.path
+    })).filter(r => r.from_table_id && r.to_table_id);
+
+    // Save returns updated relations with IDs? Backend should ideally return them.
+    // For now we assume typical save, but without reloading we won't get new IDs back.
+    // Ideally we should reload or have backend return IDs.
+    await store.saveRelations(relationsPayload);
+
+    // 3. Save Areas
+    const areasPayload = areas.map(a => ({
+        id: a.dbid ? parseInt(a.dbid) : 0, // Use stored DB ID if available
+        name: a.name,
+        x: Math.round(a.x),
+        y: Math.round(a.y),
+        width: Math.round(a.width),
+        height: Math.round(a.height),
+        color: a.color,
+        tables: JSON.stringify(activeAreaTables.value.filter(t => 
+             t.x >= a.x && t.x <= a.x + a.width && t.y >= a.y && t.y <= a.y + a.height
+        ).map(t => t.dbid))
+    }));
+    await store.saveAreas(areasPayload);
+
+    toast.add({ title: 'Success', description: 'Design saved successfully (Tables, Relations, Areas)', color: 'success' });
+    
+    // Ideally reload to get new IDs, but that resets UI. 
+    // For now, next load will pick them up.
+    markClean();
+  } catch (err: any) {
     console.error(err);
     toast.add({ title: 'Error', description: String(err), color: 'error' });
   }
@@ -866,11 +938,12 @@ async function loadDesign() {
   relSeq = 1;
   selectedId.value = null;
 
+  // 1. Fetch Tables
   await store.fetchAll();
 
   const seen = new Set();
-  const unique = [];
-  const idMap = {};
+  const unique: any[] = [];
+  const idMap: Record<string, any> = {};
 
   (store.dbobjects || []).forEach((obj: any) => {
     const key = obj?.dbobjectid ? String(obj.dbobjectid) : (obj?.objectname ?? '');
@@ -888,7 +961,73 @@ async function loadDesign() {
   });
 
   idSeq = Math.max(...tables.map((t) => t.id), 0) + 1;
-  loadRelationsFromObjects(unique, idMap);
+
+  // 2. Fetch Relations
+  try {
+      const rels = await store.fetchRelations();
+      console.log('DEBUG: Fetched Relations Raw:', rels);
+      
+      const debugMap = [];
+      rels.forEach((r: any) => {
+          // Debugging lookup:
+          const fromSearch = String(r.from_table_id);
+          const toSearch = String(r.to_table_id);
+          
+          const fromTbl = tables.find(t => String(t.dbid) == fromSearch); 
+          const toTbl = tables.find(t => String(t.dbid) == toSearch);
+
+          debugMap.push({
+             rid: r.id,
+             wantFrom: fromSearch,
+             wantTo: toSearch,
+             foundFrom: fromTbl ? fromTbl.id : 'MISSING',
+             foundTo: toTbl ? toTbl.id : 'MISSING'
+          });
+
+          if (fromTbl && toTbl) {
+              relations.push({
+                  id: relSeq++, // local ID for canvas
+                  dbid: r.id,   // Store DB ID
+                  from: {
+                      table: fromTbl.id,
+                      col: r.from_col_index,
+                      colName: r.from_col_name
+                  },
+                  to: {
+                      table: toTbl.id,
+                      col: r.to_col_index,
+                      colName: r.to_col_name
+                  },
+                  path: r.path || ''
+              });
+          }
+      });
+      console.log('DEBUG: Relation Mapping Report:', debugMap);
+      console.log('DEBUG: Final Relations Layout:', relations);
+
+  } catch (e) {
+      console.warn('Failed to load relations', e);
+  }
+
+  // 3. Fetch Areas
+  try {
+      const loadedAreas = await store.fetchAreas();
+      loadedAreas.forEach((a: any) => {
+          areas.push({
+              id: areaSeq++, // local ID for canvas
+              dbid: a.id,    // Store DB ID
+              name: a.name,
+              x: a.x,
+              y: a.y,
+              width: a.width,
+              height: a.height,
+              color: a.color
+          });
+      });
+  } catch (e) {
+      console.warn('Failed to load areas', e);
+  }
+
   computeRelationsPaths();
 }
 
@@ -898,28 +1037,26 @@ function createTableFromDBObject(obj: any, index: number) {
   let width = 120;
 
   let columns = [];
+  let content: any = null;
   if (obj.objectcontent) {
     try {
-      const content = JSON.parse(obj.objectcontent);
-      if (content?.table?.columns && Array.isArray(content.table.columns)) {
-        columns = content.table.columns.map((c: any) => ({
+      content = JSON.parse(obj.objectcontent);
+      
+      // Handle nested structure from previous save format if it exists
+      const tableData = content.table || content; 
+
+      if (tableData.columns && Array.isArray(tableData.columns)) {
+        columns = tableData.columns.map((c: any) => ({
           name: c.name || 'col',
           type: c.type || 'text',
           allownull: c.allownull ?? false,
           default: c.default ?? '',
         }));
       }
-      posX = content?.table?.x ?? 40 + (index % 4) * 340;
-      posY = content?.table?.y ?? 40 + Math.floor(index / 4) * 200;
-      width = content?.table?.width ?? 240;
+      posX = tableData.x ?? 40 + (index % 4) * 340;
+      posY = tableData.y ?? 40 + Math.floor(index / 4) * 200;
+      width = tableData.width ?? 240;
 
-      if (content.areas && content.areas.length > 0) {
-        content.areas.forEach((area: any) => {
-          if (areas.find((x) => x.id == area.id) == undefined) {
-            createAreaFromData(area);
-          }
-        });
-      }
     } catch (e) {
       console.warn(`Invalid objectcontent JSON for ${obj.objectname}`, e);
     }
@@ -937,60 +1074,8 @@ function createTableFromDBObject(obj: any, index: number) {
     columns,
     ispublished: obj.ispublished == 1 ? true : false,
     comment: obj.comment ?? '',
+    flow: content?.table?.flow ?? '',
   };
-}
-
-function createAreaFromData(data: any) {
-  const area = {
-    id: data.id,
-    name: data.name,
-    x: data.x,
-    y: data.y,
-    width: data.width,
-    height: data.height,
-    color: data.color,
-    type: 'area',
-  };
-
-  areas.push(area);
-  areaSeq = data.id;
-}
-
-function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
-  relations.splice(0, relations.length);
-  const seenKeys = new Set();
-
-  dbobjects.forEach((obj) => {
-    if (!obj.objectcontent) return;
-    let parsed = null;
-    try {
-      parsed = JSON.parse(obj.objectcontent);
-    } catch {
-      return;
-    }
-
-    if (!Array.isArray(parsed.relations)) return;
-
-    parsed.relations.forEach((rel: any) => {
-      const newFromTable = idMap[rel.from.table];
-      const newToTable = idMap[rel.to.table];
-      if (!newFromTable || !newToTable) return;
-
-      const key = `${newFromTable}|${rel.from.col}|${newToTable}|${rel.to.col}`;
-
-      if (seenKeys.has(key)) return;
-      seenKeys.add(key);
-
-      relations.push({
-        id: relSeq++,
-        from: { table: newFromTable, col: rel.from.col, colName: rel.from.colName },
-        to: { table: newToTable, col: rel.to.col, colName: rel.to.colName },
-        path: '',
-      });
-    });
-  });
-
-  computeRelationsPaths();
 }
 
 function openExecuteModal() {
@@ -1014,6 +1099,8 @@ async function reverseEngineerDatabase() {
     const response = await api.post('/api/admin/db/reverse-engineer', {
       auto_layout: true
     });
+
+    console.log('Reverse Engineering Response:', response);
 
     if (response.success) {
       toast.add({ 
