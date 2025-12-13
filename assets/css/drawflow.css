@@ -133,3 +133,61 @@ button * {
   stroke-width: 3px;
   stroke: #06b6d4;
 }
+
+/* ===== NODE STATE INDICATORS ===== */
+/* Running state - blue pulse animation */
+.drawflow-node.node-running .node-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.4);
+  animation: pulse-running 1.5s ease-in-out infinite;
+}
+
+.drawflow-node.node-running .title-box {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.4);
+  animation: pulse-running 1.5s ease-in-out infinite;
+}
+
+/* Success state - green border and glow */
+.drawflow-node.node-success .node-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.drawflow-node.node-success .title-box {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Error state - red border and glow */
+.drawflow-node.node-error .node-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(239, 68, 68, 0.4);
+  animation: pulse-error 2s ease-in-out infinite;
+}
+
+.drawflow-node.node-error .title-box {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(239, 68, 68, 0.4);
+  animation: pulse-error 2s ease-in-out infinite;
+}
+
+/* Pulse animation for running nodes */
+@keyframes pulse-running {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 4px 16px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Pulse animation for error nodes */
+@keyframes pulse-error {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2), 0 4px 16px rgba(239, 68, 68, 0.6);
+  }
+}

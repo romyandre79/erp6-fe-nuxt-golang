@@ -9,7 +9,7 @@
     <form v-else class="space-y-3" @submit.prevent>
       <template v-for="field in fields" :key="field.componentdetailid">
         <div class="space-y-1">
-          <label class="block text-sm font-medium text-gray-700">{{ field.lable ?? field.inputname }}</label>
+          <label class="block text-sm font-medium text-gray-700">{{ (field.inputdesc + '('+ field.inputname +')') }}</label>
 
           <!-- TEXTBOX -->
           <input

@@ -248,6 +248,23 @@ async function edit(key: string) {
   }
 }
 
+async function runFlow(flow: string) {
+  const dataForm = new FormData();
+  dataForm.append('flowname', flow);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
+  try {
+    const res = await Api.post('api/admin/execute-flow', dataForm);
+    if (res.code == 200) {
+      const record = res.data.data;
+    } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+      navigateTo('/login');
+    }
+  } catch (err) {
+    console.error('Gagal ambil data:', err);
+  }
+}
+
 function close(key: string) {
   try {
     const primary = getPrimary();

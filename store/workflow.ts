@@ -250,6 +250,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+  async function purgeFlowParameter(id: any) {
+      const df = new FormData();
+      df.append('flowname', 'purgewfparameter');
+      df.append('menu', 'admin');
+      df.append('search', 'false');
+      df.append('wfparameterid', id);
+      await api.post('/api/admin/execute-flow', df);
+  }
+
   async function saveFlow(flow: any) {
     loading.value = true;
     try {
@@ -283,7 +292,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (!nodeKey) return;
     home[nodeKey].data = { ...(home[nodeKey].data || {}), ...data };
     editor.drawflow.drawflow.Home.data = home;
-    saveFlow(editor.export());
+    //saveFlow(editor.export());
   }
 
   async function deleteNodeProperties(nodeId: string | number) {
@@ -342,6 +351,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     findComponentByName,
     loadComponentProperties,
     saveFlow,
+    purgeFlowParameter,
     copyFlow,
     setSelectedNode,
     updateSelectedNodeData,
