@@ -56,7 +56,7 @@
              <!-- Messages -->
              <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900" ref="aiMessagesContainer">
                 <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['flex', msg.sender === 'user' ? 'justify-end' : 'justify-start']">
-                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
+                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
                     {{ msg.text }}
                     </div>
                 </div>

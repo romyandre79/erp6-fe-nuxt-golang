@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     output: {
-      publicDir: process.env.MODE === 'prod' ? '../erp6-be-golang-dist/public' : './.output/public', // default folder Nuxt
+      publicDir: '../erp6-be-golang-dist/public', // default folder Nuxt
     },
     rollupConfig: {
       // Suppress warnings for Nitro internal virtual modules
@@ -80,7 +80,7 @@ export default defineNuxtConfig({
     public: {
       appName: process.env.APP_NAME,
       companyId: process.env.COMPANY_ID,
-      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888/api',
+      apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
       apiToken: process.env.PUBLIC_API_TOKEN || '',
       mode: process.env.MODE || 'development',
     },

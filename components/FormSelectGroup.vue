@@ -8,8 +8,8 @@ interface Props {
     label: string;
     text?: string;
     source?: string;
+    sourceAll?: string;
     place?: string;
-    valueField?: string;
   };
   formData: Ref<Record<string, any>>;
   validationErrors: Record<string, string>;
@@ -26,46 +26,77 @@ if (!Array.isArray(formData.value[component.key])) {
   formData.value[component.key] = [];
 }
 
-const options = ref<{ label: string; value: string | number }[]>([]);
+const options = ref<{ label: string; id: string | number }[]>([]);
 const loading = ref(false);
 
 onMounted(async () => {
-  if (!component.source) return;
   loading.value = true;
+  
+  const labelField = component.label || 'label';
+  // Use valueField if provided, otherwise fallback to key, then 'value', then 'id'
+  const valueField = component.key || 'value';
 
-  try {
-    let arr = props.component.source?.split(',');
-    if (arr.length == 1) {
-      // It's likely a flow name, fetch from API
-      const dataForm = new FormData();
-      dataForm.append('flowname', component.source);
-      dataForm.append('menu', 'admin');
-      dataForm.append('search', 'true');
+  // 1. Fetch Options
+  const dataSource = component.sourceAll || component.source;
+  
+  if (dataSource) {
+    try {
+      let arr = dataSource.split(',');
+      if (arr.length == 1) {
+        // Flow name
+        const dataForm = new FormData();
+        dataForm.append('flowname', dataSource);
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', 'true');
 
-      const res = await Api.post('api/admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm) as any;
 
-      if (res.code === 200 && Array.isArray(res.data?.data)) {
-        const labelField = component.label || 'label';
-        const valueField = component.valueField || component.key || 'value';
-
-        options.value = res.data.data.map((item: Record<string, any>) => ({
-          label: item[labelField],
-          value: item[valueField],
-        }));
+        if (res.code === 200 && Array.isArray(res?.data?.data)) {
+          options.value = res.data.data.map((item: Record<string, any>) => ({
+            label: item[labelField],
+            id: item[valueField] ?? item['id'], // Fallback to 'id' if specific field not found
+          }));
+        } else {
+          console.error('Failed to fetch options:', res?.message);
+        }
       } else {
-        console.error('Failed to fetch data for selectgroup:', res?.message);
+        // Static list
+        options.value = arr.map((element) => ({
+          label: element,
+          id: element,
+        }));
       }
-    } else {
-      // It's a static comma-separated list
-      options.value = arr.map((element) => ({
-        label: element,
-        value: element,
-      }));
+    } catch (err) {
+      console.error('Error rendering options:', err);
     }
-  } catch (err) {
-    console.error('Error fetch data selectgroup:', err);
   }
 
+  // 2. Fetch Selected Values
+  if (component.source && component.sourceAll && component.source !== component.sourceAll) {
+    try {
+      let arr = component.source.split(',');
+      if (arr.length == 1) {
+        // Flow name for SELECTION
+        const dataForm = new FormData();
+        dataForm.append('flowname', component.source);
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', 'true');
+
+        const res = await Api.post('api/admin/execute-flow', dataForm) as any;
+
+        if (res.code === 200 && Array.isArray(res?.data?.data)) {
+           const selectedValues = res.data.data.map((item: Record<string, any>) => item[valueField] ?? item['id']);
+           formData.value[component.key] = selectedValues;
+           console.log(formData)
+        }
+      } else {
+         formData.value[component.key] = arr;
+      }
+    } catch (err) {
+      console.error('Error fetching selection:', err);
+    }
+  }
+  
   loading.value = false;
 });
 
@@ -86,8 +117,11 @@ const modelSelect = computed({
 
     <UCheckboxGroup
       v-model="modelSelect"
-      :options="options"
+      :items="options"
       :legend="component.place"
+      orientation="horizontal"
+      indicator="end"
+      value-attribute="id"
     />
 
     <span v-if="validationErrors[component.key]" class="text-xs text-red-500 mt-1">

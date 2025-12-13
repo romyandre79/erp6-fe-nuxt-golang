@@ -188,6 +188,10 @@ const clearSchema = async () => {
   canvasComponents.value = [];
 };
 
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
+
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
 const saveSchema = async () => {
   const dataForm = new FormData();
   dataForm.append('flowname', 'modifwidget');
@@ -206,6 +210,7 @@ const saveSchema = async () => {
     const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
       toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
+      markClean();
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
@@ -321,7 +326,9 @@ watch(
   (newVal) => {
     formattedJson.value = newVal;
     formSchema.value = newVal;
+    markDirty();
   },
   { deep: true, immediate: true },
 );
+
 </script>

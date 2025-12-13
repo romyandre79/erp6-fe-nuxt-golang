@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useThemeStore } from '~/store/theme';
 import { useNotificationStore } from '~/store/notification';
 import { useAuth } from '~/composables/useAuth';
+import { useDevice } from '~/composables/useDevice';
 import AiAssistant from '~/components/AiAssistant.vue';
 
 const themeStore = useThemeStore();
@@ -14,48 +15,20 @@ const { t } = useI18n();
 const userStore = useUserStore();
 const { me } = useAuth();
 const config = useRuntimeConfig();
+import { useAppStore } from '~/store/app';
 
-// Sidebar collapse state
+const appStore = useAppStore();
+const { isMobile, isTablet } = useDevice();
+
+const reloadPage = () => {
+  window.location.reload();
+};
+
+// Sidebar collapse state - auto-collapse on mobile
 const isCollapsed = ref(false);
 // Track menu expand/collapse per parent
 const expanded = ref<Record<number, boolean>>({});
 const menus = ref<any[]>([]);
-
-// Icon mapping for menu items
-const menuIcons: Record<string, string> = {
-  dashboard: 'fa-solid fa-gauge-high',
-  user: 'fa-solid fa-users',
-  users: 'fa-solid fa-users',
-  role: 'fa-solid fa-user-shield',
-  roles: 'fa-solid fa-user-shield',
-  permission: 'fa-solid fa-key',
-  permissions: 'fa-solid fa-key',
-  menu: 'fa-solid fa-bars',
-  menus: 'fa-solid fa-bars',
-  setting: 'fa-solid fa-cog',
-  settings: 'fa-solid fa-cog',
-  report: 'fa-solid fa-chart-line',
-  reports: 'fa-solid fa-chart-line',
-  workflow: 'fa-solid fa-diagram-project',
-  article: 'fa-solid fa-newspaper',
-  articles: 'fa-solid fa-newspaper',
-  theme: 'fa-solid fa-palette',
-  themes: 'fa-solid fa-palette',
-  master: 'fa-solid fa-database',
-  transaction: 'fa-solid fa-exchange-alt',
-  form: 'fa-solid fa-window-maximize',
-  forms: 'fa-solid fa-window-maximize',
-  widget: 'fa-solid fa-puzzle-piece',
-  widgets: 'fa-solid fa-puzzle-piece',
-  dbobject: 'fa-solid fa-server',
-  admin: 'fa-solid fa-shield-halved',
-  default: 'fa-solid fa-folder',
-};
-
-const getMenuIcon = (menuName: string) => {
-  const name = menuName?.toLowerCase() || '';
-  return menuIcons[name] || menuIcons.default;
-};
 
 const route = useRoute();
 
@@ -103,6 +76,11 @@ watch(() => route.path, () => {
 
 onMounted(async () => {
   themeStore.applyCurrentTheme();
+  
+  // Auto-collapse sidebar on mobile
+  if (isMobile.value) {
+    isCollapsed.value = true;
+  }
   
   // Connect Notifications
   await notificationStore.connect();
@@ -193,7 +171,7 @@ const toggleExpand = (id: number) => {
               >
                 <!-- Icon -->
                 <div class="menu-icon w-6 flex items-center justify-center transition-all duration-200 shrink-0">
-                  <i :class="getMenuIcon(parent.menuname)" class="text-base"></i>
+                  <i :class="parent.menuicon" class="text-base"></i>
                 </div>
                 
                 <!-- Label -->
@@ -234,7 +212,7 @@ const toggleExpand = (id: number) => {
                     class="submenu-item flex items-center gap-2.5 px-3 py-2 transition-all duration-200"
                     :style="{ borderRadius: 'var(--sidebar-menu-radius)' }"
                   >
-                    <i :class="getMenuIcon(child.menuname)" class="text-[11px] opacity-70 w-4"></i>
+                    <i :class="child.menuicon" class="text-[11px] opacity-70 w-4"></i>
                     <span class="text-sm truncate">
                       {{ t(child.description.toUpperCase()) }}
                     </span>
@@ -286,6 +264,35 @@ const toggleExpand = (id: number) => {
         </main>
       </div>
       <AiAssistant />
+
+      
+      <!-- Connection Error Overlay -->
+      <div v-if="appStore.connectionError" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-gray-100 dark:border-gray-700">
+          <div class="flex flex-col items-center justify-center gap-4 text-center">
+            <div class="p-3 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+              <UIcon name="i-heroicons-exclamation-triangle-20-solid" class="w-8 h-8" />
+            </div>
+            
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              Connection Error
+            </h3>
+            
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ appStore.errorMessage }}. Please check your internet connection or try again later.
+            </p>
+
+            <UButton
+              color="error"
+              variant="solid"
+              label="Retry Connection"
+              icon="i-heroicons-arrow-path"
+              class="mt-2"
+              @click="reloadPage"
+            />
+          </div>
+        </div>
+      </div>
     </UApp>
   </ClientOnly>
 </template>

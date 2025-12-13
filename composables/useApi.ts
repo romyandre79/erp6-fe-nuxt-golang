@@ -1,4 +1,5 @@
 import { useUserStore } from '#imports';
+import { useAppStore } from '~/store/app';
 
 export const useApi = () => {
   const config = useRuntimeConfig();
@@ -18,15 +19,35 @@ export const useApi = () => {
     return headers;
   };
 
-  const get = async (url: string) => await $fetch(url, { baseURL: config.public.apiBase, headers: getHeaders() });
+  const handleError = (error: any) => {
+    const appStore = useAppStore();
+    // Check for network error (status 0) or server errors (502, 503, 504)
+    if (!error.response || [502, 503, 504].includes(error.response.status)) {
+      appStore.setConnectionError(true, 'Unable to connect to the server');
+    }
+    throw error;
+  };
 
-  const post = async (url: string, body: any) =>
-    await $fetch(url, {
-      method: 'POST',
-      baseURL: config.public.apiBase,
-      headers: getHeaders(body),
-      body: body instanceof FormData ? body : JSON.stringify(body),
-    });
+  const get = async (url: string) => {
+    try {
+      return await $fetch(url, { baseURL: config.public.apiBase, headers: getHeaders() });
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  const post = async (url: string, body: any) => {
+    try {
+      return await $fetch(url, {
+        method: 'POST',
+        baseURL: config.public.apiBase,
+        headers: getHeaders(body),
+        body: body instanceof FormData ? body : JSON.stringify(body),
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
   const donlotFile = async (urlFile: string, body: any, fileName: string) => {
     try {
@@ -54,19 +75,35 @@ export const useApi = () => {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error saat download file:', err);
+      // For fetch API, we need to inspect the error object differently or just treat catch as error
+       const appStore = useAppStore();
+       // Fetch throws TypeError on network failure
+       if (err instanceof TypeError) {
+          appStore.setConnectionError(true, 'Network error occurred during download');
+       }
     }
   };
 
-  const put = async (url: string, body: any) =>
-    await $fetch(url, {
-      method: 'PUT',
-      baseURL: config.public.apiBase,
-      headers: getHeaders(body),
-      body: body instanceof FormData ? body : JSON.stringify(body),
-    });
+  const put = async (url: string, body: any) => {
+    try {
+      return await $fetch(url, {
+        method: 'PUT',
+        baseURL: config.public.apiBase,
+        headers: getHeaders(body),
+        body: body instanceof FormData ? body : JSON.stringify(body),
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
-  const del = async (url: string) =>
-    await $fetch(url, { method: 'DELETE', baseURL: config.public.apiBase, headers: getHeaders() });
+  const del = async (url: string) => {
+    try {
+      return await $fetch(url, { method: 'DELETE', baseURL: config.public.apiBase, headers: getHeaders() });
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
   return { get, post, put, del, donlotFile };
 };

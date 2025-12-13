@@ -148,6 +148,7 @@
             @apply-json="$emit('apply-json', $event)"
             @copy-json="$emit('copy-json', $event)"
             @remove-relation="$emit('remove-relation', $event)"
+            @view-data="$emit('view-data', selectedTable)"
           />
           <div v-else class="text-gray-500 text-sm italic text-center mt-10">
             Select a table to view properties.
@@ -192,6 +193,7 @@ const emit = defineEmits([
   'copy-json',
   'remove-relation',
   'reverse-engineer',
+  'view-data',
 ]);
 
 const activeActivity = ref('toolbox');
@@ -219,9 +221,19 @@ function toggleActivity(id: string) {
 // Auto-switch to properties when a table is selected
 watch(() => props.selectedTable, (newVal) => {
   if (newVal) {
-    activeActivity.value = 'properties';
-    isPanelOpen.value = true;
+    openProperties();
   }
+});
+
+
+
+function openProperties() {
+  activeActivity.value = 'properties';
+  isPanelOpen.value = true;
+}
+
+defineExpose({
+  openProperties,
 });
 
 const aiDescriptionModel = computed({

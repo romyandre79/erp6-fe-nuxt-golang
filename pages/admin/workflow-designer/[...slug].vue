@@ -7,7 +7,7 @@
 
     <!-- Designer takes remaining space -->
     <div class="flex-1 relative bg-gray-100">
-      <Designer />
+      <Designer @saved="markClean" />
     </div>
   </div>
 </template>
@@ -52,7 +52,7 @@ onMounted(async () => {
   await store.loadWorkflow(id);
 });
 
-watch(
+/*watch(
   () => route.params.slug,
   async () => {
     console.log('Route slug changed:', route.params.slug);
@@ -62,5 +62,24 @@ watch(
     await store.loadWorkflow(id);
   },
   { deep: true }
-);
+);*/
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
+
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
+// Watch for changes in store.workflow
+watch(() => store.workflow, () => {
+  if (store.workflow) markDirty();
+}, { deep: true });
+
+// Mark clean when workflow is loaded initially
+watch(() => store.workflow?.id, () => {
+   markClean();
+});
+
+// Also need to handle save event to markClean.
+// The save logic is likely in Sidebar or Designer.
+// `Sidebar` emits `save`.
+// I should listen to save event if possible, or watch store loading state.
+
 </script>
