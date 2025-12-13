@@ -423,5 +423,8 @@
         "API": "API"
       }
     }
-  }
+  },
+  "BUSINESS UNIT": "Business Unit",
+  "REPORT": "Report",
+  "SCHEDULER JOBS": "Scheduler Jobs"
 }

@@ -136,6 +136,22 @@ function open(key: string) {
   }
 }
 
+async function copy() {
+  const onCopy = getAction('onCopy') 
+  if (onCopy == '') return 
+  try {
+  const dataForm = new FormData();
+  dataForm.append('flowname', onCopy);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
+  dataForm.append('id', selectedRows.value[0][getPrimary()]);
+  const res = await Api.post('api/admin/execute-flow', dataForm);
+  toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+  } catch (err) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+  }
+}
+
 function getPrimary() {
   let node: any;
   parsedSchema.value.forEach((element) => {
@@ -663,6 +679,9 @@ function renderComponent(component: any) {
           } else if (eventName.startsWith('open')) {
             const key = eventName.replace('open:', '');
             open(key);
+            return;
+          } else if (eventName.startsWith('copy')) {
+            copy();
             return;
           } else if (eventName.startsWith('edit')) {
             const key = eventName.replace('edit:', '');

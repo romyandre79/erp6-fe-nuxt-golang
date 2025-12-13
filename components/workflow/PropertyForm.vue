@@ -6,7 +6,7 @@
 
     <div v-if="fields.length === 0" class="text-sm text-gray-500">No properties available for this component.</div>
 
-    <form v-else class="space-y-3" @submit.prevent>
+    <form v-else class="space-y-3 pb-4" @submit.prevent>
       <template v-for="field in fields" :key="field.componentdetailid">
         <div class="space-y-1">
           <label class="block text-sm font-medium text-gray-700">{{ (field.inputdesc + '('+ field.inputname +')') }}</label>
@@ -75,14 +75,7 @@ const form = reactive<Record<string, any>>({});
 // fields array (normalized from store.componentProperties or from store.loadComponentProperties result)
 const fields = ref<any[]>([]);
 
-// debounce util (simple)
-function debounce<T extends (...args: any[]) => void>(fn: T, wait = 500) {
-  let t: any = null;
-  return function (this: any, ...args: any[]) {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(this, args), wait);
-  };
-}
+
 
 // Helper: decide types
 function isTextbox(f: any) {
@@ -131,31 +124,66 @@ function initFormFromFields() {
   }
 
   // isi form
+  console.log('[PropertyForm] initFormFromFields. Fields:', fields.value, 'NodeData:', nodeData);
+  const updates: Record<string, any> = {};
+
+  // isi form
   fields.value.forEach((f: any) => {
     const key = f.inputname;
-    if (nodeData && Object.prototype.hasOwnProperty.call(nodeData, key)) {
-      form[key] = nodeData[key];
+    let val = '';
+
+    // Prioritas:
+    // 1. Jika ada detail ID dari database (saved), gunakan nilainya (f.componentvalue).
+    // 2. Jika tidak, cek apakah ada data di node drawflow (nodeData).
+    // 3. Terakhir, gunakan default value.
+
+    if (f.workflowdetailid && f.workflowdetailid !== 0) {
+      // Data from DB exists
+      val = f.componentvalue ?? '';
+      
+      // Check consistency with drawflow JSON
+      // If DB value differs from drawflow value, we stick to DB and update Drawflow
+      if (nodeData && nodeData[key] !== val) {
+        updates[key] = val;
+      }
     } else {
-      form[key] = f.componentvalue ?? '';
+      // No DB data (unsaved or new node), prefer Drawflow data if exists
+      if (nodeData && Object.prototype.hasOwnProperty.call(nodeData, key)) {
+        val = nodeData[key];
+      } else {
+        val = f.componentvalue ?? '';
+      }
     }
+
+    form[key] = val;
   });
+
+  // Sync back to store/drawflow if we found discrepancies from DB
+  if (Object.keys(updates).length > 0) {
+    console.log('Syncing properties from DB to Drawflow:', updates);
+    store.updateSelectedNodeData(updates);
+  }
 }
 
-// UPDATE selected node data (debounced)
-const updateNodeDataDebounced = debounce(() => {
+// UPDATE specific node data (immediate)
+function updateNodeData() {
+  if (!props.nodeId) return;
+
   // push only keys that exist in form
   const payload: any = {};
   fields.value.forEach((f: any) => {
     payload[f.inputname] = form[f.inputname];
   });
-  // update store (this will update editor node data and persist)
-  store.updateSelectedNodeData(payload);
-}, 500);
+  
+  // update store using the CURRENT props.nodeId (closure safe?)
+  // Actually, safely use props.nodeId passed to this component
+  store.updateNodeData(props.nodeId, payload);
+}
 
 // event handlers
 function onInput(field: any) {
-  // live update (debounced)
-  updateNodeDataDebounced();
+  // live update (immediate)
+  updateNodeData();
 }
 
 /* =====================================================
@@ -177,6 +205,10 @@ watch(
 
     // gunakan hasil merge langsung
     fields.value = merged;
+    
+    // Clear existing form data to prevent stale values
+    Object.keys(form).forEach(key => delete form[key]);
+    
     initFormFromFields();
   },
   { immediate: true },

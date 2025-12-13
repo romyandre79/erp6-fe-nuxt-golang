@@ -12,7 +12,22 @@ export const useThemeStore = defineStore('theme', () => {
   const themeList = ref<any[]>([]);
   const userStore = useUserStore();
 
-  // Load theme list dari API
+  // Assistant Character Settings
+  const assistantCharacterCookie = useCookie<string>('assistant_character', { default: () => 'clippy', maxAge: 60*60*24*365 });
+  const assistantCustomImageCookie = useCookie<string>('assistant_custom_image', { default: () => '' });
+  
+  const assistantCharacter = ref(assistantCharacterCookie.value || 'clippy');
+  const assistantCustomImage = ref(assistantCustomImageCookie.value || '');
+  
+  const setAssistantCharacter = (char: string) => {
+      assistantCharacter.value = char;
+      assistantCharacterCookie.value = char;
+  };
+
+  const setAssistantCustomImage = (url: string) => {
+      assistantCustomImage.value = url;
+      assistantCustomImageCookie.value = url;
+  };
 
   async function loadThemes() {
     const dataForm = new FormData();
@@ -109,5 +124,10 @@ export const useThemeStore = defineStore('theme', () => {
     loadThemes,
     loadSingleThemes,
     saveActiveTheme,
+    // Assistant
+    assistantCharacter,
+    assistantCustomImage,
+    setAssistantCharacter,
+    setAssistantCustomImage
   };
 });
