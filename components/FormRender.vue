@@ -168,9 +168,7 @@ async function edit(key: string) {
   
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-  
-  console.log('edit debug:', { key, isDetailModal, modalFound: !!modal });
-  
+    
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
@@ -341,7 +339,6 @@ function close(key: string) {
 
 async function deleteData(table: any) {
   const flow = getAction('purge');
-  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
     const primary = getPrimary();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -824,32 +821,84 @@ function renderCallOther(component) {
   return h('div', `Unknown other type: ${type}`);
 }
 
+function validateContainer(container: any): boolean {
+  let isValid = true;
+
+  // List of input types that need validation
+  const inputTypes = [
+    'text', 'password', 'number', 'email', 'tel', 'url', 
+    'date', 'time', 'datetime', 'month', 'week', 
+    'select', 'selectgroup', 'textarea', 'longtext', 
+    'checkbox', 'radio', 'bool', 'boolean', 'file', 'image'
+  ];
+
+  // If the container itself is an input
+  if (inputTypes.includes((container.type || '').toLowerCase())) {
+     const val = formData.value[container.props?.key];
+     
+     // validateField expects the component object
+     const result = validateField(container, val);
+     
+     if (result !== true) {
+       isValid = false;
+       if (container.props?.key) {
+         validationErrors[container.props.key] = result as string;
+       }
+     }
+  }
+
+  // Recurse children
+  if (container.children && Array.isArray(container.children)) {
+    container.children.forEach((child: any) => {
+      if (!validateContainer(child)) {
+        isValid = false;
+      }
+    });
+  }
+
+  return isValid;
+}
+
 function renderWizard(container: any) {
-  if (!container) return null;
+  if (!container || !container.children) return null;
+
+  // Prepare steps for the wizard component
+  const steps = container.children.map((child: any) => ({
+    title: child.props?.title || child.props?.label || 'Step',
+    ...child
+  }));
 
   return h(
     FormWizard,
     {
-      steps: container,
-      saveKey: 'wizard-h',
+      steps: steps,
+      class: container.props?.class || '',
+      // Pass validation function
+      validateStep: async (index: number) => {
+         const stepComponent = container.children[index];
+         return validateContainer(stepComponent);
+      },
+      onFinish: () => {
+         // Create/Update logic
+         // We can reuse the button logic?
+         // Usually wizard finish means "Submit"
+         // We should check if there is an 'onCreate' or 'onUpdate' action defined, or expose an event.
+         // For now, let's assume it triggers the same as a primary button would.
+         
+         if (modalTitle.value === 'New Data') {
+             CreateHandler();
+         } else {
+             UpdateHandler();
+         }
+      }
     },
     {
-      default: ({ step, schema, state }) => {
-        return h(
-          'div',
-          schema.map((field) => {
-            return h('div', { class: 'mb-3' }, [
-              h('label', field.label),
-              h('input', {
-                class: 'border p-2 w-full',
-                value: state[field.key],
-                onInput: (e) => (state[field.key] = e.target.value),
-              }),
-            ]);
-          }),
-        );
+      default: ({ step }: { step: number }) => {
+        const stepComponent = container.children[step];
+        if (!stepComponent) return null;
+        return renderContainer(stepComponent);
       },
-    },
+    }
   );
 }
 
@@ -900,7 +949,6 @@ function renderDetailTable(container: any) {
 
 function renderSelectGroup(component: any) {
   if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
-console.log('comp ',component)
       return h(FormSelectGroup, {
         class: component.props.class,
         component: component.props,
@@ -912,7 +960,6 @@ console.log('comp ',component)
 
 function renderContainer(container: any) {
   if (!container) return null;
-console.log('comp ',container)
   // 🔥 Special handling for detailtable - render it as a component, not a container
   // 🔥 Special handling for detailtable - render it as a component, not a container
   if ((container.type || '').toLowerCase() === 'detailtable') {
@@ -947,7 +994,6 @@ console.log('comp ',container)
         case 'detailtable': {
       // Initialize formData for this table if not exists
       const tableKey = component.props.key;
-      console.log('🔍 Rendering detailtable:', { tableKey, component });
       
       if (!(tableKey in formData.value)) {
         formData.value[tableKey] = [];
@@ -968,8 +1014,6 @@ console.log('comp ',container)
           }
         });
       }
-
-      console.log('🔍 Detailtable columns:', columns);
 
       return h(DetailTableInline, {
         columns,
@@ -995,6 +1039,7 @@ console.log('comp ',container)
         case 'modals':
         case 'row':
         case 'col':
+        case 'step':
           return renderContainer(component);
         case 'action':
           break;
@@ -1215,8 +1260,6 @@ async function saveData(key: any) {
     // Determine if this is a detail modal by checking if the key contains "detail"
     const isDetailModal = modal && key.toLowerCase().includes('detail');
 
-    console.log('saveData debug:', { key, isDetailModal, modalFound: !!modal });
-
     if (isDetailModal) {
       // Handle detail modal save
       let actionNode: any;
@@ -1231,8 +1274,6 @@ async function saveData(key: any) {
       const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
       const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
       
-      console.log('saveData detail debug:', { modalIndex, detailModalsCount: detailModals.length });
-
       if (modalTitle.value == 'New Data') {
         const createFlows = actionNode?.props?.onCreateDetail || [];
         flow = createFlows[modalIndex];

@@ -44,20 +44,17 @@ function getWorkflowId(): string | null {
   const slug = route.params.slug;
   const id = Array.isArray(slug) ? slug[0] : slug;
   const finalId = id ?? route.params.id ?? route.query.id ?? null;
-  console.log('getWorkflowId resolving to:', finalId, 'from slug:', slug);
   return finalId as string | null;
 }
 
 onMounted(async () => {
   await router.isReady(); // Critical: Wait for router to be ready
-  console.log('Page Mounted - Router Ready');
   
   const id = getWorkflowId();
   if (!id) {
     console.warn('No ID found in route');
     return;
   }
-  console.log('Calling store.loadWorkflow with ID:', id);
   await store.loadWorkflow(id);
 });
 
@@ -68,10 +65,8 @@ onBeforeUnmount(() => {
 watch(
   () => route.params.slug,
   async () => {
-    console.log('Route slug changed:', route.params.slug);
     const id = getWorkflowId();
     if (!id) return;
-    console.log('Calling store.loadWorkflow (watch) with ID:', id);
     await store.loadWorkflow(id);
   },
   { deep: true }

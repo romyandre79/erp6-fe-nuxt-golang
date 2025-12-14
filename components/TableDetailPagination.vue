@@ -48,6 +48,7 @@
     <div class="w-full rounded-xl overflow-x-auto">
       <table class="w-full">
         <thead class="text-sm uppercase font-semibold">
+          <!-- Header Row -->
           <tr>
             <th class="px-4 py-3" v-if="enableCheck && isSelectAll">
               <input
@@ -58,10 +59,38 @@
               />
             </th>
             <th class="thead px-4 py-3" v-if="tables?.length > 1 && props.isInput == false"></th>
-            <th v-for="col in columns" :key="col.key || col" class="thead px-4 py-3 text-left tracking-wide">
-              {{ col.text || col.label }}
+            <th
+              v-for="col in columns"
+              :key="col.key || col"
+              class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors"
+              @click="toggleSort(col.key || col, fetchData)"
+            >
+              <div class="flex items-center gap-1">
+                <span>{{ col.text || col.label }}</span>
+                <span v-if="sortBy === (col.key || col)" class="text-primary">
+                  {{ sortDir === 'asc' ? '▲' : '▼' }}
+                </span>
+                <span v-else class="text-base-content/30">⇅</span>
+              </div>
             </th>
             <th v-if="rowActions && rowActions.length" class="thead px-4 py-3 text-left">Actions</th>
+          </tr>
+          <!-- Filter Row -->
+          <tr v-if="enableColumnFilter" class="bg-base-200/50">
+            <th class="px-2 py-2" v-if="enableCheck"></th>
+            <th class="px-2 py-2" v-if="tables?.length > 1 && props.isInput == false"></th>
+            <th v-for="col in columns" :key="'filter-' + (col.key || col)" class="px-2 py-2">
+              <input
+                v-if="col.filterable !== false"
+                type="text"
+                :placeholder="`Filter...`"
+                class="input input-xs input-bordered w-full"
+                :value="columnFilters[col.key || col] || ''"
+                @input="(e) => applyColumnFilter(col.key || col, (e.target as HTMLInputElement).value, fetchData)"
+                @keyup.enter="fetchData"
+              />
+            </th>
+            <th v-if="rowActions && rowActions.length" class="px-2 py-2"></th>
           </tr>
         </thead>
 
@@ -145,10 +174,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted, h, watch, computed } from 'vue';
 import { useApi } from '#imports';
 import { TablePagination } from '#components';
 import { useTableLogic } from '../composables/useTableLogic';
+import { useTablePreferences } from '../composables/useTablePreferences';
 import TableControls from './TableControls.vue';
 
 const props = defineProps({
@@ -167,6 +197,9 @@ const props = defineProps({
   enablePaging: { type: Boolean, default: true },
   enablePageSize: { type: Boolean, default: true },
   enableCheck: { type: Boolean, default: true },
+  enableColumnFilter: { type: Boolean, default: true },
+  enableColumnChooser: { type: Boolean, default: false },
+  enableColumnResize: { type: Boolean, default: false },
   method: { type: String, default: 'GET' },
   rowKey: { type: String, default: 'id' },
   selectedKeyData: { type: String, default: '' },
@@ -178,6 +211,10 @@ const props = defineProps({
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
 
+// Table preferences persistence
+const tableId = computed(() => props.endPoint || 'default_detail_table');
+const { loadPreferences, savePreferences } = useTablePreferences(tableId.value);
+
 const {
   currentPage,
   totalPages,
@@ -187,6 +224,24 @@ const {
   totalRecords,
   rowsData,
   loading,
+  // Sorting
+  sortBy,
+  sortDir,
+  toggleSort,
+  clearSort,
+  // Column filters
+  columnFilters,
+  applyColumnFilter,
+  clearColumnFilters,
+  // Column visibility
+  hiddenColumns,
+  toggleColumnVisibility,
+  isColumnVisible,
+  showAllColumns,
+  // Column widths
+  columnWidths,
+  setColumnWidth,
+  // Selection
   selectedKeys,
   toggleRowSelection,
   isSelected,
@@ -202,6 +257,11 @@ const {
   lastPage,
 } = useTableLogic(props, emit);
 
+// Computed visible columns
+const visibleColumns = computed(() => 
+  (props.columns as any[]).filter(col => isColumnVisible(col.key || col))
+);
+
 // Fetch data
 async function fetchData() {
   loading.value = true;
@@ -214,8 +274,15 @@ async function fetchData() {
       dataForm.append('search', 'true');
       dataForm.append('page', currentPage.value);
       dataForm.append('rows', pageSize.value);
+      // Sorting params
+      if (sortBy.value) {
+        dataForm.append('sortby', sortBy.value);
+        dataForm.append('sortdir', sortDir.value);
+      }
       for (const col of props.columns) {
-        dataForm.append(col.key, searchComplexQuery.value[col.key] || '');
+        // Use column filter value if exists, otherwise use complex search query
+        const filterVal = columnFilters.value[col.key] || searchComplexQuery.value[col.key] || '';
+        dataForm.append(col.key, filterVal);
       }
       if (props.selectedKeyData) {
         dataForm.append(props.relationKey, props.selectedKeyData);
@@ -304,8 +371,29 @@ function renderTable(component: any) {
 }
 
 onMounted(() => {
+  // Load saved preferences
+  const prefs = loadPreferences();
+  if (prefs.sortBy) sortBy.value = prefs.sortBy;
+  if (prefs.sortDir) sortDir.value = prefs.sortDir;
+  if (prefs.pageSize) pageSize.value = prefs.pageSize;
+  if (prefs.columnFilters) columnFilters.value = prefs.columnFilters;
+  
   fetchData();
 });
 
+// Auto-save preferences when they change
+watch([sortBy, sortDir], () => {
+  savePreferences({ sortBy: sortBy.value, sortDir: sortDir.value });
+});
+
+watch(pageSize, () => {
+  savePreferences({ pageSize: pageSize.value });
+});
+
+watch(columnFilters, () => {
+  savePreferences({ columnFilters: columnFilters.value });
+}, { deep: true });
+
 defineExpose({ refreshTable: fetchData });
 </script>
+

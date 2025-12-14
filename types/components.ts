@@ -618,4 +618,15 @@ export const layoutContainers = [
     },
     children: [],
   },
+  {
+    type: 'step',
+    label: 'Step',
+    component: 'div',
+    props: {
+      key: 'step_1',
+      title: 'Step Title',
+      class: 'w-full',
+    },
+    children: [],
+  },
 ];

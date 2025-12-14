@@ -57,6 +57,128 @@
                 <path d="M 48 58 L 52 58 L 50 63 Z" fill="pink"/>
             </svg>
 
+            <!-- DOG -->
+<svg
+  v-else-if="assistantCharacter === 'dog'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <circle
+    cx="50"
+    cy="50"
+    r="30"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+
+  <!-- Ears (Floppy) -->
+  <path
+    d="M 25 40 C 10 50, 10 70, 25 75"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+  <path
+    d="M 75 40 C 90 50, 90 70, 75 75"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+
+  <!-- Eyes -->
+  <g class="clippy-eyes" transform="translate(0, 5)">
+    <g transform="translate(40, 45)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="white" />
+      <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil" />
+    </g>
+    <g transform="translate(60, 45)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="white" />
+      <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil" />
+    </g>
+  </g>
+
+  <!-- Snout -->
+  <ellipse
+    cx="50"
+    cy="60"
+    rx="12"
+    ry="8"
+    fill="#fde68a"
+    stroke="#b45309"
+    stroke-width="1.5"
+  />
+
+  <!-- Nose -->
+  <circle cx="50" cy="58" r="3" fill="#1f2937" />
+
+  <!-- Mouth -->
+  <path
+    d="M 50 61 C 48 64, 44 64, 42 62"
+    stroke="#1f2937"
+    stroke-width="1.5"
+    fill="none"
+  />
+  <path
+    d="M 50 61 C 52 64, 56 64, 58 62"
+    stroke="#1f2937"
+    stroke-width="1.5"
+    fill="none"
+  />
+</svg>
+
+<!-- PANDA -->
+<svg
+  v-else-if="assistantCharacter === 'panda'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <circle cx="50" cy="50" r="30" fill="#ffffff" stroke="#111827" stroke-width="2"/>
+
+  <!-- Ears -->
+  <circle cx="30" cy="25" r="10" fill="#111827"/>
+  <circle cx="70" cy="25" r="10" fill="#111827"/>
+
+  <!-- Eye patches -->
+  <ellipse cx="40" cy="48" rx="9" ry="12" fill="#111827"/>
+  <ellipse cx="60" cy="48" rx="9" ry="12" fill="#111827"/>
+
+  <!-- Eyes -->
+  <circle cx="40" cy="50" r="4" fill="white"/>
+  <circle cx="60" cy="50" r="4" fill="white"/>
+
+  <!-- Nose -->
+  <circle cx="50" cy="60" r="3" fill="#111827"/>
+</svg>
+
+<!-- FOX -->
+<svg
+  v-else-if="assistantCharacter === 'fox'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <path d="M20 30 L50 15 L80 30 V65 L50 80 L20 65 Z"
+        fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- Ears -->
+  <path d="M30 30 L25 10 L45 25 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+  <path d="M70 30 L75 10 L55 25 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- Eyes -->
+  <circle cx="40" cy="45" r="4" fill="#111827"/>
+  <circle cx="60" cy="45" r="4" fill="#111827"/>
+
+  <!-- Snout -->
+  <path d="M45 55 L55 55 L50 65 Z" fill="#fff7ed"/>
+</svg>
+
+
              <!-- CUSTOM IMAGE -->
             <div v-else-if="assistantCharacter === 'custom'" class="w-24 h-24 relative drop-shadow-xl">
                  <img :src="assistantCustomImage || 'https://via.placeholder.com/100?text=?'" class="w-full h-full object-contain clippy-svg" />
@@ -149,6 +271,30 @@
                          <span class="text-4xl">🐱</span>
                      </div>
                      <span class="text-sm font-medium">Kitty</span>
+                 </div>
+
+                 <!-- Office Item -->
+                 <div @click="setCharacter('fox')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'fox' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🦊</span>
+                     </div>
+                     <span class="text-sm font-medium">Fox</span>
+                 </div>
+
+                 <!-- Office Item -->
+                 <div @click="setCharacter('dog')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'dog' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🐶</span>
+                     </div>
+                     <span class="text-sm font-medium">Dog</span>
+                 </div>
+
+                 <!-- Teacher Item -->
+                 <div @click="setCharacter('panda')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'panda' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🐼</span>
+                     </div>
+                     <span class="text-sm font-medium">Panda</span>
                  </div>
 
                   <!-- Custom Item -->
@@ -826,7 +972,7 @@ onMounted(() => {
 }
 
 .clippy-pupil {
-    animation: look-around 5s infinite;
+    animation: look-around 4s infinite ease-in-out;
 }
 
 .clippy-container:hover .clippy-eyebrow {

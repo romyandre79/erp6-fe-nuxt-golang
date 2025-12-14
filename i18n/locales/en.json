@@ -427,5 +427,21 @@
   },
   "BUSINESS UNIT": "Business Unit",
   "REPORT": "Report",
-  "SCHEDULER JOBS": "Scheduler Jobs"
+  "SCHEDULER JOBS": "Scheduler Jobs",
+  "SEARCH A COMPANYNAME": "Search A Company Name",
+  "SEARCH A CITYCODE": "Search A Citycode",
+  "SEARCH A CITYNAME": "Search A City Name",
+  "SEARCH A LANGUAGE": "Search A Language",
+  "ENTER A SHORT LANG": "Enter A Short Lang",
+  "SEARCH A COMPANY TYPE": "Search A Company Type",
+  "SEARCH A KUTYPE": "Search a Business Type",
+  "SEARCH A BU TYPE": "Search a Business Type",
+  "SEARCH A CITY CODE": "Search A City Code",
+  "SEARCH A CITY NAME": "Search A City Name",
+  "ENTER A PROVINCE CODE": "Enter A Province Code",
+  "SEARCH A CURRENCY CODE": "Search A Currency Code",
+  "SEARCH A CURRENCY NAME": "Search A Currency Name",
+  "SEARCH A USER NAME": "Search A User Name",
+  "ENTER A WORKFLOW NAME": "Enter A Workflow Name"
+
 }

@@ -20,7 +20,7 @@
 
     <!-- CONTENT -->
     <div class="mb-6">
-      <slot :step="currentStep" :schema="steps[currentStep].schema" :state="formState" />
+      <slot :step="currentStep" />
     </div>
 
     <!-- ERROR -->
@@ -40,98 +40,53 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed } from 'vue';
-/**
- * props:
- *  steps: [
- *    {
- *      title: "",
- *      schema: [{ key, label, type, rules: [...] }]
- *    }
- *  ]
- */
+import { ref, computed } from 'vue';
+
 const props = defineProps({
   steps: { type: Array, required: true },
-  saveKey: { type: String, default: 'wizard-data' },
+  validateStep: { type: Function, default: () => true },
 });
 
-const emit = defineEmits(['finish', 'changeStep', 'autosave']);
+const emit = defineEmits(['finish', 'changeStep']);
 
 const currentStep = ref(0);
 const error = ref(null);
 
 /* -------------------
-   AUTO-SAVE STATE
-------------------- */
-const formState = reactive(loadState() || {});
-
-watch(
-  formState,
-  () => {
-    localStorage.setItem(props.saveKey, JSON.stringify(formState));
-    emit('autosave', formState);
-  },
-  { deep: true },
-);
-
-function loadState() {
-  if (process.client) {
-    const x = localStorage.getItem(props.saveKey);
-    if (x) return JSON.parse(x);
-  }
-  return null;
-}
-
-/* -------------------
-   VALIDATION
-------------------- */
-function validateStep() {
-  error.value = null;
-  const schema = props.steps[currentStep.value].schema;
-
-  for (const field of schema) {
-    const value = formState[field.key];
-
-    if (field.rules?.includes('required') && (!value || value === '')) {
-      error.value = `${field.label} wajib diisi`;
-      return false;
-    }
-
-    if (field.rules?.includes('email')) {
-      const re = /\S+@\S+\.\S+/;
-      if (!re.test(value)) {
-        error.value = `${field.label} tidak valid`;
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-/* -------------------
    NAVIGATION
 ------------------- */
-function next() {
-  if (!validateStep()) return;
+async function next() {
+  error.value = null;
+  const isValid = await props.validateStep(currentStep.value);
+  if (!isValid) {
+    error.value = 'Please complete all required fields.';
+    return;
+  }
   currentStep.value++;
   emit('changeStep', currentStep.value);
 }
 
 function prev() {
+  error.value = null;
   currentStep.value--;
   emit('changeStep', currentStep.value);
 }
 
-function finish() {
-  if (!validateStep()) return;
-  emit('finish', formState);
+async function finish() {
+  error.value = null;
+  const isValid = await props.validateStep(currentStep.value);
+  if (!isValid) {
+    error.value = 'Please complete all required fields.';
+    return;
+  }
+  emit('finish');
 }
 
 /* -------------------
    PROGRESS
 ------------------- */
 const progressPercent = computed(() => {
+  if (props.steps.length <= 1) return 100;
   return (currentStep.value / (props.steps.length - 1)) * 100;
 });
 </script>

@@ -119,7 +119,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
       dataForm.append('wfname', name);
 
       const res = await api.post('/api/admin/execute-flow', dataForm);
-      console.log('Copy flow response:', res);
       
       // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
       const wfObj = res?.data?.data ?? {};
@@ -130,17 +129,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
       if (flowString && typeof flowString === 'string') {
         try {
           wfObj.flow = JSON.parse(flowString);
-          console.log('Parsed flow:', wfObj.flow);
         } catch (e) {
-          console.error('Failed parsing flow string', e);
           wfObj.flow = null;
         }
       }
 
       workflow.value = wfObj;
-      console.log('Workflow copied successfully:', workflow.value);
     } catch (error) {
-      console.error('Error copying workflow:', error);
     } finally {
       loading.value = false;
     }

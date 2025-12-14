@@ -46,11 +46,9 @@ export const useNotificationStore = defineStore('notification', {
       
       const url = `${protocol}//${host}/api/ws/notifications?token=${token}`
       
-      console.log('Connecting WS:', url)
       this.ws = new WebSocket(url)
 
       this.ws.onopen = () => {
-        console.log('WS Connected')
         this.connected = true
       }
 

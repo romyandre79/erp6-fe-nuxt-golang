@@ -791,7 +791,6 @@ function aiParseNatural(prompt: string) {
 }
 
 function aiSuggestColumns(table: any) {
-  console.log('AI Suggest Columns', table);
 }
 
 function exportCanvas() {
@@ -965,7 +964,6 @@ async function loadDesign() {
   // 2. Fetch Relations
   try {
       const rels = await store.fetchRelations();
-      console.log('DEBUG: Fetched Relations Raw:', rels);
       
       const debugMap = [];
       rels.forEach((r: any) => {
@@ -1002,8 +1000,6 @@ async function loadDesign() {
               });
           }
       });
-      console.log('DEBUG: Relation Mapping Report:', debugMap);
-      console.log('DEBUG: Final Relations Layout:', relations);
 
   } catch (e) {
       console.warn('Failed to load relations', e);
@@ -1099,8 +1095,6 @@ async function reverseEngineerDatabase() {
     const response = await api.post('/api/admin/db/reverse-engineer', {
       auto_layout: true
     });
-
-    console.log('Reverse Engineering Response:', response);
 
     if (response.success) {
       toast.add({ 

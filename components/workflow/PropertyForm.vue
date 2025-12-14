@@ -124,7 +124,6 @@ function initFormFromFields() {
   }
 
   // isi form
-  console.log('[PropertyForm] initFormFromFields. Fields:', fields.value, 'NodeData:', nodeData);
   const updates: Record<string, any> = {};
 
   // isi form
@@ -160,7 +159,6 @@ function initFormFromFields() {
 
   // Sync back to store/drawflow if we found discrepancies from DB
   if (Object.keys(updates).length > 0) {
-    console.log('Syncing properties from DB to Drawflow:', updates);
     store.updateSelectedNodeData(updates);
   }
 }

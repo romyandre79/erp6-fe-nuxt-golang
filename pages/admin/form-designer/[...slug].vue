@@ -335,14 +335,31 @@ const loadSchema = async () => {
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
-  console.log(name)
   if (name) {
     try {
       const res = await getMenuForm(name);
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
-          formSchema.value = res?.data?.data.menuform;
-          let parsed = JSON.parse(res?.data?.data.menuform);
+          const raw = res.data.data.menuform;
+
+          // escape string agar aman jadi regex
+          const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+          // replace ignore case + global
+          const text = raw.replace(
+            new RegExp(escapedName, 'gi'),
+            route.params.slug
+          );
+
+          formSchema.value = text;
+
+          let parsed;
+          try {
+            parsed = JSON.parse(text);
+          } catch (e) {
+            console.error('Invalid JSON after replace', e);
+            return;
+          }
           canvasComponents.value = hydrateNodeProps(parsed);
         }
       } else {
