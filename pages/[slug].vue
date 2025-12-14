@@ -16,7 +16,7 @@ const title = computed(() => {
 });
 
 useHead({
-  title: `${title.value} - Capella ERP v6`,
+  title: `${title.value} - Capella Engine v6`,
     bodyAttrs: {
     class: 'bg-gray-900 text-gray-100'
   }

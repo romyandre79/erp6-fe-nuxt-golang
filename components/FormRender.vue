@@ -226,9 +226,38 @@ async function edit(key: string) {
     }
   } else {
     // Handle master modal edit (existing logic)
+    const master = getMaster();
+    // Check if locking is enabled in props
+    const lockEnabled = master?.props?.lock === true;
     const flow = getAction('get');
+
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
+      
+      // 🔒 Try to lock record if locking is enabled
+      if (lockEnabled) {
+        try {
+            const lockRes = await Api.post('api/admin/lock-record', {
+                tablename: props.menuName,
+                recordid: Number(selectedRows.value[0][primary]),
+                locktype: 'edit'
+            });
+
+            if (lockRes?.code !== 200) {
+                 throw new Error(lockRes?.message || 'Lock failed');
+            }
+        } catch (err: any) {
+             const msg = err?.response?._data?.message || err?.message || 'This record is being edited by another user';
+             toast.add({
+                title: 'Record Locked',
+                description: msg,
+                color: 'error',
+                timeout: 5000
+            });
+            return; // ⛔ ABORT OPENING FORM
+        }
+      }
+
       modalTitle.value = 'Edit Data';
       modalDescription.value = '';
       modalRefs[key].value = true;
@@ -284,6 +313,18 @@ async function runFlow(flow: string) {
 function close(key: string) {
   try {
     const primary = getPrimary();
+    
+    // 🔓 Unlock record if locking is enabled
+    // We need to check if master has lock: true
+    const master = getMaster();
+    if (master?.props?.lock === true && selectedRows.value && selectedRows.value.length > 0) {
+        // Unlock
+        Api.post('api/admin/unlock-record', {
+            tablename: props.menuName,
+            recordid: Number(selectedRows.value[0][primary])
+        }).catch(err => console.error('Unlock failed', err));
+    }
+
     if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
       tableRef.value.setData(primary, selectedRows.value[0][primary]);
     }
@@ -1032,6 +1073,16 @@ function renderTable(component: any) {
     ]);
   }
   return null;
+}
+
+function getMaster() {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
+    if (element.type == 'master') {
+      node = element;
+    }
+  });
+  return node;
 }
 
 function getAction(action: string) {

@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { useUserStore } from '~/store/user';
+
 const { locale, setLocale } = useI18n();
+const userStore = useUserStore();
+
+onMounted(async () => {
+  await userStore.loadAuth();
+});
 
 const switchLanguage = () => {
   setLocale(locale.value === 'en' ? 'id' : 'en');
@@ -32,7 +39,9 @@ const switchLanguage = () => {
                         </svg>
                         {{ locale === 'en' ? 'EN' : 'ID' }}
                     </button>
-                    <NuxtLink to="/login" class="text-gray-300 hover:text-white font-medium transition">{{ $t('LANDING.NAV.LOGIN') }}</NuxtLink>
+                    
+                    <NuxtLink v-if="!userStore.token" to="/login" class="text-gray-300 hover:text-white font-medium transition">{{ $t('LANDING.NAV.LOGIN') }}</NuxtLink>
+                    <NuxtLink v-else to="/admin/dashboard" class="text-gray-300 hover:text-white font-medium transition">Admin</NuxtLink>
                     <button class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition font-medium">
                         {{ $t('LANDING.NAV.GET_STARTED') }}
                     </button>

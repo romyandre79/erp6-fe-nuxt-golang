@@ -365,11 +365,12 @@
       "PRICING": "Pricing",
       "CONTACT": "Contact",
       "GET_STARTED": "Get Started",
-      "LOGIN": "Login"
+      "LOGIN": "Login",
+      "ADMIN": "Admin"
     },
     "HERO": {
       "TITLE_PREFIX": "Automate Everything with",
-      "TITLE_SUFFIX": "Capella ERP v6",
+      "TITLE_SUFFIX": "Capella Engine v6",
       "SUBTITLE": "Modern ERP platform with integrated workflow automation. Build complex business processes with visual flow builder like n8n.",
       "START_TRIAL": "Start Free Trial",
       "WATCH_DEMO": "Watch Demo"
@@ -402,7 +403,7 @@
     },
     "CTA": {
       "TITLE": "Ready to Transform Your Business?",
-      "SUBTITLE": "Join thousands of companies already using Capella ERP v6",
+      "SUBTITLE": "Join thousands of companies already using Capella Engine v6",
       "START_TRIAL": "Start 30-Day Free Trial",
       "SCHEDULE_DEMO": "Schedule Demo"
     },

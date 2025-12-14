@@ -263,9 +263,40 @@ const hydrateNodeProps = (nodes: NodeSchema[]) => {
   return nodes;
 };
 
+// 🔒 LOCK SCHEMA (METADATA LOCK)
+const acquireLock = async (menuId: number) => {
+  try {
+    const res = await Api.post('api/admin/lock-record', {
+      tablename: 'sys_menu',
+      recordid: Number(menuId),
+      locktype: 'design'
+    });
+    
+    if (res.code === 200) {
+      toast.add({ title: 'Design Mode', description: 'Schema locked for editing', color: 'success' });
+    } else {
+      toast.add({ title: 'Lock Failed', description: res.message || 'Could not acquire lock', color: 'error' });
+    }
+  } catch (err) {
+    console.error('Lock error:', err);
+  }
+};
+
+const releaseLock = async () => {
+  if (!dataMenu.menuAccessId) return;
+  try {
+    await Api.post('api/admin/unlock-record', {
+      tablename: 'sys_menu',
+      recordid: Number(dataMenu.menuAccessId)
+    });
+  } catch (err) {
+    console.error('Unlock error:', err);
+  }
+};
+
 const loadSchema = async () => {
   try {
-    const res = await getMenuForm(route.params.slug);
+    const res = await getMenuForm(route.params.slug, true);
     if (res?.code == 200) {
       dataMenu.menuAccessId = res?.data.data.menuaccessid;
       dataMenu.menuName = res?.data.data.menuname;
@@ -278,11 +309,22 @@ const loadSchema = async () => {
       dataMenu.menuVersion = res?.data.data.menuversion;
       dataMenu.menuType = res?.data.data.menutype;
       dataMenu.recordStatus = res?.data.data.recordstatus;
+      
+      // Acquire Lock
+      await acquireLock(dataMenu.menuAccessId as number);
+
       if (res?.data.data.menuform != '') {
         formSchema.value = res?.data?.data.menuform;
         let parsed = JSON.parse(res?.data?.data.menuform);
         canvasComponents.value = hydrateNodeProps(parsed);
       }
+    } else if (res?.code == 423 || res?.message === 'SCHEMA_LOCKED') {
+       toast.add({ 
+          title: 'Schema Locked', 
+          description: res.message || 'This form is being designed by another user', 
+          color: 'error', 
+          timeout: 0 
+       });
     } else {
       console.error('Invalid response from ', res);
     }
@@ -314,8 +356,22 @@ const copySchema = async () => {
   }
 };
 
+const heartbeatInterval = ref<NodeJS.Timer | null>(null);
+
+onBeforeUnmount(() => {
+  if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
+  releaseLock();
+});
+
 onMounted(async () => {
-  loadSchema();
+  await loadSchema();
+  
+  // Start Heartbeat to refresh lock every 60s
+  if (dataMenu.menuAccessId) {
+    heartbeatInterval.value = setInterval(() => {
+      acquireLock(dataMenu.menuAccessId as number);
+    }, 60000);
+  }
 });
 
 const debugText = computed({

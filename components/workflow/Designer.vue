@@ -4,7 +4,7 @@
     <div
       v-if="showPayload"
       id="payload-overlay"
-      class="absolute top-6 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
+      class="absolute top-20 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
     >
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-bold text-sm">Test Payload</h3>

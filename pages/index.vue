@@ -1,28 +1,31 @@
 <script setup lang="ts">
+import '@/assets/css/landing.css';
+
 definePageMeta({
   layout: false,
 });
 
+
 useHead({
-  title: 'Capella ERP v6 - Platform ERP Modern dengan Workflow Automation Indonesia',
+  title: 'Capella Engine v6 - Platform Modern dengan Workflow Automation Indonesia',
   meta: [
     { charset: 'UTF-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
-    { name: 'title', content: 'Capella ERP v6 - Platform ERP Modern dengan Workflow Automation Indonesia' },
-    { name: 'description', content: 'Capella ERP v6 adalah platform ERP modern dengan visual workflow automation seperti n8n. Otomatisasi proses bisnis, integrasi 1000+ apps, dan tingkatkan produktivitas perusahaan Anda.' },
+    { name: 'title', content: 'Capella Engine v6 - Platform ERP Modern dengan Workflow Automation Indonesia' },
+    { name: 'description', content: 'Capella Engine v6 adalah platform ERP modern dengan visual workflow automation seperti n8n. Otomatisasi proses bisnis, integrasi 1000+ apps, dan tingkatkan produktivitas perusahaan Anda.' },
     { name: 'keywords', content: 'ERP Indonesia, workflow automation, n8n alternative, business automation, visual workflow builder, enterprise resource planning, sistem ERP, otomasi bisnis, capella erp' },
     { name: 'robots', content: 'index, follow' },
     { name: 'language', content: 'Indonesian' },
     { name: 'author', content: 'Capella ERP' },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://capellaerp.com/' },
-    { property: 'og:title', content: 'Capella ERP v6 - Platform ERP Modern dengan Workflow Automation' },
+    { property: 'og:title', content: 'Capella Engine v6 - Platform ERP Modern dengan Workflow Automation' },
     { property: 'og:description', content: 'Otomatisasi proses bisnis dengan visual workflow builder. 500+ template, 1000+ integrasi, dan 99.9% uptime SLA.' },
     { property: 'og:image', content: 'https://capellaerp.com/og-image.jpg' },
     { property: 'og:locale', content: 'id_ID' },
     { property: 'twitter:card', content: 'summary_large_image' },
     { property: 'twitter:url', content: 'https://capellaerp.com/' },
-    { property: 'twitter:title', content: 'Capella ERP v6 - Platform ERP Modern dengan Workflow Automation' },
+    { property: 'twitter:title', content: 'Capella Engine v6 - Platform ERP Modern dengan Workflow Automation' },
     { property: 'twitter:description', content: 'Otomatisasi proses bisnis dengan visual workflow builder. 500+ template, 1000+ integrasi, dan 99.9% uptime SLA.' },
     { property: 'twitter:image', content: 'https://capellaerp.com/twitter-image.jpg' }
   ],
@@ -38,7 +41,7 @@ useHead({
       children: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "Capella ERP v6",
+        "name": "Capella Engine v6",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web, Windows, macOS, Linux",
         "offers": {
@@ -331,22 +334,272 @@ useHead({
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-20 px-4 bg-gray-900">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6 text-white">
-                {{ $t('LANDING.CTA.TITLE') }}
-            </h2>
-            <p class="text-xl text-gray-400 mb-8">
-                {{ $t('LANDING.CTA.SUBTITLE') }}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-lg transition glow">
-                    {{ $t('LANDING.CTA.START_TRIAL') }}
-                </button>
-                <button class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold text-lg transition border border-gray-700">
-                    {{ $t('LANDING.CTA.SCHEDULE_DEMO') }}
-                </button>
+    <!-- Applications Showcase -->
+    <section id="applications" class="py-20 px-4 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    <span class="text-white">Applications Built with</span> <span class="text-gradient">Capella Engine v6</span>
+                </h2>
+                <p class="text-xl text-gray-400">Powerful platforms powered by Capella Engine v6 engine</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- App 1: Manufaktur -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-full h-auto max-h-48 mx-auto text-slate-300"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="12"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <!-- Factory Base -->
+  <rect x="64" y="240" width="384" height="176" rx="16" />
+
+  <!-- Roof -->
+  <path d="M64 240L144 176L224 240L304 176L384 240" />
+
+  <!-- Chimney -->
+  <rect x="352" y="112" width="48" height="128" rx="8" />
+  <path d="M376 112V80" />
+  <path d="M360 64C360 48 392 48 392 64" />
+
+  <!-- Windows -->
+  <rect x="96" y="272" width="48" height="48" rx="6" />
+  <rect x="160" y="272" width="48" height="48" rx="6" />
+  <rect x="224" y="272" width="48" height="48" rx="6" />
+  <rect x="288" y="272" width="48" height="48" rx="6" />
+
+  <!-- Conveyor Belt -->
+  <rect x="96" y="352" width="320" height="24" rx="12" />
+  <circle cx="128" cy="364" r="6" />
+  <circle cx="176" cy="364" r="6" />
+  <circle cx="224" cy="364" r="6" />
+  <circle cx="272" cy="364" r="6" />
+  <circle cx="320" cy="364" r="6" />
+  <circle cx="368" cy="364" r="6" />
+
+  <!-- Gear -->
+  <circle cx="256" cy="208" r="24" />
+  <path d="M256 176V160" />
+  <path d="M256 256V240" />
+  <path d="M224 208H208" />
+  <path d="M304 208H288" />
+  <path d="M236 188L224 176" />
+  <path d="M276 228L288 240" />
+  <path d="M236 228L224 240" />
+  <path d="M276 188L288 176" />
+</svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">Manufacturing</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Capella Smart ERP</h3>
+                        <p class="text-gray-400 mb-4">Manufacturing Execution System with real-time production monitoring, integrated quality control, and automated scheduling.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Production Planning</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">IoT Integration</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Quality Control</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">500+ active workflows</span>
+                            <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">View Details →</button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 flex items-center justify-center relative overflow-hidden">
+                       <svg
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-full h-auto max-h-48 mx-auto text-slate-300"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="12"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <!-- Building -->
+  <rect x="96" y="160" width="320" height="240" rx="16" />
+
+  <!-- Roof -->
+  <path d="M64 176L256 64L448 176" />
+
+  <!-- Door -->
+  <rect x="224" y="288" width="64" height="112" rx="8" />
+
+  <!-- Clock -->
+  <circle cx="256" cy="192" r="32" />
+  <path d="M256 192V176" />
+  <path d="M256 192H272" />
+
+  <!-- Windows -->
+  <rect x="128" y="224" width="48" height="48" rx="6" />
+  <rect x="192" y="224" width="48" height="48" rx="6" />
+  <rect x="272" y="224" width="48" height="48" rx="6" />
+  <rect x="336" y="224" width="48" height="48" rx="6" />
+
+  <!-- Books (Education System) -->
+  <rect x="120" y="416" width="64" height="24" rx="6" />
+  <rect x="200" y="416" width="64" height="24" rx="6" />
+  <rect x="280" y="416" width="64" height="24" rx="6" />
+</svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">Education</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">School Management System</h3>
+                        <p class="text-gray-400 mb-4">Complete e-learning platform with course management, automated grading, attendance tracking, and parent portal.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Online Classes</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Auto Grading</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Analytics</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">50K+ students</span>
+                            <NuxtLink class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" to="/hijra">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-full h-auto max-h-48 mx-auto text-amber-400"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="12"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <!-- Building -->
+  <rect x="96" y="176" width="320" height="224" rx="16" />
+  <path d="M64 192L256 96L448 192" />
+
+  <!-- Door -->
+  <rect x="224" y="288" width="64" height="112" rx="8" />
+
+  <!-- Scale -->
+  <line x1="256" y1="176" x2="256" y2="240" />
+  <line x1="208" y1="200" x2="304" y2="200" />
+
+  <path d="M208 200L176 256H240L208 200Z" />
+  <path d="M304 200L272 256H336L304 200Z" />
+
+  <!-- Gold Bar -->
+  <rect x="208" y="416" width="96" height="32" rx="8" />
+</svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">Business</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Pusat Gadai Indonesia</h3>
+                        <p class="text-gray-400 mb-4">Complete e-learning platform with course management, automated grading, attendance tracking, and parent portal.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Online Classes</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Auto Grading</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Analytics</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">50K+ students</span>
+                            <NuxtLink class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" to="/pusatgadai">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-full h-auto max-h-48 mx-auto text-emerald-400"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="12"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <!-- Building -->
+  <rect x="112" y="176" width="288" height="224" rx="16" />
+  <path d="M96 192L256 96L416 192" />
+
+  <!-- Door -->
+  <rect x="232" y="288" width="48" height="112" rx="8" />
+
+  <!-- People -->
+  <circle cx="176" cy="256" r="24" />
+  <circle cx="336" cy="256" r="24" />
+
+  <!-- Connection -->
+  <path d="M200 256H312" />
+
+  <!-- Hands / Unity -->
+  <path d="M160 304C160 272 192 272 192 304" />
+  <path d="M320 304C320 272 352 272 352 304" />
+</svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-semibold">Business</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Koperasi</h3>
+                        <p class="text-gray-400 mb-4">Complete e-learning platform with course management, automated grading, attendance tracking, and parent portal.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Online Classes</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Auto Grading</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Analytics</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">50K+ students</span>
+                            <NuxtLink class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" to="/koperasi">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Stats Banner -->
+            <div class="mt-16 bg-gradient-to-r from-red-500/10 to-purple-500/10 rounded-2xl p-8 border border-red-500/20">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl font-bold text-red-500 mb-2">50+</div>
+                        <div class="text-gray-400">Enterprise Apps</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-red-500 mb-2">10M+</div>
+                        <div class="text-gray-400">Daily Transactions</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-red-500 mb-2">15K+</div>
+                        <div class="text-gray-400">Active Workflows</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-red-500 mb-2">99.98%</div>
+                        <div class="text-gray-400">System Uptime</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -357,11 +610,13 @@ useHead({
 </template>
 
 <style>
-@import '@/assets/css/landing.css';
+/* @import '@/assets/css/landing.css'; - Moved to script */
 
 * {
     font-family: 'Inter', sans-serif;
 }
+
+
 
 .gradient-bg {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
