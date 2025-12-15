@@ -578,6 +578,192 @@ useHead({
                         </div>
                     </div>
                 </article>
+
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-emerald-500/20 to-cyan-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-full h-auto max-h-48 mx-auto text-emerald-300"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="12"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <!-- Warehouse/Building -->
+  <rect x="64" y="160" width="384" height="240" rx="16" />
+  <path d="M64 160L256 64L448 160" />
+
+  <!-- Door -->
+  <rect x="208" y="272" width="96" height="128" rx="8" />
+
+  <!-- Boxes -->
+  <rect x="96" y="320" width="64" height="64" rx="4" />
+  <rect x="352" y="320" width="64" height="64" rx="4" />
+  <rect x="96" y="240" width="64" height="64" rx="4" />
+  
+  <!-- Checkmark -->
+  <circle cx="368" cy="240" r="48" class="text-emerald-400" fill="currentColor" opacity="0.2" stroke="none"/>
+  <path d="M344 240l16 16l32-32" stroke-width="16" class="text-emerald-400"/>
+</svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Supply Chain</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">E-Procurement</h3>
+                        <p class="text-gray-400 mb-4">Advanced vendor portal and procurement management system with real-time tender tracking and automated workflows.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Vendor Portal</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Tender Management</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Analytics</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">200+ Active Vendors</span>
+                            <NuxtLink class="text-emerald-400 hover:text-emerald-300 text-sm font-semibold" to="/e-procurement">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-purple-500/20 to-pink-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-purple-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- User / Customer -->
+                          <circle cx="256" cy="160" r="64" />
+                          <path d="M160 368c0-53 43-96 96-96s96 43 96 96" />
+                          
+                          <!-- Shopping Cart / Order -->
+                          <circle cx="368" cy="400" r="24" />
+                          <circle cx="144" cy="400" r="24" />
+                          <path d="M112 400h-32l-32-160h384l-32 160h-32" />
+                          <path d="M256 320v-80" />
+                          <path d="M256 240l-32 32m32-32l32 32" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-semibold">CRM</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Customer Management</h3>
+                        <p class="text-gray-400 mb-4">Dedicated customer portal for order tracking, invoice management, and payment history.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Order Tracking</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Invoices</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Payments</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">Self-service Portal</span>
+                            <NuxtLink class="text-purple-400 hover:text-purple-300 text-sm font-semibold" to="/order">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+
+            <!-- Employee Self-Service Card -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-400/20 to-cyan-500/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-blue-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- Card Base (ID Card theme) -->
+                          <rect x="128" y="96" width="256" height="320" rx="16" />
+                          <circle cx="256" cy="192" r="48" />
+                          <path d="M192 288h128" /> <!-- Name line -->
+                          <path d="M192 336h80" />  <!-- Detail line -->
+                          
+                          <!-- Checkmark/Approval -->
+                          <path d="M352 352l32 32l64-64" class="text-green-400" stroke-width="24" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">HR Tech</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Employee Self-Service</h3>
+                        <p class="text-gray-400 mb-4">Empower employees with self-service capabilities for leave requests, profile management, and attendance.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Leave Mgmt</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Profile Update</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Sick Reports</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">1000+ Employees</span>
+                            <NuxtLink class="text-blue-400 hover:text-blue-300 text-sm font-semibold" to="/ess">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Career Portal Card -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-teal-400/20 to-cyan-500/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-teal-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- Briefcase -->
+                          <rect x="112" y="176" width="288" height="208" rx="16" />
+                          <path d="M176 176V128a32 32 0 0132-32h96a32 32 0 0132 32v48" />
+                          
+                          <!-- User search -->
+                          <circle cx="256" cy="256" r="32" />
+                          <path d="M256 320c-32 0-64 16-64 48v16h128v-16c0-32-32-48-64-48" />
+                          
+                          <!-- Magnifying Glass -->
+                          <circle cx="336" cy="336" r="24" class="text-cyan-400" />
+                          <path d="M352 352l24 24" class="text-cyan-400" stroke-width="24" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-teal-500/20 text-teal-400 rounded-full text-xs font-semibold">Recruitment</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Career Portal</h3>
+                        <p class="text-gray-400 mb-4">Complete applicant tracking system (ATS) with job postings, candidate dashboard, and interview scheduling.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Job Listings</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Applications</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Interviews</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">Find top talent</span>
+                            <NuxtLink class="text-teal-400 hover:text-teal-300 text-sm font-semibold" to="/applicant">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
             </div>
 
             <!-- Stats Banner -->

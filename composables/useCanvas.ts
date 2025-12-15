@@ -43,6 +43,17 @@ export function useCanvas() {
       const A = tables.find((t) => t.id === r.from.table);
       const B = tables.find((t) => t.id === r.to.table);
       if (!A || !B) return;
+
+      // Update indices dynamically based on names
+      if (r.from.colName) {
+        const idx = A.columns.findIndex((c: any) => c.name === r.from.colName);
+        if (idx !== -1) r.from.col = idx;
+      }
+      if (r.to.colName) {
+        const idx = B.columns.findIndex((c: any) => c.name === r.to.colName);
+        if (idx !== -1) r.to.col = idx;
+      }
+
       const y1 = A.y + 36 + r.from.col * 24;
       const x1 = A.x + A.width;
       const y2 = B.y + 36 + r.to.col * 24;

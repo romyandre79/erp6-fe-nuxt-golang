@@ -52,7 +52,7 @@ const props = defineProps({
   loading: Boolean,
   enablePaging: Boolean,
   enablePageSize: Boolean,
-  pageSizeOptions: { type: Array, default: () => [5, 10, 20, 50] },
+  pageSizeOptions: { type: Array, default: () => [5, 10, 20, 50, 100, 1000] },
 });
 
 const emit = defineEmits(['update:pageSize', 'page-size-change', 'first-page', 'prev-page', 'next-page', 'last-page']);

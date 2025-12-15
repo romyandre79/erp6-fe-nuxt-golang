@@ -190,7 +190,7 @@ const props = defineProps({
   modals: { type: Array, default: () => [] },
   rowActions: { type: Array, default: () => [] },
   pageSize: { type: Number, default: 5 },
-  pageSizeOptions: { type: Array, default: () => [5, 10, 20, 50] },
+  pageSizeOptions: { type: Array, default: () => [5, 10, 20, 50, 100, 1000] },
   enableSearch: { type: Boolean, default: true },
   simpleSearch: { type: Boolean, default: true },
   searchColumn: { type: Array, required: false },

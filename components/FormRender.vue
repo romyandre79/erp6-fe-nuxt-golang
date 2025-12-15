@@ -1158,9 +1158,12 @@ const ReadHandler = async () => {
   }
 };
 
+const isLoading = ref(false);
+
 const CreateHandler = async () => {
   const flow = getAction('create');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -1175,13 +1178,17 @@ const CreateHandler = async () => {
       }
     }
 
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
-      ReadHandler();
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+        ReadHandler();
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -1191,6 +1198,7 @@ const CreateHandler = async () => {
 const UpdateHandler = async () => {
   const flow = getAction('update');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -1205,12 +1213,16 @@ const UpdateHandler = async () => {
       }
     }
 
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -1219,31 +1231,34 @@ const UpdateHandler = async () => {
 
 const DeleteHandler = async () => {
   const flow = getAction('purge');
-  if (flow) {
-    const payload = { ...toRaw(formData.value) };
-    const dataForm = new FormData();
-    dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-
-    for (const key in payload) {
-      const val = payload[key];
-      if (val !== undefined && val !== null) {
-        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val));
-        else dataForm.append(key, val);
+  if (flow && selectedRows.value.length > 0) {
+    isLoading.value = true;
+    const primary = getPrimary();
+    try {
+      for (let index = 0; index < selectedRows.value.length; index++) {
+        let dataForm = new FormData();
+        dataForm.append('flowname', flow);
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', 'true');
+        dataForm.append(primary, selectedRows.value[index][primary]);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
+        if (res?.code == 200) {
+          tableRef.value.refreshTable();
+        } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
       }
-    }
-
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
       toast.add({
-        title: $t('TITLE DELETE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+         title: $t('TITLE DELETE'),
+         description: $t('Data deleted successfully'),
       });
-      //ReadHandler()
+    } catch (err) {
+      console.error('Gagal hapus data:', err);
+    } finally {
+      isLoading.value = false;
     }
   } else {
-    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
+    if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
@@ -1253,6 +1268,7 @@ onMounted(() => {
 
 async function saveData(key: any) {
   try {
+    isLoading.value = true;
     let flow = '';
 
     // Check if this is a detail modal
@@ -1363,6 +1379,8 @@ async function saveData(key: any) {
     }
   } catch (err) {
     console.error('Gagal simpan data:', err);
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -1419,6 +1437,17 @@ watchEffect(() => {
         </div>
       </template>
     </UModal>
+  </div>
+
+  <!-- Global Loading Overlay -->
+  <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div class="flex flex-col items-center">
+         <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
+    </div>
   </div>
 
   <!-- 🔹 Hidden file input -->

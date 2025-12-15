@@ -49,13 +49,18 @@ export const useApi = () => {
     }
   };
 
-  const donlotFile = async (urlFile: string, body: any, fileName: string) => {
+  const donlotFile = async (urlFile: string, body: any, fileName: string, method: 'POST' | 'GET' = 'POST') => {
     try {
-      const response = await fetch(`${config.public.apiBase}${urlFile}`, {
-        method: 'POST',
+      const options: RequestInit = {
+        method,
         headers: getHeaders(body),
-        body: body instanceof FormData ? body : JSON.stringify(body),
-      });
+      };
+
+      if (method === 'POST') {
+        options.body = body instanceof FormData ? body : JSON.stringify(body);
+      }
+
+      const response = await fetch(`${config.public.apiBase}${urlFile}`, options);
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

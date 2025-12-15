@@ -51,6 +51,16 @@
         </div>
       </div>
     </div>
+    <!-- Global Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+      <div class="flex flex-col items-center">
+           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -69,6 +79,7 @@ const toast = useToast();
 const Api = useApi();
 
 const saving = ref(false);
+const isLoading = ref(false);
 const zoomLevel = ref('100%');
 
 const zoomOptions = ['25%', '50%', '75%', '100%', '150%', '200%', '400%'];
@@ -78,10 +89,13 @@ async function loadReport() {
   if (!id) return;
 
   try {
+    isLoading.value = true;
     await reportStore.loadTemplate(parseInt(id));
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to load report template', color: 'red' });
     router.push('/admin/report-designer');
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -106,6 +120,7 @@ async function exportJRXML() {
   if (!reportStore.currentTemplate?.reportTemplateID) return;
 
   try {
+    isLoading.value = true;
     const response = await Api.get(`/api/admin/report-templates/${reportStore.currentTemplate.reportTemplateID}/export-jrxml`);
     const blob = new Blob([response], { type: 'application/xml' });
     const url = window.URL.createObjectURL(blob);
@@ -117,6 +132,8 @@ async function exportJRXML() {
     toast.add({ title: 'Success', description: 'JRXML exported successfully', color: 'green' });
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to export JRXML', color: 'red' });
+  } finally {
+    isLoading.value = false;
   }
 }
 

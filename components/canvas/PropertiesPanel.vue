@@ -28,6 +28,13 @@
       </div>
 
       <div>
+        <label class="text-sm text-gray-600">Modification Flow <NuxtLink to="/admin/workflow" target="_blank">
+    (to Workflow)
+  </NuxtLink></label>
+        <input v-model="selectedTable.modifflow" class="w-full mt-1 p-2 border rounded" />
+      </div>
+
+      <div>
         <label class="text-sm text-gray-600">Comment</label>
         <input v-model="selectedTable.comment" class="w-full mt-1 p-2 border rounded" />
       </div>
