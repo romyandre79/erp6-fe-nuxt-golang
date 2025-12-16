@@ -16,6 +16,8 @@ export const availableComponents = [
       onPurge: '',
       onPdf: '',
       onXls: '',
+      onLockFlow: '',
+      onCopy: '',
     },
   },
   {
@@ -176,6 +178,7 @@ export const availableComponents = [
       key: '',
       label: 'Long Text',
       place: 'Enter long text',
+      text: 'Long Text',
       class: '',
       primary: false,
       enabled: true,
@@ -469,6 +472,7 @@ export const layoutContainers = [
       layout: 'standard',
       key: 'master',
       primary: '',
+      lock: false,
     },
     children: [],
   },
@@ -506,7 +510,7 @@ export const layoutContainers = [
   {
     type: 'tabs',
     label: 'Tabs',
-    component: 'div',
+    component: 'UTab',
     props: {
       key: 'tabs',
       class: 'w-full mb-4',
@@ -611,6 +615,17 @@ export const layoutContainers = [
     props: {
         key: 'col_1',
         class: 'flex flex-col w-full md:w-1/2 p-2',
+    },
+    children: [],
+  },
+  {
+    type: 'step',
+    label: 'Step',
+    component: 'div',
+    props: {
+      key: 'step_1',
+      title: 'Step Title',
+      class: 'w-full',
     },
     children: [],
   },

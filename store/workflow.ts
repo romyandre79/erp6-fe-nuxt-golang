@@ -17,7 +17,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
   // assume you have a global api helper exposed e.g. useApi() or $api in NuxtApp
   const api = useApi();
 
+  async function resetWorkflow() {
+    workflow.value = null;
+    categories.value = [];
+    components.value = [];
+    componentDetails.value = [];
+    componentDefaultDetails.value = [];
+    componentProperties.value = {};
+    selectedNode.value = null;
+    parameters.value = [];
+    loading.value = false;
+  }
+
   async function loadWorkflow(id: string) {
+    if (workflow.value?.wfname !== id) {
+        resetWorkflow();
+    }
     loading.value = true;
     try {
       // Create all FormData objects
@@ -104,7 +119,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
       dataForm.append('wfname', name);
 
       const res = await api.post('/api/admin/execute-flow', dataForm);
-      console.log('Copy flow response:', res);
       
       // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
       const wfObj = res?.data?.data ?? {};
@@ -115,17 +129,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
       if (flowString && typeof flowString === 'string') {
         try {
           wfObj.flow = JSON.parse(flowString);
-          console.log('Parsed flow:', wfObj.flow);
         } catch (e) {
-          console.error('Failed parsing flow string', e);
           wfObj.flow = null;
         }
       }
 
       workflow.value = wfObj;
-      console.log('Workflow copied successfully:', workflow.value);
     } catch (error) {
-      console.error('Error copying workflow:', error);
     } finally {
       loading.value = false;
     }
@@ -180,6 +190,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         componentvalue: savedItem?.componentvalue ?? '', // merge value
       };
     });
+    console.log(`[Store] loadComponentProperties for ${name} #${nodeId}:`, merged);
     componentProperties.value = merged;
     return merged;
   }
@@ -295,6 +306,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
     //saveFlow(editor.export());
   }
 
+
+
+  function updateNodeData(nodeId: string | number, data: any) {
+    const editor = (window as any).editor;
+    if (!editor) return;
+    const home = editor.drawflow?.drawflow?.Home?.data;
+    if (!home) return;
+    
+    // Find key by nodeId (usually "node-N" or just N)
+    const nodeKey = Object.keys(home).find((k) => Number(home[k].id) === Number(nodeId));
+    if (!nodeKey) return;
+    
+    home[nodeKey].data = { ...(home[nodeKey].data || {}), ...data };
+    editor.drawflow.drawflow.Home.data = home;
+  }
+
   async function deleteNodeProperties(nodeId: string | number) {
     // 1. Find all saved properties for this node
     const propsToDelete = componentDetails.value.filter((x) => Number(x.nodeid) === Number(nodeId));
@@ -355,6 +382,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     copyFlow,
     setSelectedNode,
     updateSelectedNodeData,
+    updateNodeData,
     deleteNodeProperties,
+    resetWorkflow,
   };
 });

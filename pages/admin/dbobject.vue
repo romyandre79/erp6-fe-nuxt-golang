@@ -133,10 +133,25 @@
             @duplicate="duplicateTable"
             @delete="deleteTable"
             @start-link="startLink"
+            @reorder="reorderColumns"
+            :style="{ zIndex: selectedId === table.id ? 50 : 1 }"
           />
 
           <!-- add table button pinned bottom-left -->
           <div class="absolute left-4 bottom-4"></div>
+        </div>
+        
+        <!-- Zoom Controls -->
+        <div class="fixed top-24 right-6 flex flex-col gap-2 z-50">
+          <button @click="zoomIn" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom In">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          </button>
+          <button @click="resetZoom" class="btn btn-xs rounded shadow-lg bg-white text-gray-700 font-medium" title="Reset Zoom">
+            {{ Math.round(zoom * 100) }}%
+          </button>
+          <button @click="zoomOut" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom Out">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -151,6 +166,18 @@
       </div>
     </div>
 
+    <!-- Global Loading Overlay -->
+    <!-- Global Loading Overlay -->
+    <!-- Global Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+      <div class="flex flex-col items-center">
+           <svg class="animate-spin h-12 w-12 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -248,6 +275,7 @@ const jsonPreview = ref('');
 const aiDescription = ref('');
 const showExecuteModal = ref(false);
 const showDataModal = ref(false);
+const isLoading = ref(false);
 const dataViewerTable = ref<any>(null);
 
 function openDataViewer(table: any) {
@@ -329,8 +357,8 @@ function onDropCanvas(ev: any) {
   if (!dragging.value) return;
   const table = tables.find((t) => t.id === dragging.value);
   if (!table) return;
-  table.x = ev.clientX - canvas.left - offset.value.x;
-  table.y = ev.clientY - canvas.top - offset.value.y;
+  table.x = (ev.clientX - canvas.left - offset.value.x) / zoom.value;
+  table.y = (ev.clientY - canvas.top - offset.value.y) / zoom.value;
   dragging.value = null;
   computeRelationsPaths();
 }
@@ -363,9 +391,10 @@ function addArea() {
 function startAreaDrag(area: any, ev: any) {
   activeArea.value = area;
   areaMode.value = 'move';
+  const canvas = canvasRef.value.getBoundingClientRect();
   areaOffset.value = {
-    x: ev.clientX - area.x,
-    y: ev.clientY - area.y,
+    x: (ev.clientX - canvas.left) / zoom.value - area.x,
+    y: (ev.clientY - canvas.top) / zoom.value - area.y,
   };
 
   activeAreaTables.value = tables.filter((t) => {
@@ -393,8 +422,12 @@ function onAreaMouseMove(ev: any) {
   const area = activeArea.value;
 
   if (areaMode.value === 'move') {
-    const newX = ev.clientX - areaOffset.value.x;
-    const newY = ev.clientY - areaOffset.value.y;
+    const canvas = canvasRef.value.getBoundingClientRect();
+    const mouseX = (ev.clientX - canvas.left) / zoom.value;
+    const mouseY = (ev.clientY - canvas.top) / zoom.value;
+    
+    const newX = mouseX - areaOffset.value.x;
+    const newY = mouseY - areaOffset.value.y;
     const dx = newX - area.x;
     const dy = newY - area.y;
 
@@ -408,8 +441,12 @@ function onAreaMouseMove(ev: any) {
     });
     computeRelationsPaths();
   } else if (areaMode.value === 'resize') {
-    area.width = Math.max(100, ev.clientX - area.x);
-    area.height = Math.max(100, ev.clientY - area.y);
+    const canvas = canvasRef.value.getBoundingClientRect();
+    const mouseX = (ev.clientX - canvas.left) / zoom.value;
+    const mouseY = (ev.clientY - canvas.top) / zoom.value;
+    
+    area.width = Math.max(100, mouseX - area.x);
+    area.height = Math.max(100, mouseY - area.y);
   }
 }
 
@@ -546,6 +583,7 @@ function applyJSONToSelected(json: string) {
     selectedTable.value.y = Number(obj.y ?? selectedTable.value.y);
     selectedTable.value.width = Number(obj.width ?? selectedTable.value.width);
     selectedTable.value.flow = obj.flow ?? selectedTable.value.flow;
+    selectedTable.value.modifflow = obj.modifflow ?? selectedTable.value.modifflow;
     if (Array.isArray(obj.columns)) selectedTable.value.columns = obj.columns;
     computeRelationsPaths();
     alert('Applied to selected table');
@@ -791,7 +829,6 @@ function aiParseNatural(prompt: string) {
 }
 
 function aiSuggestColumns(table: any) {
-  console.log('AI Suggest Columns', table);
 }
 
 function exportCanvas() {
@@ -855,8 +892,15 @@ function exportArea(area: any) {
 }
 
 // Load/Save Logic
+// Load/Save Logic
 async function saveToBackend() {
-  if (!tables.length && !areas.length && !relations.length) return alert('Nothing to save');
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+  if (!tables.length && !areas.length && !relations.length) {
+    isLoading.value = false;
+    return alert('Nothing to save');
+  }
 
   try {
     // 1. Save Tables
@@ -887,21 +931,40 @@ async function saveToBackend() {
     }
 
     // 2. Save Relations
-    const relationsPayload = relations.map(r => ({
-        id: r.dbid ? parseInt(r.dbid) : 0, // Use stored DB ID if available
-        from_table_id: tables.find(t => t.id === r.from.table)?.dbid ? parseInt(tables.find(t => t.id === r.from.table)?.dbid) : 0,
+    // 2. Save Relations
+    // Filter relations that have valid table DBIDs
+    const relationsToSave = relations.filter(r => {
+        const fromTbl = tables.find(t => t.id === r.from.table);
+        const toTbl = tables.find(t => t.id === r.to.table);
+        return fromTbl?.dbid && toTbl?.dbid;
+    });
+
+    const relationsPayload = relationsToSave.map(r => ({
+        id: r.dbid ? parseInt(r.dbid) : 0, 
+        from_table_id: parseInt(tables.find(t => t.id === r.from.table)?.dbid),
         from_col_index: r.from.col,
         from_col_name: r.from.colName,
-        to_table_id: tables.find(t => t.id === r.to.table)?.dbid ? parseInt(tables.find(t => t.id === r.to.table)?.dbid) : 0,
+        to_table_id: parseInt(tables.find(t => t.id === r.to.table)?.dbid),
         to_col_index: r.to.col,
         to_col_name: r.to.colName,
         path: r.path
-    })).filter(r => r.from_table_id && r.to_table_id);
+    }));
 
-    // Save returns updated relations with IDs? Backend should ideally return them.
-    // For now we assume typical save, but without reloading we won't get new IDs back.
-    // Ideally we should reload or have backend return IDs.
-    await store.saveRelations(relationsPayload);
+    const resRel = await store.saveRelations(relationsPayload);
+
+    // Update local IDs from response to avoid duplicates on next save
+    // content of resRel?.data is { success: true, data: [...] }
+    if (resRel?.data?.data && Array.isArray(resRel.data.data)) {
+        const savedRelations = resRel.data.data;
+        if (savedRelations.length === relationsToSave.length) {
+            relationsToSave.forEach((localRel, index) => {
+                const saved = savedRelations[index];
+                if (saved.id) {
+                    localRel.dbid = String(saved.id);
+                }
+            });
+        }
+    }
 
     // 3. Save Areas
     const areasPayload = areas.map(a => ({
@@ -926,6 +989,8 @@ async function saveToBackend() {
   } catch (err: any) {
     console.error(err);
     toast.add({ title: 'Error', description: String(err), color: 'error' });
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -965,7 +1030,6 @@ async function loadDesign() {
   // 2. Fetch Relations
   try {
       const rels = await store.fetchRelations();
-      console.log('DEBUG: Fetched Relations Raw:', rels);
       
       const debugMap = [];
       rels.forEach((r: any) => {
@@ -1002,8 +1066,6 @@ async function loadDesign() {
               });
           }
       });
-      console.log('DEBUG: Relation Mapping Report:', debugMap);
-      console.log('DEBUG: Final Relations Layout:', relations);
 
   } catch (e) {
       console.warn('Failed to load relations', e);
@@ -1075,6 +1137,7 @@ function createTableFromDBObject(obj: any, index: number) {
     ispublished: obj.ispublished == 1 ? true : false,
     comment: obj.comment ?? '',
     flow: content?.table?.flow ?? '',
+    modifflow: content?.table?.modifflow ?? '',
   };
 }
 
@@ -1090,6 +1153,7 @@ async function reverseEngineerDatabase() {
   }
 
   try {
+    isLoading.value = true;
     toast.add({ 
       title: 'Reverse Engineering', 
       description: 'Extracting database schema...', 
@@ -1099,8 +1163,6 @@ async function reverseEngineerDatabase() {
     const response = await api.post('/api/admin/db/reverse-engineer', {
       auto_layout: true
     });
-
-    console.log('Reverse Engineering Response:', response);
 
     if (response.success) {
       toast.add({ 
@@ -1125,6 +1187,8 @@ async function reverseEngineerDatabase() {
       description: String(err), 
       color: 'error' 
     });
+  } finally {
+    isLoading.value = false;
   }
 }
 

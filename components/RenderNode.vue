@@ -10,9 +10,10 @@
     </button>
 
     <!-- 🔹 Container node -->
-    <div
+    <component
+      :is="resolveComponent(node.type)"
       v-if="isContainer"
-      class="flex flex-col relative border border-transparent min-h-[50px] p-3 rounded bg-white dark:bg-black dark:text-white transition-all duration-150 group-hover/container:border-gray-200 hover:!border-blue-300 hover:bg-blue-50/10"
+      class="w-full h-full col-span-full relative border border-transparent min-h-[50px] p-3 rounded bg-white dark:bg-black dark:text-white transition-all duration-150 group-hover/container:border-gray-200 hover:!border-blue-300 hover:bg-blue-50/10"
       :class="[
         isDragOver ? 'border-blue-400 bg-blue-50' : '',
         node.type === 'search' ? '!border-dashed !border-green-200 bg-green-50/20' : '',
@@ -38,7 +39,7 @@
         ghost-class="draggable-ghost"
         chosen-class="hover-highlight"
         @change="onChildChange"
-        @add="onAdd"
+
       >
         <template #item="{ element }">
           <RenderNode
@@ -60,7 +61,7 @@
           </div>
         </template>
       </draggable>
-    </div>
+    </component>
 
     <!-- 🔹 Leaf node -->
     <div
@@ -69,6 +70,9 @@
       @click.stop="emitSelect"
       draggable="false"
     >
+      <label v-if="!['button','label','title','subtitle'].includes(node.type) && node.props?.text" class="block text-xs font-bold text-gray-500 mb-1">
+        {{ node.props.text }}
+      </label>
       <component :is="resolveComponent(node.type)" v-bind="getComponentProps(node)" :disabled="preview">
         {{ node.type + ':' + (node.props?.text || node.label) }}
       </component>
@@ -134,20 +138,13 @@ const onDrop = (event: DragEvent) => {
   }
 };
 
-const onAdd = (event: any) => {
-  const newItem = event.added?.element;
-  if (!newItem) return;
-
-  emit('drop-child', props.node.id, newItem);
-};
 // 🔹 Delete confirmation
 const confirmDelete = () => emit('delete', props.node);
 
 const onChildChange = () => emit('select', props.node);
 
-// 🔹 Component resolver
 const componentMap: Record<string, any> = {};
-availableComponents.forEach((item) => {
+[...availableComponents, ...layoutContainers].forEach((item) => {
   // Jika component berupa string → native element
   // Jika berupa komponen Vue → #components otomatis resolve
   componentMap[item.type] = item.component;
@@ -165,10 +162,29 @@ const getComponentProps = (node: any) => {
     case 'password':
     case 'email':
     case 'text':
-      return { ...base, type: 'text', disabled: true, placeholder: base.key || 'Enter text...' };
+      return { 
+        ...base, 
+        type: 'text', 
+        disabled: true, 
+        placeholder: base.key || 'Enter text...',
+        class: (base.class || '') + ' w-full border border-gray-300 rounded px-2 py-1 text-sm'
+      };
 
     case 'longtext':
-      return { ...base, rows: 3, placeholder: base.key || 'Enter long text...' };
+      return { 
+        ...base, 
+        rows: 3, 
+        placeholder: base.key || 'Enter long text...',
+        class: (base.class || '') + ' w-full border border-gray-300 rounded px-2 py-1 text-sm'
+      };
+
+    case 'select':
+    case 'combobox':
+      return {
+          ...base,
+          placeholder: 'Select option...',
+           class: (base.class || '') + ' w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white'
+      }
 
     case 'button':
       const { label, ...rest } = base;

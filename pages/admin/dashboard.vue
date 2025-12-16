@@ -64,7 +64,6 @@ const fetchData = async () => {
       for (let index = 0; index < recordWidget.value.length; index++) {
         const element = recordWidget.value[index];
         recordWidget.value[index].widgetform = JSON.parse(element.widgetform);
-        console.log('widg', recordWidget);
       }
     } else {
       console.error('Invalid response from /auth/me', res);

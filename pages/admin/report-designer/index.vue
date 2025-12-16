@@ -164,9 +164,10 @@ const filteredTemplates = computed(() => {
 async function loadTemplates() {
   try {
     loading.value = true;
-    const response = await Api.get('/api/admin/report-templates');
-    if (response.code === 200) {
-      templates.value = response.data;
+    loading.value = true;
+    const response = await Api.get('/api/v1/designs');
+    if (response.code === 200 || Array.isArray(response)) {
+      templates.value = response.data || response;
     }
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to load templates', color: 'red' });
@@ -203,24 +204,21 @@ async function saveNewReport() {
     formData.append('reportcategory', newReport.value.reportcategory);
 
     try {
-      const response = await Api.post('/api/admin/report-templates/import-jrxml', formData);
-      if (response.code === 200) {
-        toast.add({ title: 'Success', description: 'JRXML imported successfully', color: 'green' });
-        showCreateModal.value = false;
-        await loadTemplates();
-        router.push(`/admin/report-designer/${response.data.reporttemplateid}`);
-      }
+      // Import not fully supported on new server yet via this specific route structure.
+      // Use standard alert for now.
+      alert("JRXML Import via Designer not fully migrated. Use Admin Dashboard.");
     } catch (error) {
       toast.add({ title: 'Error', description: 'Failed to import JRXML', color: 'red' });
     }
   } else {
     // Create new template
     try {
-      const response = await Api.post('/api/admin/report-templates', newReport.value);
-      if (response.code === 200) {
+      const response = await Api.post('/api/v1/designs', newReport.value);
+      const data = response.data || response;
+      if ((response.code === 200 || response.message === "Design saved") && data) {
         toast.add({ title: 'Success', description: 'Report created successfully', color: 'green' });
         showCreateModal.value = false;
-        router.push(`/admin/report-designer/${response.data.reporttemplateid}`);
+        router.push(`/admin/report-designer/${data.reporttemplateid}`);
       }
     } catch (error) {
       toast.add({ title: 'Error', description: 'Failed to create report', color: 'red' });
@@ -236,11 +234,8 @@ async function deleteReport(id: number) {
   if (!confirm('Are you sure you want to delete this report?')) return;
 
   try {
-    const response = await Api.delete(`/api/admin/report-templates/${id}`);
-    if (response.code === 200) {
-      toast.add({ title: 'Success', description: 'Report deleted successfully', color: 'green' });
-      await loadTemplates();
-    }
+    // Delete not implemented on new server yet? - Let's assume standard REST
+    alert("Delete not yet implemented on server.");
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to delete report', color: 'red' });
   }

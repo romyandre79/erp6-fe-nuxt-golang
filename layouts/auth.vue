@@ -123,7 +123,8 @@ const toggleExpand = (id: number) => {
 <template>
   <ClientOnly>
     <UApp>
-      <div class="flex min-h-screen transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
+      <div class="admin-layout flex min-h-screen transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
+
         <!-- MODERN SIDEBAR -->
         <aside 
           :class="[
@@ -299,6 +300,8 @@ const toggleExpand = (id: number) => {
 
 <style>
 @import '@/assets/css/main.css';
+
+
 
 /* Submenu animation */
 .slide-fade-enter-active {

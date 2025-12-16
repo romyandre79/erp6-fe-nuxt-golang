@@ -69,7 +69,7 @@
         </div>
 
         <!-- Properties Content -->
-        <div v-if="activeActivity === 'property'">
+        <div v-if="activeActivity === 'property'" class="pb-20">
           <PropertyForm
             v-if="store.selectedNode"
             :componentName="store.selectedNode.name"

@@ -136,6 +136,22 @@ function open(key: string) {
   }
 }
 
+async function copy() {
+  const onCopy = getAction('onCopy') 
+  if (onCopy == '') return 
+  try {
+  const dataForm = new FormData();
+  dataForm.append('flowname', onCopy);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
+  dataForm.append('id', selectedRows.value[0][getPrimary()]);
+  const res = await Api.post('api/admin/execute-flow', dataForm);
+  toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+  } catch (err) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+  }
+}
+
 function getPrimary() {
   let node: any;
   parsedSchema.value.forEach((element) => {
@@ -152,9 +168,7 @@ async function edit(key: string) {
   
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-  
-  console.log('edit debug:', { key, isDetailModal, modalFound: !!modal });
-  
+    
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
@@ -210,9 +224,38 @@ async function edit(key: string) {
     }
   } else {
     // Handle master modal edit (existing logic)
+    const master = getMaster();
+    // Check if locking is enabled in props
+    const lockEnabled = master?.props?.lock === true;
     const flow = getAction('get');
+
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
+      
+      // 🔒 Try to lock record if locking is enabled
+      if (lockEnabled) {
+        try {
+            const lockRes = await Api.post('api/admin/lock-record', {
+                tablename: props.menuName,
+                recordid: Number(selectedRows.value[0][primary]),
+                locktype: 'edit'
+            });
+
+            if (lockRes?.code !== 200) {
+                 throw new Error(lockRes?.message || 'Lock failed');
+            }
+        } catch (err: any) {
+             const msg = err?.response?._data?.message || err?.message || 'This record is being edited by another user';
+             toast.add({
+                title: 'Record Locked',
+                description: msg,
+                color: 'error',
+                timeout: 5000
+            });
+            return; // ⛔ ABORT OPENING FORM
+        }
+      }
+
       modalTitle.value = 'Edit Data';
       modalDescription.value = '';
       modalRefs[key].value = true;
@@ -268,6 +311,18 @@ async function runFlow(flow: string) {
 function close(key: string) {
   try {
     const primary = getPrimary();
+    
+    // 🔓 Unlock record if locking is enabled
+    // We need to check if master has lock: true
+    const master = getMaster();
+    if (master?.props?.lock === true && selectedRows.value && selectedRows.value.length > 0) {
+        // Unlock
+        Api.post('api/admin/unlock-record', {
+            tablename: props.menuName,
+            recordid: Number(selectedRows.value[0][primary])
+        }).catch(err => console.error('Unlock failed', err));
+    }
+
     if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
       tableRef.value.setData(primary, selectedRows.value[0][primary]);
     }
@@ -284,7 +339,6 @@ function close(key: string) {
 
 async function deleteData(table: any) {
   const flow = getAction('purge');
-  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
     const primary = getPrimary();
     for (let index = 0; index < selectedRows.value.length; index++) {
@@ -664,6 +718,9 @@ function renderComponent(component: any) {
             const key = eventName.replace('open:', '');
             open(key);
             return;
+          } else if (eventName.startsWith('copy')) {
+            copy();
+            return;
           } else if (eventName.startsWith('edit')) {
             const key = eventName.replace('edit:', '');
             edit(key);
@@ -764,32 +821,84 @@ function renderCallOther(component) {
   return h('div', `Unknown other type: ${type}`);
 }
 
+function validateContainer(container: any): boolean {
+  let isValid = true;
+
+  // List of input types that need validation
+  const inputTypes = [
+    'text', 'password', 'number', 'email', 'tel', 'url', 
+    'date', 'time', 'datetime', 'month', 'week', 
+    'select', 'selectgroup', 'textarea', 'longtext', 
+    'checkbox', 'radio', 'bool', 'boolean', 'file', 'image'
+  ];
+
+  // If the container itself is an input
+  if (inputTypes.includes((container.type || '').toLowerCase())) {
+     const val = formData.value[container.props?.key];
+     
+     // validateField expects the component object
+     const result = validateField(container, val);
+     
+     if (result !== true) {
+       isValid = false;
+       if (container.props?.key) {
+         validationErrors[container.props.key] = result as string;
+       }
+     }
+  }
+
+  // Recurse children
+  if (container.children && Array.isArray(container.children)) {
+    container.children.forEach((child: any) => {
+      if (!validateContainer(child)) {
+        isValid = false;
+      }
+    });
+  }
+
+  return isValid;
+}
+
 function renderWizard(container: any) {
-  if (!container) return null;
+  if (!container || !container.children) return null;
+
+  // Prepare steps for the wizard component
+  const steps = container.children.map((child: any) => ({
+    title: child.props?.title || child.props?.label || 'Step',
+    ...child
+  }));
 
   return h(
     FormWizard,
     {
-      steps: container,
-      saveKey: 'wizard-h',
+      steps: steps,
+      class: container.props?.class || '',
+      // Pass validation function
+      validateStep: async (index: number) => {
+         const stepComponent = container.children[index];
+         return validateContainer(stepComponent);
+      },
+      onFinish: () => {
+         // Create/Update logic
+         // We can reuse the button logic?
+         // Usually wizard finish means "Submit"
+         // We should check if there is an 'onCreate' or 'onUpdate' action defined, or expose an event.
+         // For now, let's assume it triggers the same as a primary button would.
+         
+         if (modalTitle.value === 'New Data') {
+             CreateHandler();
+         } else {
+             UpdateHandler();
+         }
+      }
     },
     {
-      default: ({ step, schema, state }) => {
-        return h(
-          'div',
-          schema.map((field) => {
-            return h('div', { class: 'mb-3' }, [
-              h('label', field.label),
-              h('input', {
-                class: 'border p-2 w-full',
-                value: state[field.key],
-                onInput: (e) => (state[field.key] = e.target.value),
-              }),
-            ]);
-          }),
-        );
+      default: ({ step }: { step: number }) => {
+        const stepComponent = container.children[step];
+        if (!stepComponent) return null;
+        return renderContainer(stepComponent);
       },
-    },
+    }
   );
 }
 
@@ -840,7 +949,6 @@ function renderDetailTable(container: any) {
 
 function renderSelectGroup(component: any) {
   if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
-console.log('comp ',component)
       return h(FormSelectGroup, {
         class: component.props.class,
         component: component.props,
@@ -852,7 +960,6 @@ console.log('comp ',component)
 
 function renderContainer(container: any) {
   if (!container) return null;
-console.log('comp ',container)
   // 🔥 Special handling for detailtable - render it as a component, not a container
   // 🔥 Special handling for detailtable - render it as a component, not a container
   if ((container.type || '').toLowerCase() === 'detailtable') {
@@ -887,7 +994,6 @@ console.log('comp ',container)
         case 'detailtable': {
       // Initialize formData for this table if not exists
       const tableKey = component.props.key;
-      console.log('🔍 Rendering detailtable:', { tableKey, component });
       
       if (!(tableKey in formData.value)) {
         formData.value[tableKey] = [];
@@ -908,8 +1014,6 @@ console.log('comp ',container)
           }
         });
       }
-
-      console.log('🔍 Detailtable columns:', columns);
 
       return h(DetailTableInline, {
         columns,
@@ -935,6 +1039,7 @@ console.log('comp ',container)
         case 'modals':
         case 'row':
         case 'col':
+        case 'step':
           return renderContainer(component);
         case 'action':
           break;
@@ -1015,6 +1120,16 @@ function renderTable(component: any) {
   return null;
 }
 
+function getMaster() {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
+    if (element.type == 'master') {
+      node = element;
+    }
+  });
+  return node;
+}
+
 function getAction(action: string) {
   let node: any;
   parsedSchema.value.forEach((element) => {
@@ -1043,9 +1158,12 @@ const ReadHandler = async () => {
   }
 };
 
+const isLoading = ref(false);
+
 const CreateHandler = async () => {
   const flow = getAction('create');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -1060,13 +1178,17 @@ const CreateHandler = async () => {
       }
     }
 
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
-      ReadHandler();
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+        ReadHandler();
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -1076,6 +1198,7 @@ const CreateHandler = async () => {
 const UpdateHandler = async () => {
   const flow = getAction('update');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -1090,12 +1213,16 @@ const UpdateHandler = async () => {
       }
     }
 
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -1104,31 +1231,34 @@ const UpdateHandler = async () => {
 
 const DeleteHandler = async () => {
   const flow = getAction('purge');
-  if (flow) {
-    const payload = { ...toRaw(formData.value) };
-    const dataForm = new FormData();
-    dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-
-    for (const key in payload) {
-      const val = payload[key];
-      if (val !== undefined && val !== null) {
-        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val));
-        else dataForm.append(key, val);
+  if (flow && selectedRows.value.length > 0) {
+    isLoading.value = true;
+    const primary = getPrimary();
+    try {
+      for (let index = 0; index < selectedRows.value.length; index++) {
+        let dataForm = new FormData();
+        dataForm.append('flowname', flow);
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', 'true');
+        dataForm.append(primary, selectedRows.value[index][primary]);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
+        if (res?.code == 200) {
+          tableRef.value.refreshTable();
+        } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
       }
-    }
-
-    const res = await Api.post('api/admin/execute-flow', dataForm);
-    if (res.code == 200) {
       toast.add({
-        title: $t('TITLE DELETE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+         title: $t('TITLE DELETE'),
+         description: $t('Data deleted successfully'),
       });
-      //ReadHandler()
+    } catch (err) {
+      console.error('Gagal hapus data:', err);
+    } finally {
+      isLoading.value = false;
     }
   } else {
-    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
+    if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
@@ -1138,14 +1268,13 @@ onMounted(() => {
 
 async function saveData(key: any) {
   try {
+    isLoading.value = true;
     let flow = '';
 
     // Check if this is a detail modal
     const modal = modals.value.find((m: any) => m.props.key === key);
     // Determine if this is a detail modal by checking if the key contains "detail"
     const isDetailModal = modal && key.toLowerCase().includes('detail');
-
-    console.log('saveData debug:', { key, isDetailModal, modalFound: !!modal });
 
     if (isDetailModal) {
       // Handle detail modal save
@@ -1161,8 +1290,6 @@ async function saveData(key: any) {
       const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
       const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
       
-      console.log('saveData detail debug:', { modalIndex, detailModalsCount: detailModals.length });
-
       if (modalTitle.value == 'New Data') {
         const createFlows = actionNode?.props?.onCreateDetail || [];
         flow = createFlows[modalIndex];
@@ -1252,6 +1379,8 @@ async function saveData(key: any) {
     }
   } catch (err) {
     console.error('Gagal simpan data:', err);
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -1308,6 +1437,17 @@ watchEffect(() => {
         </div>
       </template>
     </UModal>
+  </div>
+
+  <!-- Global Loading Overlay -->
+  <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div class="flex flex-col items-center">
+         <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
+    </div>
   </div>
 
   <!-- 🔹 Hidden file input -->

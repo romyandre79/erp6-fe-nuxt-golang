@@ -4,7 +4,7 @@
     <div
       v-if="showPayload"
       id="payload-overlay"
-      class="absolute top-6 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
+      class="absolute top-20 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
     >
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-bold text-sm">Test Payload</h3>
@@ -164,14 +164,11 @@ function initEditor(container: HTMLElement) {
   });
 
   ed.on('nodeSelected', async (id: string) => {
-    console.log('Designer: nodeSelected event', id);
     const cleanId = id.replace('node-', '');
     const node = ed.drawflow.drawflow?.Home?.data?.[cleanId];
 
     if (node) {
-      console.log('Designer: Loading properties for node', cleanId, node.name);
       await store.loadComponentProperties(node.name, cleanId.toString());
-      console.log('Designer: Setting selected node in store');
       store.setSelectedNode(node);
     }
     
@@ -326,40 +323,32 @@ function initWorkflowWebSocket() {
 
   let wsBase = config.public.apiBase.replace('http', 'ws');
   const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
-
-  console.log('Connecting to Workflow WS:', wsUrl);
   
   workflowSocket = new WebSocket(wsUrl);
   
   workflowSocket.onopen = () => {
-    console.log('Workflow WS Connected');
   };
 
   workflowSocket.onmessage = (event) => {
     try {
       const payload = JSON.parse(event.data);
       handleWorkflowEvent(payload);
-    } catch (e) {
-      console.error('WS Message Parse Error', e);
+    } catch (err) {
     }
   };
 
   workflowSocket.onclose = (e) => {
-    console.log('Workflow WS Closed', e.code, e.reason);
     workflowSocket = null;
   };
 
   workflowSocket.onerror = (e) => {
-    console.error('Workflow WS Error', e);
   };
 }
 
 function handleWorkflowEvent(payload: any) {
   // Only handle workflow_test events
   if (payload.type !== 'workflow_test') return;
-  
-  console.log('[Workflow Event]', payload.event, payload);
-  
+    
   const nodeId = payload.nodeId;
   if (!nodeId) return;
   
@@ -516,7 +505,6 @@ function updateAllConnections() {
     }
   });
   
-  console.log('✅ Updated all connection paths');
 }
 
 /* ======================================================
@@ -526,7 +514,6 @@ onBeforeUnmount(() => {
   try {
     editor?.destroy();
   } catch (e) {
-    console.error(e);
   }
 });
 

@@ -168,9 +168,13 @@ export const useReportStore = defineStore('report', {
     async loadTemplate(id: number) {
       const api = useApi();
       try {
-        const response = await api.get(`/api/admin/report-templates/${id}`);
-        if (response.code === 200) {
-          const data = response.data;
+        // Update to use new server endpoint
+        // NOTE: The base URL of `api` might need to be changed if Report Server is on different port.
+        // Assuming Nuxt proxy or same domain for now.
+        // If separate, we might need a full URL.
+        const response = await api.get(`/api/v1/designs/${id}`);
+        if (response.code === 200 || response.reporttemplateid) { // Handle different response wrappers if any
+          const data = response.data || response; // Handle wrapped or direct response
           
           // Parse JSON template if it exists
           let template: ReportTemplate;
@@ -254,12 +258,14 @@ export const useReportStore = defineStore('report', {
       try {
         if (this.currentTemplate.reportTemplateID) {
           // Update existing
-          await api.put(`/api/admin/report-templates/${this.currentTemplate.reportTemplateID}`, payload);
+          await api.put(`/api/v1/designs/${this.currentTemplate.reportTemplateID}`, payload);
         } else {
           // Create new
-          const response = await api.post('/api/admin/report-templates', payload);
-          if (response.code === 200 && response.data) {
-            this.currentTemplate.reportTemplateID = response.data.reporttemplateid;
+          const response = await api.post('/api/v1/designs', payload);
+          // Check response structure
+          const data = response.data || response;
+          if ((response.code === 200 || response.message === "Design saved") && data) {
+            this.currentTemplate.reportTemplateID = data.reporttemplateid;
           }
         }
       } catch (error) {
@@ -269,3 +275,6 @@ export const useReportStore = defineStore('report', {
     },
   },
 });
+// Note: We also need to update the list fetching in index.vue, and the Create/Update calls in saveTemplate.
+// But wait, saveTemplate uses /api/admin/report-templates...
+// Let's update saveTemplate as well.

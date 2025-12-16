@@ -499,14 +499,10 @@ async function confirmUninstall(module) {
 
   // Check dependencies
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${apiUrl}/api/admin/module/dependencies/${module.moduleid}?menu=modules`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    const data = await response.json()
+    const res = await api.get(`/api/admin/module/dependencies/${module.moduleid}?menu=modules`)
 
-    if (response.ok) {
-      uninstallDependencies.value = data.data
+    if (res && res.code === 200) {
+      uninstallDependencies.value = res.data
       showUninstallModal.value = true
     }
   } catch (error) {
@@ -521,27 +517,17 @@ async function uninstallModule() {
   uninstalling.value = true
 
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      `${apiUrl}/api/admin/module/uninstall/${moduleToUninstall.value.moduleid}?drop_tables=${dropTables.value}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ menu: 'modules' })
-      }
+    const res = await api.post(
+      `/api/admin/module/uninstall/${moduleToUninstall.value.moduleid}?drop_tables=${dropTables.value}`,
+      { menu: 'modules' }
     )
 
-    const data = await response.json()
-
-    if (response.ok) {
+    if (res && (res.code === 200 || res.success)) {
       showToast('Module uninstalled successfully!', 'success')
       closeUninstallModal()
       await loadModules()
     } else {
-      showToast(data.message || 'Failed to uninstall module', 'error')
+      showToast(res.message || 'Failed to uninstall module', 'error')
     }
   } catch (error) {
     console.error('Uninstall error:', error)
@@ -560,40 +546,14 @@ function closeUninstallModal() {
 
 async function exportModule(moduleid, modulename) {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${apiUrl}/api/admin/module/export/${moduleid}?menu=modules`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-
-    if (response.ok) {
-      // Get the blob from response
-      const blob = await response.blob()
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      
-      // Get filename from Content-Disposition header or use default
-      const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = `${modulename.toLowerCase().replace(/ /g, '-')}.zip`
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename=(.+)/)
-        if (filenameMatch) {
-          filename = filenameMatch[1].replace(/"/g, '')
-        }
-      }
-      
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      
-      showToast('Module exported successfully!', 'success')
-    } else {
-      showToast('Failed to export module', 'error')
-    }
+    const filename = `${modulename.toLowerCase().replace(/ /g, '-')}.zip`
+    await api.donlotFile(
+      `/api/admin/module/export/${moduleid}?menu=modules`,
+      null, 
+      filename,
+      'GET'
+    )
+    showToast('Module exported successfully!', 'success')
   } catch (error) {
     console.error('Export error:', error)
     showToast('Failed to export module', 'error')
