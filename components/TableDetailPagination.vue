@@ -210,6 +210,8 @@ const props = defineProps({
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
+const route = useRoute();
+
 
 // Table preferences persistence
 const tableId = computed(() => props.endPoint || 'default_detail_table');
@@ -270,7 +272,7 @@ async function fetchData() {
     if (props.method.toUpperCase() === 'POST') {
       const dataForm = new FormData();
       dataForm.append('flowname', props.endPoint || '');
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append('page', currentPage.value);
       dataForm.append('rows', pageSize.value);

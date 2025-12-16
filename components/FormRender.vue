@@ -30,7 +30,7 @@ const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
-
+const route = useRoute();
 const toast = useToast();
 let selectedRows = ref<any[]>([]);
 
@@ -142,7 +142,7 @@ async function copy() {
   try {
   const dataForm = new FormData();
   dataForm.append('flowname', onCopy);
-  dataForm.append('menu', 'admin');
+  dataForm.append('menu', route.params.slug);
   dataForm.append('search', 'true');
   dataForm.append('id', selectedRows.value[0][getPrimary()]);
   const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -197,7 +197,7 @@ async function edit(key: string) {
       
       const dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       
       // Append all selected row data as search parameters
@@ -261,7 +261,7 @@ async function edit(key: string) {
       modalRefs[key].value = true;
       const dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append(primary, selectedRows.value[0][primary]);
       try {
@@ -294,7 +294,7 @@ async function edit(key: string) {
 async function runFlow(flow: string) {
   const dataForm = new FormData();
   dataForm.append('flowname', flow);
-  dataForm.append('menu', 'admin');
+  dataForm.append('menu', route.params.slug);
   dataForm.append('search', 'true');
   try {
     const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -344,7 +344,7 @@ async function deleteData(table: any) {
     for (let index = 0; index < selectedRows.value.length; index++) {
       let dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append(primary, selectedRows.value[index][primary]);
       try {
@@ -372,7 +372,7 @@ async function downForm(mode: any) {
     let dataForm = new FormData();
     const primary = getPrimary();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(primary + '[' + index + ']', selectedRows[index][primary]);
@@ -462,7 +462,7 @@ async function handleFileChange(e: Event) {
 
   const form = new FormData();
   form.append('flowname', flow);
-  form.append('menu', 'admin');
+  form.append('menu', route.params.slug);
   form.append('search', 'false');
   form.append('file-modules', file);
 
@@ -1146,7 +1146,7 @@ const ReadHandler = async () => {
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -1167,7 +1167,7 @@ const CreateHandler = async () => {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     for (const key in payload) {
@@ -1202,7 +1202,7 @@ const UpdateHandler = async () => {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     for (const key in payload) {
@@ -1238,7 +1238,7 @@ const DeleteHandler = async () => {
       for (let index = 0; index < selectedRows.value.length; index++) {
         let dataForm = new FormData();
         dataForm.append('flowname', flow);
-        dataForm.append('menu', 'admin');
+        dataForm.append('menu', route.params.slug);
         dataForm.append('search', 'true');
         dataForm.append(primary, selectedRows.value[index][primary]);
         const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -1322,7 +1322,7 @@ async function saveData(key: any) {
 
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
     
     const payload = { ...toRaw(formData.value) };

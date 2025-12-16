@@ -412,7 +412,7 @@ useHead({
                         </div>
                         <div class="flex items-center justify-between pt-4 border-t border-gray-700">
                             <span class="text-sm text-gray-500">500+ active workflows</span>
-                            <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">View Details →</button>
+                            <NuxtLink to="/erp" class="text-blue-400 hover:text-blue-300 text-sm font-semibold">View Details →</NuxtLink>
                         </div>
                     </div>
                 </article>
