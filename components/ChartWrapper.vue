@@ -85,7 +85,7 @@ async function fetchData() {
   });
 
   try {
-    const res = (await Api.post('admin/execute-flow', dataForm)) as any;
+    const res = (await Api.post('api/admin/execute-flow', dataForm)) as any;
     if (res.code === 200) {
       chartOption.value = res.data.data;
     }

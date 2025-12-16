@@ -83,6 +83,16 @@
         <PropertyEditor v-model="selected.props" />
       </div>
     </aside>
+    <!-- Global Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+      <div class="flex flex-col items-center">
+           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -198,11 +208,15 @@ const toggleJson = () => {
   showJson.value = !showJson.value;
 };
 
+const isLoading = ref(false);
+
 const clearSchema = async () => {
   canvasComponents.value = [];
 };
 
 const saveSchema = async () => {
+  if (isLoading.value) return;
+  isLoading.value = true;
   const dataForm = new FormData();
   dataForm.append('flowname', 'modifmenuaccess');
   dataForm.append('menu', 'admin');
@@ -220,7 +234,7 @@ const saveSchema = async () => {
   dataForm.append('recordstatus', dataMenu.recordStatus);
   dataForm.append('menuform', JSON.stringify(formattedJson.value));
   try {
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
       toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
     } else {
@@ -228,6 +242,8 @@ const saveSchema = async () => {
     }
   } catch (err) {
     toast.add({ title: 'Error', description: err, color: 'error' });
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -245,9 +261,59 @@ const dataMenu = reactive({
   recordStatus: Number,
 });
 
-const loadSchema = async () => {
+const hydrateNodeProps = (nodes: NodeSchema[]) => {
+  nodes.forEach((node) => {
+    const defaults = getDefaultProps(node.type);
+    // Merge defaults with existing props, preserving existing values but adding missing keys
+    node.props = { ...defaults, ...node.props };
+    
+    // Explicitly ensure key exists if it's in defaults, even if it was lost
+    if ('key' in defaults && !('key' in node.props)) {
+      node.props.key = defaults.key;
+    }
+
+    if (node.children && node.children.length > 0) {
+      hydrateNodeProps(node.children);
+    }
+  });
+  return nodes;
+};
+
+// 🔒 LOCK SCHEMA (METADATA LOCK)
+const acquireLock = async (menuId: number) => {
   try {
-    const res = await getMenuForm(route.params.slug);
+    const res = await Api.post('api/admin/lock-record', {
+      tablename: 'sys_menu',
+      recordid: Number(menuId),
+      locktype: 'design'
+    });
+    
+    if (res.code === 200) {
+      toast.add({ title: 'Design Mode', description: 'Schema locked for editing', color: 'success' });
+    } else {
+      toast.add({ title: 'Lock Failed', description: res.message || 'Could not acquire lock', color: 'error' });
+    }
+  } catch (err) {
+    console.error('Lock error:', err);
+  }
+};
+
+const releaseLock = async () => {
+  if (!dataMenu.menuAccessId) return;
+  try {
+    await Api.post('api/admin/unlock-record', {
+      tablename: 'sys_menu',
+      recordid: Number(dataMenu.menuAccessId)
+    });
+  } catch (err) {
+    console.error('Unlock error:', err);
+  }
+};
+
+const loadSchema = async () => {
+  isLoading.value = true;
+  try {
+    const res = await getMenuForm(route.params.slug, true);
     if (res?.code == 200) {
       dataMenu.menuAccessId = res?.data.data.menuaccessid;
       dataMenu.menuName = res?.data.data.menuname;
@@ -260,42 +326,91 @@ const loadSchema = async () => {
       dataMenu.menuVersion = res?.data.data.menuversion;
       dataMenu.menuType = res?.data.data.menutype;
       dataMenu.recordStatus = res?.data.data.recordstatus;
+      
+      // Acquire Lock
+      await acquireLock(dataMenu.menuAccessId as number);
+
       if (res?.data.data.menuform != '') {
         formSchema.value = res?.data?.data.menuform;
-        canvasComponents.value = JSON.parse(res?.data?.data.menuform);
+        let parsed = JSON.parse(res?.data?.data.menuform);
+        canvasComponents.value = hydrateNodeProps(parsed);
       }
+    } else if (res?.code == 423 || res?.message === 'SCHEMA_LOCKED') {
+       toast.add({ 
+          title: 'Schema Locked', 
+          description: res.message || 'This form is being designed by another user', 
+          color: 'error', 
+          timeout: 0 
+       });
     } else {
       console.error('Invalid response from ', res);
     }
   } catch (err) {
     console.error('Error loading :', err);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
-  console.log(name)
   if (name) {
+    isLoading.value = true;
     try {
       const res = await getMenuForm(name);
       if (res?.code == 200) {
         if (res?.data.data.menuform != '') {
-          formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = JSON.parse(res?.data?.data.menuform);
+          const raw = res.data.data.menuform;
+
+          // escape string agar aman jadi regex
+          const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+          // replace ignore case + global
+          const text = raw.replace(
+            new RegExp(escapedName, 'gi'),
+            route.params.slug
+          );
+
+          formSchema.value = text;
+
+          let parsed;
+          try {
+            parsed = JSON.parse(text);
+          } catch (e) {
+            console.error('Invalid JSON after replace', e);
+            return;
+          }
+          canvasComponents.value = hydrateNodeProps(parsed);
         }
       } else {
         console.error('Invalid response from ', res);
       }
     } catch (err) {
       console.error('Error loading :', err);
+    } finally {
+      isLoading.value = false;
     }
   } else {
     console.warn('Empty');
   }
 };
 
+const heartbeatInterval = ref<NodeJS.Timer | null>(null);
+
+onBeforeUnmount(() => {
+  if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
+  releaseLock();
+});
+
 onMounted(async () => {
-  loadSchema();
+  await loadSchema();
+  
+  // Start Heartbeat to refresh lock every 60s
+  if (dataMenu.menuAccessId) {
+    heartbeatInterval.value = setInterval(() => {
+      acquireLock(dataMenu.menuAccessId as number);
+    }, 60000);
+  }
 });
 
 const debugText = computed({

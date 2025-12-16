@@ -3,6 +3,39 @@
     <header class="flex items-center justify-between p-4 border-b bg-white sticky">
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
+        <!-- Restore File Input (Hidden) -->
+        <input
+          type="file"
+          ref="restoreInput"
+          class="hidden"
+          accept=".sql,.db"
+          @change="onFileSelected"
+        />
+        
+        <div class="flex items-center gap-2 ml-4">
+             <button
+            @click="backupDatabase"
+            :disabled="backupLoading"
+            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
+            Backup
+          </button>
+          
+          <button
+            @click="triggerRestore"
+            :disabled="backupLoading"
+            class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+          >
+             <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
+            Restore
+          </button>
+        </div>
+      </div>
+      
+      <!-- Progress Bar (Overlay or inline) -->
+      <div v-if="backupLoading" class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
+        <div class="h-full bg-blue-600 transition-all duration-300" :style="{ width: `${progress}%` }"></div>
       </div>
     </header>
 
@@ -10,6 +43,7 @@
       <!-- Sidebar -->
       <div class="flex-none bg-white border-r z-10">
         <Sidebar
+          ref="sidebarRef"
           :tables="tables"
           :areas="areas"
           :selectedTable="selectedTable"
@@ -35,6 +69,8 @@
           @apply-json="applyJSONToSelected"
           @copy-json="copyJSONToClipboard"
           @remove-relation="removeRelation"
+          @reverse-engineer="reverseEngineerDatabase"
+          @view-data="openDataViewer"
         />
       </div>
 
@@ -97,14 +133,51 @@
             @duplicate="duplicateTable"
             @delete="deleteTable"
             @start-link="startLink"
+            @reorder="reorderColumns"
+            :style="{ zIndex: selectedId === table.id ? 50 : 1 }"
           />
 
           <!-- add table button pinned bottom-left -->
           <div class="absolute left-4 bottom-4"></div>
         </div>
+        
+        <!-- Zoom Controls -->
+        <div class="fixed top-24 right-6 flex flex-col gap-2 z-50">
+          <button @click="zoomIn" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom In">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          </button>
+          <button @click="resetZoom" class="btn btn-xs rounded shadow-lg bg-white text-gray-700 font-medium" title="Reset Zoom">
+            {{ Math.round(zoom * 100) }}%
+          </button>
+          <button @click="zoomOut" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom Out">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data Viewer Modal -->
+    <div v-if="showDataModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-xl overflow-hidden relative max-w-[90vw] max-h-[90vh]">
+        <DbObjectDataViewer 
+          :table="dataViewerTable" 
+          @close="showDataModal = false" 
+        />
       </div>
     </div>
 
+    <!-- Global Loading Overlay -->
+    <!-- Global Loading Overlay -->
+    <!-- Global Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+      <div class="flex flex-col items-center">
+           <svg class="animate-spin h-12 w-12 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -114,12 +187,14 @@ import { useDbobjectStore } from '~/store/dbobject';
 import { useToast } from '#imports';
 import { toPng } from 'html-to-image';
 import { useCanvas } from '~/composables/useCanvas';
+import { useBackupRestore } from '~/composables/useBackupRestore';
 
 // Lazy load heavy components for code splitting
 const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjectSidebar.vue'));
 const CanvasTable = defineAsyncComponent(() => import('~/components/canvas/CanvasTable.vue'));
 const CanvasArea = defineAsyncComponent(() => import('~/components/canvas/CanvasArea.vue'));
 const PropertiesPanel = defineAsyncComponent(() => import('~/components/canvas/PropertiesPanel.vue'));
+const DbObjectDataViewer = defineAsyncComponent(() => import('~/components/dbobject/DbObjectDataViewer.vue'));
 
 definePageMeta({
   middleware: ['auth'],
@@ -133,6 +208,48 @@ let areaSeq = 1;
 const toast = useToast();
 const store = useDbobjectStore();
 const canvasRef = ref(null);
+const restoreInput = ref(null);
+const api = useApi();
+
+const { 
+  backupDatabase, 
+  restoreDatabase, 
+  loading: backupLoading, 
+  progress, 
+  error: backupError, 
+  success: backupSuccess 
+} = useBackupRestore();
+
+// Watch for success/error to show toasts
+import { watch } from 'vue';
+watch(backupSuccess, (val) => {
+  if (val) toast.add({ title: 'Success', description: val, color: 'success' });
+});
+watch(backupError, (val) => {
+  if (val) toast.add({ title: 'Error', description: val, color: 'error' });
+});
+
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
+
+function triggerRestore() {
+  restoreInput.value?.click();
+}
+
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
+function onFileSelected(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    if(!confirm(`Are you sure you want to restore ${file.name}? This will overwrite existing data.`)) {
+        event.target.value = ''; // reset
+        return;
+    }
+    restoreDatabase(file);
+    markClean(); // Clean state after restore
+    event.target.value = ''; // reset after selection
+  }
+}
+
 
 const {
   tables,
@@ -157,17 +274,36 @@ const selectedId = ref(null);
 const jsonPreview = ref('');
 const aiDescription = ref('');
 const showExecuteModal = ref(false);
+const showDataModal = ref(false);
+const isLoading = ref(false);
+const dataViewerTable = ref<any>(null);
+
+function openDataViewer(table: any) {
+  dataViewerTable.value = table;
+  showDataModal.value = true;
+}
 
 const selectedTable = computed(() => tables.find((t) => t.id === selectedId.value) || null);
 
+const sidebarRef = ref<any>(null); // Use any to avoid typing issues with async component
+
 function selectTable(id: any) {
   selectedId.value = id;
-  const t = tables.find((x) => x.id === id);
-  jsonPreview.value = t ? JSON.stringify(t, null, 2) : '';
+  // Force open properties panel
+  if (sidebarRef.value) {
+    sidebarRef.value.openProperties();
+  }
 }
 
-// ... (Rest of the logic needs to be adapted or moved)
-// Since the file was huge, I'll keep the specific logic here but use the composable state.
+watch(selectedTable, (newVal) => {
+  jsonPreview.value = newVal ? JSON.stringify(newVal, null, 2) : '';
+}, { deep: true });
+
+
+watch([tables, relations, areas], () => {
+  markDirty();
+}, { deep: true });
+
 
 function addTableAt() {
   let x = 40;
@@ -221,8 +357,8 @@ function onDropCanvas(ev: any) {
   if (!dragging.value) return;
   const table = tables.find((t) => t.id === dragging.value);
   if (!table) return;
-  table.x = ev.clientX - canvas.left - offset.value.x;
-  table.y = ev.clientY - canvas.top - offset.value.y;
+  table.x = (ev.clientX - canvas.left - offset.value.x) / zoom.value;
+  table.y = (ev.clientY - canvas.top - offset.value.y) / zoom.value;
   dragging.value = null;
   computeRelationsPaths();
 }
@@ -242,6 +378,7 @@ function addArea() {
 
   areas.push({
     id: areaSeq,
+    dbid: '', // New area has no DB ID
     name: 'Area ' + areaSeq,
     x: x,
     y: y,
@@ -254,9 +391,10 @@ function addArea() {
 function startAreaDrag(area: any, ev: any) {
   activeArea.value = area;
   areaMode.value = 'move';
+  const canvas = canvasRef.value.getBoundingClientRect();
   areaOffset.value = {
-    x: ev.clientX - area.x,
-    y: ev.clientY - area.y,
+    x: (ev.clientX - canvas.left) / zoom.value - area.x,
+    y: (ev.clientY - canvas.top) / zoom.value - area.y,
   };
 
   activeAreaTables.value = tables.filter((t) => {
@@ -284,8 +422,12 @@ function onAreaMouseMove(ev: any) {
   const area = activeArea.value;
 
   if (areaMode.value === 'move') {
-    const newX = ev.clientX - areaOffset.value.x;
-    const newY = ev.clientY - areaOffset.value.y;
+    const canvas = canvasRef.value.getBoundingClientRect();
+    const mouseX = (ev.clientX - canvas.left) / zoom.value;
+    const mouseY = (ev.clientY - canvas.top) / zoom.value;
+    
+    const newX = mouseX - areaOffset.value.x;
+    const newY = mouseY - areaOffset.value.y;
     const dx = newX - area.x;
     const dy = newY - area.y;
 
@@ -299,8 +441,12 @@ function onAreaMouseMove(ev: any) {
     });
     computeRelationsPaths();
   } else if (areaMode.value === 'resize') {
-    area.width = Math.max(100, ev.clientX - area.x);
-    area.height = Math.max(100, ev.clientY - area.y);
+    const canvas = canvasRef.value.getBoundingClientRect();
+    const mouseX = (ev.clientX - canvas.left) / zoom.value;
+    const mouseY = (ev.clientY - canvas.top) / zoom.value;
+    
+    area.width = Math.max(100, mouseX - area.x);
+    area.height = Math.max(100, mouseY - area.y);
   }
 }
 
@@ -354,6 +500,7 @@ function finishLink(ev: any, moveHandler: any, upHandler: any) {
   if (target) {
     const rel = {
       id: relSeq++,
+      dbid: '', // New relation has no DB ID
       from: {
         table: linkPreview.from.table,
         col: linkPreview.from.col,
@@ -435,6 +582,8 @@ function applyJSONToSelected(json: string) {
     selectedTable.value.x = Number(obj.x ?? selectedTable.value.x);
     selectedTable.value.y = Number(obj.y ?? selectedTable.value.y);
     selectedTable.value.width = Number(obj.width ?? selectedTable.value.width);
+    selectedTable.value.flow = obj.flow ?? selectedTable.value.flow;
+    selectedTable.value.modifflow = obj.modifflow ?? selectedTable.value.modifflow;
     if (Array.isArray(obj.columns)) selectedTable.value.columns = obj.columns;
     computeRelationsPaths();
     alert('Applied to selected table');
@@ -485,6 +634,7 @@ function aiSuggestRelations() {
 
           relations.push({
             id: relSeq++,
+            dbid: '', // New relation has no DB ID
             from: { table: t1.id, col: idx1, colName: col1.name },
             to: { table: t2.id, col: idx2, colName: t2.columns[idx2].name },
             path: '',
@@ -679,7 +829,6 @@ function aiParseNatural(prompt: string) {
 }
 
 function aiSuggestColumns(table: any) {
-  console.log('AI Suggest Columns', table);
 }
 
 function exportCanvas() {
@@ -743,24 +892,26 @@ function exportArea(area: any) {
 }
 
 // Load/Save Logic
+// Load/Save Logic
 async function saveToBackend() {
-  if (!tables.length) return alert('No tables to save');
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+  if (!tables.length && !areas.length && !relations.length) {
+    isLoading.value = false;
+    return alert('Nothing to save');
+  }
 
   try {
+    // 1. Save Tables
     for (const table of toRaw(tables)) {
       const payloadObj = {
-        table,
-        relations: relations
-          .filter((r) => r.from.table === table.id || r.to.table === table.id)
-          .map((r) => ({
-            id: r.id,
-            from: { ...r.from, table: tables.find((t) => t.id === r.from.table)?.dbid },
-            to: { ...r.to, table: tables.find((t) => t.id === r.to.table)?.dbid },
-          })),
-        areas,
+          table: {
+              ...(toRaw(table)),
+          }
       };
 
-      const dbobj = {
+      const dbobj: any = {
         dbobjectid: table.dbid ? String(table.dbid) : '',
         objectname: table.name,
         dbobjecttypeid: '1',
@@ -772,16 +923,74 @@ async function saveToBackend() {
 
       const res = await store.saveTable(dbobj);
       const returned = res?.data?.data ?? res;
-      const newId = returned?.dbobjectid ?? returned?.dbobjectid ?? null;
+      const newId = returned?.dbobjectid ?? null;
       if (newId) {
         const local = tables.find((t) => t.id === table.id);
         if (local) local.dbid = newId;
       }
     }
-    toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
-  } catch (err) {
+
+    // 2. Save Relations
+    // 2. Save Relations
+    // Filter relations that have valid table DBIDs
+    const relationsToSave = relations.filter(r => {
+        const fromTbl = tables.find(t => t.id === r.from.table);
+        const toTbl = tables.find(t => t.id === r.to.table);
+        return fromTbl?.dbid && toTbl?.dbid;
+    });
+
+    const relationsPayload = relationsToSave.map(r => ({
+        id: r.dbid ? parseInt(r.dbid) : 0, 
+        from_table_id: parseInt(tables.find(t => t.id === r.from.table)?.dbid),
+        from_col_index: r.from.col,
+        from_col_name: r.from.colName,
+        to_table_id: parseInt(tables.find(t => t.id === r.to.table)?.dbid),
+        to_col_index: r.to.col,
+        to_col_name: r.to.colName,
+        path: r.path
+    }));
+
+    const resRel = await store.saveRelations(relationsPayload);
+
+    // Update local IDs from response to avoid duplicates on next save
+    // content of resRel?.data is { success: true, data: [...] }
+    if (resRel?.data?.data && Array.isArray(resRel.data.data)) {
+        const savedRelations = resRel.data.data;
+        if (savedRelations.length === relationsToSave.length) {
+            relationsToSave.forEach((localRel, index) => {
+                const saved = savedRelations[index];
+                if (saved.id) {
+                    localRel.dbid = String(saved.id);
+                }
+            });
+        }
+    }
+
+    // 3. Save Areas
+    const areasPayload = areas.map(a => ({
+        id: a.dbid ? parseInt(a.dbid) : 0, // Use stored DB ID if available
+        name: a.name,
+        x: Math.round(a.x),
+        y: Math.round(a.y),
+        width: Math.round(a.width),
+        height: Math.round(a.height),
+        color: a.color,
+        tables: JSON.stringify(activeAreaTables.value.filter(t => 
+             t.x >= a.x && t.x <= a.x + a.width && t.y >= a.y && t.y <= a.y + a.height
+        ).map(t => t.dbid))
+    }));
+    await store.saveAreas(areasPayload);
+
+    toast.add({ title: 'Success', description: 'Design saved successfully (Tables, Relations, Areas)', color: 'success' });
+    
+    // Ideally reload to get new IDs, but that resets UI. 
+    // For now, next load will pick them up.
+    markClean();
+  } catch (err: any) {
     console.error(err);
     toast.add({ title: 'Error', description: String(err), color: 'error' });
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -794,11 +1003,12 @@ async function loadDesign() {
   relSeq = 1;
   selectedId.value = null;
 
+  // 1. Fetch Tables
   await store.fetchAll();
 
   const seen = new Set();
-  const unique = [];
-  const idMap = {};
+  const unique: any[] = [];
+  const idMap: Record<string, any> = {};
 
   (store.dbobjects || []).forEach((obj: any) => {
     const key = obj?.dbobjectid ? String(obj.dbobjectid) : (obj?.objectname ?? '');
@@ -816,7 +1026,70 @@ async function loadDesign() {
   });
 
   idSeq = Math.max(...tables.map((t) => t.id), 0) + 1;
-  loadRelationsFromObjects(unique, idMap);
+
+  // 2. Fetch Relations
+  try {
+      const rels = await store.fetchRelations();
+      
+      const debugMap = [];
+      rels.forEach((r: any) => {
+          // Debugging lookup:
+          const fromSearch = String(r.from_table_id);
+          const toSearch = String(r.to_table_id);
+          
+          const fromTbl = tables.find(t => String(t.dbid) == fromSearch); 
+          const toTbl = tables.find(t => String(t.dbid) == toSearch);
+
+          debugMap.push({
+             rid: r.id,
+             wantFrom: fromSearch,
+             wantTo: toSearch,
+             foundFrom: fromTbl ? fromTbl.id : 'MISSING',
+             foundTo: toTbl ? toTbl.id : 'MISSING'
+          });
+
+          if (fromTbl && toTbl) {
+              relations.push({
+                  id: relSeq++, // local ID for canvas
+                  dbid: r.id,   // Store DB ID
+                  from: {
+                      table: fromTbl.id,
+                      col: r.from_col_index,
+                      colName: r.from_col_name
+                  },
+                  to: {
+                      table: toTbl.id,
+                      col: r.to_col_index,
+                      colName: r.to_col_name
+                  },
+                  path: r.path || ''
+              });
+          }
+      });
+
+  } catch (e) {
+      console.warn('Failed to load relations', e);
+  }
+
+  // 3. Fetch Areas
+  try {
+      const loadedAreas = await store.fetchAreas();
+      loadedAreas.forEach((a: any) => {
+          areas.push({
+              id: areaSeq++, // local ID for canvas
+              dbid: a.id,    // Store DB ID
+              name: a.name,
+              x: a.x,
+              y: a.y,
+              width: a.width,
+              height: a.height,
+              color: a.color
+          });
+      });
+  } catch (e) {
+      console.warn('Failed to load areas', e);
+  }
+
   computeRelationsPaths();
 }
 
@@ -826,28 +1099,26 @@ function createTableFromDBObject(obj: any, index: number) {
   let width = 120;
 
   let columns = [];
+  let content: any = null;
   if (obj.objectcontent) {
     try {
-      const content = JSON.parse(obj.objectcontent);
-      if (content?.table?.columns && Array.isArray(content.table.columns)) {
-        columns = content.table.columns.map((c: any) => ({
+      content = JSON.parse(obj.objectcontent);
+      
+      // Handle nested structure from previous save format if it exists
+      const tableData = content.table || content; 
+
+      if (tableData.columns && Array.isArray(tableData.columns)) {
+        columns = tableData.columns.map((c: any) => ({
           name: c.name || 'col',
           type: c.type || 'text',
           allownull: c.allownull ?? false,
           default: c.default ?? '',
         }));
       }
-      posX = content?.table?.x ?? 40 + (index % 4) * 340;
-      posY = content?.table?.y ?? 40 + Math.floor(index / 4) * 200;
-      width = content?.table?.width ?? 240;
+      posX = tableData.x ?? 40 + (index % 4) * 340;
+      posY = tableData.y ?? 40 + Math.floor(index / 4) * 200;
+      width = tableData.width ?? 240;
 
-      if (content.areas && content.areas.length > 0) {
-        content.areas.forEach((area: any) => {
-          if (areas.find((x) => x.id == area.id) == undefined) {
-            createAreaFromData(area);
-          }
-        });
-      }
     } catch (e) {
       console.warn(`Invalid objectcontent JSON for ${obj.objectname}`, e);
     }
@@ -865,65 +1136,59 @@ function createTableFromDBObject(obj: any, index: number) {
     columns,
     ispublished: obj.ispublished == 1 ? true : false,
     comment: obj.comment ?? '',
+    flow: content?.table?.flow ?? '',
+    modifflow: content?.table?.modifflow ?? '',
   };
-}
-
-function createAreaFromData(data: any) {
-  const area = {
-    id: data.id,
-    name: data.name,
-    x: data.x,
-    y: data.y,
-    width: data.width,
-    height: data.height,
-    color: data.color,
-    type: 'area',
-  };
-
-  areas.push(area);
-  areaSeq = data.id;
-}
-
-function loadRelationsFromObjects(dbobjects: any[], idMap: any) {
-  relations.splice(0, relations.length);
-  const seenKeys = new Set();
-
-  dbobjects.forEach((obj) => {
-    if (!obj.objectcontent) return;
-    let parsed = null;
-    try {
-      parsed = JSON.parse(obj.objectcontent);
-    } catch {
-      return;
-    }
-
-    if (!Array.isArray(parsed.relations)) return;
-
-    parsed.relations.forEach((rel: any) => {
-      const newFromTable = idMap[rel.from.table];
-      const newToTable = idMap[rel.to.table];
-      if (!newFromTable || !newToTable) return;
-
-      const key = `${newFromTable}|${rel.from.col}|${newToTable}|${rel.to.col}`;
-
-      if (seenKeys.has(key)) return;
-      seenKeys.add(key);
-
-      relations.push({
-        id: relSeq++,
-        from: { table: newFromTable, col: rel.from.col, colName: rel.from.colName },
-        to: { table: newToTable, col: rel.to.col, colName: rel.to.colName },
-        path: '',
-      });
-    });
-  });
-
-  computeRelationsPaths();
 }
 
 function openExecuteModal() {
   if (selectedTable.value) {
     showExecuteModal.value = true;
+  }
+}
+
+async function reverseEngineerDatabase() {
+  if (!confirm('This will import all tables from the current database into the designer. Existing tables with the same name will be updated. Continue?')) {
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    toast.add({ 
+      title: 'Reverse Engineering', 
+      description: 'Extracting database schema...', 
+      color: 'info' 
+    });
+
+    const response = await api.post('/api/admin/db/reverse-engineer', {
+      auto_layout: true
+    });
+
+    if (response.success) {
+      toast.add({ 
+        title: 'Success', 
+        description: response.message, 
+        color: 'success' 
+      });
+      
+      // Reload the design to show imported tables
+      await loadDesign();
+    } else {
+      toast.add({ 
+        title: 'Error', 
+        description: response.error || 'Failed to reverse engineer database', 
+        color: 'error' 
+      });
+    }
+  } catch (err) {
+    console.error('Reverse engineering error:', err);
+    toast.add({ 
+      title: 'Error', 
+      description: String(err), 
+      color: 'error' 
+    });
+  } finally {
+    isLoading.value = false;
   }
 }
 

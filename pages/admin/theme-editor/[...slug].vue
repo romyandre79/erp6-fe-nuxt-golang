@@ -91,6 +91,7 @@
 import { ref, reactive, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useThemeStore } from '~/store/theme';
 import { useToast, useRoute } from '#imports';
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
 
 // Lazy load heavy components for code splitting
 const Sidebar = defineAsyncComponent(() => import('~/components/theme/ThemeSidebar.vue'));
@@ -105,7 +106,25 @@ const store = useThemeStore();
 const toast = useToast();
 const route = useRoute();
 
-// simplified category list (you can extend or generate dynamically)
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
+// ... existing code ...
+
+function onChange(key, val) {
+  themeState[key] = val;
+  document.documentElement.style.setProperty(`--${key}`, String(val));
+  markDirty();
+}
+
+// ... existing code ...
+
+// apply theme + sync to Pinia store + persist themedata
+async function applyTheme() {
+  store.saveActiveTheme(JSON.stringify(themeState));
+  // apply and (optionally) persist selection as current theme
+  toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });
+  markClean();
+}
 const optionBorderStyle = [
   { value: 'solid', label: 'Solid' },
   { value: 'dashed', label: 'Dashed' },
@@ -138,6 +157,16 @@ const categories = [
         type: 'color',
       },
       {
+        key: 'sidebar-logo-background',
+        label: 'Sidebar Logo Background',
+        type: 'text',
+      },
+      {
+        key: 'sidebar-logo-color',
+        label: 'Sidebar Logo Color',
+        type: 'color',
+      },
+      {
         key: 'sidebar-title-color',
         label: 'Sidebar Title Color',
         type: 'color',
@@ -146,6 +175,11 @@ const categories = [
         key: 'sidebar-menu-color',
         label: 'Menu Text Color',
         type: 'color',
+      },
+      {
+        key: 'sidebar-menu-radius',
+        label: 'Menu Radius (e.g. 0.75rem)',
+        type: 'text',
       },
       {
         key: 'sidebar-menu-hover-background',
@@ -183,6 +217,16 @@ const categories = [
         type: 'color',
       },
       {
+        key: 'sidebar-collapse-radius',
+        label: 'Collapse Button Radius',
+        type: 'text',
+      },
+      {
+        key: 'sidebar-collapse-hover-background',
+        label: 'Collapse Button Hover Background',
+        type: 'color',
+      },
+      {
         key: 'sidebar-profile-icon-color',
         label: 'Profile Icon Color',
         type: 'color',
@@ -196,6 +240,11 @@ const categories = [
         key: 'sidebar-profile-email-color',
         label: 'Profile Email Color',
         type: 'color',
+      },
+      {
+        key: 'sidebar-radius',
+        label: 'Sidebar Generic Radius',
+        type: 'text',
       },
     ],
   },
@@ -356,6 +405,36 @@ const categories = [
         label: 'Common Font Family',
         type: 'text',
       },
+      {
+        key: 'color-bg',
+        label: 'Tailwind Bg',
+        type: 'color',
+      },
+      {
+        key: 'color-text',
+        label: 'Tailwind Text',
+        type: 'color',
+      },
+      {
+        key: 'color-primary',
+        label: 'Tailwind Primary',
+        type: 'color',
+      },
+      {
+        key: 'color-secondary',
+        label: 'Tailwind Secondary',
+        type: 'color',
+      },
+      {
+        key: 'background-color',
+        label: 'Global Background',
+        type: 'color',
+      },
+      {
+        key: 'text-color',
+        label: 'Global Text',
+        type: 'color',
+      },
     ],
   },
   {
@@ -387,6 +466,31 @@ const categories = [
         key: 'navbar-admin-color',
         label: 'Navbar Admin Color',
         type: 'color',
+      },
+      {
+        key: 'navbar-admin-border-color',
+        label: 'Navbar Admin Border Color',
+        type: 'color',
+      },
+      {
+        key: 'navbar-icon-color',
+        label: 'Navbar Icon Color',
+        type: 'color',
+      },
+      {
+        key: 'navbar-icon-hover-color',
+        label: 'Navbar Icon Hover Color',
+        type: 'color',
+      },
+      {
+        key: 'navbar-item-radius',
+        label: 'Navbar Item Radius',
+        type: 'text',
+      },
+      {
+        key: 'navbar-dropdown-radius',
+        label: 'Navbar Dropdown Radius',
+        type: 'text',
       },
     ],
   },
@@ -868,11 +972,6 @@ const currentProps = computed(() => {
   return cat.props;
 });
 
-function onChange(key, val) {
-  themeState[key] = val;
-  document.documentElement.style.setProperty(`--${key}`, String(val));
-}
-
 function addCustom() {
   if (!newKey.value) return;
   themeState[newKey.value] = newValue.value;
@@ -885,12 +984,6 @@ function resetToDefault() {
   loadThemeToState(selectedThemeKey.value);
 }
 
-// apply theme + sync to Pinia store + persist themedata
-async function applyTheme() {
-  store.saveActiveTheme(JSON.stringify(themeState));
-  // apply and (optionally) persist selection as current theme
-  toast.add({ title: 'Success', description: 'Theme saved', color: 'success' });
-}
 
 const cssText = computed(() => {
   let out = `:root {

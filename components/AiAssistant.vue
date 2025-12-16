@@ -1,48 +1,220 @@
 <template>
   <div>
     <!-- Floating Button -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <button 
+    <!-- Floating Animated Character -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+        <div 
           @click="toggleOpen" 
-          class="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          :class="{ 'rotate-0': !isOpen, 'rotate-90': isOpen }"
+          class="clippy-container pointer-events-auto cursor-pointer transition-transform duration-300 hover:scale-110"
+          :class="{ 'clippy-active': isOpen }"
         >
             <!-- Unread Badge -->
-            <span v-if="totalUnread > 0 && !isOpen" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">
+            <span v-if="totalUnread > 0 && !isOpen" class="absolute -top-2 -right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center animate-bounce shadow-md">
                 {{ totalUnread > 99 ? '99+' : totalUnread }}
             </span>
-            <span v-if="!isOpen">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7">
-                    <path fill-rule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813a3.75 3.75 0 0 0 2.576-2.576l.813-2.846A.75.75 0 0 1 9 4.5ZM1.5 9.75a.75.75 0 0 1 1.5 0v.812a.75.75 0 0 1-1.5 0v-.812Zm2.25-.812a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812Zm0 2.25a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812ZM9 15a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812Zm0 2.25a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812ZM15 9.75a.75.75 0 0 1 1.5 0v.812a.75.75 0 0 1-1.5 0v-.812Zm2.25-.812a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812Zm0 2.25a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812ZM4.5 4.5a.75.75 0 0 1 1.5 0v.812a.75.75 0 0 1-1.5 0v-.812Zm2.25-.812a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812Zm0 2.25a.75.75 0 0 1 .75.75v.812a.75.75 0 0 1-.75.75v-.812Z" clip-rule="evenodd" />
-                </svg>
-            </span>
-             <span v-else>
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                 </svg>
-             </span>
-        </button>
+            
+            <!-- Dynamic Character Rendering -->
+
+            <!-- CLIPPY -->
+            <svg v-if="assistantCharacter === 'clippy'" class="clippy-svg w-24 h-24 drop-shadow-xl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 30 70 L 30 30 A 15 15 0 0 1 60 30 L 60 80 A 20 20 0 0 1 20 80 L 20 40" fill="none" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="clippy-wire"/>
+                <path d="M 30 70 L 65 70" fill="none" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round" class="clippy-wire-base"/>
+                <g class="clippy-eyes" transform="translate(0, 5)">
+                    <g transform="translate(35, 35)"> <circle cx="0" cy="0" r="10" fill="white" stroke="#666" stroke-width="1"/> <circle cx="2" cy="-1" r="3" fill="black" class="clippy-pupil"/> <path d="M -8 -12 Q 0 -16 8 -12" fill="none" stroke="black" stroke-width="2" class="clippy-eyebrow"/> </g>
+                    <g transform="translate(60, 35)"> <circle cx="0" cy="0" r="10" fill="white" stroke="#666" stroke-width="1"/> <circle cx="-2" cy="-1" r="3" fill="black" class="clippy-pupil"/> <path d="M -8 -12 Q 0 -16 8 -12" fill="none" stroke="black" stroke-width="2" class="clippy-eyebrow"/> </g>
+                </g>
+            </svg>
+
+            <!-- ROBOT -->
+            <svg v-else-if="assistantCharacter === 'robot'" class="clippy-svg w-24 h-24 drop-shadow-xl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Head -->
+                <rect x="25" y="25" width="50" height="40" rx="8" ry="8" fill="#6366f1" stroke="#4338ca" stroke-width="2"/>
+                <!-- Antennas -->
+                <line x1="35" y1="25" x2="30" y2="15" stroke="#4338ca" stroke-width="2"/> <circle cx="30" cy="15" r="3" fill="#ef4444" class="animate-pulse"/>
+                <line x1="65" y1="25" x2="70" y2="15" stroke="#4338ca" stroke-width="2"/> <circle cx="70" cy="15" r="3" fill="#ef4444" class="animate-pulse"/>
+                <!-- Eyes -->
+                <g class="clippy-eyes" transform="translate(0, 0)"> 
+                     <g transform="translate(40, 45)"> <circle cx="0" cy="0" r="6" fill="#fff"/> <circle cx="0" cy="0" r="3" fill="#000" class="clippy-pupil"/> </g>
+                     <g transform="translate(60, 45)"> <circle cx="0" cy="0" r="6" fill="#fff"/> <circle cx="0" cy="0" r="3" fill="#000" class="clippy-pupil"/> </g>
+                </g>
+                <!-- Mouth -->
+                <rect x="40" y="55" width="20" height="4" rx="2" fill="white"/>
+            </svg>
+
+            <!-- CAT -->
+            <svg v-else-if="assistantCharacter === 'cat'" class="clippy-svg w-24 h-24 drop-shadow-xl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Head -->
+                <circle cx="50" cy="50" r="30" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+                <!-- Ears -->
+                <path d="M 25 35 L 20 15 L 45 30 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+                <path d="M 75 35 L 80 15 L 55 30 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+                <!-- Eyes -->
+                <g class="clippy-eyes" transform="translate(0, 5)">
+                    <g transform="translate(40, 45)"> <ellipse cx="0" cy="0" rx="6" ry="8" fill="white"/> <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil"/> </g>
+                    <g transform="translate(60, 45)"> <ellipse cx="0" cy="0" rx="6" ry="8" fill="white"/> <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil"/> </g>
+                </g>
+                <!-- Nose/Mouth -->
+                <path d="M 48 58 L 52 58 L 50 63 Z" fill="pink"/>
+            </svg>
+
+            <!-- DOG -->
+<svg
+  v-else-if="assistantCharacter === 'dog'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <circle
+    cx="50"
+    cy="50"
+    r="30"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+
+  <!-- Ears (Floppy) -->
+  <path
+    d="M 25 40 C 10 50, 10 70, 25 75"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+  <path
+    d="M 75 40 C 90 50, 90 70, 75 75"
+    fill="#fbbf24"
+    stroke="#b45309"
+    stroke-width="2"
+  />
+
+  <!-- Eyes -->
+  <g class="clippy-eyes" transform="translate(0, 5)">
+    <g transform="translate(40, 45)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="white" />
+      <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil" />
+    </g>
+    <g transform="translate(60, 45)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="white" />
+      <circle cx="0" cy="0" r="3" fill="black" class="clippy-pupil" />
+    </g>
+  </g>
+
+  <!-- Snout -->
+  <ellipse
+    cx="50"
+    cy="60"
+    rx="12"
+    ry="8"
+    fill="#fde68a"
+    stroke="#b45309"
+    stroke-width="1.5"
+  />
+
+  <!-- Nose -->
+  <circle cx="50" cy="58" r="3" fill="#1f2937" />
+
+  <!-- Mouth -->
+  <path
+    d="M 50 61 C 48 64, 44 64, 42 62"
+    stroke="#1f2937"
+    stroke-width="1.5"
+    fill="none"
+  />
+  <path
+    d="M 50 61 C 52 64, 56 64, 58 62"
+    stroke="#1f2937"
+    stroke-width="1.5"
+    fill="none"
+  />
+</svg>
+
+<!-- PANDA -->
+<svg
+  v-else-if="assistantCharacter === 'panda'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <circle cx="50" cy="50" r="30" fill="#ffffff" stroke="#111827" stroke-width="2"/>
+
+  <!-- Ears -->
+  <circle cx="30" cy="25" r="10" fill="#111827"/>
+  <circle cx="70" cy="25" r="10" fill="#111827"/>
+
+  <!-- Eye patches -->
+  <ellipse cx="40" cy="48" rx="9" ry="12" fill="#111827"/>
+  <ellipse cx="60" cy="48" rx="9" ry="12" fill="#111827"/>
+
+  <!-- Eyes -->
+  <circle cx="40" cy="50" r="4" fill="white"/>
+  <circle cx="60" cy="50" r="4" fill="white"/>
+
+  <!-- Nose -->
+  <circle cx="50" cy="60" r="3" fill="#111827"/>
+</svg>
+
+<!-- FOX -->
+<svg
+  v-else-if="assistantCharacter === 'fox'"
+  class="clippy-svg w-24 h-24 drop-shadow-xl"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Head -->
+  <path d="M20 30 L50 15 L80 30 V65 L50 80 L20 65 Z"
+        fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- Ears -->
+  <path d="M30 30 L25 10 L45 25 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+  <path d="M70 30 L75 10 L55 25 Z" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- Eyes -->
+  <circle cx="40" cy="45" r="4" fill="#111827"/>
+  <circle cx="60" cy="45" r="4" fill="#111827"/>
+
+  <!-- Snout -->
+  <path d="M45 55 L55 55 L50 65 Z" fill="#fff7ed"/>
+</svg>
+
+
+             <!-- CUSTOM IMAGE -->
+            <div v-else-if="assistantCharacter === 'custom'" class="w-24 h-24 relative drop-shadow-xl">
+                 <img :src="assistantCustomImage || 'https://via.placeholder.com/100?text=?'" class="w-full h-full object-contain clippy-svg" />
+            </div>
+
+            <!-- Speech Bubble Tail for open state -->
+            <div v-if="isOpen" class="absolute -top-4 right-12 w-4 h-4 bg-white dark:bg-gray-800 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
+        </div>
     </div>
 
     <!-- Main Window -->
     <transition name="fade-slide">
-      <div v-if="isOpen" class="fixed bottom-24 right-6 z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl w-80 sm:w-96 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700 h-[600px]">
+      <div v-if="isOpen" class="fixed bottom-32 right-8 z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden border-2 border-gray-200 dark:border-gray-700 h-[600px] origin-bottom-right">
         
         <!-- Tabs Header -->
         <div class="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex">
             <button 
                 @click="activeTab = 'ai'"
-                class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors"
+                class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative"
                 :class="activeTab === 'ai' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
             >
                 AI Assistant
             </button>
             <button 
                 @click="activeTab = 'people'"
-                class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors"
+                class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative"
                 :class="activeTab === 'people' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
             >
                 People
+            </button>
+             <button 
+                @click="activeTab = 'settings'"
+                class="w-12 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative border-l border-gray-200 dark:border-gray-700"
+                :class="activeTab === 'settings' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+            >
+                <i class="fa-solid fa-gear"></i>
             </button>
         </div>
 
@@ -56,7 +228,7 @@
              <!-- Messages -->
              <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900" ref="aiMessagesContainer">
                 <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['flex', msg.sender === 'user' ? 'justify-end' : 'justify-start']">
-                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
+                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
                     {{ msg.text }}
                     </div>
                 </div>
@@ -69,6 +241,82 @@
                         <i class="fa-solid fa-paper-plane px-1"></i>
                     </button>
                 </form>
+             </div>
+        </div>
+        
+        <!-- Content: Settings Tab -->
+        <div v-else-if="activeTab === 'settings'" class="flex-1 flex flex-col p-4 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+             <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-4">Choose your Assistant</h3>
+             
+             <div class="grid grid-cols-2 gap-4">
+                 <!-- Clippy Item -->
+                 <div @click="setCharacter('clippy')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'clippy' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">📎</span>
+                     </div>
+                     <span class="text-sm font-medium">Clippy</span>
+                 </div>
+                 
+                 <!-- Robot Item -->
+                 <div @click="setCharacter('robot')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'robot' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🤖</span>
+                     </div>
+                     <span class="text-sm font-medium">Auto-Bot</span>
+                 </div>
+
+                 <!-- Cat Item -->
+                 <div @click="setCharacter('cat')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'cat' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🐱</span>
+                     </div>
+                     <span class="text-sm font-medium">Kitty</span>
+                 </div>
+
+                 <!-- Office Item -->
+                 <div @click="setCharacter('fox')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'fox' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🦊</span>
+                     </div>
+                     <span class="text-sm font-medium">Fox</span>
+                 </div>
+
+                 <!-- Office Item -->
+                 <div @click="setCharacter('dog')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'dog' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🐶</span>
+                     </div>
+                     <span class="text-sm font-medium">Dog</span>
+                 </div>
+
+                 <!-- Teacher Item -->
+                 <div @click="setCharacter('panda')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'panda' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">🐼</span>
+                     </div>
+                     <span class="text-sm font-medium">Panda</span>
+                 </div>
+
+                  <!-- Custom Item -->
+                 <div @click="setCharacter('custom')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'custom' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                     <div class="h-16 w-16 flex items-center justify-center">
+                         <span class="text-4xl">✨</span>
+                     </div>
+                     <span class="text-sm font-medium">Custom</span>
+                 </div>
+             </div>
+             
+             <!-- Custom Image Input -->
+             <div v-if="assistantCharacter === 'custom'" class="mt-6 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
+                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Image URL</label>
+                 <input 
+                    type="text" 
+                    :value="assistantCustomImage" 
+                    @input="updateCustomImage"
+                    placeholder="https://example.com/my-avatar.png"
+                    class="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 border-none text-sm focus:ring-2 focus:ring-indigo-500"
+                 />
+                 <p class="text-xs text-gray-400 mt-2">Paste a URL to a PNG, JPG, or GIF.</p>
              </div>
         </div>
 
@@ -187,12 +435,13 @@ import { storeToRefs } from 'pinia';
 import { useUserStore } from '~/store/user';
 import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
-import { useNotificationStore } from '~/store/notification';
+import { useThemeStore } from '~/store/theme';
 
 const isOpen = ref(false);
-const activeTab = ref<'ai' | 'people'>('ai');
+const activeTab = ref<'ai' | 'people' | 'settings'>('ai');
 const aiInput = ref('');
 const aiMessages = ref<{text: string, sender: 'user'|'ai'}[]>([]);
+const aiConversationState = ref(''); // Track conversation state
 const users = ref<any[]>([]);
 const loadingUsers = ref(false);
 const selectedUser = ref<any>(null);
@@ -200,6 +449,9 @@ const chatInput = ref('');
 const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string}[]>>({});
 const unreadCounts = ref<Record<number, number>>({});
 const userStore = useUserStore();
+const themeStore = useThemeStore();
+const { assistantCharacter, assistantCustomImage } = storeToRefs(themeStore);
+
 const myUserId = computed(() => userStore.user?.userid);
 const totalUnread = computed(() => Object.values(unreadCounts.value).reduce((sum, count) => sum + count, 0));
 const aiMessagesContainer = ref<HTMLElement|null>(null);
@@ -207,6 +459,18 @@ const chatMessagesContainer = ref<HTMLElement|null>(null);
 const notificationStore = useNotificationStore(); // Access socket
 
 const { get, post } = useApi();
+
+const setCharacter = (char: string) => {
+    themeStore.setAssistantCharacter(char);
+    if (char === 'custom' && !assistantCustomImage.value) {
+        // Option to prompt or just focus input
+    }
+};
+
+const updateCustomImage = (e: Event) => {
+    const val = (e.target as HTMLInputElement).value;
+    themeStore.setAssistantCustomImage(val);
+};
 
 // Video Call State
 const isInCall = ref(false);
@@ -248,25 +512,40 @@ const sendAiMessage = async () => {
     aiInput.value = '';
     await scrollToBottom(aiMessagesContainer.value);
 
-    // Call API
+    // Call execute-flow API with AI command
+    // Response will come via WebSocket, not from API response
     try {
-        const { data }: any = await post('/admin/ai/command', { message: text });
-        const reply = data?.reply || data?.data?.reply || "Done";
-        aiMessages.value.push({ text: reply, sender: 'ai' });
+        const formData = new FormData();
+        formData.append('flowname', 'aicommand');
+        formData.append('menu', 'admin');
+        formData.append('search', 'false');
+        formData.append('command', text);
+        formData.append('user_id', String(myUserId.value || ''));
+        formData.append('conversation_state', aiConversationState.value); // Send conversation state
+        
+        await post('/api/admin/execute-flow', formData);
+        // Don't add response here - it will come via WebSocket
     } catch(e) {
         aiMessages.value.push({ text: "Error connecting to AI.", sender: 'ai' });
     }
-    await scrollToBottom(aiMessagesContainer.value);
 };
 
 // --- People / Users ---
 const fetchUsers = async () => {
     loadingUsers.value = true;
     try {
-        const { data }: any = await get('/admin/users/list');
-        users.value = data || [];
+        // Use execute-flow to get user list
+        const formData = new FormData();
+        formData.append('flowname', 'getuserlist');
+        formData.append('menu', 'admin');
+        formData.append('search', 'true');
+        formData.append('action', 'getuserlist');
+        formData.append('senderid', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/api/admin/execute-flow', formData);
+        users.value = data?.result || data?.data || data || [];
         // Init unread counts if needed
-        users.value.forEach(u => {
+        users.value.forEach((u: any) => {
             if (!unreadCounts.value[u.useraccessid]) unreadCounts.value[u.useraccessid] = 0;
         });
     } catch(e) {
@@ -290,12 +569,22 @@ const selectUser = (user: any) => {
 
 const fetchChatHistory = async (targetId: number) => {
     try {
-        const { data }: any = await get(`/admin/chat/history?target_id=${targetId}`);
-        if(data) {
+        // Use execute-flow to get chat history
+        const formData = new FormData();
+        formData.append('flowname', 'chat');
+        formData.append('menu', 'admin');
+        formData.append('search', 'true');
+        formData.append('action', 'gethistory');
+        formData.append('targetid', String(targetId));
+        formData.append('senderid', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/api/admin/execute-flow', formData);
+        const history = data?.result || data?.data || data || [];
+        if(history) {
              // Map backend definition: senderid -> senderId, created_at -> timestamp
-             chatHistory.value[targetId] = data.map((d: any) => ({
+             chatHistory.value[targetId] = history.map((d: any) => ({
                  text: d.message,
-                 senderId: d.sender_id,
+                 senderId: d.senderid,
                  timestamp: d.created_at
              }));
         }
@@ -335,7 +624,7 @@ const initWebSocket = () => {
     if (socket) socket.close();
 
     let wsBase = config.public.apiBase.replace('http', 'ws');
-    const wsUrl = `${wsBase}/ws/notifications?token=${token.value}`;
+    const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
 
     console.log("Connecting to Chat WS:", wsUrl);
     
@@ -380,9 +669,34 @@ onMounted(() => {
 const handleWsMessage = async (payload: any) => {
     console.log("WS Msg:", payload);
     
-    // Chat Message
-    if (payload.type === 'chat') {
-        const senderId = payload.sender_id;
+    // AI Chat Message (from backend workflow)
+    if (payload.type === 'chat' && payload.message) {
+        // This is an AI response from the backend
+        aiMessages.value.push({ 
+            text: payload.message, 
+            sender: 'ai' 
+        });
+        
+        // Save conversation state for next message
+        if (payload.conversation_state) {
+            aiConversationState.value = payload.conversation_state;
+        }
+        
+        // Auto-open AI tab if closed
+        if (!isOpen.value) {
+            isOpen.value = true;
+            activeTab.value = 'ai';
+        } else if (activeTab.value !== 'ai') {
+            activeTab.value = 'ai';
+        }
+        
+        await scrollToBottom(aiMessagesContainer.value);
+        return;
+    }
+    
+    // Person-to-Person Chat Message
+    if (payload.type === 'chat' && payload.senderid) {
+        const senderId = payload.senderid;
         
         // Ensure reactivity for new keys
         if (!chatHistory.value[senderId]) {
@@ -404,8 +718,15 @@ const handleWsMessage = async (payload: any) => {
              unreadCounts.value[senderId]++;
         }
     }
-// ...
     
+    // Status Update
+    else if (payload.type === 'status_update') {
+        const user = users.value.find(u => u.useraccessid === payload.user_id);
+        if (user) {
+            user.isonline = payload.isonline;
+        }
+    }
+
     // WebRTC Signals
     else if (payload.type === 'offer') {
         handleIncomingOffer(payload);
@@ -428,7 +749,7 @@ const sendChatMessage = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const payload = JSON.stringify({
             type: 'chat',
-            target_id: targetId,
+            targetid: targetId,
             data: { text, timestamp }
         });
         socket.send(payload);
@@ -518,11 +839,11 @@ const createPeerConnection = (targetUserId: number) => {
 };
 
 const sendSignal = (type: string, data: any, targetId?: number) => {
-    const target = targetId || selectedUser.value?.useraccessid || incomingCall.value?.sender_id;
+    const target = targetId || selectedUser.value?.useraccessid || incomingCall.value?.senderid;
     if (socket && target) {
         socket.send(JSON.stringify({
             type,
-            target_id: target,
+            targetid: target,
             data
         }));
     }
@@ -531,11 +852,11 @@ const sendSignal = (type: string, data: any, targetId?: number) => {
 // Handle Incoming Signals
 const handleIncomingOffer = async (payload: any) => {
     // Show Incoming Call Modal
-    const callerId = payload.sender_id;
+    const callerId = payload.senderid;
     const callerName = users.value.find(u => u.useraccessid === callerId)?.realname || 'Unknown User';
     
     incomingCall.value = {
-        sender_id: callerId,
+        senderid: callerId,
         callerName,
         offer: payload.data
     };
@@ -543,7 +864,7 @@ const handleIncomingOffer = async (payload: any) => {
 
 const answerCall = async () => {
     if (!incomingCall.value) return;
-    const callerId = incomingCall.value.sender_id;
+    const callerId = incomingCall.value.senderid;
     const offer = incomingCall.value.offer;
     incomingCall.value = null; // Hide modal
     
@@ -618,4 +939,52 @@ onMounted(() => {
   70% { transform: scale(0.9); }
   100% { transform: scale(1); }
 }
+
+/* Clippy Animations */
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50% { transform: rotate(5deg) translateY(-5px); }
+}
+
+@keyframes look-around {
+  0%, 40%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(2px, -1px); }
+  70% { transform: translate(-2px, 0); }
+}
+
+@keyframes eyebrows-raise {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.clippy-container:hover .clippy-svg {
+    animation: sway 2s infinite ease-in-out;
+}
+
+.clippy-eyes {
+    animation: blink 4s infinite;
+    transform-origin: center;
+}
+
+.clippy-pupil {
+    animation: look-around 4s infinite ease-in-out;
+}
+
+.clippy-container:hover .clippy-eyebrow {
+    animation: eyebrows-raise 1s infinite alternate;
+}
+
+.clippy-container:hover {
+    filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+}
+
+.clippy-active .clippy-svg {
+    transform: scale(1.1) rotate(-10deg);
+}
+
 </style>

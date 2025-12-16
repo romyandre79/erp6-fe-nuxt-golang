@@ -48,6 +48,10 @@
                 <UIcon name="heroicons:building-library" class="w-5 h-5 text-purple-500" />
                 <span>AI Suggest Relations</span>
               </button>
+              <button @click="$emit('reverse-engineer')" class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm">
+                <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-orange-600" />
+                <span>Reverse Engineer DB</span>
+              </button>
             </div>
 <div class="mt-4">
       <label class="text-sm font-semibold">AI Prompt</label>
@@ -57,6 +61,8 @@
           placeholder="e.g. Customer table with id, name, email"
           class="flex-1 p-2 border rounded"
         />
+        </div>
+              <div class="flex gap-2 mt-1">
         <button @click="$emit('ai-parse', aiDescriptionModel)" class="px-3 py-1 bg-yellow-500 text-white rounded">
           Generate
         </button>
@@ -142,6 +148,7 @@
             @apply-json="$emit('apply-json', $event)"
             @copy-json="$emit('copy-json', $event)"
             @remove-relation="$emit('remove-relation', $event)"
+            @view-data="$emit('view-data', selectedTable)"
           />
           <div v-else class="text-gray-500 text-sm italic text-center mt-10">
             Select a table to view properties.
@@ -185,6 +192,8 @@ const emit = defineEmits([
   'apply-json',
   'copy-json',
   'remove-relation',
+  'reverse-engineer',
+  'view-data',
 ]);
 
 const activeActivity = ref('toolbox');
@@ -212,9 +221,19 @@ function toggleActivity(id: string) {
 // Auto-switch to properties when a table is selected
 watch(() => props.selectedTable, (newVal) => {
   if (newVal) {
-    activeActivity.value = 'properties';
-    isPanelOpen.value = true;
+    openProperties();
   }
+});
+
+
+
+function openProperties() {
+  activeActivity.value = 'properties';
+  isPanelOpen.value = true;
+}
+
+defineExpose({
+  openProperties,
 });
 
 const aiDescriptionModel = computed({

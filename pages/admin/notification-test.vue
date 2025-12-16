@@ -39,6 +39,5 @@ const store = useNotificationStore()
 
 const fetchNotifications = async () => {
   await store.fetchUnread()
-  console.log('Fetched notifications:', store.notifications)
 }
 </script>

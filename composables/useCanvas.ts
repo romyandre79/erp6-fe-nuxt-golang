@@ -10,15 +10,15 @@ export function useCanvas() {
   const minZoom = 0.2;
   const maxZoom = 3;
 
-  const dragging = ref(null);
+  const dragging = ref<any>(null);
   const offset = ref({ x: 0, y: 0 });
-  const activeArea = ref(null);
-  const areaMode = ref(null);
+  const activeArea = ref<any>(null);
+  const areaMode = ref<string|null>(null);
   const areaOffset = ref({ x: 0, y: 0 });
   const activeAreaTables = ref<any[]>([]);
 
   // Linking state
-  const linkPreview = reactive({ active: false, from: null, sx: 0, sy: 0, path: '' });
+  const linkPreview = reactive<{active: boolean, from: any, sx: number, sy: number, path: string}>({ active: false, from: null, sx: 0, sy: 0, path: '' });
 
   // Zoom controls
   function zoomIn() {
@@ -43,6 +43,17 @@ export function useCanvas() {
       const A = tables.find((t) => t.id === r.from.table);
       const B = tables.find((t) => t.id === r.to.table);
       if (!A || !B) return;
+
+      // Update indices dynamically based on names
+      if (r.from.colName) {
+        const idx = A.columns.findIndex((c: any) => c.name === r.from.colName);
+        if (idx !== -1) r.from.col = idx;
+      }
+      if (r.to.colName) {
+        const idx = B.columns.findIndex((c: any) => c.name === r.to.colName);
+        if (idx !== -1) r.to.col = idx;
+      }
+
       const y1 = A.y + 36 + r.from.col * 24;
       const x1 = A.x + A.width;
       const y2 = B.y + 36 + r.to.col * 24;

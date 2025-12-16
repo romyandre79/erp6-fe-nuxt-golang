@@ -27,7 +27,7 @@ export function useWidgets() {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
       dataForm.append('modulename', modulename);
-      const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('api/admin/execute-flow', dataForm);
       if (res.code === 200) return res;
     } catch (e) {
       console.error('Error fetching widgets', e);
@@ -44,7 +44,7 @@ export function useWidgets() {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
       dataForm.append('widgetname', slug);
-      const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('api/admin/execute-flow', dataForm);
       if (res.code == 200) {
         return res;
       } else {

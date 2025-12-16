@@ -1,12 +1,12 @@
 <template>
-  <header class="flex items-center justify-between px-6 py-3 transition-colors duration-300">
+  <header class="flex items-center justify-between px-6 py-3 transition-colors duration-300 overflow-visible">
     <!-- LEFT: Breadcrumb or empty -->
     <div class="flex items-center gap-3">
       <!-- Can add breadcrumbs here if needed -->
     </div>
 
     <!-- RIGHT: Actions -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 overflow-visible">
       <!-- Notification Bell -->
       <NotificationBell />
       
@@ -17,11 +17,12 @@
       <div class="h-8 w-px bg-slate-200 dark:bg-gray-700 mx-1"></div>
 
       <!-- USER DROPDOWN -->
-      <div ref="userMenu" class="relative">
+      <div ref="userMenu" class="relative overflow-visible">
         <!-- Trigger -->
         <button
           @click.stop="toggleDropdown"
-          class="profile-trigger flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2 transition-all duration-200 group"
+          class="profile-trigger flex items-center gap-3 cursor-pointer px-3 py-2 transition-all duration-200 group"
+          style="border-radius: var(--navbar-item-radius);"
         >
           <!-- Avatar -->
           <div class="w-9 h-9 flex items-center justify-center" style="color: var(--sidebar-profile-icon-color, #6366f1);">
@@ -48,7 +49,8 @@
         <transition name="dropdown">
           <div
             v-if="isOpen"
-            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+            class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden border border-slate-200/80 dark:border-gray-800"
+            style="border-radius: var(--navbar-dropdown-radius); z-index: 9999 !important;"
           >
             <!-- User Info Header -->
             <div class="px-4 py-4 border-b border-slate-200 dark:border-gray-800">
@@ -137,7 +139,7 @@ const handleLogout = async () => {
 
 const handleProfile = () => {
   isOpen.value = false;
-  navigateTo('/admin/profile');
+  navigateTo('/api/admin/profile');
 };
 
 onMounted(() => document.addEventListener('click', handleClickOutside));

@@ -29,7 +29,18 @@
       <div class="flex-1 overflow-auto p-3">
         <!-- Toolbox Content -->
         <div v-if="activeActivity === 'toolbox'">
-          <div v-for="cat in store.categories" :key="cat.id" class="mb-4">
+          <div class="mb-4 sticky top-0 bg-white z-10 pb-2">
+            <UInput
+              v-model="searchQuery"
+              icon="i-heroicons-magnifying-glass-20-solid"
+              size="sm"
+              color="white"
+              :trailing="false"
+              placeholder="Search components..."
+              class="w-full"
+            />
+          </div>
+          <div v-for="cat in store.categories" :key="cat.id" class="mb-4" v-show="compsByCategory(cat).length > 0">
             <div class="font-semibold text-xs text-gray-500 uppercase mb-2 tracking-wider">
               {{ cat.categoryname ?? cat.label ?? cat.name }}
             </div>
@@ -58,7 +69,7 @@
         </div>
 
         <!-- Properties Content -->
-        <div v-if="activeActivity === 'property'">
+        <div v-if="activeActivity === 'property'" class="pb-20">
           <PropertyForm
             v-if="store.selectedNode"
             :componentName="store.selectedNode.name"
@@ -72,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import FlowParameter from './FlowParameter.vue';
 import PropertyForm from './PropertyForm.vue';
@@ -80,6 +91,7 @@ import PropertyForm from './PropertyForm.vue';
 const store = useWorkflowStore();
 const activeActivity = ref('toolbox');
 const isPanelOpen = ref(true);
+const searchQuery = ref('');
 
 const activities = [
   { id: 'toolbox', label: 'Toolbox', icon: 'heroicons:squares-2x2' },
@@ -100,10 +112,36 @@ function toggleActivity(id: string) {
   }
 }
 
+// Auto-switch to property tab when a node is selected
+watch(
+  () => store.selectedNode,
+  (newNode) => {
+    if (newNode) {
+      activeActivity.value = 'property';
+      isPanelOpen.value = true;
+    }
+  }
+);
+
 function compsByCategory(cat: any) {
-  return store.components.filter((c) => {
+  const components = store.components.filter((c) => {
     if (!c) return false;
-    return c.categoryname === cat.categoryname;
+    // Match by categoryname if available
+    if (c.categoryname && cat.categoryname) {
+      return c.categoryname === cat.categoryname;
+    }
+    // Fallback to other properties
+    const catId = cat.id ?? cat.categoryid ?? cat.name;
+    const compCatId = c.categoryid ?? c.categoryname;
+    return compCatId === catId;
+  });
+
+  if (!searchQuery.value) return components;
+
+  const query = searchQuery.value.toLowerCase();
+  return components.filter((c) => {
+    const name = c.componenttitle ?? c.label ?? c.name ?? '';
+    return name.toLowerCase().includes(query);
   });
 }
 

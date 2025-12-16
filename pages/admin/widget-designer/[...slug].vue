@@ -83,6 +83,16 @@
         <PropertyEditor v-model="selected.props" />
       </div>
     </aside>
+    <!-- Global Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+      <div class="flex flex-col items-center">
+           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -188,7 +198,15 @@ const clearSchema = async () => {
   canvasComponents.value = [];
 };
 
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
+
+const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
+const isLoading = ref(false);
+
 const saveSchema = async () => {
+  if (isLoading.value) return;
+  isLoading.value = true;
   const dataForm = new FormData();
   dataForm.append('flowname', 'modifwidget');
   dataForm.append('menu', 'admin');
@@ -203,14 +221,17 @@ const saveSchema = async () => {
   dataForm.append('recordstatus', dataMenu.recordStatus);
   dataForm.append('widgetform', JSON.stringify(formattedJson.value));
   try {
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
       toast.add({ title: 'Success', description: 'Runtime schema saved successfully', color: 'success' });
+      markClean();
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
   } catch (err) {
     toast.add({ title: 'Error', description: err, color: 'error' });
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -228,7 +249,30 @@ const dataMenu = reactive({
   recordStatus: Number,
 });
 
+const getDefaultProps = (type: string) => {
+  const found = availableComponents.find((x) => x.type === type) || layoutContainers.find((x) => x.type === type);
+  return found ? JSON.parse(JSON.stringify(found.props || {})) : {};
+};
+
+const hydrateNodeProps = (nodes: NodeSchema[]) => {
+  nodes.forEach((node) => {
+    const defaults = getDefaultProps(node.type);
+    node.props = { ...defaults, ...node.props };
+        
+    // Explicitly ensure key exists if it's in defaults
+    if ('key' in defaults && !('key' in node.props)) {
+      node.props.key = defaults.key;
+    }
+
+    if (node.children && node.children.length > 0) {
+      hydrateNodeProps(node.children);
+    }
+  });
+  return nodes;
+};
+
 const loadSchema = async () => {
+  isLoading.value = true;
   try {
     const res = await getWidgetForm(route.params.slug);
     if (res?.code == 200) {
@@ -244,31 +288,38 @@ const loadSchema = async () => {
         (dataMenu.recordStatus = res?.data.data.recordstatus));
       if (res?.data.data.widgetform != '') {
         formSchema.value = res?.data?.data.widgetform;
-        canvasComponents.value = JSON.parse(res?.data?.data.widgetform);
+        let parsed = JSON.parse(res?.data?.data.widgetform);
+        canvasComponents.value = hydrateNodeProps(parsed);
       }
     } else {
       console.error('Invalid response from ', res);
     }
   } catch (err) {
     console.error('Error loading :', err);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
   if (name) {
+    isLoading.value = true;
     try {
       const res = await getWidgetForm(name);
       if (res?.code == 200) {
-        if (res?.data.data.menuform != '') {
-          formSchema.value = res?.data?.data.menuform;
-          canvasComponents.value = res?.data?.data.menuform;
+        if (res?.data.data.widgetform != '') {
+          formSchema.value = res?.data?.data.widgetform;
+          let parsed = JSON.parse(res?.data?.data.widgetform);
+          canvasComponents.value = hydrateNodeProps(parsed);
         }
       } else {
         console.error('Invalid response from ', res);
       }
     } catch (err) {
       console.error('Error loading :', err);
+    } finally {
+      isLoading.value = false;
     }
   } else {
     console.warn('Empty');
@@ -297,7 +348,9 @@ watch(
   (newVal) => {
     formattedJson.value = newVal;
     formSchema.value = newVal;
+    markDirty();
   },
   { deep: true, immediate: true },
 );
+
 </script>

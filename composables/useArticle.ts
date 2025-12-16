@@ -13,7 +13,7 @@ export const useArticle = () => {
     try {
       loading.value = true;
       error.value = '';
-      const res = await get('/blog/post?companyid=' + config.public.companyId);
+      const res = await get('/api/blog/post?companyid=' + config.public.companyId);
       if (res?.code == 200) {
         return res;
       } else {
@@ -30,7 +30,7 @@ export const useArticle = () => {
     try {
       loading.value = true;
       error.value = '';
-      const res = await get('/blog/post/slug?slug=' + slug);
+      const res = await get('/api/blog/post/slug?slug=' + slug);
       if (res.code == 200) {
         return res.data;
       } else {

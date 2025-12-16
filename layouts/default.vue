@@ -1,9 +1,20 @@
 <script setup>
 import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
+import { useUserStore } from '../store/user';
+import { useDevice } from '~/composables/useDevice';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
+const userStore = useUserStore();
+import { useAppStore } from '~/store/app';
+
+const appStore = useAppStore();
+const { isMobile, isTablet, isDesktop, deviceType } = useDevice();
+
+const reloadPage = () => {
+  window.location.reload();
+};
 
 onMounted(async () => {
   themeStore.applyCurrentTheme();
@@ -17,7 +28,7 @@ onMounted(async () => {
         
         <!-- Modern Glassmorphism Navbar -->
         <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-800/50 shadow-sm transition-all duration-300">
-          <div class="container mx-auto px-6">
+          <div class="container mx-auto" :class="isMobile ? 'px-4' : 'px-6'">
             <Navbar class="nav" />
           </div>
         </header>
@@ -33,8 +44,8 @@ onMounted(async () => {
           <!-- Top accent line -->
           <div class="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
           
-          <div class="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md py-6 px-4">
-            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md" :class="isMobile ? 'py-4 px-3' : 'py-6 px-4'">
+            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between" :class="isMobile ? 'gap-2' : 'gap-4'">
               <!-- Copyright -->
               <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 &copy; {{ new Date().getFullYear() }} Prisma Data Abadi
@@ -49,11 +60,43 @@ onMounted(async () => {
           </div>
         </footer>
       </div>
+      <AiAssistant v-if="userStore.token" />
+
+      
+      <!-- Connection Error Overlay -->
+      <div v-if="appStore.connectionError" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-gray-100 dark:border-gray-700">
+          <div class="flex flex-col items-center justify-center gap-4 text-center">
+            <div class="p-3 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+              <UIcon name="i-heroicons-exclamation-triangle-20-solid" class="w-8 h-8" />
+            </div>
+            
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              Connection Error
+            </h3>
+            
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ appStore.errorMessage }}. Please check your internet connection or try again later.
+            </p>
+
+            <UButton
+              color="error"
+              variant="solid"
+              label="Retry Connection"
+              icon="i-heroicons-arrow-path"
+              class="mt-2"
+              @click="reloadPage"
+            />
+          </div>
+        </div>
+      </div>
     </UApp>
   </ClientOnly>
 </template>
 
 <style>
+@import '@/assets/css/default.css';
+
 @keyframes fade-in {
   from {
     opacity: 0;

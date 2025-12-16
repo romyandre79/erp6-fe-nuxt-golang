@@ -46,6 +46,7 @@ function add() {
 ---------------------------------- */
 function remove(id: any) {
   store.parameters = store.parameters.filter((p: any) => p.wfparameterid !== id);
+  store.purgeFlowParameter(id);
 }
 
 /* ----------------------------------

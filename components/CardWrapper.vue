@@ -25,7 +25,7 @@ export default defineComponent({
         dataForm.append('menu', 'admin');
         dataForm.append('search', 'true');
         try {
-          const res = await Api.post('admin/execute-flow', dataForm);
+          const res = await Api.post('api/admin/execute-flow', dataForm);
           if (res.code === 200) {
             data.value = res.data.data;
           }

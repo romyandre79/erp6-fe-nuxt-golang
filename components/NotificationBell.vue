@@ -15,13 +15,13 @@ const markRead = async (id: number) => {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative overflow-visible">
     <!-- Bell Button -->
     <button 
       @click="toggle" 
       class="navbar-icon relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 group"
     >
-      <i class="fa-solid fa-bell text-lg group-hover:scale-110 transition-transform"></i>
+      <i class="fa-solid fa-bell text-lg group-hover:scale-110 transition-colors"></i>
       
       <!-- Badge -->
       <span 
@@ -36,13 +36,14 @@ const markRead = async (id: number) => {
     <transition name="dropdown">
       <div 
         v-if="isOpen" 
-        class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden z-50 border border-slate-200/80 dark:border-gray-800"
+        class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden border border-slate-200/80 dark:border-gray-800"
+        style="z-index: 9999 !important;"
       >
         <!-- Header -->
         <div class="px-4 py-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-              <i class="fa-solid fa-bell text-indigo-500 text-xs"></i>
+              <i class="fa-solid fa-bell transition-colors text-xs"></i>
             </div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-white">Notifications</h3>
           </div>
@@ -107,13 +108,6 @@ const markRead = async (id: number) => {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-8px) scale(0.95);
-}
-
-.navbar-icon {
-  color: var(--navbar-icon-color, #6b7280);
-}
-.navbar-icon:hover {
-  color: var(--navbar-icon-hover-color, #4f46e5);
 }
 
 .custom-scrollbar::-webkit-scrollbar {

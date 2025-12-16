@@ -37,20 +37,12 @@ export const useDbobjectStore = defineStore('dbobject', () => {
   async function fetchAll() {
     loading.value = true;
     try {
-      let dataForm = new FormData();
-      dataForm.append('flowname', 'searchcombodbobjecttype');
-      dataForm.append('menu', 'admin');
-      dataForm.append('search', 'true');
-
-      let res = await api.post('/admin/execute-flow', dataForm);
-      dbobjects.value = res?.data?.data ?? {};
-
-      dataForm = new FormData();
+      const dataForm = new FormData();
       dataForm.append('flowname', 'searchdbobject');
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
 
-      res = await api.post('/admin/execute-flow', dataForm);
+      const res = await api.post('/api/admin/execute-flow', dataForm);
       dbobjects.value = res?.data?.data ?? {};
     } finally {
       loading.value = false;
@@ -66,7 +58,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('search', 'true');
       dataForm.append('dbobjectid', id);
 
-      const res = await api.post('/admin/execute-flow', dataForm);
+      const res = await api.post('/api/admin/execute-flow', dataForm);
       dbobject.value = res?.data?.data ?? {};
     } finally {
       loading.value = false;
@@ -79,14 +71,15 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('flowname', 'modifdbobject');
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
-      dataForm.append('dbobjectid', dbobject.dbobjectid);
-      dataForm.append('objectname', dbobject.objectname);
-      dataForm.append('dbobjecttypeid', dbobject.dbobjecttypeid);
-      dataForm.append('objectcontent', dbobject.objectcontent);
-      dataForm.append('ispublished', dbobject.ispublished);
-      dataForm.append('comment', dbobject.comment);
+      dataForm.append('dbobjectid', dbobject.dbobjectid || '');
+      dataForm.append('objectname', dbobject.objectname || '');
+      dataForm.append('dbobjecttypeid', dbobject.dbobjecttypeid || '');
+      dataForm.append('objectcontent', dbobject.objectcontent || '');
+      dataForm.append('ispublished', String(dbobject.ispublished || 0));
+      dataForm.append('comment', dbobject.comment || '');
 
-      await api.post('/admin/execute-flow', dataForm);
+      const res = await api.post('/api/admin/execute-flow', dataForm);
+      return res; // Return the response
     } finally {
       loading.value = false;
     }
@@ -100,7 +93,7 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('search', 'true');
       dataForm.append('dbobjectid', id);
 
-      await api.post('/admin/execute-flow', dataForm);
+      await api.post('/api/admin/execute-flow', dataForm);
     } finally {
       loading.value = false;
     }
@@ -114,8 +107,60 @@ export const useDbobjectStore = defineStore('dbobject', () => {
       dataForm.append('operation', operation);
       dataForm.append('table', JSON.stringify(tableData));
 
-      const res = await api.post('/admin/execute-table-operation', dataForm);
+      const res = await api.post('/api/admin/execute-table-operation', dataForm);
       return res?.data ?? res;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function saveRelations(relations: any[]) {
+    try {
+      const res = await api.post('/api/admin/db/relations/save', relations);
+      return res;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchRelations() {
+    try {
+      const res = await api.get('/api/admin/db/relations');
+      return res || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function deleteRelation(id: number) {
+    try {
+      await api.delete(`/api/admin/db/relations/${id}`);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function saveAreas(areas: any[]) {
+    try {
+      const res = await api.post('/api/admin/db/areas/save', areas);
+      return res;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchAreas() {
+    try {
+      const res = await api.get('/api/admin/db/areas');
+      return res || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function deleteArea(id: number) {
+    try {
+      await api.delete(`/api/admin/db/areas/${id}`);
     } finally {
       loading.value = false;
     }
@@ -127,6 +172,12 @@ export const useDbobjectStore = defineStore('dbobject', () => {
     saveTable,
     purgeTable,
     executeTableOperation,
+    saveRelations,
+    fetchRelations,
+    deleteRelation,
+    saveAreas,
+    fetchAreas,
+    deleteArea,
     dbobject,
     dbobjects,
     loading,

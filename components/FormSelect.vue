@@ -42,7 +42,7 @@ onMounted(async () => {
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
 
-      const res = await Api.post('admin/execute-flow', dataForm);
+      const res = await Api.post('api/admin/execute-flow', dataForm);
 
       if (res.code === 200 && Array.isArray(res.data?.data)) {
         const labelField = component.label || 'label';

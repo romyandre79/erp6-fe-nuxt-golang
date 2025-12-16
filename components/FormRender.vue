@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormWizard } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -136,6 +136,22 @@ function open(key: string) {
   }
 }
 
+async function copy() {
+  const onCopy = getAction('onCopy') 
+  if (onCopy == '') return 
+  try {
+  const dataForm = new FormData();
+  dataForm.append('flowname', onCopy);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
+  dataForm.append('id', selectedRows.value[0][getPrimary()]);
+  const res = await Api.post('api/admin/execute-flow', dataForm);
+  toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+  } catch (err) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+  }
+}
+
 function getPrimary() {
   let node: any;
   parsedSchema.value.forEach((element) => {
@@ -152,9 +168,7 @@ async function edit(key: string) {
   
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-  
-  console.log('edit debug:', { key, isDetailModal, modalFound: !!modal });
-  
+    
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
@@ -195,7 +209,7 @@ async function edit(key: string) {
       }
       
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res.code == 200) {
           const record = res.data.data;
           for (const key in record) {
@@ -210,9 +224,38 @@ async function edit(key: string) {
     }
   } else {
     // Handle master modal edit (existing logic)
+    const master = getMaster();
+    // Check if locking is enabled in props
+    const lockEnabled = master?.props?.lock === true;
     const flow = getAction('get');
+
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
+      
+      // 🔒 Try to lock record if locking is enabled
+      if (lockEnabled) {
+        try {
+            const lockRes = await Api.post('api/admin/lock-record', {
+                tablename: props.menuName,
+                recordid: Number(selectedRows.value[0][primary]),
+                locktype: 'edit'
+            });
+
+            if (lockRes?.code !== 200) {
+                 throw new Error(lockRes?.message || 'Lock failed');
+            }
+        } catch (err: any) {
+             const msg = err?.response?._data?.message || err?.message || 'This record is being edited by another user';
+             toast.add({
+                title: 'Record Locked',
+                description: msg,
+                color: 'error',
+                timeout: 5000
+            });
+            return; // ⛔ ABORT OPENING FORM
+        }
+      }
+
       modalTitle.value = 'Edit Data';
       modalDescription.value = '';
       modalRefs[key].value = true;
@@ -222,12 +265,21 @@ async function edit(key: string) {
       dataForm.append('search', 'true');
       dataForm.append(primary, selectedRows.value[0][primary]);
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res.code == 200) {
           const record = res.data.data;
           for (const key in record) {
             formData.value[key] = record[key];
           }
+          
+          // 🔥 Load detail table data if exists
+          // Check for any array fields that might be detail tables
+          for (const key in record) {
+            if (Array.isArray(record[key]) && record[key].length > 0) {
+              formData.value[key] = [...record[key]];
+            }
+          }
+          
           tableRef.value.setData(primary, selectedRows.value[0][primary]);
         } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
           navigateTo('/login');
@@ -239,9 +291,38 @@ async function edit(key: string) {
   }
 }
 
+async function runFlow(flow: string) {
+  const dataForm = new FormData();
+  dataForm.append('flowname', flow);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
+  try {
+    const res = await Api.post('api/admin/execute-flow', dataForm);
+    if (res.code == 200) {
+      const record = res.data.data;
+    } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+      navigateTo('/login');
+    }
+  } catch (err) {
+    console.error('Gagal ambil data:', err);
+  }
+}
+
 function close(key: string) {
   try {
     const primary = getPrimary();
+    
+    // 🔓 Unlock record if locking is enabled
+    // We need to check if master has lock: true
+    const master = getMaster();
+    if (master?.props?.lock === true && selectedRows.value && selectedRows.value.length > 0) {
+        // Unlock
+        Api.post('api/admin/unlock-record', {
+            tablename: props.menuName,
+            recordid: Number(selectedRows.value[0][primary])
+        }).catch(err => console.error('Unlock failed', err));
+    }
+
     if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
       tableRef.value.setData(primary, selectedRows.value[0][primary]);
     }
@@ -258,16 +339,16 @@ function close(key: string) {
 
 async function deleteData(table: any) {
   const flow = getAction('purge');
-  console.log('del table ', tableRef.value[table]);
   if (flow && selectedRows.value.length > 0) {
-    let dataForm = new FormData();
+    const primary = getPrimary();
     for (let index = 0; index < selectedRows.value.length; index++) {
+      let dataForm = new FormData();
       dataForm.append('flowname', flow);
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
-      dataForm.append(parsedSchema.value.primary, selectedRows.value[index][parsedSchema.value.primary]);
+      dataForm.append(primary, selectedRows.value[index][primary]);
       try {
-        const res = await Api.post('admin/execute-flow', dataForm);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res?.code == 200) {
           tableRef.value.refreshTable();
         } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
@@ -289,13 +370,14 @@ async function downForm(mode: any) {
   }
   if (flow) {
     let dataForm = new FormData();
+    const primary = getPrimary();
     dataForm.append('flowname', flow);
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
     for (let index = 0; index < selectedRows?.length; index++) {
-      dataForm.append(parsedSchema.value.primary + '[' + index + ']', selectedRows[index][parsedSchema.value.primary]);
+      dataForm.append(primary + '[' + index + ']', selectedRows[index][primary]);
     }
-    await Api.donlotFile('/admin/execute-flow', dataForm, props.menuName + '.' + mode);
+    await Api.donlotFile('/api/admin/execute-flow', dataForm, props.menuName + '.' + mode);
   }
 }
 
@@ -303,7 +385,7 @@ async function downTemplate() {
   let dataForm = new FormData();
 
   dataForm.append('menu', props.menuName);
-  await Api.donlotFile('/admin/down-template', dataForm, props.menuName + '.xlsx');
+  await Api.donlotFile('/api/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
 function navigate(key: any) {
@@ -388,7 +470,7 @@ async function handleFileChange(e: Event) {
     isUploading.value = true;
     uploadProgress.value = 0;
 
-    const res = await Api.post('admin/execute-flow', form);
+    const res = await Api.post('api/admin/execute-flow', form);
 
     if (res.code === 200) {
       toast.add({
@@ -593,6 +675,10 @@ function renderComponent(component: any) {
         validateField,
       });
 
+
+    case 'selectgroup':
+      return renderSelectGroup(component)
+
     case 'bool':
     case 'boolean': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = false;
@@ -632,6 +718,9 @@ function renderComponent(component: any) {
             const key = eventName.replace('open:', '');
             open(key);
             return;
+          } else if (eventName.startsWith('copy')) {
+            copy();
+            return;
           } else if (eventName.startsWith('edit')) {
             const key = eventName.replace('edit:', '');
             edit(key);
@@ -659,6 +748,9 @@ function renderComponent(component: any) {
         },
         label: component.props.text,
       });
+    
+    
+    
     case 'action':
       break;
   }
@@ -729,32 +821,84 @@ function renderCallOther(component) {
   return h('div', `Unknown other type: ${type}`);
 }
 
+function validateContainer(container: any): boolean {
+  let isValid = true;
+
+  // List of input types that need validation
+  const inputTypes = [
+    'text', 'password', 'number', 'email', 'tel', 'url', 
+    'date', 'time', 'datetime', 'month', 'week', 
+    'select', 'selectgroup', 'textarea', 'longtext', 
+    'checkbox', 'radio', 'bool', 'boolean', 'file', 'image'
+  ];
+
+  // If the container itself is an input
+  if (inputTypes.includes((container.type || '').toLowerCase())) {
+     const val = formData.value[container.props?.key];
+     
+     // validateField expects the component object
+     const result = validateField(container, val);
+     
+     if (result !== true) {
+       isValid = false;
+       if (container.props?.key) {
+         validationErrors[container.props.key] = result as string;
+       }
+     }
+  }
+
+  // Recurse children
+  if (container.children && Array.isArray(container.children)) {
+    container.children.forEach((child: any) => {
+      if (!validateContainer(child)) {
+        isValid = false;
+      }
+    });
+  }
+
+  return isValid;
+}
+
 function renderWizard(container: any) {
-  if (!container) return null;
+  if (!container || !container.children) return null;
+
+  // Prepare steps for the wizard component
+  const steps = container.children.map((child: any) => ({
+    title: child.props?.title || child.props?.label || 'Step',
+    ...child
+  }));
 
   return h(
     FormWizard,
     {
-      steps: container,
-      saveKey: 'wizard-h',
+      steps: steps,
+      class: container.props?.class || '',
+      // Pass validation function
+      validateStep: async (index: number) => {
+         const stepComponent = container.children[index];
+         return validateContainer(stepComponent);
+      },
+      onFinish: () => {
+         // Create/Update logic
+         // We can reuse the button logic?
+         // Usually wizard finish means "Submit"
+         // We should check if there is an 'onCreate' or 'onUpdate' action defined, or expose an event.
+         // For now, let's assume it triggers the same as a primary button would.
+         
+         if (modalTitle.value === 'New Data') {
+             CreateHandler();
+         } else {
+             UpdateHandler();
+         }
+      }
     },
     {
-      default: ({ step, schema, state }) => {
-        return h(
-          'div',
-          schema.map((field) => {
-            return h('div', { class: 'mb-3' }, [
-              h('label', field.label),
-              h('input', {
-                class: 'border p-2 w-full',
-                value: state[field.key],
-                onInput: (e) => (state[field.key] = e.target.value),
-              }),
-            ]);
-          }),
-        );
+      default: ({ step }: { step: number }) => {
+        const stepComponent = container.children[step];
+        if (!stepComponent) return null;
+        return renderContainer(stepComponent);
       },
-    },
+    }
   );
 }
 
@@ -768,18 +912,71 @@ function renderChart(container: any) {
   return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
 }
 
+function renderDetailTable(container: any) {
+  const tableKey = container.props.key;
+    
+    if (!(tableKey in formData.value)) {
+      formData.value[tableKey] = [];
+    }
+
+    // Extract columns from component children
+    let columns: any[] = [];
+    if (container.children) {
+      container.children.forEach((child: any) => {
+        if (child.type === 'columns' && child.children) {
+          columns = child.children.map((col: any) => ({
+            ...col.props,
+            type: col.type,
+            text: col.props?.text,
+            label: col.props?.label,
+            key: col.props?.key,
+          }));
+        }
+      });
+    }
+
+    return h(DetailTableInline, {
+      columns,
+      tableKey,
+      formData: formData.value,
+      modelValue: formData.value[tableKey] || [],
+      'onUpdate:modelValue': (val: any) => {
+        formData.value[tableKey] = val;
+      },
+      class: container.props.class || 'mb-4',
+    });
+}
+
+function renderSelectGroup(component: any) {
+  if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
+      return h(FormSelectGroup, {
+        class: component.props.class,
+        component: component.props,
+        formData,
+        validationErrors,
+        validateField,
+      });
+}
+
 function renderContainer(container: any) {
   if (!container) return null;
+  // 🔥 Special handling for detailtable - render it as a component, not a container
+  // 🔥 Special handling for detailtable - render it as a component, not a container
+  if ((container.type || '').toLowerCase() === 'detailtable') {
+    return renderDetailTable(container)
+  } else 
+  if ((container.type || '').toLowerCase() === 'selectgroup') {
+    return renderSelectGroup(container)
+  }
 
   let children = Array.isArray(container) ? container : container.children || [];
-  console.log('comp type', container);
   return h(
     'div',
     {
       class: container.props?.class || '',
     },
     children.map((component: any) => {
-      switch (component.type) {
+      switch ((component.type || '').toLowerCase()) {
         case 'table':
           return renderTable(component);
         case 'tabs':
@@ -794,6 +991,42 @@ function renderContainer(container: any) {
         case 'chart':
           return renderChart(component);
 
+        case 'detailtable': {
+      // Initialize formData for this table if not exists
+      const tableKey = component.props.key;
+      
+      if (!(tableKey in formData.value)) {
+        formData.value[tableKey] = [];
+      }
+
+      // Extract columns from component children
+      let columns: any[] = [];
+      if (component.children) {
+        component.children.forEach((child: any) => {
+          if (child.type === 'columns' && child.children) {
+            columns = child.children.map((col: any) => ({
+              ...col.props,
+              type: col.type,
+              text: col.props?.text,
+              label: col.props?.label,
+              key: col.props?.key,
+            }));
+          }
+        });
+      }
+
+      return h(DetailTableInline, {
+        columns,
+        tableKey,
+        formData: formData.value,
+        modelValue: formData.value[tableKey],
+        'onUpdate:modelValue': (val: any) => {
+          formData.value[tableKey] = val;
+        },
+        class: component.props.class || 'mb-4',
+      });
+    }
+
         case 'master':
         case 'buttons':
         case 'tables':
@@ -804,6 +1037,9 @@ function renderContainer(container: any) {
         case 'cards':
         case 'charts':
         case 'modals':
+        case 'row':
+        case 'col':
+        case 'step':
           return renderContainer(component);
         case 'action':
           break;
@@ -884,6 +1120,16 @@ function renderTable(component: any) {
   return null;
 }
 
+function getMaster() {
+  let node: any;
+  parsedSchema.value.forEach((element) => {
+    if (element.type == 'master') {
+      node = element;
+    }
+  });
+  return node;
+}
+
 function getAction(action: string) {
   let node: any;
   parsedSchema.value.forEach((element) => {
@@ -903,7 +1149,7 @@ const ReadHandler = async () => {
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     formData.value = {};
     if (res?.data?.data) {
       const firstRow = res?.data?.data;
@@ -912,9 +1158,12 @@ const ReadHandler = async () => {
   }
 };
 
+const isLoading = ref(false);
+
 const CreateHandler = async () => {
   const flow = getAction('create');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -929,13 +1178,17 @@ const CreateHandler = async () => {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
-      ReadHandler();
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+        ReadHandler();
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -945,6 +1198,7 @@ const CreateHandler = async () => {
 const UpdateHandler = async () => {
   const flow = getAction('update');
   if (flow) {
+    isLoading.value = true;
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
@@ -959,12 +1213,16 @@ const UpdateHandler = async () => {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
-    if (res.code == 200) {
-      toast.add({
-        title: $t('TITLE UPDATE'),
-        description: $t(res.message.replaceAll('_', ' ')),
-      });
+    try {
+      const res = await Api.post('api/admin/execute-flow', dataForm);
+      if (res.code == 200) {
+        toast.add({
+          title: $t('TITLE UPDATE'),
+          description: $t(res.message.replaceAll('_', ' ')),
+        });
+      }
+    } finally {
+      isLoading.value = false;
     }
   } else {
     toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
@@ -973,31 +1231,34 @@ const UpdateHandler = async () => {
 
 const DeleteHandler = async () => {
   const flow = getAction('purge');
-  if (flow) {
-    const payload = { ...toRaw(formData.value) };
-    const dataForm = new FormData();
-    dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-
-    for (const key in payload) {
-      const val = payload[key];
-      if (val !== undefined && val !== null) {
-        if (typeof val === 'object') dataForm.append(key, JSON.stringify(val));
-        else dataForm.append(key, val);
+  if (flow && selectedRows.value.length > 0) {
+    isLoading.value = true;
+    const primary = getPrimary();
+    try {
+      for (let index = 0; index < selectedRows.value.length; index++) {
+        let dataForm = new FormData();
+        dataForm.append('flowname', flow);
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', 'true');
+        dataForm.append(primary, selectedRows.value[index][primary]);
+        const res = await Api.post('api/admin/execute-flow', dataForm);
+        if (res?.code == 200) {
+          tableRef.value.refreshTable();
+        } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
+          navigateTo('/login');
+        }
       }
-    }
-
-    const res = await Api.post('admin/execute-flow', dataForm);
-    if (res.code == 200) {
       toast.add({
-        title: $t('TITLE DELETE'),
-        description: $t(res.message.replaceAll('_', ' ')),
+         title: $t('TITLE DELETE'),
+         description: $t('Data deleted successfully'),
       });
-      //ReadHandler()
+    } catch (err) {
+      console.error('Gagal hapus data:', err);
+    } finally {
+      isLoading.value = false;
     }
   } else {
-    toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
+    if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
   }
 };
 
@@ -1007,14 +1268,13 @@ onMounted(() => {
 
 async function saveData(key: any) {
   try {
+    isLoading.value = true;
     let flow = '';
 
     // Check if this is a detail modal
     const modal = modals.value.find((m: any) => m.props.key === key);
     // Determine if this is a detail modal by checking if the key contains "detail"
     const isDetailModal = modal && key.toLowerCase().includes('detail');
-
-    console.log('saveData debug:', { key, isDetailModal, modalFound: !!modal });
 
     if (isDetailModal) {
       // Handle detail modal save
@@ -1030,8 +1290,6 @@ async function saveData(key: any) {
       const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
       const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
       
-      console.log('saveData detail debug:', { modalIndex, detailModalsCount: detailModals.length });
-
       if (modalTitle.value == 'New Data') {
         const createFlows = actionNode?.props?.onCreateDetail || [];
         flow = createFlows[modalIndex];
@@ -1108,7 +1366,7 @@ async function saveData(key: any) {
       }
     }
 
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200) {
       toast.add({
         title: $t('TITLE UPDATE'),
@@ -1121,6 +1379,8 @@ async function saveData(key: any) {
     }
   } catch (err) {
     console.error('Gagal simpan data:', err);
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -1154,7 +1414,12 @@ watchEffect(() => {
 
   <div v-for="(value, index) in modals" :key="value.props.key">
     <UModal
-      fullscreen
+    :ui="{
+    wrapper: 'items-center',
+    content: 'sm:max-w-none lg:max-w-none',
+    // Optionally remove padding if needed
+    // base: 'relative text-left rtl:text-right overflow-hidden shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6', 
+  }"
       v-if="modalRefs?.[value.props.key]"
       v-model:open="modalRefs[value.props.key]"
       :title="modalTitle"
@@ -1172,6 +1437,17 @@ watchEffect(() => {
         </div>
       </template>
     </UModal>
+  </div>
+
+  <!-- Global Loading Overlay -->
+  <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div class="flex flex-col items-center">
+         <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
+    </div>
   </div>
 
   <!-- 🔹 Hidden file input -->

@@ -4,7 +4,7 @@
     <div
       v-if="showPayload"
       id="payload-overlay"
-      class="absolute top-6 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
+      class="absolute top-20 left-6 p-3 bg-white shadow-lg rounded border z-50 max-w-sm"
     >
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-bold text-sm">Test Payload</h3>
@@ -52,11 +52,7 @@
         </div>
       </div>
     </div>
-
-    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
-
-    <!-- Zoom Control -->
-    <div class="absolute right-6 top-6 flex flex-row gap-2 z-50">
+<div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
       <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
       <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
@@ -80,10 +76,25 @@
         Upload Plugin
       </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
-      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
-      <button @click="testFlow" class="p-2 rounded shadow bg-white text-black">Test Flow</button>
+                      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+      <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
+      <button @click="testFlow" :disabled="isTestingFlow" class="p-2 rounded shadow bg-white text-black disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isTestingFlow" class="inline-flex items-center gap-2">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Testing...
+        </span>
+        <span v-else>Test Flow</span>
+      </button>
       <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
+
     </div>
+    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
+
+    <!-- Zoom Control -->
+    
   </div>
 </template>
 
@@ -95,6 +106,7 @@ import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
 
 const store = useWorkflowStore();
 const toast = useToast();
+const emit = defineEmits(['saved']); // Added emit definition
 const testResult = ref('');
 const payload = ref('');
 const showPayload = ref(false);
@@ -102,6 +114,11 @@ const showPayload = ref(false);
 // Step Results State
 const stepResults = ref<any[]>([]);
 const hasTestResults = computed(() => stepResults.value.length > 0);
+
+// Test Flow Loading State
+const isTestingFlow = ref(false);
+const nodeStates = ref<Map<number, 'running' | 'success' | 'error'>>(new Map());
+const nodeErrors = ref<Map<number, string>>(new Map());
 
 // Upload State
 const showUploadModal = ref(false);
@@ -113,6 +130,7 @@ const isUploading = ref(false);
 
 let editor: any = null;
 let saveTimeout: any = null;
+let workflowSocket: WebSocket | null = null;
 
 /* ======================================================
    FUNCTION: initEditor (DEFINISI WAJIB ADA!!)
@@ -133,10 +151,17 @@ function initEditor(container: HTMLElement) {
   ed.start();
 
   /* -------- Register events --------*/
-  ed.on('nodeCreated', () => scheduleSave());
-  ed.on('nodeRemoved', () => scheduleSave());
-  ed.on('connectionCreated', () => scheduleSave());
-  ed.on('connectionRemoved', () => scheduleSave());
+  ed.on('nodeRemoved', (id: string) => {
+    // When node removed, cleanup its properties from DB
+    const cleanId = id.replace('node-', '');
+    if (typeof store.deleteNodeProperties === 'function') {
+      try {
+        store.deleteNodeProperties(cleanId);
+      } catch (err) {
+        console.error('Error deleteNodeProperties:', err);
+      }
+    }
+  });
 
   ed.on('nodeSelected', async (id: string) => {
     const cleanId = id.replace('node-', '');
@@ -147,25 +172,18 @@ function initEditor(container: HTMLElement) {
       store.setSelectedNode(node);
     }
     
-    // Collapse the result panel for this node when clicked
-    collapseNodeResultPanel(cleanId);
+    // Hide all result panels first
+    const allPanels = document.querySelectorAll('.node-result-panel') as NodeListOf<HTMLElement>;
+    allPanels.forEach(p => p.style.display = 'none');
+    
+    // Show only the result panel for this node (if it exists)
+    const panel = document.querySelector(`.node-result-panel[data-node-result="${cleanId}"]`) as HTMLElement;
+    if (panel) {
+      panel.style.display = 'block';
+    }
   });
 
   return ed;
-}
-
-/* ======================================================
-   Auto Save
-   ======================================================*/
-function scheduleSave() {
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    try {
-      store.saveFlow(editor.export());
-    } catch (e) {
-      console.error('❌ saveFlow error', e);
-    }
-  }, 500);
 }
 
 async function Save() {
@@ -176,6 +194,13 @@ async function Save() {
         title: $t('TITLE UPDATE'),
         description: $t(res.message.replaceAll('_', ' ')),
       });
+      emit('saved');
+      // Emit saved event
+      // emit is not defined in script setup? I need to defineEmits.
+      // Wait, let's check if defineEmits is used. It's not.
+      // I can use `const emit = defineEmits(['saved'])`
+      // I need to add defineEmits first.
+
     }
   } catch (e) {
     console.error('❌ saveFlow error', e);
@@ -262,7 +287,7 @@ async function uploadPlugin() {
     const config = useRuntimeConfig();
     const apiBase = config.public.apiBase || '/api';
 
-    xhr.open('POST', `${apiBase}/plugins/upload`);
+    xhr.open('POST', `${apiBase}/api/admin/plugins/upload`);
 
     // Add auth token if needed
     const token = useCookie('token');
@@ -275,6 +300,83 @@ async function uploadPlugin() {
     console.error('Upload error:', err);
     uploadError.value = `Exception: ${err}`;
     isUploading.value = false;
+  }
+}
+
+/* ======================================================
+   WebSocket for Real-Time Workflow Updates
+   ======================================================*/
+function initWorkflowWebSocket() {
+  // Prevent multiple connections
+  if (workflowSocket && (workflowSocket.readyState === WebSocket.OPEN || workflowSocket.readyState === WebSocket.CONNECTING)) return;
+
+  const config = useRuntimeConfig();
+  const token = useCookie('token');
+  
+  if (!token.value) {
+    console.error('No token for workflow WS');
+    return;
+  }
+
+  // Close existing connection
+  if (workflowSocket) workflowSocket.close();
+
+  let wsBase = config.public.apiBase.replace('http', 'ws');
+  const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
+  
+  workflowSocket = new WebSocket(wsUrl);
+  
+  workflowSocket.onopen = () => {
+  };
+
+  workflowSocket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      handleWorkflowEvent(payload);
+    } catch (err) {
+    }
+  };
+
+  workflowSocket.onclose = (e) => {
+    workflowSocket = null;
+  };
+
+  workflowSocket.onerror = (e) => {
+  };
+}
+
+function handleWorkflowEvent(payload: any) {
+  // Only handle workflow_test events
+  if (payload.type !== 'workflow_test') return;
+    
+  const nodeId = payload.nodeId;
+  if (!nodeId) return;
+  
+  const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement;
+  if (!nodeEl) return;
+  
+  // Remove all state classes
+  nodeEl.classList.remove('node-running', 'node-success', 'node-error');
+  
+  switch (payload.event) {
+    case 'node_start':
+      nodeEl.classList.add('node-running');
+      nodeStates.value.set(nodeId, 'running');
+      console.log(`Node ${nodeId} (${payload.componentName}) started`);
+      break;
+      
+    case 'node_complete':
+      nodeEl.classList.add('node-success');
+      nodeStates.value.set(nodeId, 'success');
+      console.log(`Node ${nodeId} (${payload.componentName}) completed in ${payload.executionTime}ms`);
+      break;
+      
+    case 'node_error':
+      nodeEl.classList.add('node-error');
+      nodeStates.value.set(nodeId, 'error');
+      nodeErrors.value.set(nodeId, payload.error || 'Unknown error');
+      console.log(`Node ${nodeId} (${payload.componentName}) failed:`, payload.error);
+      break;
   }
 }
 
@@ -306,6 +408,9 @@ onMounted(async () => {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
   }
+  
+  // Initialize WebSocket for real-time updates
+  initWorkflowWebSocket();
 });
 
 watch(
@@ -400,7 +505,6 @@ function updateAllConnections() {
     }
   });
   
-  console.log('✅ Updated all connection paths');
 }
 
 /* ======================================================
@@ -410,7 +514,6 @@ onBeforeUnmount(() => {
   try {
     editor?.destroy();
   } catch (e) {
-    console.error(e);
   }
 });
 
@@ -469,8 +572,6 @@ function drop(ev: DragEvent) {
     nodeHtml,
   );
 
-  // auto save
-  scheduleSave();
 }
 
 function fixColors(container: HTMLElement) {
@@ -502,6 +603,21 @@ async function exportImage() {
   link.click();
 }
 
+const copySchema = async () => {
+  const name = window.prompt('Copy Schema From ? ');
+  console.log(name)
+  if (name) {
+    try {
+      await store.copyFlow(name);
+      
+    } catch (err) {
+      console.error('Error loading :', err);
+    }
+  } else {
+    console.warn('Empty');
+  }
+};
+
 const route = useRoute();
 const Api = useApi();
 
@@ -528,9 +644,24 @@ function injectNodeResults(results: any[]) {
   const drawflowContent = drawflowContainer.querySelector('.drawflow') as HTMLElement;
   if (!drawflowContent) return;
   
-  results.forEach((step) => {
+  // Filter duplicate results for same node (keep latest)
+  const uniqueResults = new Map();
+  results.forEach(step => {
+      uniqueResults.set(step.nodeId, step);
+  });
+
+  uniqueResults.forEach((step) => {
     const nodeEl = document.getElementById(`node-${step.nodeId}`) as HTMLElement;
     if (!nodeEl) return;
+    
+    // Apply visual state to node
+    nodeEl.classList.remove('node-success', 'node-error');
+    if (step.success) {
+      nodeEl.classList.add('node-success');
+    } else {
+      nodeEl.classList.add('node-error');
+      nodeErrors.value.set(step.nodeId, step.error || 'Unknown error');
+    }
     
     // Get node position and dimensions
     const nodeRect = nodeEl.getBoundingClientRect();
@@ -557,6 +688,7 @@ function injectNodeResults(results: any[]) {
     const panelWidth = Math.max(nodeWidth, 80);
     
     // Position panel below the node using fixed coordinates
+    // Hidden by default - will show when node is clicked
     panel.style.cssText = `
       position: absolute;
       left: ${nodeLeft}px;
@@ -573,6 +705,7 @@ function injectNodeResults(results: any[]) {
       pointer-events: auto;
       resize: both;
       overflow: auto;
+      display: none;
     `;
     
     // Create collapsed view
@@ -588,28 +721,39 @@ function injectNodeResults(results: any[]) {
     // Create expanded details
     const details = document.createElement('div');
     details.className = 'result-details';
-    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;';
+    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px; height: calc(100% - 40px); overflow: hidden; display: flex; flex-direction: column;';
     
     let detailsHtml = '';
     if (step.input && Object.keys(step.input).length > 0) {
-      detailsHtml += `<div style="margin-bottom: 8px;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
+      detailsHtml += `<div style="margin-bottom: 8px; flex-shrink: 0;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
     }
-    detailsHtml += `<div><strong style="font-size: 12px;">Result:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 200px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.result, null, 2)}</pre></div>`;
+    detailsHtml += `<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;"><strong style="font-size: 12px;">Result:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; flex: 1; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.result, null, 2)}</pre></div>`;
     if (step.error) {
-      detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px;"><strong>Error:</strong> ${step.error}</div>`;
+      detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px; flex-shrink: 0;"><strong>Error:</strong> ${step.error}</div>`;
     }
     details.innerHTML = detailsHtml;
     
     // Toggle expand/collapse
     panel.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isExpanded = details.style.display !== 'none';
-      details.style.display = isExpanded ? 'none' : 'block';
-      summary.querySelector('span:last-child')!.textContent = isExpanded ? '▼' : '▲';
+      const isExpanded = details.style.display === 'none' || details.style.display === '';
       
-      // When expanding, make panel wider for better readability
-      if (!isExpanded) {
-        panel.style.minWidth = '250px';
+      if (isExpanded) {
+        // Expanding - make panel larger to show more content
+        details.style.display = 'flex';
+        summary.querySelector('span:last-child')!.textContent = '▲';
+        panel.style.minWidth = '600px';  // Increased from 400px
+        panel.style.minHeight = '400px'; // Increased from 300px
+        panel.style.maxWidth = '800px';  // Add max width
+        panel.style.maxHeight = '600px'; // Add max height
+      } else {
+        // Collapsing
+        details.style.display = 'none';
+        summary.querySelector('span:last-child')!.textContent = '▼';
+        panel.style.minWidth = `${panelWidth}px`;
+        panel.style.minHeight = 'auto';
+        panel.style.maxWidth = 'none';
+        panel.style.maxHeight = 'none';
       }
     });
     
@@ -654,8 +798,13 @@ function clearTestResults() {
 
 async function testFlow() {
   try {
-    // Clear previous results
+    // Set loading state
+    isTestingFlow.value = true;
+    
+    // Clear previous results and node states
     clearTestResults();
+    nodeStates.value.clear();
+    nodeErrors.value.clear();
     
     const dataForm = new FormData();
     dataForm.append('flowname', route.params.slug);
@@ -666,7 +815,7 @@ async function testFlow() {
       const element = store.parameters[index];
       dataForm.append(element.parametername, element.parametervalue);
     }
-    const res = await Api.post('admin/execute-flow', dataForm);
+    const res = await Api.post('api/admin/execute-flow', dataForm);
     payload.value = JSON.stringify(formDataToObject(dataForm), null, 2);
     showPayload.value = true;
 
@@ -700,6 +849,9 @@ async function testFlow() {
       description: String(err),
       color: 'red',
     });
+  } finally {
+    // Clear loading state
+    isTestingFlow.value = false;
   }
 }
 </script>
