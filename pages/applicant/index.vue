@@ -198,11 +198,37 @@
             </div>
         </div>
     </section>
+    
+    <!-- Employer Pricing -->
+    <div class="bg-gray-50 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">For Employers</h2>
+                <p class="text-slate-600">Post jobs and find talent.</p>
+            </div>
+            <PricingCalculator 
+              :available-apps="employerApps"
+              theme="light"
+              module-name="Applicant"
+              :initial-selected-apps="['job_posting', 'candidate_matching']"
+            />
+        </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
 definePageMeta({
   layout: 'applicant',
 });
+
+const employerApps = [
+  { id: 'job_posting', name: 'Unlimited Job Posting', price: 50000, icon: '📢' },
+  { id: 'candidate_matching', name: 'AI Candidate Matching', price: 100000, icon: '🤖' },
+  { id: 'branding', name: 'Employer Branding Page', price: 30000, icon: '🌟' },
+  { id: 'resume_db', name: 'Resume Database Access', price: 80000, icon: '📂' },
+]
 </script>

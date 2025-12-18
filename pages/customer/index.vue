@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
 definePageMeta({
   layout: 'customer'
 })
+
+const crmApps = [
+  { id: 'crm_basic', name: 'CRM Basic', price: 50000, icon: '👥' },
+  { id: 'pipeline', name: 'Sales Pipeline', price: 50000, icon: '📈' },
+  { id: 'helpdesk', name: 'Helpdesk & Support', price: 40000, icon: '🎧' },
+  { id: 'loyalty', name: 'Loyalty Upgrade', price: 60000, icon: '🎁' },
+]
 </script>
 
 <template>
@@ -93,6 +102,17 @@ definePageMeta({
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Pricing Calculator -->
+    <div class="mt-8">
+      <h2 class="text-xl font-bold mb-4">Subscription Plan</h2>
+      <PricingCalculator 
+        :available-apps="crmApps"
+        theme="light"
+        module-name="CRM"
+        :initial-selected-apps="['crm_basic', 'pipeline']"
+      />
     </div>
   </div>
 </template>

@@ -1,13 +1,13 @@
 <template>
   <div class="relative" :style="{ padding: '40px' }">
     <!-- Rulers -->
-    <div v-if="reportStore.showRulers" class="absolute top-0 left-0 right-0 h-10 bg-gray-200 border-b flex items-end">
+    <div v-if="reportStore.showRulers && !previewMode" class="absolute top-0 left-0 right-0 h-10 bg-gray-200 border-b flex items-end">
       <div v-for="i in Math.ceil(canvasWidth / 50)" :key="`h-${i}`" class="relative" :style="{ width: '50px' }">
         <span class="absolute bottom-0 left-0 text-xs text-gray-600">{{ i * 50 }}</span>
         <div class="absolute bottom-0 left-0 w-px h-2 bg-gray-400"></div>
       </div>
     </div>
-    <div v-if="reportStore.showRulers" class="absolute top-0 left-0 bottom-0 w-10 bg-gray-200 border-r flex flex-col justify-end">
+    <div v-if="reportStore.showRulers && !previewMode" class="absolute top-0 left-0 bottom-0 w-10 bg-gray-200 border-r flex flex-col justify-end">
       <div v-for="i in Math.ceil(canvasHeight / 50)" :key="`v-${i}`" class="relative" :style="{ height: '50px' }">
         <span class="absolute top-0 left-0 text-xs text-gray-600 transform -rotate-90 origin-top-left">{{ i * 50 }}</span>
         <div class="absolute top-0 left-0 h-px w-2 bg-gray-400"></div>
@@ -16,7 +16,7 @@
 
     <!-- Canvas Container -->
     <div
-      class="relative bg-white shadow-lg mx-auto"
+      class="relative bg-white shadow-lg mx-auto transition-all duration-300"
       :style="{
         width: `${canvasWidth}px`,
         height: `${canvasHeight}px`,
@@ -26,7 +26,7 @@
     >
       <!-- Grid -->
       <svg
-        v-if="reportStore.showGrid"
+        v-if="reportStore.showGrid && !previewMode"
         class="absolute inset-0 pointer-events-none"
         :width="canvasWidth"
         :height="canvasHeight"
@@ -53,13 +53,14 @@
       <div
         v-for="band in reportStore.currentTemplate?.bands"
         :key="band.type"
-        class="relative border-b border-dashed border-gray-300"
+        class="relative"
+        :class="{'border-b border-dashed border-gray-300': !previewMode}"
         :style="{ height: `${band.height}px` }"
         @dragover.prevent
         @drop="onDrop($event, band.type)"
       >
         <!-- Band Label -->
-        <div class="absolute -left-2 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-l transform -translate-x-full">
+        <div v-if="!previewMode" class="absolute -left-2 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-l transform -translate-x-full z-10">
           {{ band.type }}
         </div>
 
@@ -67,10 +68,11 @@
         <div
           v-for="element in band.elements"
           :key="element.id"
-          class="absolute border cursor-move"
+          class="absolute overflow-hidden"
           :class="{
-            'border-blue-500 border-2': reportStore.selectedElement?.id === element.id,
-            'border-gray-400': reportStore.selectedElement?.id !== element.id,
+            'border cursor-move': !previewMode,
+            'border-blue-500 border-2 z-20': !previewMode && reportStore.selectedElement?.id === element.id,
+            'border-gray-400 hover:border-gray-500': !previewMode && reportStore.selectedElement?.id !== element.id,
           }"
           :style="{
             left: `${element.x}px`,
@@ -82,33 +84,65 @@
           @mousedown="startDrag($event, element)"
         >
           <!-- Element Content -->
-          <div class="p-1 text-xs overflow-hidden">
+          <div class="w-full h-full p-1" :class="{'pointer-events-none': previewMode}">
+             <!-- Dynamic Component Rendering could be better here, but switch case for now -->
             <template v-if="element.type === 'staticText'">
-              {{ element.properties.text || 'Static Text' }}
+              <div 
+                class="w-full h-full whitespace-pre-wrap"
+                :style="{
+                  fontFamily: element.properties.fontFamily,
+                  fontSize: `${element.properties.fontSize}px`,
+                  fontWeight: element.properties.bold ? 'bold' : 'normal',
+                  fontStyle: element.properties.italic ? 'italic' : 'normal',
+                  textDecoration: element.properties.underline ? 'underline' : 'none',
+                  color: element.properties.color,
+                  textAlign: element.properties.alignment,
+                }"
+              >
+                {{ element.properties.text || 'Label' }}
+              </div>
             </template>
             <template v-else-if="element.type === 'textField'">
-              <span class="text-blue-600">{{ element.properties.expression || '$F{field}' }}</span>
+              <div class="w-full h-full flex items-center bg-blue-50/50 text-blue-600 text-xs px-1" v-if="!previewMode">
+                 {{ element.properties.expression || '$F{field}' }}
+              </div>
+              <div v-else class="w-full h-full text-gray-500 italic">
+                 {{ element.properties.expression }} (Data)
+              </div>
             </template>
             <template v-else-if="element.type === 'image'">
-              <UIcon name="i-heroicons-photo" class="text-gray-400" />
+               <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                 <img v-if="element.properties.source && !element.properties.source.startsWith('$')" :src="element.properties.source" class="max-w-full max-h-full" />
+                 <UIcon v-else name="i-heroicons-photo" class="text-gray-400 w-8 h-8" />
+               </div>
             </template>
             <template v-else-if="element.type === 'line'">
-              <div class="w-full h-px bg-black"></div>
+              <div 
+                class="w-full h-full flex items-center justify-center"
+              >
+                 <div 
+                    :style="{
+                        width: element.properties.direction === 'vertical' ? `${element.properties.lineWidth}px` : '100%',
+                        height: element.properties.direction === 'horizontal' ? `${element.properties.lineWidth}px` : '100%',
+                        backgroundColor: element.properties.color
+                    }"
+                 ></div>
+              </div>
             </template>
             <template v-else-if="element.type === 'rectangle'">
-              <!-- Rectangle border only -->
+               <div class="w-full h-full border border-black"></div>
             </template>
             <template v-else>
-              {{ element.type }}
+               <span class="text-xs text-gray-400">{{ element.type }}</span>
             </template>
           </div>
 
-          <!-- Resize Handles (when selected) -->
-          <template v-if="reportStore.selectedElement?.id === element.id">
+          <!-- Resize Handles (when selected and not preview) -->
+          <template v-if="!previewMode && reportStore.selectedElement?.id === element.id">
             <div
               v-for="handle in resizeHandles"
               :key="handle.position"
-              class="absolute w-2 h-2 bg-blue-500 border border-white"
+              class="absolute w-2 h-2 bg-blue-500 border border-white z-30"
               :class="handle.cursor"
               :style="handle.style"
               @mousedown.stop="startResize($event, element, handle.position)"
@@ -123,6 +157,13 @@
 <script setup lang="ts">
 import { useReportStore } from '~/store/report';
 import type { ReportElement } from '~/store/report';
+
+const props = defineProps({
+  previewMode: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const reportStore = useReportStore();
 
@@ -143,6 +184,7 @@ const resizeHandles = [
 let dragState: any = null;
 
 function onDrop(event: DragEvent, bandType: string) {
+  if (props.previewMode) return;
   event.preventDefault();
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
@@ -171,10 +213,12 @@ function onDrop(event: DragEvent, bandType: string) {
 }
 
 function selectElement(element: ReportElement) {
+  if (props.previewMode) return;
   reportStore.selectElement(element);
 }
 
 function startDrag(event: MouseEvent, element: ReportElement) {
+  if (props.previewMode) return;
   if (event.button !== 0) return; // Only left click
 
   dragState = {
@@ -191,6 +235,7 @@ function startDrag(event: MouseEvent, element: ReportElement) {
 }
 
 function startResize(event: MouseEvent, element: ReportElement, position: string) {
+  if (props.previewMode) return;
   dragState = {
     type: 'resize',
     element,
@@ -258,6 +303,8 @@ function onMouseUp() {
 // Keyboard shortcuts
 onMounted(() => {
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (props.previewMode) return;
+    
     // Delete
     if (event.key === 'Delete' && reportStore.selectedElement) {
       reportStore.deleteElement(reportStore.selectedElement.id);

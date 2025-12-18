@@ -219,12 +219,35 @@
            </div>
         </div>
     </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Investasi Sistem</h2>
+            </div>
+            <PricingCalculator 
+              :available-apps="koperasiApps"
+              theme="light"
+              module-name="Koperasi"
+              :initial-selected-apps="['simpan_pinjam', 'accounting']"
+            />
+        </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
 definePageMeta({
   layout: 'koperasi'
 })
 
+const koperasiApps = [
+  { id: 'simpan_pinjam', name: 'Simpan Pinjam', price: 60000, icon: '🏦' },
+  { id: 'unit_ritel', name: 'Unit Ritel / POS', price: 50000, icon: '🏪' },
+  { id: 'accounting', name: 'Koperasi Accounting', price: 50000, icon: '📒' },
+  { id: 'mobile_app', name: 'Anggota Mobile App', price: 30000, icon: '📱' },
+]
 </script>

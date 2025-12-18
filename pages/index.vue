@@ -1,5 +1,24 @@
 <script setup lang="ts">
 import '@/assets/css/landing.css';
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
+// Consolidated list of popular apps from various modules for the main landing page
+const allApps = [
+  { id: 'engine', name: 'Capella', price: 2500000, icon: '📊' },
+  { id: 'accounting', name: 'Accounting', price: 250000, icon: '📊' },
+  { id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📊' },
+  { id: 'erp_prod', name: 'ERP Production', price: 250000, icon: '📊' },
+  { id: 'erp_prod', name: 'ERP Project', price: 250000, icon: '📊' },
+  { id: 'hris_ess', name: 'HRIS', price: 150000, icon: '👥' },
+  { id: 'ess', name: 'ESS', price: 100000, icon: '👥' },
+  { id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },
+  { id: 'career', name: 'Career', price: 100000, icon: '👥' },
+  { id: 'customer_pro', name: 'Customer Professional', price: 50000, icon: '🤝' },
+  { id: 'eproc_adv', name: 'E-Procurement Advanced', price: 100000, icon: '🛒' },
+  { id: 'pos_retail', name: 'POS Retail', price: 100000, icon: '🏪' },
+  { id: 'pentest', name: 'Security Scanner', price: 2000000, icon: '🛡️' },
+  { id: 'remindax', name: 'Remindax', price: 50000, icon: '🔔' },
+]
 
 definePageMeta({
   layout: false,
@@ -812,6 +831,50 @@ useHead({
                         </div>
                     </div>
                 </article>
+
+                                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-orange-500/20 to-red-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-orange-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- Clock -->
+                          <circle cx="256" cy="256" r="192" />
+                          <path d="M256 128V256L352 320" stroke-width="24" />
+                          
+                          <!-- Notification Bell -->
+                          <path d="M416 96L448 64" stroke-width="24" class="text-red-400" />
+                          <path d="M448 96L416 64" stroke-width="24" class="text-red-400" />
+                          <path d="M96 96L64 64" stroke-width="24" class="text-red-400" />
+                          <path d="M64 96L96 64" stroke-width="24" class="text-red-400" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs font-semibold">Productivity</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Remindax</h3>
+                        <p class="text-gray-400 mb-4">Smart reminder and scheduling system. Never miss a deadline with multi-channel notifications via WhatsApp & Email.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Scheduling</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">WhatsApp</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Recurring</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">Stay Organized</span>
+                            <NuxtLink class="text-orange-400 hover:text-orange-300 text-sm font-semibold" to="/remindax">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
             </div>
 
             <!-- Stats Banner -->
@@ -835,6 +898,25 @@ useHead({
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto">
+             <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">
+                    Transparent Pricing
+                </h2>
+                <p class="text-xl text-gray-400">Build your perfect stack. Select the modules you need and get an instant estimate.</p>
+            </div>
+            
+            <PricingCalculator 
+              :available-apps="allApps"
+              theme="dark"
+              module-name="Enterprise Bundle"
+              :initial-selected-apps="['erp_core', 'hris_ess']"
+            />
         </div>
     </section>
 

@@ -1,22 +1,41 @@
+<template>
+  <div class="bg-indigo-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-20 text-center">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-indigo-900 mb-6">Smart Order Management</h1>
+        <p class="text-xl text-indigo-700 max-w-2xl mx-auto mb-12">
+            Centralize your orders from all channels. Automate processing, shipping, and inventory updates in real-time.
+        </p>
+        <div class="flex justify-center gap-4 mb-20">
+            <NuxtLink to="/customer/orders" class="px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
+                Enter Dashboard
+            </NuxtLink>
+            <button class="px-8 py-4 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50 transition-all">
+                Learn More
+            </button>
+        </div>
+
+        <!-- Pricing Section -->
+        <PricingCalculator 
+            :available-apps="omsApps"
+            theme="light"
+            module-name="Order"
+            :initial-selected-apps="['order_processing', 'inventory']"
+        />
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-// Simple redirect to customer orders or login
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
 definePageMeta({
   layout: false
 })
 
-onMounted(() => {
-  const router = useRouter();
-  // In a real app, check auth state here.
-  // For now, redirect to customer dashboard (or orders as requested plan)
-  router.push('/customer/orders');
-});
+const omsApps = [
+  { id: 'order_processing', name: 'Order Processing', price: 50000, icon: '📦' },
+  { id: 'inventory', name: 'Inventory Sync', price: 40000, icon: '🔄' },
+  { id: 'warehouse', name: 'Multi-Warehouse', price: 60000, icon: '🏭' },
+  { id: 'shipping', name: 'Shipping Integration', price: 30000, icon: '🚚' },
+]
 </script>
-
-<template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-      <p class="mt-4 text-gray-600">Redirecting to Customer Portal...</p>
-    </div>
-  </div>
-</template>
