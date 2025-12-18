@@ -320,5 +320,62 @@
         "API": "API"
       }
     }
+  },
+  "ERP": {
+    "HERO": {
+      "TITLE_PREFIX": "Tingkatkan Bisnis Anda",
+      "TITLE_SUFFIX": "Dengan ERP Cerdas",
+      "SUBTITLE": "Rasakan masa depan manajemen perusahaan. Wawasan berbasis AI, kustomisasi seret-dan-lepas, dan alur kerja mulus—semua di satu tempat.",
+      "GET_STARTED": "Mulai Sekarang",
+      "LEARN_MORE": "Pelajari Lebih Lanjut"
+    },
+    "FEATURES": {
+      "TITLE": "Kemampuan Utama",
+      "SUBTITLE": "Dibangun untuk fleksibilitas dan performa."
+    },
+    "MODULES": {
+      "TITLE": "Modul Perusahaan",
+      "SUBTITLE": "Periksa rangkaian komprehensif untuk mengelola setiap aspek bisnis Anda."
+    },
+    "PRICING": {
+      "TITLE": "Hitung Harga Anda",
+      "SUBTITLE": "Pilih aplikasi yang Anda butuhkan dan jumlah pengguna.",
+      "CHOOSE_DEPLOYMENT": "Pilih Deployment",
+      "SELECT_APPS": "Pilih Aplikasi",
+      "USERS_COUNT": "Berapa banyak pengguna?",
+      "USERS_NOTE": "Harga per pengguna berlaku untuk semua modul yang dipilih.",
+      "STORAGE": "Penyimpanan Data",
+      "STORAGE_NOTE": "Termasuk 10GB dasar. +Rp 20.000 per 10GB tambahan.",
+      "SERVICES": "Layanan & Implementasi",
+      "CONSULTATION": "Konsultasi (Jam Kerja)",
+      "TRANSPORT": "Transportasi & Akomodasi",
+      "WORKFLOWS": "Tambahkan Kemampuan Ekstra (Workflows)",
+      "ESTIMATED_COST": "Perkiraan Biaya",
+      "REQUEST_QUOTE": "Minta Penawaran",
+      "DEPLOYMENT": "Deployment",
+      "TOTAL_ONE_TIME": "Total Satu Kali",
+      "TOTAL_MONTHLY": "Total Bulanan Berulang"
+    },
+    "DEMO": {
+      "TITLE": "Minta Demo",
+      "SUBTITLE": "Lihat ERP kami beraksi. Isi formulir di bawah ini dan kami akan segera menghubungi Anda.",
+      "NAME": "Nama Lengkap",
+      "PHONE": "Nomor Telepon",
+      "EMAIL": "Alamat Email",
+      "SEND": "Kirim Permintaan",
+      "SENDING": "Mengirim...",
+      "SUCCESS": "Terima kasih! Permintaan demo Anda telah berhasil dikirim.",
+      "ERROR": "Terjadi kesalahan. Silakan coba lagi nanti."
+    },
+    "APPS": {
+      "ACCOUNTING": "Akuntansi",
+      "WAREHOUSE": "Gudang",
+      "PRODUCTION": "Produksi",
+      "ORDER": "Manajemen Pesanan",
+      "PROCUREMENT": "Pengadaan",
+      "EPROCUREMENT": "E-Procurement",
+      "HR": "Sumber Daya Manusia",
+      "PROJECT": "Manajemen Proyek"
+    }
   }
 }

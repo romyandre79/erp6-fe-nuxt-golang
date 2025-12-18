@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useUserStore } from '~/store/user'
+import { useChatStore } from '~/store/chat'
 // import { useAuth } from '~/composables/useAuth'
 
 export const useNotificationStore = defineStore('notification', {
@@ -38,11 +39,17 @@ export const useNotificationStore = defineStore('notification', {
       const token = userStore.token || localStorage.getItem('token')
       if (!token) return
 
-      // Use correct protocol (ws or wss)
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = 'localhost:8888' // Backend host. Ideally from config/env
-      // If frontend/backend on same domain/proxy, usage window.location.host
-      // But user has go run . (port usually 8888) and bun run dev (port 3000)
+      // Use runtime config to get API base
+      const config = useRuntimeConfig()
+      let apiBase = config.public.apiBase as string
+
+      // Remove protocol (http:// or https://) to get host
+      let host = apiBase.replace(/^https?:\/\//, '')
+      
+      // Determine request protocol (ws:// or wss://) based on page protocol
+      // If apiBase is https, force wss
+      const isSecure = window.location.protocol === 'https:' || apiBase.startsWith('https://')
+      const protocol = isSecure ? 'wss:' : 'ws:'
       
       const url = `${protocol}//${host}/api/ws/notifications?token=${token}`
       
@@ -60,6 +67,25 @@ export const useNotificationStore = defineStore('notification', {
             // Optional: Show toast
             const { $toast } = useNuxtApp()
             if ($toast) $toast.add({ title: payload.data.menuname, description: payload.data.description })
+          } else if (payload.type === 'chat') {
+            // Forward to Chat Store
+            // We need to dynamically import to avoid circular dependency potentially, or just use useChatStore if safe
+            // Let's assume standard import works (pinia handles it well usually)
+            // but to be safe inside a callback:
+            const chatStore = useNuxtApp().$pinia.state.value.chat ? useChatStore() : useChatStore()
+            
+            // Payload data usually contains { text: "...", timestamp: "..." } structure or full Chat model
+            // The backend sends: { type: "chat", data: chatLog_Struct }
+            chatStore.addMessage(payload.data)
+            
+            // Also Show Toast for chat? User said "Chat show to chat", but maybe a notification is nice if not open?
+            // "notification different" implies keep them separate.
+            const { $toast } = useNuxtApp()
+            if ($toast) $toast.add({ 
+              title: `Message from User ${payload.data.senderid}`, 
+              description: payload.data.message,
+              icon: 'i-heroicons-chat-bubble-left-right'
+            })
           }
         } catch (e) {
           console.error('WS Parse error', e)

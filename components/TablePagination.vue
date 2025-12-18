@@ -163,6 +163,7 @@
               v-for="col in visibleColumns"
               :key="col.key || col"
               class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors relative group"
+              :class="{'text-right': ['number','currency'].includes(col.type)}"
               :style="columnWidths[col.key || col] ? { width: columnWidths[col.key || col] + 'px', minWidth: columnWidths[col.key || col] + 'px' } : {}"
               @click="toggleSort(col.key || col, fetchData)"
               :draggable="enableGrouping"
@@ -263,7 +264,7 @@
                   </button>
                 </td>
 
-                <td v-for="col in visibleColumns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer">
+                <td v-for="col in visibleColumns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
                   <template v-if="enableInlineEdit && isEditing(item.row)">
                     <input type="text" class="input input-xs input-bordered w-full" v-model="editForm[col.key || col]" @click.stop />
                   </template>
@@ -394,6 +395,7 @@ const props = defineProps({
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
+const route = useRoute();
 
 // Table preferences persistence
 const tableId = computed(() => props.endPoint || 'default_table');
@@ -587,7 +589,7 @@ async function fetchData() {
     if (props.method.toUpperCase() === 'POST') {
       const dataForm = new FormData();
       dataForm.append('flowname', props.endPoint || '');
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append('page', currentPage.value);
       dataForm.append('rows', pageSize.value);

@@ -8,7 +8,7 @@
         Go Back
       </button>
     </div>
-    <FormRender v-else-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle" />
+    <FormRender v-else-if="formSchema" :schema="formSchema" :menuName="menuName" :formType="formType" :title="formTitle" :permissions="permissions" />
   </div>
 </template>
 
@@ -22,6 +22,7 @@ const formSchema = ref<Record<string, any> | null>(null);
 const formType = ref(String);
 const formTitle = ref(String);
 const menuName = ref(String);
+const permissions = ref<Record<string, number>>({});
 
 definePageMeta({
   layout: 'auth',
@@ -40,6 +41,13 @@ onMounted(async () => {
       formTitle.value = res.data.data.description;
       formType.value = res.data.data.menutype;
       formSchema.value = JSON.parse(res.data.data.menuform);
+      permissions.value = {
+        iswrite: res.data.data.iswrite ?? 1, // Default to 1 if not present (legacy compat)
+        isread: res.data.data.isread ?? 1,
+        ispurge: res.data.data.ispurge ?? 1,
+        isupload: res.data.data.isupload ?? 1,
+        isdownload: res.data.data.isdownload ?? 1,
+      };
     } else if (res?.code == 423 || res?.message === 'SCHEMA_LOCKED') {
       // Schema is locked
       maintenanceMode.value = true;

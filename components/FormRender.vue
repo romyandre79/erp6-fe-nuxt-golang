@@ -23,6 +23,7 @@ const props = defineProps({
   menuName: { type: String, default: '' },
   schema: { type: [Object, String], required: true },
   formType: { type: String, default: 'form' },
+  permissions: { type: Object, default: () => ({ iswrite: 1, isread: 1, ispurge: 1, isupload: 1, isdownload: 1 }) },
 });
 
 const modalTitle = ref('');
@@ -30,7 +31,7 @@ const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
 const Api = useApi();
-
+const route = useRoute();
 const toast = useToast();
 let selectedRows = ref<any[]>([]);
 
@@ -72,7 +73,8 @@ watch(
     if (!newVal || newVal.length === 0) return;
     // 🔄 Loop semua tabel di schema
     tables.value.forEach((tbl: any) => {
-      if (tbl.key !== 'table0') {
+      const key = tbl.props?.key || tbl.key;
+      if (key !== 'table0') {
         // update relation key untuk table child
         tbl.selectionKeyData = newVal[0][tbl.relationkey] + '';
       }
@@ -89,7 +91,8 @@ watch(
     for (const key of Object.keys(modalRefs)) delete modalRefs[key];
     newVal?.forEach((m) => {
       // buat modal ref
-      modalRefs[m.key] = ref(false);
+      const key = m.props?.key || m.key;
+      modalRefs[key] = ref(false);
     });
   },
   { immediate: true },
@@ -129,6 +132,22 @@ function open(key: string) {
     modalRefs[key].value = true;
     modalTitle.value = 'New Data';
     modalDescription.value = '';
+    
+    const modal = modals.value.find((m: any) => m.props.key === key);
+    if (modal) {
+       const modalFields = getModalFields(modal.children || []);
+       modalFields.forEach(fieldKey => {
+         if (formData.value[fieldKey] !== undefined) {
+           formData.value[fieldKey] = null; // or default value if needed
+           // Special handling for array/detail tables if necessary, though null works for most
+           // If it's a detail table inline, maybe empty array
+           if (Array.isArray(formData.value[fieldKey])) {
+             formData.value[fieldKey] = [];
+           }
+         }
+       });
+    }
+
     const primary = getPrimary();
     tableRef.value.setData(primary, 0);
   } else {
@@ -137,16 +156,29 @@ function open(key: string) {
 }
 
 async function copy() {
-  const onCopy = getAction('onCopy') 
+  const onCopy = getAction('copy') 
   if (onCopy == '') return 
   try {
   const dataForm = new FormData();
   dataForm.append('flowname', onCopy);
-  dataForm.append('menu', 'admin');
+  dataForm.append('menu', route.params.slug);
   dataForm.append('search', 'true');
-  dataForm.append('id', selectedRows.value[0][getPrimary()]);
+  const selectedRow = selectedRows.value[0];
+  for (const rowKey in selectedRow) {
+    if (selectedRow[rowKey] !== null && selectedRow[rowKey] !== undefined && typeof selectedRow[rowKey] !== 'object') {
+      dataForm.append('id', selectedRow[rowKey]);
+    }
+  }
   const res = await Api.post('api/admin/execute-flow', dataForm);
-  toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+  if (res.code == 200) {
+    toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+  } else {
+    toast.add({
+      title: $t('TITLE ERROR'),
+      description: res.details,
+      color: 'error',
+    });
+  }
   } catch (err) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
   }
@@ -160,6 +192,51 @@ function getPrimary() {
     }
   });
   return node.props.primary || null;
+}
+
+async function refreshMasterData(recId: any) {
+  const primary = getPrimary();
+  const flow = getAction('get');
+
+  if (!recId || !flow) return;
+
+  const dataForm = new FormData();
+  dataForm.append('flowname', flow);
+  dataForm.append('menu', route.params.slug);
+  dataForm.append('search', 'true');
+  dataForm.append(primary, recId);
+
+  try {
+    const res = await Api.post('api/admin/execute-flow', dataForm);
+    if (res.code == 200) {
+      const record = res.data.data;
+      for (const key in record) {
+        formData.value[key] = record[key];
+      }
+
+      // 🔥 Load detail table data if exists
+      // Check for any array fields that might be detail tables
+      for (const key in record) {
+        if (Array.isArray(record[key]) && record[key].length > 0) {
+          formData.value[key] = [...record[key]];
+        }
+      }
+
+      if (tableRef.value && typeof tableRef.value.setData === 'function') {
+        tableRef.value.setData(primary, recId);
+      }
+    } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
+      navigateTo('/login');
+    } else {
+      toast.add({
+        title: $t('TITLE ERROR'),
+        description: res.details,
+        color: 'error',
+      });
+    }
+  } catch (err) {
+    console.error('Gagal ambil data:', err);
+  }
 }
 
 async function edit(key: string) {
@@ -197,7 +274,7 @@ async function edit(key: string) {
       
       const dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       
       // Append all selected row data as search parameters
@@ -217,6 +294,12 @@ async function edit(key: string) {
           }
         } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
           navigateTo('/login');
+        } else {
+          toast.add({
+            title: $t('TITLE ERROR'),
+            description: res.details,
+            color: 'error',
+          });
         }
       } catch (err) {
         console.error('Gagal ambil data:', err);
@@ -261,29 +344,11 @@ async function edit(key: string) {
       modalRefs[key].value = true;
       const dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append(primary, selectedRows.value[0][primary]);
       try {
-        const res = await Api.post('api/admin/execute-flow', dataForm);
-        if (res.code == 200) {
-          const record = res.data.data;
-          for (const key in record) {
-            formData.value[key] = record[key];
-          }
-          
-          // 🔥 Load detail table data if exists
-          // Check for any array fields that might be detail tables
-          for (const key in record) {
-            if (Array.isArray(record[key]) && record[key].length > 0) {
-              formData.value[key] = [...record[key]];
-            }
-          }
-          
-          tableRef.value.setData(primary, selectedRows.value[0][primary]);
-        } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
-          navigateTo('/login');
-        }
+        await refreshMasterData(selectedRows.value[0][primary]);
       } catch (err) {
         console.error('Gagal ambil data:', err);
       }
@@ -294,7 +359,7 @@ async function edit(key: string) {
 async function runFlow(flow: string) {
   const dataForm = new FormData();
   dataForm.append('flowname', flow);
-  dataForm.append('menu', 'admin');
+  dataForm.append('menu', route.params.slug);
   dataForm.append('search', 'true');
   try {
     const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -302,6 +367,12 @@ async function runFlow(flow: string) {
       const record = res.data.data;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
+    } else {
+      toast.add({
+        title: $t('TITLE ERROR'),
+        description: res.details,
+        color: 'error',
+      });
     }
   } catch (err) {
     console.error('Gagal ambil data:', err);
@@ -338,26 +409,116 @@ function close(key: string) {
 }
 
 async function deleteData(table: any) {
-  const flow = getAction('purge');
-  if (flow && selectedRows.value.length > 0) {
-    const primary = getPrimary();
-    for (let index = 0; index < selectedRows.value.length; index++) {
+  let flow = '';
+  let itemsToDelete = [];
+  let primaryKey = '';
+
+  // Check if it is a detail table
+  // Instead of checking string 'detail', we check if it is NOT the master table.
+  // Master table is usually the first table, or specific type 'master' (but here we deal with 'table' type nodes).
+  // Let's assume tables[0] is master if explicitly not defined otherwise.
+  // Or better, check against 'table0' or the key of the main table.
+  
+  // Find the master table key
+  // Usually the list of tables[0] is the main one?
+  // Let's look at `tables` computed again. It finds all nodes of type 'table'.
+  // Often master table is separate? 
+  // If 'TablePagination' is used as master, it's a 'table' node.
+  
+  const allTables = tables.value;
+  let masterTable = allTables.find((t: any) => t.props.key === 'table0');
+  if (!masterTable && allTables.length > 0) masterTable = allTables[0];
+  
+  const masterKey = masterTable?.props?.key || 'table0';
+  
+  // Is it detail?
+  // If the passed table key is NOT the master key, it's a detail table.
+  // Also check if the table actually exists in our list.
+  const targetTableObj = allTables.find((t: any) => t.props.key.toLowerCase() === table.toLowerCase());
+  
+  const isDetailTable = targetTableObj && targetTableObj.props.key !== masterKey;
+  
+  if (isDetailTable) {
+    // Handle detail table deletion
+    // 1. Identify which detail table it is (index among detail tables)
+    // Filter out the master table to get list of detail tables
+    const detailTables = allTables.filter((t: any) => t.props.key !== masterKey);
+    
+    // Find index (case-insensitive find)
+    const tableIndex = detailTables.findIndex((t: any) => t.props.key.toLowerCase() === table.toLowerCase());
+    
+    // Get flow
+    let actionNode: any;
+    parsedSchema.value.forEach((element: any) => {
+      if (element.type == 'action') {
+        actionNode = element;
+      }
+    });
+
+    const purgeFlows = actionNode?.props?.onPurgeDetail || [];
+    flow = purgeFlows[tableIndex];
+    
+    itemsToDelete = selectedRows.value;
+
+    // For detail table, primary key might be different. 
+    primaryKey = targetTableObj?.props?.primary || 'id';
+
+  } else {
+    // Master table deletion
+    flow = getAction('purge');
+    itemsToDelete = selectedRows.value;
+    primaryKey = getPrimary();
+  }
+
+  if (flow && itemsToDelete.length > 0) {
+    for (let index = 0; index < itemsToDelete.length; index++) {
       let dataForm = new FormData();
       dataForm.append('flowname', flow);
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
-      dataForm.append(primary, selectedRows.value[index][primary]);
+      
+      const idVal = itemsToDelete[index][primaryKey];
+      if (idVal) {
+          dataForm.append(primaryKey, idVal);
+      }
+      
       try {
         const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res?.code == 200) {
-          tableRef.value.refreshTable();
+           
+           if (isDetailTable) {
+               // Refresh detail table
+               // We need to re-fetch master data to update the detail list in formData
+               const masterPrimary = getPrimary();
+               const masterId = formData.value[masterPrimary];
+               if (masterId) {
+                   await refreshMasterData(masterId);
+               }
+           } else {
+               tableRef.value.refreshTable();
+           }
+           
         } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
           navigateTo('/login');
+        } else {
+          toast.add({
+            title: $t('TITLE ERROR'),
+            description: res.details,
+            color: 'error',
+          });
         }
       } catch (err) {
+        toast.add({
+            title: $t('TITLE ERROR'),
+            description: err,
+            color: 'error',
+          });
         console.error('Gagal hapus data:', err);
       }
     }
+  } else {
+      if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
+      if (itemsToDelete.length === 0) toast.add({ title: 'Warning', description: 'No rows selected', color: 'warning' });
   }
 }
 
@@ -372,7 +533,7 @@ async function downForm(mode: any) {
     let dataForm = new FormData();
     const primary = getPrimary();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
     for (let index = 0; index < selectedRows?.length; index++) {
       dataForm.append(primary + '[' + index + ']', selectedRows[index][primary]);
@@ -462,7 +623,7 @@ async function handleFileChange(e: Event) {
 
   const form = new FormData();
   form.append('flowname', flow);
-  form.append('menu', 'admin');
+  form.append('menu', route.params.slug);
   form.append('search', 'false');
   form.append('file-modules', file);
 
@@ -482,8 +643,9 @@ async function handleFileChange(e: Event) {
       tableRef.value?.refreshTable?.();
     } else {
       toast.add({
-        title: 'Upload Failed',
-        description: res.message || 'Unknown error.',
+        title: $t('TITLE ERROR'),
+        description: res.details || 'Unknown error.',
+        color: 'error',
       });
     }
   } catch (err) {
@@ -701,6 +863,15 @@ function renderComponent(component: any) {
     }
 
     case 'button':
+      // 🔒 Permission Check
+      const p = props.permissions;
+      const evt = (component.props.onClick || '').toLowerCase();
+      
+      if ((evt === 'oncreate' || evt === 'onupdate' || evt.startsWith('open:') || evt.startsWith('edit:') || evt.startsWith('copy')) && Number(p?.iswrite) === 0) return null;
+      if ((evt === 'ondelete' || evt.startsWith('deletedata')) && Number(p?.ispurge) === 0) return null;
+      if (evt.startsWith('upload') && Number(p?.isupload) === 0) return null;
+      if ((evt === 'downtemplate' || evt.startsWith('downform')) && Number(p?.isdownload) === 0) return null;
+
       return h(UButton, {
         class: [component.props.class, 'rounded px-4 py-2 mr-2 transition mb-3'],
         icon: component.props.icon || '',
@@ -1146,7 +1317,7 @@ const ReadHandler = async () => {
   if (flow) {
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -1167,7 +1338,7 @@ const CreateHandler = async () => {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     for (const key in payload) {
@@ -1186,6 +1357,12 @@ const CreateHandler = async () => {
           description: $t(res.message.replaceAll('_', ' ')),
         });
         ReadHandler();
+      } else {
+        toast.add({
+          title: $t('TITLE ERROR'),
+          description: res.details,
+          color: 'error',
+        });
       }
     } finally {
       isLoading.value = false;
@@ -1202,7 +1379,7 @@ const UpdateHandler = async () => {
     const payload = { ...toRaw(formData.value) };
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
 
     for (const key in payload) {
@@ -1219,6 +1396,12 @@ const UpdateHandler = async () => {
         toast.add({
           title: $t('TITLE UPDATE'),
           description: $t(res.message.replaceAll('_', ' ')),
+        });
+      } else {
+        toast.add({
+          title: $t('TITLE ERROR'),
+          description: res.details,
+          color: 'error',
         });
       }
     } finally {
@@ -1238,7 +1421,7 @@ const DeleteHandler = async () => {
       for (let index = 0; index < selectedRows.value.length; index++) {
         let dataForm = new FormData();
         dataForm.append('flowname', flow);
-        dataForm.append('menu', 'admin');
+        dataForm.append('menu', route.params.slug);
         dataForm.append('search', 'true');
         dataForm.append(primary, selectedRows.value[index][primary]);
         const res = await Api.post('api/admin/execute-flow', dataForm);
@@ -1265,6 +1448,21 @@ const DeleteHandler = async () => {
 onMounted(() => {
   ReadHandler();
 });
+
+
+// Helper to find all input keys in a modal
+function getModalFields(nodes: any[]): string[] {
+  let fields: string[] = [];
+  nodes.forEach((node) => {
+    if (node.props?.key) {
+      fields.push(node.props.key);
+    }
+    if (node.children) {
+      fields = fields.concat(getModalFields(node.children));
+    }
+  });
+  return fields;
+}
 
 async function saveData(key: any) {
   try {
@@ -1306,23 +1504,11 @@ async function saveData(key: any) {
       }
     }
 
-    // Helper to find all input keys in a modal
-    function getModalFields(nodes: any[]): string[] {
-      let fields: string[] = [];
-      nodes.forEach((node) => {
-        if (node.props?.key) {
-          fields.push(node.props.key);
-        }
-        if (node.children) {
-          fields = fields.concat(getModalFields(node.children));
-        }
-      });
-      return fields;
-    }
-
+    // Helper to find all input keys in a modal (Moved to global scope below)
+    
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
-    dataForm.append('menu', 'admin');
+    dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
     
     const payload = { ...toRaw(formData.value) };
@@ -1372,12 +1558,40 @@ async function saveData(key: any) {
         title: $t('TITLE UPDATE'),
         description: $t(res.message.replaceAll('_', ' ')),
       });
-      tableRef.value.refreshTable();
+      // tableRef.value.refreshTable(); // ❌ Don't refresh main table immediately to avoid clearing selection
+      
+      const primary = getPrimary();
+      let masterId = null;
+      if (primary && formData.value[primary]) {
+        masterId = formData.value[primary];
+      }
+
+      // If Detail Modal, refresh master data to update detail table
+      if (isDetailModal && masterId) {
+        await refreshMasterData(masterId);
+      } 
+      
+      // Refresh global table (optional, might clear selection)
+      if (tableRef.value) {
+          tableRef.value.refreshTable();
+      }
+      
       modalRefs[key].value = false;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
+    } else {
+       toast.add({
+        title: $t('TITLE ERROR'),
+        description: res.details,
+        color: 'error',
+      });
     }
   } catch (err) {
+    toast.add({
+        title: $t('TITLE ERROR'),
+        description: err,
+        color: 'error',
+      });
     console.error('Gagal simpan data:', err);
   } finally {
     isLoading.value = false;

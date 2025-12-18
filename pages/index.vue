@@ -412,7 +412,7 @@ useHead({
                         </div>
                         <div class="flex items-center justify-between pt-4 border-t border-gray-700">
                             <span class="text-sm text-gray-500">500+ active workflows</span>
-                            <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">View Details →</button>
+                            <NuxtLink to="/erp" class="text-blue-400 hover:text-blue-300 text-sm font-semibold">View Details →</NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -761,6 +761,54 @@ useHead({
                         <div class="flex items-center justify-between pt-4 border-t border-gray-700">
                             <span class="text-sm text-gray-500">Find top talent</span>
                             <NuxtLink class="text-teal-400 hover:text-teal-300 text-sm font-semibold" to="/applicant">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
+            <!-- HRIS Card -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-pink-500/20 to-rose-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-pink-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- People Network -->
+                          <circle cx="256" cy="128" r="48" />
+                          <circle cx="128" cy="304" r="40" />
+                          <circle cx="384" cy="304" r="40" />
+                          
+                          <!-- Connections -->
+                          <path d="M256 176L128 264" />
+                          <path d="M256 176L384 264" />
+                          <path d="M128 344V400H384V344" />
+                          
+                          <!-- Heart/Care symbol -->
+                          <path d="M256 368C256 368 288 352 304 336C320 320 320 304 320 304" class="text-rose-400" stroke-width="16" stroke-linecap="round"/>
+                          <path d="M256 368C256 368 224 352 208 336C192 320 192 304 192 304" class="text-rose-400" stroke-width="16" stroke-linecap="round"/>
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-xs font-semibold">Human Resources</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Capella HRIS</h3>
+                        <p class="text-gray-400 mb-4">Modern Human Resource Information System with automated payroll, attendance tracking, and performance management.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Payroll</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Attendance</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Performance</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">Simplify HR</span>
+                            <NuxtLink class="text-pink-400 hover:text-pink-300 text-sm font-semibold" to="/hris">View Details →</NuxtLink>
                         </div>
                     </div>
                 </article>

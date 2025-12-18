@@ -371,18 +371,67 @@
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" ref="chatMessagesContainer">
                      <div v-for="(msg, idx) in chatHistory[selectedUser.useraccessid] || []" :key="idx" :class="['flex', msg.senderId === myUserId ? 'justify-end' : 'justify-start']">
                         <div :class="['max-w-[75%] rounded-xl px-4 py-2 text-sm relative', msg.senderId === myUserId ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-700 rounded-tl-none']">
-                            <p>{{ msg.text }}</p>
+                            <!-- Attachment Render -->
+                            <div v-if="msg.attachment" class="mb-2">
+                                <img v-if="msg.attachment.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
+                                     :src="getAttachmentUrl(msg.attachment)"
+                                     class="max-w-full rounded-lg max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                     @click="window.open(getAttachmentUrl(msg.attachment), '_blank')"
+                                />
+                                <a v-else 
+                                   :href="getAttachmentUrl(msg.attachment)"
+                                   target="_blank" 
+                                   class="flex items-center gap-2 p-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs"
+                                >
+                                    <i class="fa-solid fa-paperclip"></i>
+                                    <span class="truncate max-w-[150px]">{{ msg.attachment.split('/').pop() }}</span>
+                                    <i class="fa-solid fa-download ml-auto"></i>
+                                </a>
+                            </div>
+                            <p v-if="msg.text">{{ msg.text }}</p>
                             <p class="text-[10px] opacity-70 mt-1 text-right">{{ formatTime(msg.timestamp) }}</p>
                         </div>
                     </div>
                 </div>
 
-                 <!-- Chat Input -->
-                <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                    <form @submit.prevent="sendChatMessage" class="flex gap-2">
-                        <input v-model="chatInput" type="text" placeholder="Message..." class="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                        <button type="submit" class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700">
-                            <i class="fa-solid fa-paper-plane px-1"></i>
+                <!-- Chat Input -->
+                <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 relative">
+                    <!-- Emoji Picker -->
+                    <div v-if="showEmojiPicker" class="absolute bottom-16 left-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-2 z-50 animate-fade-in w-64">
+                         <div class="grid grid-cols-6 gap-1">
+                             <button v-for="emoji in emojis" :key="emoji" @click="addEmoji(emoji)" class="text-xl p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">{{ emoji }}</button>
+                         </div>
+                    </div>
+
+                    <!-- Attachment Preview -->
+                    <div v-if="attachmentName" class="absolute bottom-16 left-4 right-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-2 flex items-center justify-between shadow-lg animate-slide-up border border-indigo-200 dark:border-indigo-900">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                             <div class="w-8 h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                 <i class="fa-solid fa-file"></i>
+                             </div>
+                             <span class="text-sm truncate font-medium text-gray-700 dark:text-gray-200">{{ attachmentName }}</span>
+                        </div>
+                        <button @click="removeAttachment" class="text-gray-500 hover:text-red-500 transition-colors p-1">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="sendChatMessage" class="flex gap-2 items-center">
+                        <input type="file" ref="fileInput" hidden @change="handleFileUpload" />
+                        
+                        <button type="button" @click="triggerFileUpload" class="p-2 text-gray-500 hover:text-indigo-600 transition-colors" title="Attach File">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+
+                        <div class="relative flex-1">
+                             <input v-model="chatInput" type="text" placeholder="Message..." class="w-full px-4 py-2 pr-10 rounded-full bg-gray-100 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
+                             <button type="button" @click="showEmojiPicker = !showEmojiPicker" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-500 transition-colors">
+                                 <i class="fa-regular fa-face-smile"></i>
+                             </button>
+                        </div>
+                        
+                        <button type="submit" class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-md transform active:scale-95 transition-all w-10 h-10 flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
                     </form>
                 </div>
@@ -446,8 +495,14 @@ const users = ref<any[]>([]);
 const loadingUsers = ref(false);
 const selectedUser = ref<any>(null);
 const chatInput = ref('');
-const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string}[]>>({});
+const showEmojiPicker = ref(false);
+const attachment = ref<string|null>(null);
+const attachmentName = ref<string|null>(null);
+const fileInput = ref<HTMLInputElement|null>(null);
+const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string, attachment?: string}[]>>({});
 const unreadCounts = ref<Record<number, number>>({});
+
+const emojis = ['😀','😂','🥰','😎','🤔','👍','👎','❤️','💔','🎉','🔥','👀','🚀','📎','✅','❌','⚠️','👋'];
 const userStore = useUserStore();
 const themeStore = useThemeStore();
 const { assistantCharacter, assistantCustomImage } = storeToRefs(themeStore);
@@ -616,22 +671,32 @@ const initWebSocket = () => {
     const config = useRuntimeConfig();
     
     if (!token.value) {
-        console.error("No token for WS");
+        console.error("[AiAssistant] No token for WS");
         return;
     }
 
-    // Close existing if checking?
-    if (socket) socket.close();
+    // Close existing if open/closing
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
 
-    let wsBase = config.public.apiBase.replace('http', 'ws');
+    // Robust URL transformation: http->ws, https->wss
+    let wsBase = config.public.apiBase;
+    if (wsBase.startsWith('https')) {
+        wsBase = wsBase.replace('https', 'wss');
+    } else {
+        wsBase = wsBase.replace('http', 'ws');
+    }
+    
     const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
 
-    console.log("Connecting to Chat WS:", wsUrl);
+    console.log("[AiAssistant] Connecting to Chat WS:", wsUrl);
     
     socket = new WebSocket(wsUrl);
     
     socket.onopen = () => {
-        console.log("Chat WS Connected");
+        console.log("[AiAssistant] Chat WS Connected");
     };
 
     socket.onmessage = async (event) => {
@@ -639,17 +704,22 @@ const initWebSocket = () => {
             const payload = JSON.parse(event.data);
             handleWsMessage(payload);
         } catch (e) {
-            console.error("WS Message Parse Error", e);
+            console.error("[AiAssistant] WS Message Parse Error", e);
         }
     };
 
     socket.onclose = (e) => {
-        console.log("Chat WS Closed", e.code, e.reason);
+        console.log("[AiAssistant] Chat WS Closed", e.code, e.reason);
         socket = null;
+        // Auto Reconnect after 3s
+        setTimeout(() => {
+            console.log("[AiAssistant] Attempting Reconnect...");
+            initWebSocket();
+        }, 3000);
     };
 
     socket.onerror = (e) => {
-        console.error("Chat WS Error", e);
+        console.error("[AiAssistant] Chat WS Error", e);
     };
 };
 
@@ -705,6 +775,7 @@ const handleWsMessage = async (payload: any) => {
         
         chatHistory.value[senderId].push({
             text: payload.data.text,
+            attachment: payload.data.attachment,
             senderId: senderId,
             timestamp: payload.data.timestamp || new Date().toISOString()
         });
@@ -737,9 +808,74 @@ const handleWsMessage = async (payload: any) => {
     }
 };
 
+const triggerFileUpload = () => {
+    fileInput.value?.click();
+};
+
+const handleFileUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const config = useRuntimeConfig();
+    const maxSize = Number(config.public.chatMaxFileSize) || 10485760; // Default 10MB
+
+    // Validate Size
+    if (file.size > maxSize) {
+        alert(`File too large. Max size is ${maxSize / 1024 / 1024}MB.`);
+        input.value = '';
+        return;
+    }
+
+    // Validate Type (Image, PDF, Doc, Excel)
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+        alert("Invalid file type. Only Images, PDF, Word, and Excel are allowed.");
+        input.value = '';
+        return;
+    }
+
+    // Upload
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', 'chat_uploads'); // Upload to public/chat_uploads
+        
+        // Helper to upload using useApi or direct fetch? useApi wrapper doesn't support multipart easily if generic.
+        // Let's use direct fetch with token
+        const { data }: any = await post('/api/media/upload', formData);
+        
+        // Assuming response is { message: "Upload success" } but we need the path.
+        // Wait, mediamgrcontroller.go UploadMedia returns { "message": "Upload success" } but NOT the path/filename?
+        // Actually it saves with original filename. So path is path + filename.
+        // We should construct it.
+        
+        attachment.value = `chat_uploads/${file.name}`;
+        attachmentName.value = file.name;
+        
+    } catch (e) {
+        console.error("Upload failed", e);
+        alert("Upload failed.");
+    } finally {
+        input.value = '';
+    }
+};
+
+const removeAttachment = () => {
+    attachment.value = null;
+    attachmentName.value = null;
+};
+
+const addEmoji = (emoji: string) => {
+    chatInput.value += emoji;
+    showEmojiPicker.value = false;
+};
+
 const sendChatMessage = () => {
-    if (!chatInput.value.trim() || !selectedUser.value) return;
+    if ((!chatInput.value.trim() && !attachment.value) || !selectedUser.value) return;
     const text = chatInput.value;
+    const att = attachment.value;
     const targetId = selectedUser.value.useraccessid;
     const timestamp = new Date().toISOString();
 
@@ -750,7 +886,7 @@ const sendChatMessage = () => {
         const payload = JSON.stringify({
             type: 'chat',
             targetid: targetId,
-            data: { text, timestamp }
+            data: { text, attachment: att, timestamp }
         });
         socket.send(payload);
         console.log("Sent payload:", payload);
@@ -762,10 +898,13 @@ const sendChatMessage = () => {
     if (!chatHistory.value[targetId]) chatHistory.value[targetId] = [];
     chatHistory.value[targetId].push({
         text,
+        attachment: att,
         senderId: myUserId.value,
         timestamp
     });
     chatInput.value = '';
+    attachment.value = null;
+    attachmentName.value = null;
     scrollToBottom(chatMessagesContainer.value);
 };
 
@@ -773,6 +912,17 @@ const formatTime = (isoString: string) => {
     if (!isoString) return '';
     const date = new Date(isoString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const getAttachmentUrl = (path: string) => {
+    if (!path) return '';
+    // If path is already full URL
+    if (path.startsWith('http')) return path;
+    
+    // Remove leading slash if present to avoid double slash
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const config = useRuntimeConfig();
+    return `${config.public.apiBase}/${cleanPath}`;
 };
 
 // --- WebRTC Video Call ---

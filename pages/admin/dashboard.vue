@@ -60,7 +60,7 @@ const fetchData = async () => {
   try {
     res = await fetchWidgets('admin');
     if (res?.code === 200) {
-      recordWidget.value = res?.data.data;
+      recordWidget.value = res?.data.data || [];
       for (let index = 0; index < recordWidget.value.length; index++) {
         const element = recordWidget.value[index];
         recordWidget.value[index].widgetform = JSON.parse(element.widgetform);
