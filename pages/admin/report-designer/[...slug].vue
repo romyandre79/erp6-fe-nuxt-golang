@@ -23,42 +23,69 @@
         <UDivider orientation="vertical" class="h-6" />
         
         <UButton icon="i-heroicons-arrow-down-tray" size="sm" variant="soft" @click="exportJRXML">Export JRXML</UButton>
-        <UButton icon="i-heroicons-eye" size="sm" variant="soft" @click="previewReport">Preview</UButton>
+        <UButton 
+          :icon="previewMode ? 'i-heroicons-pencil-square' : 'i-heroicons-eye'" 
+          size="sm" 
+          :variant="previewMode ? 'solid' : 'soft'"
+          :color="previewMode ? 'primary' : 'white'"
+          @click="previewReport"
+        >
+          {{ previewMode ? 'Edit' : 'Preview' }}
+        </UButton>
         <UButton icon="i-heroicons-check" size="sm" color="primary" @click="saveReport" :loading="saving">Save</UButton>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Left Sidebar - Component Palette -->
-      <div class="w-64 bg-white border-r overflow-y-auto">
-        <ReportSidebar />
-      </div>
+      <!-- Left Sidebar - Component Palette & Properties -->
+      <div v-if="!previewMode" class="w-80 bg-white border-r flex flex-col shadow-sm z-10 transition-all duration-300">
+        <!-- Sidebar Tabs -->
+        <div class="flex border-b bg-gray-50">
+          <button 
+            @click="activeTab = 'elements'" 
+            :class="['flex-1 py-3 text-sm font-medium transition-colors duration-200', activeTab === 'elements' ? 'text-primary bg-white border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100']"
+          >
+            Elements
+          </button>
+          <button 
+            @click="activeTab = 'properties'" 
+            :class="['flex-1 py-3 text-sm font-medium transition-colors duration-200', activeTab === 'properties' ? 'text-primary bg-white border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100']"
+          >
+            Properties
+          </button>
+        </div>
 
-      <!-- Center Canvas -->
-      <div class="flex-1 bg-gray-100 overflow-auto relative">
-        <ReportCanvas />
-      </div>
-
-      <!-- Right Panel - Properties -->
-      <div class="w-80 bg-white border-l overflow-y-auto">
-        <div class="p-4">
-          <h3 class="font-semibold mb-4">Properties</h3>
-          <ReportProperties v-if="reportStore.selectedElement" />
-          <div v-else class="text-sm text-gray-500 text-center py-8">
-            Select an element to edit properties
+        <!-- Sidebar Content -->
+        <div class="flex-1 overflow-y-auto">
+          <div v-show="activeTab === 'elements'" class="h-full">
+             <ReportSidebar />
+          </div>
+          <div v-show="activeTab === 'properties'" class="p-4 h-full">
+            <ReportProperties v-if="reportStore.selectedElement" />
+            <div v-else class="flex flex-col items-center justify-center h-64 text-gray-400">
+              <UIcon name="i-heroicons-cursor-arrow-rays" class="text-4xl mb-3 opacity-50" />
+              <p class="text-sm font-medium">No element selected</p>
+              <p class="text-xs mt-1">Select an element on the canvas to view its properties</p>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Center Canvas -->
+      <div class="flex-1 bg-gray-100 overflow-auto relative shadow-inner">
+        <ReportCanvas :preview-mode="previewMode" />
+      </div>
     </div>
+    
     <!-- Global Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-sm cursor-wait">
       <div class="flex flex-col items-center">
-           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+           <svg class="animate-spin h-10 w-10 text-primary mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+          <span class="text-gray-600 font-medium">Processing...</span>
       </div>
     </div>
   </div>
@@ -81,8 +108,17 @@ const Api = useApi();
 const saving = ref(false);
 const isLoading = ref(false);
 const zoomLevel = ref('100%');
+const activeTab = ref('elements');
+const previewMode = ref(false);
 
 const zoomOptions = ['25%', '50%', '75%', '100%', '150%', '200%', '400%'];
+
+// Watch for element selection to switch to properties tab
+watch(() => reportStore.selectedElement, (newVal) => {
+  if (newVal && !previewMode.value) {
+    activeTab.value = 'properties';
+  }
+});
 
 async function loadReport() {
   const id = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug;
@@ -138,7 +174,10 @@ async function exportJRXML() {
 }
 
 function previewReport() {
-  toast.add({ title: 'Info', description: 'Preview functionality coming soon', color: 'blue' });
+  previewMode.value = !previewMode.value;
+  if(previewMode.value) {
+      reportStore.selectElement(null); // deselect
+  }
 }
 
 function goBack() {

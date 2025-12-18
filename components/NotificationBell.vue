@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useNotificationStore } from '~/store/notification'
+import { useAppStore } from '~/store/app'
 import { storeToRefs } from 'pinia'
 
 const store = useNotificationStore()
+const appStore = useAppStore()
 const { unreadCount, notifications } = storeToRefs(store)
-const isOpen = ref(false)
+const { isNotificationOpen } = storeToRefs(appStore)
 
-const toggle = () => (isOpen.value = !isOpen.value)
+const toggle = () => appStore.toggleNotification()
 
 const markRead = async (id: number) => {
   await store.markAsRead(id)
@@ -35,7 +37,7 @@ const markRead = async (id: number) => {
     <!-- Dropdown -->
     <transition name="dropdown">
       <div 
-        v-if="isOpen" 
+        v-if="isNotificationOpen" 
         class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden border border-slate-200/80 dark:border-gray-800"
         style="z-index: 9999 !important;"
       >
@@ -48,7 +50,7 @@ const markRead = async (id: number) => {
             <h3 class="text-sm font-semibold text-gray-800 dark:text-white">Notifications</h3>
           </div>
           <button 
-            @click="isOpen = false" 
+            @click="toggle" 
             class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <i class="fa-solid fa-times text-xs"></i>

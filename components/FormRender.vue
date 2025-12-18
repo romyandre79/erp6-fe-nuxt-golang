@@ -14,9 +14,11 @@ import {
   watchEffect,
   defineComponent,
 } from 'vue';
+import { storeToRefs } from 'pinia';
 import CardWrapper from './CardWrapper.vue';
 import ChartWrapper from './ChartWrapper.vue';
 import { useFormValidation } from '../composables/useFormValidation';
+import { useAppStore } from '~/store/app';
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -1598,6 +1600,220 @@ async function saveData(key: any) {
   }
 }
 
+// --- Keyboard Shortcuts & Help ---
+const showHelpModal = ref(false);
+const appStore = useAppStore();
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  // Ignore if input/textarea is focused (except F-keys and specific combinations usually allowed)
+  // Actually, ERP shortcuts usually override input focus for F-keys. 
+  // Standard text input keys (arrows, letters) should be ignored if in input.
+  const target = e.target as HTMLElement;
+  const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+
+  // --- STANDARD F-KEYS ---
+  if (!e.altKey && !e.ctrlKey && !e.shiftKey) {
+    switch (e.key) {
+      case 'F1':
+        e.preventDefault();
+        showHelpModal.value = true;
+        break;
+      case 'F2':
+        e.preventDefault();
+        // New Master
+        const masterKey = getAction('create'); // or find master modal
+        if (masterKey) {
+             // Logic to find 'New' action or open primary modal
+             // Assuming primary modal key usually matches generic pattern or we search for openable modal
+             // For now, let's try to trigger a generic "Create" if flow exists, or open the "New Data" modal
+             // If we have a modal for new data, it usually has a key.
+             // We need a reliable way to get the "Create Modal" key. 
+             // Often it's passed or we can find it in schemas.
+             // Workaround: Find modal with title 'New Data' or similar if feasible, 
+             // but better: Trigger 'create' action if it's a flow, OR open the modal if we know the key.
+             // Let's assume standard "New Data" modal is available via a button we can simulate or just find the modal.
+             // Simplified: Trigger the button that has 'onCreate' event?
+             const createBtn = parsedSchema.value.find((c: any) => c.props?.onClick?.toLowerCase() === 'oncreate');
+             if(createBtn) {
+                 // Creating data via modal usually involves setting modal open.
+                 // We need the key of the modal to open.
+                 // Often the schemas have buttons that toggle modals.
+                 // Let's try to find a modal that is NOT detail.
+                 const mainModal = modals.value.find((m:any) => !m.props.key.toLowerCase().includes('detail'));
+                 if(mainModal) {
+                     modalTitle.value = 'New Data';
+                     formData.value = {};
+                     modalRefs[mainModal.props.key].value = true;
+                 }
+             }
+        }
+        break;
+      case 'F3':
+        e.preventDefault();
+        // Edit Master - usually requires selection
+        if (selectedRows.value.length === 1) {
+             const row = selectedRows.value[0];
+             const mainModal = modals.value.find((m:any) => !m.props.key.toLowerCase().includes('detail'));
+             if(mainModal) {
+                 modalTitle.value = 'Edit Data';
+                 formData.value = { ...row }; // Copy row to form
+                 modalRefs[mainModal.props.key].value = true;
+             }
+        } else {
+             toast.add({ title: 'Info', description: 'Please select one row to edit', color: 'yellow' });
+        }
+        break;
+      case 'F4':
+        e.preventDefault();
+        // Other (Designers) - Placeholder or actual implementation if routes exist
+        toast.add({ title: 'Info', description: 'Design features not enabled', color: 'gray' });
+        break;
+      case 'F5':
+        e.preventDefault();
+        window.location.reload();
+        break;
+      case 'F6':
+        e.preventDefault();
+        // Save Master
+        // Only if modal is open?
+        // Find open modal
+        const openModalKey = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
+        if (openModalKey && !openModalKey.toLowerCase().includes('detail')) {
+            saveData(openModalKey);
+        }
+        break;
+      case 'F7':
+        e.preventDefault();
+        // Cancel (Close Modal)
+        const activeModal = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
+        if (activeModal) close(activeModal);
+        break;
+      case 'F8':
+        e.preventDefault();
+        // Purge (Delete)
+        DeleteHandler();
+        break;
+      case 'F9':
+        e.preventDefault();
+        // Approve
+        // Check for 'approve' flow/action
+        // generic flow execution?
+        toast.add({ title: 'Info', description: 'Approve action triggered (Not implemented)', color: 'gray' });
+        break;
+      case 'F10':
+        e.preventDefault();
+        // Reject
+        toast.add({ title: 'Info', description: 'Reject action triggered (Not implemented)', color: 'gray' });
+        break;
+      case 'F11':
+        e.preventDefault();
+        // PDF (Chrome)
+        downTemplate('pdf'); // Assuming downTemplate logic serves this or similar
+        break;
+      case 'F12':
+        e.preventDefault();
+        // XLS
+        downTemplate('xlsx');
+        break;
+      case 'Escape':
+        // Close Modal or Help
+        if (showHelpModal.value) showHelpModal.value = false;
+        else {
+             const m = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
+             if (m) close(m);
+        }
+        break;
+    }
+  }
+
+  // --- ALT COMBINATIONS (Detail Operations) ---
+  if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+     switch (e.key) {
+        case 'w':
+        case 'W':
+            e.preventDefault();
+            // Close Mini Tab (Detail Modal?)
+            const detailModal = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
+            if(detailModal) close(detailModal);
+            break;
+        case 'F1':
+            e.preventDefault();
+            // Upload
+            triggerFileSelect();
+            break;
+        case 'F2':
+            e.preventDefault();
+            // New Detail
+            // Find detail modal
+            // We need context of WHICH detail table. 
+            // If strictly just "open the first detail modal found":
+            const dModal = modals.value.find((m:any) => m.props.key.toLowerCase().includes('detail'));
+            if(dModal) {
+                 modalTitle.value = 'New Data'; // Detail title
+                 formData.value = {}; // Reset? Watch out for master ID binding
+                 // Ideally we need to know the parent ID or context
+                 modalRefs[dModal.props.key].value = true;
+            }
+            break;
+        // ... Add F3 (Edit Detail), F6 (Save Detail), F8 (Purge Detail) same pattern ...
+        case 'F6':
+             e.preventDefault();
+             // Save Detail
+             const openDetail = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
+             if(openDetail) saveData(openDetail);
+             break;
+        case 'F7':
+             e.preventDefault();
+             // Cancel Detail
+             const actDetail = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
+             if(actDetail) close(actDetail);
+             break;
+         case 'F11':
+            e.preventDefault();
+            // PDF (Opera) -> PDF
+            downTemplate('pdf');
+            break;
+     }
+  }
+
+  // --- CTRL COMBINATIONS (Global) ---
+  if (e.ctrlKey) {
+     switch (e.key) {
+         case 'F1':
+             e.preventDefault();
+             triggerFileSelect();
+             break;
+         case 'F2':
+             e.preventDefault();
+             appStore.toggleNotification();
+             break;
+         case 'F3':
+             e.preventDefault();
+             appStore.toggleChat();
+             break;
+         case '<':
+         case ',': // < is Shift+, but Ctrl+< might register as , depending on layout, check both or event.code
+             // Prev Data (Pagination)
+             if (tableRef.value) tableRef.value.prevPage?.(); // Ensure exposed
+             break;
+         case '>':
+         case '.':
+             // Next Data
+             if (tableRef.value) tableRef.value.nextPage?.();
+             break;
+     }
+  }
+}
+
+onMounted(() => {
+  ReadHandler();
+  document.addEventListener('keydown', handleGlobalKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeydown);
+});
+
 function initModalRefs(schema: any) {
   schema.forEach((node) => {
     if (node.type === 'modals') {
@@ -1612,11 +1828,6 @@ function initModalRefs(schema: any) {
   });
 }
 
-watchEffect(() => {
-  if (parsedSchema.value?.length) {
-    initModalRefs(parsedSchema.value);
-  }
-});
 </script>
 
 <template>
@@ -1666,6 +1877,83 @@ watchEffect(() => {
 
   <!-- 🔹 Hidden file input -->
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
+
+  <UModal v-if="showHelpModal" v-model:open="showHelpModal" :ui="{  wrapper: 'items-center', content: 'sm:max-w-none lg:max-w-none' }">
+    <template #body>
+      <div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+        <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-3">
+          <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-keyboard text-indigo-500"></i>
+              Keyboard Shortcuts
+          </h3>
+          <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="showHelpModal = false" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Standard Keys -->
+          <div>
+            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+              Standard Function Keys
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Esc</span> <span>Close Modal</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F1</span> <span>About / Help</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F2</span> <span>New Data</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F3</span> <span>Edit Data</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F4</span> <span>Designers (If avail)</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F5</span> <span>Refresh Page</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F6</span> <span>Save Data</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F7</span> <span>Cancel / Close</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F8</span> <span>Purge / Delete</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F9</span> <span>Approve</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F10</span> <span>Reject</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F11</span> <span>Download PDF</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F12</span> <span>Download XLS</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Tab</span> <span>Next Focus</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Shift+Tab</span> <span>Prev Focus</span></li>
+            </ul>
+          </div>
+
+          <!-- Alt Combinations -->
+          <div>
+            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+              Alt + Key (Detail)
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + W</span> <span>Close Mini Tab</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F1</span> <span>Upload File</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F2</span> <span>New Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F3</span> <span>Edit Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F6</span> <span>Save Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F7</span> <span>Cancel Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F8</span> <span>Purge Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F9</span> <span>Copy Detail</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F11</span> <span>PDF (Opera)</span></li>
+            </ul>
+          </div>
+
+          <!-- Ctrl Combinations -->
+          <div>
+            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+              Ctrl + Key (Global)
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F1</span> <span>Choose File</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F2</span> <span>Notifications</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F3</span> <span>Open Chat</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + <</span> <span>Data Before</span></li>
+              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + ></span> <span>Next Data</span></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500">
+          Press <b>Esc</b> to close this window.
+        </div>
+      </div>
+    </template>
+  </UModal>
+
 </template>
 
 <style></style>

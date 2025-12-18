@@ -390,7 +390,7 @@
       "SECURITY": { "TITLE": "Enterprise Security", "DESC": "End-to-end encryption, role-based access, and complete audit trails" },
       "ANALYTICS": { "TITLE": "Advanced Analytics", "DESC": "Interactive dashboards with real-time insights for decision making" },
       "MODULAR": { "TITLE": "Modular Architecture", "DESC": "Activate only modules you need, scale as required" },
-      "CUSTOM_NODES": { "TITLE": "Custom Nodes", "DESC": "Create your own custom nodes with JavaScript or Python" }
+      "CUSTOM_NODES": { "TITLE": "Custom Nodes", "DESC": "Create your own custom nodes with other Language, Interpreter Go, or even .NET and executable" }
     },
     "AUTOMATION": {
       "TITLE_PREFIX": "Automation Made",
@@ -466,7 +466,10 @@
       "CHOOSE_DEPLOYMENT": "Choose Deployment",
       "SELECT_APPS": "Select Applications",
       "USERS_COUNT": "How many users?",
-      "USERS_NOTE": "Price per user applies to all selected modules.",
+      "USERS_ADMIN": "Administrator Users",
+      "USERS_OPERATIONAL": "Operational Users",
+      "USERS_VIEWER": "Viewer Users",
+      "USERS_NOTE": "Cloud: Price depends on user role.",
       "STORAGE": "Data Storage",
       "STORAGE_NOTE": "Included 10GB basic. +Rp 20.000 per 10GB extra.",
       "SERVICES": "Services & Implementation",
