@@ -63,6 +63,7 @@
               v-for="col in columns"
               :key="col.key || col"
               class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors"
+              :class="{'text-right': ['number','currency'].includes(col.type)}"
               @click="toggleSort(col.key || col, fetchData)"
             >
               <div class="flex items-center gap-1">
@@ -119,7 +120,7 @@
                 </button>
               </td>
 
-              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer">
+              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
                 <span v-html="formatCellValue(col, row[col.key || col])"></span>
               </td>
 
@@ -210,6 +211,8 @@ const props = defineProps({
 
 const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-change']);
 const Api = useApi();
+const route = useRoute();
+
 
 // Table preferences persistence
 const tableId = computed(() => props.endPoint || 'default_detail_table');
@@ -270,7 +273,7 @@ async function fetchData() {
     if (props.method.toUpperCase() === 'POST') {
       const dataForm = new FormData();
       dataForm.append('flowname', props.endPoint || '');
-      dataForm.append('menu', 'admin');
+      dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
       dataForm.append('page', currentPage.value);
       dataForm.append('rows', pageSize.value);

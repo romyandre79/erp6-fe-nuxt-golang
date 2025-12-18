@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
+import '@/assets/css/main.css';
 import { useI18n } from 'vue-i18n';
 
 // Page metadata

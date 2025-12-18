@@ -227,7 +227,8 @@ const saveSchema = async () => {
   dataForm.append('menucode', dataMenu.menuCode);
   dataForm.append('menuurl', dataMenu.menuUrl);
   dataForm.append('menuicon', dataMenu.menuIcon);
-  dataForm.append('moduleiId', dataMenu.moduleId);
+  dataForm.append('moduleid', dataMenu.moduleId);
+  dataForm.append('parentid', dataMenu.parentId);
   dataForm.append('sortorder', dataMenu.sortOrder);
   dataForm.append('menuversion', dataMenu.menuVersion);
   dataForm.append('menutype', dataMenu.menuType);
@@ -322,6 +323,7 @@ const loadSchema = async () => {
       dataMenu.menuUrl = res?.data.data.menuurl;
       dataMenu.menuIcon = res?.data.data.menuicon;
       dataMenu.moduleId = res?.data.data.moduleid;
+      dataMenu.parentId = res?.data.data.parentid;
       dataMenu.sortOrder = res?.data.data.sortorder;
       dataMenu.menuVersion = res?.data.data.menuversion;
       dataMenu.menuType = res?.data.data.menutype;

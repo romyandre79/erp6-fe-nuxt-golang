@@ -14,6 +14,7 @@ export const availableComponents = [
       onUpdateDetail: [],
       onUpload: '',
       onPurge: '',
+      onPurgeDetail:[],
       onPdf: '',
       onXls: '',
       onLockFlow: '',

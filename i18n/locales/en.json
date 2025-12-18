@@ -443,6 +443,62 @@
   "SEARCH A CURRENCY CODE": "Search A Currency Code",
   "SEARCH A CURRENCY NAME": "Search A Currency Name",
   "SEARCH A USER NAME": "Search A User Name",
-  "ENTER A WORKFLOW NAME": "Enter A Workflow Name"
-
+  "ENTER A WORKFLOW NAME": "Enter A Workflow Name",
+  "ERP": {
+    "HERO": {
+      "TITLE_PREFIX": "Power Your Business",
+      "TITLE_SUFFIX": "With Intelligent ERP",
+      "SUBTITLE": "Experience the future of enterprise management. AI-driven insights, drag-and-drop customization, and seamless workflows—all in one place.",
+      "GET_STARTED": "Get Started",
+      "LEARN_MORE": "Learn More"
+    },
+    "FEATURES": {
+      "TITLE": "Core Capabilities",
+      "SUBTITLE": "Built for flexibility and performance."
+    },
+    "MODULES": {
+      "TITLE": "Enterprise Modules",
+      "SUBTITLE": "Check comprehensive suite to manage every aspect of your business."
+    },
+    "PRICING": {
+      "TITLE": "Calculate Your Price",
+      "SUBTITLE": "Select the applications you need and the number of users.",
+      "CHOOSE_DEPLOYMENT": "Choose Deployment",
+      "SELECT_APPS": "Select Applications",
+      "USERS_COUNT": "How many users?",
+      "USERS_NOTE": "Price per user applies to all selected modules.",
+      "STORAGE": "Data Storage",
+      "STORAGE_NOTE": "Included 10GB basic. +Rp 20.000 per 10GB extra.",
+      "SERVICES": "Services & Implementation",
+      "CONSULTATION": "Consultation (Man Hours)",
+      "TRANSPORT": "Transport & Accommodation",
+      "WORKFLOWS": "Add Extra Capabilities (Workflows)",
+      "ESTIMATED_COST": "Estimated Cost",
+      "REQUEST_QUOTE": "Request Quote",
+      "DEPLOYMENT": "Deployment",
+      "TOTAL_ONE_TIME": "Total One-Time",
+      "TOTAL_MONTHLY": "Total Monthly Recurring"
+    },
+    "DEMO": {
+      "TITLE": "Request a Demo",
+      "SUBTITLE": "See our ERP in action. Fill out the form below and we'll be in touch shortly.",
+      "NAME": "Full Name",
+      "PHONE": "Phone Number",
+      "EMAIL": "Email Address",
+      "SEND": "Send Request",
+      "SENDING": "Sending...",
+      "SUCCESS": "Thank you! Your demo request has been sent successfully.",
+      "ERROR": "Something went wrong. Please try again later."
+    },
+    "APPS": {
+      "ACCOUNTING": "Accounting",
+      "WAREHOUSE": "Warehouse",
+      "PRODUCTION": "Production",
+      "ORDER": "Order Mgmt",
+      "PROCUREMENT": "Procurement",
+      "EPROCUREMENT": "E-Procurement",
+      "HR": "Human Resource",
+      "PROJECT": "Project Mgmt"
+    }
+  }
 }

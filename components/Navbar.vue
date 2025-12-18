@@ -61,6 +61,9 @@ const closeMobileMenu = () => {
         <i class="fa-solid fa-tachometer-alt mr-2 text-xs"></i>
         {{ $t('ADMIN') }}
       </NuxtLink>
+
+      <!-- Language Switcher -->
+      <LanguageWatcher class="ml-2" />
     </div>
 
     <!-- Mobile Menu Toggle -->
@@ -131,6 +134,10 @@ const closeMobileMenu = () => {
             <i class="fa-solid fa-tachometer-alt text-base"></i>
             {{ $t('ADMIN') }}
           </NuxtLink>
+
+          <div class="px-4 py-3">
+             <LanguageWatcher />
+          </div>
         </nav>
       </div>
     </Transition>

@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { useI18n } from '#imports';
 
 export function useTableLogic(props: any, emit: any) {
   // States
@@ -331,16 +332,17 @@ export function useTableLogic(props: any, emit: any) {
   };
 
   // Formatter
+  const { locale } = useI18n();
   const formatCellValue = (col: any, value: any) => {
     if (['boolean', 'bool', 'checkbox'].includes(col.type))
       return value
         ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
         : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
     if (col.type === 'currency')
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
+      return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
         value || 0,
       );
-    if (col.type === 'number') return new Intl.NumberFormat('id-ID').format(value || 0);
+    if (col.type === 'number') return new Intl.NumberFormat(locale.value).format(value || 0);
     return value ?? '';
   };
 

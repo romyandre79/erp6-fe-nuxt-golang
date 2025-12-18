@@ -31,7 +31,7 @@ export default defineNuxtConfig({
   vite: {
     build: {
       sourcemap: false,
-      chunkSizeWarningLimit: 1000, // Increase limit - chunks are already optimized with code splitting
+      chunkSizeWarningLimit: 2000, // Increase limit - chunks are already optimized with code splitting
       rollupOptions: {
         output: {
       manualChunks: (id: string) => {
@@ -64,6 +64,7 @@ export default defineNuxtConfig({
     storesDirs: ['./store/**'],
   },
   i18n: {
+    langDir: 'locales',
     defaultLocale: 'en',
     locales: [
       { code: 'en', name: 'English', file: 'en.json' },
@@ -83,6 +84,7 @@ export default defineNuxtConfig({
       apiBase: process.env.PUBLIC_API_URL || 'http://localhost:8888',
       apiToken: process.env.PUBLIC_API_TOKEN || '',
       mode: process.env.MODE || 'development',
+      chatMaxFileSize: process.env.CHAT_MAX_FILE_SIZE || 10485760,
     },
   },
   app: {
