@@ -31,7 +31,7 @@ export default defineNuxtConfig({
   vite: {
     build: {
       sourcemap: false,
-      chunkSizeWarningLimit: 1000, // Increase limit - chunks are already optimized with code splitting
+      chunkSizeWarningLimit: 2000, // Increase limit - chunks are already optimized with code splitting
       rollupOptions: {
         output: {
       manualChunks: (id: string) => {

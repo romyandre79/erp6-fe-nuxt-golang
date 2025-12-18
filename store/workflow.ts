@@ -119,10 +119,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
       dataForm.append('wfname', name);
 
       const res = await api.post('/api/admin/execute-flow', dataForm);
-      
+
       // backend response shape: { data: { data: { flow: "..." , workflowid: , wfname: ... } } }
       const wfObj = res?.data?.data ?? {};
-
       // try various locations
       const flowString = wfObj?.flow;
 
@@ -134,7 +133,19 @@ export const useWorkflowStore = defineStore('workflow', () => {
         }
       }
 
-      workflow.value = wfObj;
+      workflow.value.flow = wfObj.flow;
+
+      // 2. get workflow detail (backend returns nested structure)
+      const dataDetailForm = new FormData();
+      dataDetailForm.append('flowname', 'searchwfdetailbywfname');
+      dataDetailForm.append('menu', 'admin');
+      dataDetailForm.append('search', 'true');
+      dataDetailForm.append('wfname', name);
+
+      const resdetail = await api.post('/api/admin/execute-flow', dataDetailForm);
+      componentDetails.value = resdetail.data?.data ?? [];
+
+
     } catch (error) {
     } finally {
       loading.value = false;
@@ -282,7 +293,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       const res = await api.post('/api/admin/execute-flow', df);
       await saveFlowDetails(flow);
       await saveFlowParameter();
-      await loadWorkflow(workflow.value?.wfname);
+      await loadWorkflow(workflow.value?.wfname, true);
       return res;
     } finally {
       loading.value = false;

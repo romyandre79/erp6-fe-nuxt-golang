@@ -63,6 +63,7 @@
               v-for="col in columns"
               :key="col.key || col"
               class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors"
+              :class="{'text-right': ['number','currency'].includes(col.type)}"
               @click="toggleSort(col.key || col, fetchData)"
             >
               <div class="flex items-center gap-1">
@@ -119,7 +120,7 @@
                 </button>
               </td>
 
-              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer">
+              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
                 <span v-html="formatCellValue(col, row[col.key || col])"></span>
               </td>
 
