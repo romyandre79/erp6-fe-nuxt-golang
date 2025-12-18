@@ -6,10 +6,10 @@
         <div 
           @click="toggleOpen" 
           class="clippy-container pointer-events-auto cursor-pointer transition-transform duration-300 hover:scale-110"
-          :class="{ 'clippy-active': isOpen }"
+          :class="{ 'clippy-active': isChatOpen }"
         >
             <!-- Unread Badge -->
-            <span v-if="totalUnread > 0 && !isOpen" class="absolute -top-2 -right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center animate-bounce shadow-md">
+            <span v-if="totalUnread > 0 && !isChatOpen" class="absolute -top-2 -right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center animate-bounce shadow-md">
                 {{ totalUnread > 99 ? '99+' : totalUnread }}
             </span>
             
@@ -185,13 +185,13 @@
             </div>
 
             <!-- Speech Bubble Tail for open state -->
-            <div v-if="isOpen" class="absolute -top-4 right-12 w-4 h-4 bg-white dark:bg-gray-800 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
+            <div v-if="isChatOpen" class="absolute -top-4 right-12 w-4 h-4 bg-white dark:bg-gray-800 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
         </div>
     </div>
 
     <!-- Main Window -->
     <transition name="fade-slide">
-      <div v-if="isOpen" class="fixed bottom-32 right-8 z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden border-2 border-gray-200 dark:border-gray-700 h-[600px] origin-bottom-right">
+      <div v-if="isChatOpen" class="fixed bottom-32 right-8 z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden border-2 border-gray-200 dark:border-gray-700 h-[600px] origin-bottom-right">
         
         <!-- Tabs Header -->
         <div class="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex">
@@ -485,8 +485,12 @@ import { useUserStore } from '~/store/user';
 import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
 import { useThemeStore } from '~/store/theme';
+import { useAppStore } from '~/store/app';
 
-const isOpen = ref(false);
+const appStore = useAppStore();
+const { isChatOpen } = storeToRefs(appStore); // Use store ref
+
+// const isOpen = ref(false); // Removed local ref
 const activeTab = ref<'ai' | 'people' | 'settings'>('ai');
 const aiInput = ref('');
 const aiMessages = ref<{text: string, sender: 'user'|'ai'}[]>([]);
@@ -544,14 +548,15 @@ let socket: WebSocket | null = null;
 // --- General ---
 
 const toggleOpen = () => {
-    isOpen.value = !isOpen.value;
-    if (isOpen.value && activeTab.value === 'people' && users.value.length === 0) {
+    appStore.toggleChat();
+    // isOpen.value = !isOpen.value;
+    if (isChatOpen.value && activeTab.value === 'people' && users.value.length === 0) {
         fetchUsers();
     }
 };
 
-watch(activeTab, (val) => {
-    if (val === 'people' && users.value.length === 0) fetchUsers();
+watch(isChatOpen, (val) => {
+    if (val && activeTab.value === 'people' && users.value.length === 0) fetchUsers();
 });
 
 const scrollToBottom = async (container: HTMLElement|null) => {
@@ -753,8 +758,9 @@ const handleWsMessage = async (payload: any) => {
         }
         
         // Auto-open AI tab if closed
-        if (!isOpen.value) {
-            isOpen.value = true;
+        if (!isChatOpen.value) {
+            appStore.toggleChat(); // Use action
+            // isOpen.value = true;
             activeTab.value = 'ai';
         } else if (activeTab.value !== 'ai') {
             activeTab.value = 'ai';
@@ -781,7 +787,7 @@ const handleWsMessage = async (payload: any) => {
         });
         
         // If chat is OPEN with this user
-        if (selectedUser.value && selectedUser.value.useraccessid === senderId && isOpen.value && activeTab.value === 'people') {
+        if (selectedUser.value && selectedUser.value.useraccessid === senderId && isChatOpen.value && activeTab.value === 'people') {
              await scrollToBottom(chatMessagesContainer.value);
         } else {
              // Increment Unread

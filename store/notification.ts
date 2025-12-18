@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useUserStore } from '~/store/user'
 import { useChatStore } from '~/store/chat'
+import { useToast } from '#imports'
 // import { useAuth } from '~/composables/useAuth'
 
 export const useNotificationStore = defineStore('notification', {
@@ -65,8 +66,14 @@ export const useNotificationStore = defineStore('notification', {
           if (payload.type === 'notification') {
             this.notifications.unshift(payload.data)
             // Optional: Show toast
-            const { $toast } = useNuxtApp()
-            if ($toast) $toast.add({ title: payload.data.menuname, description: payload.data.description })
+
+            const toast = useToast()
+            toast.add({ 
+              title: payload.data.menuname, 
+              description: payload.data.description,
+              icon: 'i-heroicons-bell',
+              color: 'primary'
+            })
           } else if (payload.type === 'chat') {
             // Forward to Chat Store
             // We need to dynamically import to avoid circular dependency potentially, or just use useChatStore if safe
@@ -80,11 +87,12 @@ export const useNotificationStore = defineStore('notification', {
             
             // Also Show Toast for chat? User said "Chat show to chat", but maybe a notification is nice if not open?
             // "notification different" implies keep them separate.
-            const { $toast } = useNuxtApp()
-            if ($toast) $toast.add({ 
+            const toast = useToast()
+            toast.add({ 
               title: `Message from User ${payload.data.senderid}`, 
               description: payload.data.message,
-              icon: 'i-heroicons-chat-bubble-left-right'
+              icon: 'i-heroicons-chat-bubble-left-right',
+              color: 'primary'
             })
           }
         } catch (e) {

@@ -188,6 +188,22 @@
       </div>
     </section>
 
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-white relative z-10">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+           <h2 class="text-3xl font-bold text-slate-900 mb-4">Investasi Sistem</h2>
+           <p class="text-slate-600">Simulasi biaya investasi sistem gadai digital untuk bisnis anda.</p>
+        </div>
+        <PricingCalculator 
+            :available-apps="gadaiApps"
+            theme="light"
+            module-name="Pusat Gadai"
+            :initial-selected-apps="['gadai_mgmt', 'appraisal']"
+        />
+      </div>
+    </section>
+
     <!-- Why Us Section (Existing) -->
     <section id="tentang" class="py-24 bg-white relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-6">
@@ -316,6 +332,15 @@ definePageMeta({
 });
 
 const { branding, navigation, hero, services, benefits, footer } = usePusatGadaiContent();
+
+import PricingCalculator from '~/components/PricingCalculator.vue'
+
+const gadaiApps = [
+  { id: 'gadai_mgmt', name: 'Gadai Management', price: 50000, icon: '🏷️' },
+  { id: 'appraisal', name: 'Appraisal AI', price: 60000, icon: '💎' },
+  { id: 'auction', name: 'Auction System', price: 40000, icon: '🔨' },
+  { id: 'reporting', name: 'Financial Reporting', price: 30000, icon: '📈' },
+]
 </script>
 
 <style scoped>
