@@ -30,6 +30,7 @@ const categories = computed(() => {
     data: { name: 'data', label: 'Data Elements', components: [] as any[] },
     charts: { name: 'charts', label: 'Charts & Graphs', components: [] as any[] },
     special: { name: 'special', label: 'Special Elements', components: [] as any[] },
+    structure: { name: 'structure', label: 'Bands', components: [] as any[] },
   };
 
   reportComponents.forEach((comp) => {

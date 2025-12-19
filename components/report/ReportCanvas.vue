@@ -23,6 +23,8 @@
         transform: `scale(${reportStore.zoom / 100})`,
         transformOrigin: 'top left',
       }"
+      @dragover.prevent
+      @drop="onCanvasDrop"
     >
       <!-- Grid -->
       <svg
@@ -53,16 +55,22 @@
       <div
         v-for="band in reportStore.currentTemplate?.bands"
         :key="band.type"
-        class="relative"
+        class="relative group"
         :class="{'border-b border-dashed border-gray-300': !previewMode}"
         :style="{ height: `${band.height}px` }"
         @dragover.prevent
         @drop="onDrop($event, band.type)"
       >
         <!-- Band Label -->
-        <div v-if="!previewMode" class="absolute -left-2 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-l transform -translate-x-full z-10">
-          {{ band.type }}
+        <div 
+          v-if="!previewMode" 
+          class="absolute -left-0 top-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-br border-b border-r border-blue-200 z-10 opacity-70 group-hover:opacity-100 transition-opacity select-none pointer-events-none"
+        >
+          {{ band.type.toUpperCase() }}
         </div>
+
+        <!-- Drop Zone Indicator (Visual only) -->
+        <div v-if="!previewMode" class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity"></div>
 
         <!-- Elements in Band -->
         <div
@@ -183,13 +191,31 @@ const resizeHandles = [
 
 let dragState: any = null;
 
-function onDrop(event: DragEvent, bandType: string) {
+function onCanvasDrop(event: DragEvent) {
   if (props.previewMode) return;
   event.preventDefault();
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
 
   const component = JSON.parse(data);
+
+  // If dropping a Band (structure)
+  if (component.category === 'structure') {
+     reportStore.addBand(component.props.bandType, component.props.height);
+     return;
+  }
+}
+
+function onDrop(event: DragEvent, bandType: string) {
+  if (props.previewMode) return;
+  event.preventDefault();
+  event.stopPropagation(); // Stop propagation so canvas drop doesn't trigger
+  const data = event.dataTransfer?.getData('application/json');
+  if (!data) return;
+
+  const component = JSON.parse(data);
+  if (component.category === 'structure') return; // Cannot drop band into band
+
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = Math.round((event.clientX - rect.left) / (reportStore.zoom / 100));
   const y = Math.round((event.clientY - rect.top) / (reportStore.zoom / 100));

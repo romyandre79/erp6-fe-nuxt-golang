@@ -5,6 +5,8 @@
     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
         <div 
           @click="toggleOpen" 
+          @mouseenter="isHovered = true"
+          @mouseleave="isHovered = false"
           class="clippy-container pointer-events-auto cursor-pointer transition-transform duration-300 hover:scale-110"
           :class="{ 'clippy-active': isChatOpen }"
         >
@@ -23,6 +25,35 @@
                     <g transform="translate(35, 35)"> <circle cx="0" cy="0" r="10" fill="white" stroke="#666" stroke-width="1"/> <circle cx="2" cy="-1" r="3" fill="black" class="clippy-pupil"/> <path d="M -8 -12 Q 0 -16 8 -12" fill="none" stroke="black" stroke-width="2" class="clippy-eyebrow"/> </g>
                     <g transform="translate(60, 35)"> <circle cx="0" cy="0" r="10" fill="white" stroke="#666" stroke-width="1"/> <circle cx="-2" cy="-1" r="3" fill="black" class="clippy-pupil"/> <path d="M -8 -12 Q 0 -16 8 -12" fill="none" stroke="black" stroke-width="2" class="clippy-eyebrow"/> </g>
                 </g>
+
+                <!-- Writing Animation Elements -->
+                <transition name="fade">
+                  <g v-if="isBusy" transform="translate(0, 10)">
+                      <!-- Paper -->
+                      <path d="M 55 95 L 85 95 L 85 65 L 55 65 Z" fill="white" stroke="#666" stroke-width="1" transform="rotate(-15 70 80)"/>
+                      <line x1="60" y1="70" x2="80" y2="70" stroke="#ccc" stroke-width="1" transform="rotate(-15 70 80)"/>
+                      <line x1="60" y1="75" x2="80" y2="75" stroke="#ccc" stroke-width="1" transform="rotate(-15 70 80)"/>
+                      <line x1="60" y1="80" x2="80" y2="80" stroke="#ccc" stroke-width="1" transform="rotate(-15 70 80)"/>
+                      
+                      <!-- Hand/Pen -->
+                      <g class="clippy-writing-hand">
+                         <path d="M 75 75 L 85 55 L 90 58 L 80 78 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                         <path d="M 75 75 L 73 78" stroke="#333" stroke-width="1" />
+                      </g>
+                  </g>
+                </transition>
+
+                <!-- Waving Animation (Hover) -->
+                <transition name="fade">
+                  <g v-if="isHovered && !isBusy" transform="translate(0, 5)">
+                      <g class="clippy-wave-hand">
+                         <!-- Hand/Arm -->
+                        <path d="M 80 50 L 95 35 L 100 40 L 85 55 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                        <circle cx="95" cy="35" r="5" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                         <path d="M 80 50 Q 85 60 80 70" fill="none" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round" />
+                      </g>
+                  </g>
+                </transition>
             </svg>
 
             <!-- ROBOT -->
@@ -486,8 +517,14 @@ import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
 import { useThemeStore } from '~/store/theme';
 import { useAppStore } from '~/store/app';
+import { useWorkflowStore } from '~/store/workflow';
+import { useDbobjectStore } from '~/store/dbobject';
+import { useReportStore } from '~/store/report';
 
 const appStore = useAppStore();
+const workflowStore = useWorkflowStore();
+const dbobjectStore = useDbobjectStore();
+const reportStore = useReportStore();
 const { isChatOpen } = storeToRefs(appStore); // Use store ref
 
 // const isOpen = ref(false); // Removed local ref
@@ -505,6 +542,19 @@ const attachmentName = ref<string|null>(null);
 const fileInput = ref<HTMLInputElement|null>(null);
 const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string, attachment?: string}[]>>({});
 const unreadCounts = ref<Record<number, number>>({});
+const isAiProcessing = ref(false);
+const isBusy = computed(() => 
+    isAiProcessing.value || 
+    loadingUsers.value || 
+    appStore.isLoading || 
+    workflowStore.loading || 
+    dbobjectStore.loading || 
+    reportStore.loading
+);
+
+
+
+const isHovered = ref(false);
 
 const emojis = ['😀','😂','🥰','😎','🤔','👍','👎','❤️','💔','🎉','🔥','👀','🚀','📎','✅','❌','⚠️','👋'];
 const userStore = useUserStore();
@@ -583,10 +633,12 @@ const sendAiMessage = async () => {
         formData.append('user_id', String(myUserId.value || ''));
         formData.append('conversation_state', aiConversationState.value); // Send conversation state
         
+        isAiProcessing.value = true;
         await post('/api/admin/execute-flow', formData);
         // Don't add response here - it will come via WebSocket
     } catch(e) {
         aiMessages.value.push({ text: "Error connecting to AI.", sender: 'ai' });
+        isAiProcessing.value = false;
     }
 };
 
@@ -756,6 +808,8 @@ const handleWsMessage = async (payload: any) => {
         if (payload.conversation_state) {
             aiConversationState.value = payload.conversation_state;
         }
+
+        isAiProcessing.value = false;
         
         // Auto-open AI tab if closed
         if (!isChatOpen.value) {
@@ -1143,4 +1197,38 @@ onMounted(() => {
     transform: scale(1.1) rotate(-10deg);
 }
 
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes writing-scribble {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2px, 2px) rotate(5deg); }
+  50% { transform: translate(0, 4px) rotate(0deg); }
+  75% { transform: translate(-2px, 2px) rotate(-5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.clippy-writing-hand {
+  animation: writing-scribble 0.5s infinite linear;
+  transform-origin: 75px 75px;
+}
+
+@keyframes wave {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-20deg); }
+  50% { transform: rotate(10deg); }
+  75% { transform: rotate(-20deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.clippy-wave-hand {
+  animation: wave 1s infinite ease-in-out;
+  transform-origin: 80px 70px;
+}
 </style>

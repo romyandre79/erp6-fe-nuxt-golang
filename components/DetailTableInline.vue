@@ -174,9 +174,29 @@ function renderCell(row: any, col: any, rowIndex: number) {
   const type = (col.type || col.props?.type || 'text').toLowerCase();
   const colProps = col.props || col;
 
+  // Helper date formatter
+  const formatDate = (val: any, type: string) => {
+      if (!val) return '';
+      if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof val === 'string') {
+          const date = new Date(val);
+          if (!isNaN(date.getTime())) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+
+              if (type === 'date') return `${year}-${month}-${day}`;
+              if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
+              if (type === 'time') return `${hours}:${minutes}`;
+          }
+      }
+      return val;
+  };
+
   // Create a computed model for two-way binding
   const modelValue = computed({
-    get: () => row[key],
+    get: () => formatDate(row[key], type),
     set: (val) => {
       row[key] = val;
       
@@ -225,6 +245,23 @@ function renderCell(row: any, col: any, rowIndex: number) {
     case 'date':
       return h('input', {
         type: 'date',
+        class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
+        value: modelValue.value,
+        onInput: (e: any) => modelValue.value = e.target.value
+      });
+
+    case 'datetime':
+    case 'datetime-local':
+      return h('input', {
+        type: 'datetime-local',
+        class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
+        value: modelValue.value,
+        onInput: (e: any) => modelValue.value = e.target.value
+      });
+
+    case 'time':
+      return h('input', {
+        type: 'time',
         class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
         value: modelValue.value,
         onInput: (e: any) => modelValue.value = e.target.value

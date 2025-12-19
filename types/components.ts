@@ -2,6 +2,7 @@ export const availableComponents = [
   {
     type: 'action',
     label: 'Action',
+    icon: 'heroicons:bolt',
     component: 'div',
     props: {
       onNew: '',
@@ -24,6 +25,7 @@ export const availableComponents = [
   {
     type: 'bool',
     label: 'Boolean',
+    icon: 'heroicons:check-circle',
     component: 'input',
     props: {
       key: '',
@@ -39,6 +41,7 @@ export const availableComponents = [
   {
     type: 'button',
     label: 'Button',
+    icon: 'heroicons:stop',
     component: 'UButton',
     props: {
       text: 'Button',
@@ -50,6 +53,7 @@ export const availableComponents = [
   {
     type: 'callother',
     label: 'Call Other',
+    icon: 'heroicons:arrow-path',
     component: 'div',
     props: {
       key: '',
@@ -61,6 +65,7 @@ export const availableComponents = [
   {
     type: 'color',
     label: 'Color',
+    icon: 'heroicons:swatch',
     component: 'input',
     props: {
       key: '',
@@ -75,6 +80,7 @@ export const availableComponents = [
   {
     type: 'date',
     label: 'Date',
+    icon: 'heroicons:calendar',
     component: 'input',
     props: {
       key: '',
@@ -89,6 +95,7 @@ export const availableComponents = [
   {
     type: 'datetime',
     label: 'Date Time',
+    icon: 'heroicons:calendar-days',
     component: 'input',
     props: {
       key: '',
@@ -103,6 +110,7 @@ export const availableComponents = [
   {
     type: 'email',
     label: 'Email',
+    icon: 'heroicons:envelope',
     component: 'input',
     props: {
       key: '',
@@ -117,6 +125,7 @@ export const availableComponents = [
   {
     type: 'file',
     label: 'File',
+    icon: 'heroicons:document',
     component: 'input',
     props: {
       key: '',
@@ -131,6 +140,7 @@ export const availableComponents = [
   {
     type: 'hidden',
     label: 'Hidden',
+    icon: 'heroicons:eye-slash',
     component: 'input',
     props: {
       text: 'Hidden Text',
@@ -144,6 +154,7 @@ export const availableComponents = [
   {
     type: 'image',
     label: 'Image',
+    icon: 'heroicons:photo',
     component: 'input',
     props: {
       key: '',
@@ -160,6 +171,7 @@ export const availableComponents = [
   {
     type: 'label',
     label: 'Label',
+    icon: 'heroicons:tag',
     component: 'label',
     props: {
       key: '',
@@ -174,6 +186,7 @@ export const availableComponents = [
   {
     type: 'longtext',
     label: 'Long Text',
+    icon: 'heroicons:document-text',
     component: 'textarea',
     props: {
       key: '',
@@ -189,6 +202,7 @@ export const availableComponents = [
   {
     type: 'month',
     label: 'Month',
+    icon: 'heroicons:calendar',
     component: 'input',
     props: {
       key: '',
@@ -203,6 +217,7 @@ export const availableComponents = [
   {
     type: 'number',
     label: 'Number',
+    icon: 'heroicons:calculator',
     component: 'input',
     props: {
       key: '',
@@ -218,6 +233,7 @@ export const availableComponents = [
   {
     type: 'password',
     label: 'Password',
+    icon: 'heroicons:lock-closed',
     component: 'input',
     props: {
       key: '',
@@ -232,6 +248,7 @@ export const availableComponents = [
   {
     type: 'radio',
     label: 'Radio',
+    icon: 'heroicons:radio',
     component: 'input',
     props: {
       key: '',
@@ -246,6 +263,7 @@ export const availableComponents = [
   {
     type: 'range',
     label: 'Range',
+    icon: 'heroicons:adjustments-horizontal',
     component: 'input',
     props: {
       key: '',
@@ -260,6 +278,7 @@ export const availableComponents = [
   {
     type: 'reset',
     label: 'Reset',
+    icon: 'heroicons:arrow-path',
     component: 'input',
     props: {
       key: '',
@@ -274,6 +293,7 @@ export const availableComponents = [
   {
     type: 'select',
     label: 'Select',
+    icon: 'heroicons:list-bullet',
     component: 'input',
     props: {
       key: '',
@@ -290,6 +310,7 @@ export const availableComponents = [
   {
     type: 'selectgroup',
     label: 'Select Group',
+    icon: 'heroicons:queue-list',
     component: 'div',
     props: {
       key: '',
@@ -307,6 +328,7 @@ export const availableComponents = [
   {
     type: 'tel',
     label: 'Tel',
+    icon: 'heroicons:phone',
     component: 'input',
     props: {
       key: '',
@@ -321,6 +343,7 @@ export const availableComponents = [
   {
     type: 'text',
     label: 'Text',
+    icon: 'heroicons:pencil-square',
     component: 'input',
     props: {
       key: '',
@@ -335,6 +358,7 @@ export const availableComponents = [
   {
     type: 'time',
     label: 'Time',
+    icon: 'heroicons:clock',
     component: 'input',
     props: {
       key: '',
@@ -349,6 +373,7 @@ export const availableComponents = [
   {
     type: 'url',
     label: 'Url',
+    icon: 'heroicons:link',
     component: 'input',
     props: {
       key: '',
@@ -363,6 +388,7 @@ export const availableComponents = [
   {
     type: 'title',
     label: 'Title',
+    icon: 'mdi:format-header-1',
     component: 'div',
     props: {
       text: 'title',
@@ -372,6 +398,7 @@ export const availableComponents = [
   {
     type: 'subtitle',
     label: 'Sub Title',
+    icon: 'mdi:format-header-2',
     component: 'div',
     props: {
       text: 'Sub Title',
@@ -384,6 +411,7 @@ export const layoutContainers = [
   {
     type: 'buttons',
     label: 'Buttons',
+    icon: 'heroicons:stop',
     component: 'div',
     props: {
       key: '',
@@ -394,6 +422,7 @@ export const layoutContainers = [
   {
     type: 'chart',
     label: 'Chart',
+    icon: 'heroicons:chart-bar',
     component: 'div',
     props: {
       key: '',
@@ -410,6 +439,7 @@ export const layoutContainers = [
   {
     type: 'charts',
     label: 'Charts',
+    icon: 'heroicons:chart-pie',
     component: 'div',
     props: {
       key: '',
@@ -420,6 +450,7 @@ export const layoutContainers = [
   {
     type: 'card',
     label: 'Card',
+    icon: 'heroicons:credit-card',
     component: 'div',
     props: {
       key: '',
@@ -436,6 +467,7 @@ export const layoutContainers = [
   {
     type: 'cards',
     label: 'Cards',
+    icon: 'heroicons:squares-2x2',
     component: 'div',
     props: {
       key: '',
@@ -446,6 +478,7 @@ export const layoutContainers = [
   {
     type: 'columns',
     label: 'Columns',
+    icon: 'heroicons:view-columns',
     component: 'div',
     props: {
       key: '',
@@ -456,6 +489,7 @@ export const layoutContainers = [
   {
     type: 'form',
     label: 'Form',
+    icon: 'heroicons:clipboard-document-list',
     component: 'div',
     props: {
       class: 'w-full',
@@ -467,6 +501,7 @@ export const layoutContainers = [
   {
     type: 'master',
     label: 'Master',
+    icon: 'heroicons:document-duplicate',
     component: 'div',
     props: {
       class: 'w-full',
@@ -480,6 +515,7 @@ export const layoutContainers = [
   {
     type: 'modals',
     label: 'Modals',
+    icon: 'heroicons:window',
     component: 'div',
     props: {
       key: '',
@@ -490,6 +526,7 @@ export const layoutContainers = [
   {
     type: 'modal',
     label: 'Modal',
+    icon: 'heroicons:window',
     component: 'div',
     props: {
       key: '',
@@ -501,6 +538,7 @@ export const layoutContainers = [
   {
     type: 'search',
     label: 'Search',
+    icon: 'heroicons:magnifying-glass',
     component: 'div',
     props: {
       key: '',
@@ -511,6 +549,7 @@ export const layoutContainers = [
   {
     type: 'tabs',
     label: 'Tabs',
+    icon: 'heroicons:folder',
     component: 'UTab',
     props: {
       key: 'tabs',
@@ -521,6 +560,7 @@ export const layoutContainers = [
   {
     type: 'tab',
     label: 'Tab',
+    icon: 'heroicons:folder-open',
     component: 'div',
     props: {
       key: 'tab',
@@ -532,6 +572,7 @@ export const layoutContainers = [
   {
     type: 'table',
     label: 'Table',
+    icon: 'heroicons:table-cells',
     component: 'div',
     props: {
       key: 'table0',
@@ -550,6 +591,7 @@ export const layoutContainers = [
   {
     type: 'detailtable',
     label: 'Detail Table (Inline)',
+    icon: 'heroicons:table-cells',
     component: 'div',
     props: {
       key: 'table0',
@@ -568,6 +610,7 @@ export const layoutContainers = [
   {
     type: 'tables',
     label: 'Tables',
+    icon: 'heroicons:table-cells',
     component: 'div',
     props: {
       key: '',
@@ -578,6 +621,7 @@ export const layoutContainers = [
   {
     type: 'widget',
     label: 'Widget',
+    icon: 'heroicons:puzzle-piece',
     component: 'div',
     props: {
       class: 'w-full',
@@ -590,6 +634,7 @@ export const layoutContainers = [
   {
     type: 'wizard',
     label: 'Wizard',
+    icon: 'heroicons:play-circle',
     component: 'div',
     props: {
       class: 'w-full',
@@ -602,6 +647,7 @@ export const layoutContainers = [
   {
     type: 'row',
     label: 'Row / Section',
+    icon: 'heroicons:bars-3',
     component: 'div',
     props: {
         key: 'row_1',
@@ -612,6 +658,7 @@ export const layoutContainers = [
   {
     type: 'col',
     label: 'Column',
+    icon: 'heroicons:view-columns',
     component: 'div',
     props: {
         key: 'col_1',
@@ -622,6 +669,7 @@ export const layoutContainers = [
   {
     type: 'step',
     label: 'Step',
+    icon: 'heroicons:forward',
     component: 'div',
     props: {
       key: 'step_1',

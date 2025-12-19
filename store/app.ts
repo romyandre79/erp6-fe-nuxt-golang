@@ -6,6 +6,7 @@ export const useAppStore = defineStore('app', {
     errorMessage: 'Unable to connect to the server',
     isChatOpen: false,
     isNotificationOpen: false,
+    isLoading: false,
   }),
   actions: {
     setConnectionError(status: boolean, message?: string) {
