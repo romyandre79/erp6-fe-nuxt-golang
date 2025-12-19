@@ -338,6 +338,24 @@ export function useTableLogic(props: any, emit: any) {
       return value
         ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
         : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
+    
+    if (['date', 'datetime', 'datetime-local'].includes(col.type) && value) {
+       const date = new Date(value);
+       if (!isNaN(date.getTime())) {
+          if (col.type === 'date') {
+             return new Intl.DateTimeFormat(locale.value).format(date);
+          }
+          return new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }).format(date);
+       }
+    }
+    
+    if (col.type === 'time' && value) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return new Intl.DateTimeFormat(locale.value, { timeStyle: 'short' }).format(date);
+        }
+    }
+
     if (col.type === 'currency')
       return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
         value || 0,

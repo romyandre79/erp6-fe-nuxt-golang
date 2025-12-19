@@ -4,7 +4,7 @@ export interface ReportComponent {
   type: string;
   label: string;
   icon: string;
-  category: 'basic' | 'data' | 'charts' | 'special';
+  category: 'basic' | 'data' | 'charts' | 'special' | 'structure';
   props: Record<string, any>;
 }
 
@@ -238,6 +238,78 @@ export const reportComponents: ReportComponent[] = [
       fontSize: 10,
       alignment: 'left',
     },
+  },
+
+  // Structure / Bands
+  {
+    type: 'band_title',
+    label: 'Title Band',
+    icon: 'i-heroicons-bars-3-bottom-left', // Distinct icon
+    category: 'structure',
+    props: {
+      height: 50,
+      bandType: 'title'
+    }
+  },
+  {
+    type: 'band_pageHeader',
+    label: 'Page Header',
+    icon: 'i-heroicons-bars-arrow-up',
+    category: 'structure',
+    props: {
+      height: 30,
+      bandType: 'pageHeader'
+    }
+  },
+  {
+    type: 'band_columnHeader',
+    label: 'Column Header',
+    icon: 'i-heroicons-table-cells',
+    category: 'structure',
+    props: {
+      height: 30,
+      bandType: 'columnHeader'
+    }
+  },
+  {
+    type: 'band_detail',
+    label: 'Detail Band',
+    icon: 'i-heroicons-list-bullet',
+    category: 'structure',
+    props: {
+      height: 100,
+      bandType: 'detail'
+    }
+  },
+  {
+    type: 'band_columnFooter',
+    label: 'Column Footer',
+    icon: 'i-heroicons-table-cells',
+    category: 'structure',
+    props: {
+      height: 30,
+      bandType: 'columnFooter'
+    }
+  },
+  {
+    type: 'band_pageFooter',
+    label: 'Page Footer',
+    icon: 'i-heroicons-bars-arrow-down',
+    category: 'structure',
+    props: {
+      height: 30,
+      bandType: 'pageFooter'
+    }
+  },
+  {
+    type: 'band_summary',
+    label: 'Summary Band',
+    icon: 'i-heroicons-bars-3-bottom-right',
+    category: 'structure',
+    props: {
+      height: 50,
+      bandType: 'summary'
+    }
   },
 ];
 

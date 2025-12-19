@@ -122,14 +122,20 @@ watch(() => reportStore.selectedElement, (newVal) => {
 
 async function loadReport() {
   const id = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug;
-  if (!id) return;
+  if (!id) {
+    // No ID provided, initialize a new blank report
+    reportStore.initializeNewTemplate();
+    return;
+  }
 
   try {
     isLoading.value = true;
     await reportStore.loadTemplate(parseInt(id));
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to load report template', color: 'red' });
-    router.push('/admin/report-designer');
+    // If load fails, maybe redirect or init new? 
+    // For now, let's just init new so they aren't stuck on blank screen
+    reportStore.initializeNewTemplate();
   } finally {
     isLoading.value = false;
   }

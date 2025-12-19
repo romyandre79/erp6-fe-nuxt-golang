@@ -8,8 +8,12 @@ definePageMeta({
 const route = useRoute();
 const Api = useApi();
 const slug = computed(() => {
-    const s = route.params.slug as string;
-    return s.charAt(0).toUpperCase() + s.slice(1);
+    // [...slug] returns an array of strings
+    const s = Array.isArray(route.params.slug) ? route.params.slug.join('/') : route.params.slug;
+    // Capitalize first letter of the last segment for display title
+    if (!s) return 'Page';
+    const lastSegment = s.split('/').pop() || s;
+    return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 });
 
 const pageData = ref<any>(null);
@@ -31,8 +35,10 @@ useHead({
 const fetchPage = async () => {
   isLoading.value = true;
   error.value = null;
+  // Join slug array if it's an array for the API call
+  const slugParam = Array.isArray(route.params.slug) ? route.params.slug.join('/') : route.params.slug;
   try {
-    const res = await Api.get(`api/public/page/${route.params.slug}`);
+    const res = await Api.get(`api/public/page/${slugParam}`);
     if (res.code === 200) {
       pageData.value = res.data;
       if (typeof pageData.value.menuform === 'string') {
