@@ -8,7 +8,7 @@ const allApps = [
   { id: 'accounting', name: 'Accounting', price: 250000, icon: '📊' },
   { id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📊' },
   { id: 'erp_prod', name: 'ERP Production', price: 250000, icon: '📊' },
-  { id: 'erp_prod', name: 'ERP Project', price: 250000, icon: '📊' },
+  { id: 'erp_proj', name: 'ERP Project', price: 250000, icon: '📊' },
   { id: 'hris_ess', name: 'HRIS', price: 150000, icon: '👥' },
   { id: 'ess', name: 'ESS', price: 100000, icon: '👥' },
   { id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },

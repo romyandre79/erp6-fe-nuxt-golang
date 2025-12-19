@@ -551,6 +551,27 @@ async function downTemplate() {
   await Api.donlotFile('/api/admin/down-template', dataForm, props.menuName + '.xlsx');
 }
 
+async function downReport(reportId: any, format: string = 'pdf') {
+  let dataForm = new FormData();
+  dataForm.append('flowname', 'printreport');
+  dataForm.append('reportid', reportId);
+  dataForm.append('format', format);
+  dataForm.append('menu', route.params.slug);
+  dataForm.append('search', 'true');
+
+  const primary = getPrimary();
+  if (selectedRows.value.length > 0) {
+      for (let index = 0; index < selectedRows.value.length; index++) {
+        if(selectedRows.value[index][primary]) {
+            dataForm.append(primary + '[' + index + ']', selectedRows.value[index][primary]);
+        }
+      }
+  }
+
+  await Api.donlotFile('/api/admin/execute-flow', dataForm, 'Report_' + reportId + '.' + format);
+}
+
+
 function navigate(key: any) {
   if (key.includes('form-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
@@ -662,6 +683,27 @@ async function handleFileChange(e: Event) {
 let formData = ref<Record<string, any>>({});
 const validationErrors = reactive<Record<string, string>>({});
 const { validateField } = useFormValidation();
+
+function formatDate(value: any, type: string) {
+  if (!value) return '';
+  // Check if it looks like an ISO string or contains date parts
+  if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof value === 'string') {
+      // If valid date
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+
+          if (type === 'date') return `${year}-${month}-${day}`;
+          if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
+          if (type === 'time') return `${hours}:${minutes}`; 
+      }
+  }
+  return value;
+}
 
 function renderComponent(component: any) {
   switch ((component.type || '').toLowerCase()) {
@@ -797,11 +839,20 @@ function renderComponent(component: any) {
 
     case 'text':
     case 'hidden':
+    case 'date':
+    case 'datetime':
+    case 'email':
+    case 'tel':
+    case 'url':
+    case 'time':
+    case 'reset':
+    case 'week':
+    case 'month':
     case 'password':
     case 'number': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
-        get: () => formData.value[component.props.key],
+        get: () => formatDate(formData.value[component.props.key], component.type),
         set: (val) => {
           formData.value[component.props.key] = val;
         },
@@ -813,7 +864,7 @@ function renderComponent(component: any) {
             : null
           : '',
         h('input', {
-          type: component.type,
+          type: component.type === 'datetime' ? 'datetime-local' : component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
