@@ -6,6 +6,7 @@
   "ACCOUNT": "Account",
   "ACCOUNT PAYABLE REPORT": "Account Payable Report",
   "ACCOUNT PERIOD": "Account Period",
+  "ACCOUNTING PERIOD": "Account Period",
   "ACCOUNT RECEIVABLE REPORT": "Account Receivable Report",
   "ACCOUNT TYPE": "Account Type",
   "ACCOUNTING": "Accounting",
@@ -183,6 +184,7 @@
   "QUALIFICATION PARAMETER": "Qualification Parameter",
   "QUALIFICATION TEST": "Qualification Test",
   "RATE": "Rate",
+  "CURRENCY RATE": "Rate",
   "READ MORE": "Read More ...",
   "RECRUIT REQUEST LIST": "Recruit Request List",
   "RECURRING TYPE": "Reccuring Type",
@@ -502,6 +504,8 @@
       "EPROCUREMENT": "E-Procurement",
       "HR": "Human Resource",
       "PROJECT": "Project Mgmt"
-    }
+    },
+    "SLOC ACCOUNTING": "Sloc Accounting",
+    "SLOC": "Storage Location"
   }
 }

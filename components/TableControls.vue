@@ -27,14 +27,14 @@
     </button>
     <button
       class="px-3 py-1 rounded-lg border hover:bg-base-100"
-      :disabled="currentPage === totalPages || loading"
+      :disabled="currentPage === totalPages || loading || totalPages === 0"
       @click="$emit('next-page')"
     >
       &gt;
     </button>
     <button
       class="px-3 py-1 rounded-lg border hover:bg-base-100"
-      :disabled="currentPage === totalPages || loading"
+      :disabled="currentPage === totalPages || loading || totalPages === 0"
       @click="$emit('last-page')"
     >
       &gt;&gt;
