@@ -59,7 +59,11 @@ import { ref, onMounted } from 'vue';
 import { useApi } from '#imports';
 import { useMediaManager } from '~/composables/useMediaManager';
 
-const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager();
+const props = defineProps({
+  apiBase: { type: String, default: '/media' }
+});
+
+const { files, currentPath, loading, loadMedia, uploadFile, deleteFile, renameFile, createFolder } = useMediaManager(props.apiBase);
 const fileInput = ref<HTMLInputElement | null>(null);
 const preview = ref<any>(null);
 const Api = useApi();

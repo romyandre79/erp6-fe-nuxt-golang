@@ -13,6 +13,25 @@
         />
         
         <div class="flex items-center gap-2 ml-4">
+          <button 
+            @click="handleUndo" 
+            :disabled="!canUndo"
+            :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
+            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50" 
+            title="Undo (Ctrl+Z)"
+          >
+            ↶ Undo
+          </button>
+          <button 
+            @click="handleRedo" 
+            :disabled="!canRedo"
+            :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
+            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50" 
+            title="Redo (Ctrl+Y)"
+          >
+            ↷ Redo
+          </button>
+          <div class="w-px h-6 bg-gray-300"></div>
              <button
             @click="backupDatabase"
             :disabled="backupLoading"
@@ -270,6 +289,21 @@ const {
   computeRelationsPaths,
 } = useCanvas();
 
+// Undo/Redo functionality for dbobject
+interface DbObjectState {
+  tables: any[];
+  relations: any[];
+  areas: any[];
+}
+
+const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<DbObjectState>(
+  { tables: [], relations: [], areas: [] },
+  {
+    historyLimit: 50,
+    enableKeyboardShortcuts: false // We'll handle this manually
+  }
+);
+
 const selectedId = ref(null);
 const jsonPreview = ref('');
 const aiDescription = ref('');
@@ -302,7 +336,73 @@ watch(selectedTable, (newVal) => {
 
 watch([tables, relations, areas], () => {
   markDirty();
+  // Record state for undo/redo
+  recordCanvasState();
 }, { deep: true });
+
+// Helper function to record canvas state
+function recordCanvasState() {
+  const state: DbObjectState = {
+    tables: JSON.parse(JSON.stringify(toRaw(tables))),
+    relations: JSON.parse(JSON.stringify(toRaw(relations))),
+    areas: JSON.parse(JSON.stringify(toRaw(areas)))
+  };
+  record(state);
+}
+
+// Undo/Redo handlers
+const handleUndo = () => {
+  const previousState = undo();
+  if (previousState) {
+    restoreCanvasState(previousState);
+  }
+};
+
+const handleRedo = () => {
+  const nextState = redo();
+  if (nextState) {
+    restoreCanvasState(nextState);
+  }
+};
+
+function restoreCanvasState(state: DbObjectState) {
+  // Clear current state
+  tables.splice(0, tables.length, ...state.tables);
+  relations.splice(0, relations.length, ...state.relations);
+  areas.splice(0, areas.length, ...state.areas);
+  
+  // Update sequences
+  if (tables.length > 0) {
+    idSeq = Math.max(...tables.map(t => t.id)) + 1;
+  }
+  if (relations.length > 0) {
+    relSeq = Math.max(...relations.map(r => r.id)) + 1;
+  }
+  if (areas.length > 0) {
+    areaSeq = Math.max(...areas.map(a => a.id)) + 1;
+  }
+  
+  // Recompute paths
+  computeRelationsPaths();
+}
+
+// Keyboard shortcuts for undo/redo
+const handleKeyDown = (event: KeyboardEvent) => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+
+  // Undo: Ctrl+Z
+  if (ctrlKey && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault();
+    handleUndo();
+  }
+
+  // Redo: Ctrl+Y or Ctrl+Shift+Z
+  if ((ctrlKey && event.key === 'y') || (ctrlKey && event.shiftKey && event.key === 'z')) {
+    event.preventDefault();
+    handleRedo();
+  }
+};
 
 
 function addTableAt() {
@@ -1199,5 +1299,13 @@ function onExecuteSuccess() {
 
 onMounted(async () => {
   await loadDesign();
+  
+  // Register keyboard shortcuts
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  // Remove keyboard listener
+  window.removeEventListener('keydown', handleKeyDown);
 });
 </script>

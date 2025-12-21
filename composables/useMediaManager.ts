@@ -1,13 +1,13 @@
 import { ref } from 'vue';
 import { useApi } from '#imports';
 
-export function useMediaManager() {
+export function useMediaManager(apiBase = '/media') {
   const files = ref<any[]>([]);
   const currentPath = ref('');
   const loading = ref(false);
   const Api = useApi();
 
-  const baseUrl = '/media';
+  const baseUrl = apiBase;
 
   async function loadMedia(path = '') {
     loading.value = true;

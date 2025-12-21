@@ -1,5 +1,23 @@
 <template>
   <div class="flex">
+    <button 
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+      @click="handleUndo"
+      :disabled="!canUndo"
+      :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
+      title="Undo (Ctrl+Z)"
+    >
+      ↶ Undo
+    </button>
+    <button 
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+      @click="handleRedo"
+      :disabled="!canRedo"
+      :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
+      title="Redo (Ctrl+Y)"
+    >
+      ↷ Redo
+    </button>
     <button class="text-black dark:text-white w-full py-1 rounded cursor-pointer" @click="saveSchema">
       💾 Save Schema
     </button>
@@ -133,6 +151,12 @@ const showJson = ref(true);
 const { getMenuForm } = useAuth();
 const Api = useApi();
 
+// Undo/Redo functionality
+const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<NodeSchema[]>([], {
+  historyLimit: 50,
+  enableKeyboardShortcuts: false // We'll handle this manually to sync with canvasComponents
+});
+
 function getDefaultProps(type: string) {
   const found = availableComponents.find((x) => x.type === type) || layoutContainers.find((x) => x.type === type);
 
@@ -206,6 +230,39 @@ const togglePreview = () => {
 
 const toggleJson = () => {
   showJson.value = !showJson.value;
+};
+
+// Undo/Redo handlers
+const handleUndo = () => {
+  const previousState = undo();
+  if (previousState) {
+    canvasComponents.value = JSON.parse(JSON.stringify(previousState));
+  }
+};
+
+const handleRedo = () => {
+  const nextState = redo();
+  if (nextState) {
+    canvasComponents.value = JSON.parse(JSON.stringify(nextState));
+  }
+};
+
+// Keyboard shortcuts for undo/redo
+const handleKeyDown = (event: KeyboardEvent) => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+
+  // Undo: Ctrl+Z
+  if (ctrlKey && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault();
+    handleUndo();
+  }
+
+  // Redo: Ctrl+Y or Ctrl+Shift+Z
+  if ((ctrlKey && event.key === 'y') || (ctrlKey && event.shiftKey && event.key === 'z')) {
+    event.preventDefault();
+    handleRedo();
+  }
 };
 
 const isLoading = ref(false);
@@ -399,10 +456,7 @@ const copySchema = async () => {
 
 const heartbeatInterval = ref<NodeJS.Timer | null>(null);
 
-onBeforeUnmount(() => {
-  if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
-  releaseLock();
-});
+
 
 onMounted(async () => {
   await loadSchema();
@@ -413,6 +467,20 @@ onMounted(async () => {
       acquireLock(dataMenu.menuAccessId as number);
     }, 60000);
   }
+
+  // Register keyboard shortcuts
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  // Remove keyboard listener
+  window.removeEventListener('keydown', handleKeyDown);
+  
+  // Clear heartbeat interval
+  if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
+  
+  // Release lock
+  releaseLock();
 });
 
 const debugText = computed({
@@ -433,7 +501,20 @@ watch(
   (newVal) => {
     formattedJson.value = newVal;
     formSchema.value = newVal;
+    // Record state for undo/redo
+    record(JSON.parse(JSON.stringify(newVal)));
   },
-  { deep: true, immediate: true },
+  { deep: true, immediate: false }, // Changed to false to avoid recording initial state
+);
+
+// Reset undo/redo history when schema is loaded
+watch(
+  () => formSchema.value,
+  (newVal) => {
+    if (newVal && canvasComponents.value.length > 0) {
+      reset(JSON.parse(JSON.stringify(canvasComponents.value)));
+    }
+  },
+  { immediate: false }
 );
 </script>

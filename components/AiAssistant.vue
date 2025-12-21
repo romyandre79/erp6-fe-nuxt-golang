@@ -215,6 +215,34 @@
                  <img :src="assistantCustomImage || 'https://via.placeholder.com/100?text=?'" class="w-full h-full object-contain clippy-svg" />
             </div>
 
+            <!-- Universal Writing Animation (for all characters) -->
+            <transition name="fade">
+              <svg v-if="isBusy" class="absolute bottom-0 right-0 w-16 h-16" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Paper -->
+                  <path d="M 10 45 L 50 45 L 50 15 L 10 15 Z" fill="white" stroke="#666" stroke-width="1" transform="rotate(-10 30 30)"/>
+                  <line x1="15" y1="22" x2="45" y2="22" stroke="#ccc" stroke-width="1" transform="rotate(-10 30 30)"/>
+                  <line x1="15" y1="28" x2="45" y2="28" stroke="#ccc" stroke-width="1" transform="rotate(-10 30 30)"/>
+                  <line x1="15" y1="34" x2="45" y2="34" stroke="#ccc" stroke-width="1" transform="rotate(-10 30 30)"/>
+                  
+                  <!-- Pen -->
+                  <g class="clippy-writing-hand">
+                     <path d="M 35 30 L 45 15 L 50 18 L 40 33 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                     <path d="M 35 30 L 33 33" stroke="#333" stroke-width="1" />
+                  </g>
+              </svg>
+            </transition>
+
+            <!-- Universal Waving Animation (for all characters) -->
+            <transition name="fade">
+              <svg v-if="isHovered && !isBusy" class="absolute top-0 right-0 w-12 h-12" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <g class="clippy-wave-hand">
+                     <!-- Hand -->
+                    <path d="M 10 20 L 25 5 L 30 10 L 15 25 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                    <circle cx="25" cy="5" r="4" fill="#facc15" stroke="#ca8a04" stroke-width="1"/>
+                  </g>
+              </svg>
+            </transition>
+
             <!-- Speech Bubble Tail for open state -->
             <div v-if="isChatOpen" class="absolute -top-4 right-12 w-4 h-4 bg-white dark:bg-gray-800 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
         </div>
@@ -525,7 +553,10 @@ const appStore = useAppStore();
 const workflowStore = useWorkflowStore();
 const dbobjectStore = useDbobjectStore();
 const reportStore = useReportStore();
-const { isChatOpen } = storeToRefs(appStore); // Use store ref
+const { isChatOpen, isLoading: appIsLoading } = storeToRefs(appStore);
+const { loading: workflowLoading } = storeToRefs(workflowStore);
+const { loading: dbobjectLoading } = storeToRefs(dbobjectStore);
+const { loading: reportLoading } = storeToRefs(reportStore);
 
 // const isOpen = ref(false); // Removed local ref
 const activeTab = ref<'ai' | 'people' | 'settings'>('ai');
@@ -546,10 +577,10 @@ const isAiProcessing = ref(false);
 const isBusy = computed(() => 
     isAiProcessing.value || 
     loadingUsers.value || 
-    appStore.isLoading || 
-    workflowStore.loading || 
-    dbobjectStore.loading || 
-    reportStore.loading
+    appIsLoading.value || 
+    workflowLoading.value || 
+    dbobjectLoading.value || 
+    reportLoading.value
 );
 
 

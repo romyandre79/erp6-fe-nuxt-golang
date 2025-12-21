@@ -678,4 +678,91 @@ export const layoutContainers = [
     },
     children: [],
   },
+  {
+    type: 'kanban',
+    label: 'Kanban Board',
+    icon: 'heroicons:view-columns',
+    component: 'div',
+    props: {
+      key: 'kanban_1',
+      class: 'w-full',
+      source: '',
+      primary: '',
+      titlefield: 'title',
+      descriptionfield: 'description',
+      statusfield: 'status',
+      assigneefield: 'assignee',
+      duedatefield: 'duedate',
+      priorityfield: 'priority',
+      tagsfield: 'tags',
+      onUpdate: '',
+      onUpdateStatus: '',
+    },
+    children: [],
+  },
+  {
+    type: 'kanbanboard',
+    label: 'Kanban Board',
+    icon: 'heroicons:view-columns',
+    component: 'KanbanBoard',
+    props: {
+      key: 'kanban_1',
+      // Data source workflows
+      projectsSource: '', // workflow to fetch projects
+      cardsSource: '', // workflow to fetch cards
+      // Project CRUD workflows
+      onCreateProject: '', // workflow to create project
+      onUpdateProject: '', // workflow to update project
+      onDeleteProject: '', // workflow to delete project
+      // Card CRUD workflows
+      onCreateCard: '', // workflow to create card
+      onUpdateCard: '', // workflow to update card
+      onDeleteCard: '', // workflow to delete card
+      onMoveCard: '', // workflow to move card between columns
+      // Attachment workflows
+      onUploadAttachment: '', // workflow to upload attachment
+      onDeleteAttachment: '', // workflow to delete attachment
+      // Column configuration (customizable)
+      columns: [
+        { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
+        { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
+        { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
+        { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6' },
+        { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
+      ],
+      // Features
+      enableAttachments: true, // enable file attachments
+      enableClipboardPaste: true, // enable Ctrl+V image paste
+      enableColumnManagement: true, // enable column reordering and customization
+      enableDragDrop: true, // enable drag and drop
+      class: '',
+    },
+    children: [],
+  },
+  {
+    type: 'kanbancolumn',
+    label: 'Kanban Column',
+    icon: 'heroicons:rectangle-stack',
+    component: 'div',
+    props: {
+      key: 'column_1',
+      title: 'To Do',
+      status: 'todo',
+      color: 'gray',
+      limit: 0,
+      class: '',
+    },
+    children: [],
+  },
+  {
+    type: 'kanbancard',
+    label: 'Kanban Card',
+    icon: 'heroicons:credit-card',
+    component: 'div',
+    props: {
+      key: 'card_1',
+      class: '',
+    },
+    children: [],
+  },
 ];

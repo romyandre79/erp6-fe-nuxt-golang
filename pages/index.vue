@@ -151,9 +151,9 @@ useHead({
                 <button class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-lg transition glow">
                     {{ $t('LANDING.HERO.START_TRIAL') }}
                 </button>
-                <button class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold text-lg transition border border-gray-700">
+                <a href="#demo-video" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold text-lg transition border border-gray-700 inline-block text-center">
                     {{ $t('LANDING.HERO.WATCH_DEMO') }}
-                </button>
+                </a>
             </div>
             
             <!-- Stats -->
@@ -174,6 +174,29 @@ useHead({
                     <div class="text-4xl font-bold text-red-500 mb-2">24/7</div>
                     <div class="text-gray-400">{{ $t('LANDING.STATS.SUPPORT') }}</div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Video Section -->
+    <section id="demo-video" class="py-20 px-4 bg-gray-900">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    <span class="text-gradient">Watch Capella in Action</span>
+                </h2>
+                <p class="text-xl text-gray-400">See how Capella Engine v6 transforms your workflow automation</p>
+            </div>
+            
+            <div class="relative w-full" style="padding-bottom: 56.25%;">
+                <iframe 
+                    class="absolute top-0 left-0 w-full h-full rounded-2xl shadow-2xl border border-gray-700"
+                    src="https://www.youtube.com/embed/1fO4u2Nf0sI?si=jbvPy5-06mBGyFoj" 
+                    title="Capella Engine Demo" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                ></iframe>
             </div>
         </div>
     </section>
