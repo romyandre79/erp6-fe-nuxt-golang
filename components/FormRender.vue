@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -852,7 +852,13 @@ function renderComponent(component: any) {
     case 'number': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
       const modelInput = computed({
-        get: () => formatDate(formData.value[component.props.key], component.type),
+        get: () => {
+          // Only format dates, not numbers
+          if (['date', 'datetime', 'datetime-local', 'time'].includes(component.type)) {
+            return formatDate(formData.value[component.props.key], component.type);
+          }
+          return formData.value[component.props.key];
+        },
         set: (val) => {
           formData.value[component.props.key] = val;
         },
@@ -1136,6 +1142,45 @@ function renderChart(container: any) {
   return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
 }
 
+function renderKanbanBoard(container: any) {
+  if (!container) return null;
+  
+  // Import KanbanBoard component dynamically
+  const KanbanBoard = resolveComponent('KanbanBoard');
+  
+  return h(KanbanBoard, {
+    // Data sources
+    projectsSource: container.props?.projectsSource || '',
+    cardsSource: container.props?.cardsSource || '',
+    // Project CRUD
+    onCreateProject: container.props?.onCreateProject || '',
+    onUpdateProject: container.props?.onUpdateProject || '',
+    onDeleteProject: container.props?.onDeleteProject || '',
+    // Card CRUD
+    onCreateCard: container.props?.onCreateCard || '',
+    onUpdateCard: container.props?.onUpdateCard || '',
+    onDeleteCard: container.props?.onDeleteCard || '',
+    onMoveCard: container.props?.onMoveCard || '',
+    // Attachments
+    onUploadAttachment: container.props?.onUploadAttachment || '',
+    onDeleteAttachment: container.props?.onDeleteAttachment || '',
+    // Column configuration
+    columns: container.props?.columns || [
+      { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
+      { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
+      { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
+      { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6' },
+      { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
+    ],
+    // Feature flags
+    enableAttachments: container.props?.enableAttachments !== false,
+    enableClipboardPaste: container.props?.enableClipboardPaste !== false,
+    enableColumnManagement: container.props?.enableColumnManagement !== false,
+    enableDragDrop: container.props?.enableDragDrop !== false,
+    class: container.props?.class || '',
+  });
+}
+
 function renderDetailTable(container: any) {
   const tableKey = container.props.key;
     
@@ -1182,6 +1227,86 @@ function renderSelectGroup(component: any) {
       });
 }
 
+function renderKanban(container: any) {
+  if (!container) return null;
+  
+  const kanbanKey = container.props.key || 'kanban_1';
+  
+  // Initialize kanban data in formData if not exists
+  if (!(kanbanKey in formData.value)) {
+    formData.value[kanbanKey] = [];
+  }
+  
+  return h(KanbanBoard, {
+    container,
+    formData: formData.value,
+    onUpdate: (card: any) => {
+      // Handle card update
+      const index = formData.value[kanbanKey].findIndex(
+        (c: any) => c[container.props.primary || 'id'] === card[container.props.primary || 'id']
+      );
+      if (index >= 0) {
+        formData.value[kanbanKey][index] = card;
+      } else {
+        formData.value[kanbanKey].push(card);
+      }
+    },
+    onStatusChange: async ({ card, oldStatus, newStatus }: any) => {
+      // Handle status change - call backend if onUpdateStatus flow is defined
+      const flow = container.props.onUpdateStatus;
+      if (flow) {
+        try {
+          const dataForm = new FormData();
+          dataForm.append('flowname', flow);
+          dataForm.append('menu', route.params.slug);
+          dataForm.append('search', 'true');
+          
+          // Append card data
+          for (const key in card) {
+            if (card[key] !== null && card[key] !== undefined) {
+              if (typeof card[key] === 'object') {
+                dataForm.append(key, JSON.stringify(card[key]));
+              } else {
+                dataForm.append(key, card[key]);
+              }
+            }
+          }
+          
+          const res = await Api.post('api/admin/execute-flow', dataForm);
+          if (res.code === 200) {
+            toast.add({
+              title: 'Success',
+              description: 'Card status updated',
+              color: 'green',
+            });
+          } else {
+            toast.add({
+              title: 'Error',
+              description: res.details || 'Failed to update card status',
+              color: 'red',
+            });
+          }
+        } catch (err) {
+          console.error('Failed to update card status:', err);
+        }
+      }
+    },
+    onCardClick: (card: any) => {
+      // Handle card click - open modal if defined
+      const modalKey = container.props.modalkey || 'modalkanban';
+      if (modalRefs[modalKey]) {
+        // Populate formData with card data
+        for (const key in card) {
+          formData.value[key] = card[key];
+        }
+        modalRefs[modalKey].value = true;
+        modalTitle.value = 'Edit Card';
+      }
+    },
+  });
+}
+
+
 function renderContainer(container: any) {
   if (!container) return null;
   // 🔥 Special handling for detailtable - render it as a component, not a container
@@ -1214,6 +1339,9 @@ function renderContainer(container: any) {
 
         case 'chart':
           return renderChart(component);
+
+        case 'kanbanboard':
+          return renderKanbanBoard(component);
 
         case 'detailtable': {
       // Initialize formData for this table if not exists
@@ -1265,6 +1393,8 @@ function renderContainer(container: any) {
         case 'col':
         case 'step':
           return renderContainer(component);
+        case 'kanban':
+          return renderKanban(component);
         case 'action':
           break;
 
@@ -1398,7 +1528,11 @@ const CreateHandler = async () => {
       const val = payload[key];
       if (val !== undefined && val !== null) {
         if (typeof val === 'object') dataForm.append(key, JSON.stringify(val));
+        else if (typeof val === 'boolean') dataForm.append(key, val ? '1' : '0');
         else dataForm.append(key, val);
+      } else if (val === false) {
+        // Explicitly handle false boolean values
+        dataForm.append(key, '0');
       }
     }
 
@@ -1439,7 +1573,11 @@ const UpdateHandler = async () => {
       const val = payload[key];
       if (val !== undefined && val !== null) {
         if (typeof val === 'object') dataForm.append(key, JSON.stringify(val));
+        else if (typeof val === 'boolean') dataForm.append(key, val ? '1' : '0');
         else dataForm.append(key, val);
+      } else if (val === false) {
+        // Explicitly handle false boolean values
+        dataForm.append(key, '0');
       }
     }
 

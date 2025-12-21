@@ -53,6 +53,25 @@
       </div>
     </div>
 <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
+      <button 
+        @click="handleUndo" 
+        :disabled="!canUndo"
+        :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
+        class="p-2 rounded shadow bg-white text-black" 
+        title="Undo (Ctrl+Z)"
+      >
+        ↶ Undo
+      </button>
+      <button 
+        @click="handleRedo" 
+        :disabled="!canRedo"
+        :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
+        class="p-2 rounded shadow bg-white text-black" 
+        title="Redo (Ctrl+Y)"
+      >
+        ↷ Redo
+      </button>
+      <div class="w-px bg-gray-300 mx-1"></div>
       <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
       <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
       <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
@@ -132,6 +151,12 @@ let editor: any = null;
 let saveTimeout: any = null;
 let workflowSocket: WebSocket | null = null;
 
+// Undo/Redo functionality for workflow
+const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<any>(null, {
+  historyLimit: 50,
+  enableKeyboardShortcuts: false // We'll handle this manually
+});
+
 /* ======================================================
    FUNCTION: initEditor (DEFINISI WAJIB ADA!!)
    ======================================================*/
@@ -161,6 +186,8 @@ function initEditor(container: HTMLElement) {
         console.error('Error deleteNodeProperties:', err);
       }
     }
+    // Record state for undo/redo
+    recordEditorState();
   });
 
   ed.on('nodeSelected', async (id: string) => {
@@ -183,6 +210,20 @@ function initEditor(container: HTMLElement) {
     }
   });
 
+  // Record state on node creation
+  ed.on('nodeCreated', () => {
+    recordEditorState();
+  });
+
+  // Record state on connection changes
+  ed.on('connectionCreated', () => {
+    recordEditorState();
+  });
+
+  ed.on('connectionRemoved', () => {
+    recordEditorState();
+  });
+
   return ed;
 }
 
@@ -195,17 +236,73 @@ async function Save() {
         description: $t(res.message.replaceAll('_', ' ')),
       });
       emit('saved');
-      // Emit saved event
-      // emit is not defined in script setup? I need to defineEmits.
-      // Wait, let's check if defineEmits is used. It's not.
-      // I can use `const emit = defineEmits(['saved'])`
-      // I need to add defineEmits first.
-
+      // Record state after save
+      recordEditorState();
     }
   } catch (e) {
     console.error('❌ saveFlow error', e);
   }
 }
+
+// Helper function to record editor state
+function recordEditorState() {
+  if (!editor) return;
+  try {
+    const state = editor.export();
+    record(JSON.parse(JSON.stringify(state)));
+  } catch (e) {
+    console.error('Error recording editor state:', e);
+  }
+}
+
+// Undo/Redo handlers
+const handleUndo = () => {
+  const previousState = undo();
+  if (previousState && editor) {
+    try {
+      editor.import(previousState);
+      setTimeout(() => {
+        convertOldNodesToIcons();
+        updateAllConnections();
+      }, 100);
+    } catch (e) {
+      console.error('Error restoring previous state:', e);
+    }
+  }
+};
+
+const handleRedo = () => {
+  const nextState = redo();
+  if (nextState && editor) {
+    try {
+      editor.import(nextState);
+      setTimeout(() => {
+        convertOldNodesToIcons();
+        updateAllConnections();
+      }, 100);
+    } catch (e) {
+      console.error('Error restoring next state:', e);
+    }
+  }
+};
+
+// Keyboard shortcuts for undo/redo
+const handleKeyDown = (event: KeyboardEvent) => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+
+  // Undo: Ctrl+Z
+  if (ctrlKey && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault();
+    handleUndo();
+  }
+
+  // Redo: Ctrl+Y or Ctrl+Shift+Z
+  if ((ctrlKey && event.key === 'y') || (ctrlKey && event.shiftKey && event.key === 'z')) {
+    event.preventDefault();
+    handleRedo();
+  }
+};
 
 /* ======================================================
    Upload Plugin Logic
@@ -403,6 +500,8 @@ onMounted(async () => {
       setTimeout(() => {
         convertOldNodesToIcons();
         updateAllConnections();
+        // Initialize undo/redo with current state
+        reset(editor.export());
       }, 100);
     } catch (e) {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
@@ -411,6 +510,9 @@ onMounted(async () => {
   
   // Initialize WebSocket for real-time updates
   initWorkflowWebSocket();
+  
+  // Register keyboard shortcuts
+  window.addEventListener('keydown', handleKeyDown);
 });
 
 watch(
@@ -515,6 +617,9 @@ onBeforeUnmount(() => {
     editor?.destroy();
   } catch (e) {
   }
+  
+  // Remove keyboard listener
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 /* ======================================================

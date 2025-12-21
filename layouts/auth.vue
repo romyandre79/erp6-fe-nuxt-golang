@@ -111,6 +111,9 @@ const parentMenus = computed(() => allMenus.value.filter((m) => !m.parentid || m
 const getChildren = (parentId: number) =>
   allMenus.value.filter((m) => m.parentid === parentId).sort((a, b) => (a.sortorder ?? 0) - (b.sortorder ?? 0));
 
+// Helper to check if icon is a Nuxt Icon (starts with i-)
+const isNuxtIcon = (name: string) => name?.startsWith('i-');
+
 // Sidebar toggle
 const toggleSidebar = () => (isCollapsed.value = !isCollapsed.value);
 
@@ -172,7 +175,8 @@ const toggleExpand = (id: number) => {
               >
                 <!-- Icon -->
                 <div class="menu-icon w-6 flex items-center justify-center transition-all duration-200 shrink-0">
-                  <i :class="parent.menuicon" class="text-base"></i>
+                  <UIcon v-if="isNuxtIcon(parent.menuicon)" :name="parent.menuicon" class="text-base" />
+                  <i v-else :class="parent.menuicon" class="text-base"></i>
                 </div>
                 
                 <!-- Label -->
@@ -213,7 +217,8 @@ const toggleExpand = (id: number) => {
                     class="submenu-item flex items-center gap-2.5 px-3 py-2 transition-all duration-200"
                     :style="{ borderRadius: 'var(--sidebar-menu-radius)' }"
                   >
-                    <i :class="child.menuicon" class="text-[11px] opacity-70 w-4"></i>
+                    <UIcon v-if="isNuxtIcon(child.menuicon)" :name="child.menuicon" class="text-[11px] opacity-70 w-4" />
+                    <i v-else :class="child.menuicon" class="text-[11px] opacity-70 w-4"></i>
                     <span class="text-sm truncate">
                       {{ t(child.description.toUpperCase()) }}
                     </span>
