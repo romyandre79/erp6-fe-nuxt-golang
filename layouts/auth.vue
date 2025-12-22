@@ -157,7 +157,7 @@ const toggleExpand = (id: number) => {
           <button 
             @click="toggleSidebar"
             class="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center shadow-lg transition-all duration-200 collapse-btn"
-            style="border-radius: var(--sidebar-collapse-radius); background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 100;"
+            style="border-radius: var(--sidebar-collapse-radius); background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 50;"
           >
             <i :class="[isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left', 'text-xs']"></i>
           </button>
