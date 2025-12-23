@@ -765,4 +765,27 @@ export const layoutContainers = [
     },
     children: [],
   },
+  {
+    type: 'orgchart',
+    label: 'Org Chart',
+    icon: 'heroicons:user-group',
+    component: 'FormOrgChart',
+    props: {
+      key: 'orgchart_1',
+      source: '', // Dataflow to fetch nodes
+      onCreate: '', // Flow to create node
+      onUpdate: '', // Flow to update node (move/reparent)
+      onDelete: '', // Flow to delete node
+      modalKey: '', // Modal to open for editing/creating
+      config: {
+        nodeKey: 'id',
+        parentKey: 'parent_id',
+        labelKey: 'name',
+        titleKey: 'title',
+        imageKey: 'avatar'
+      },
+      class: 'w-full h-[600px]',
+    },
+    children: [],
+  }
 ];
