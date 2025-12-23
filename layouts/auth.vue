@@ -126,7 +126,7 @@ const toggleExpand = (id: number) => {
 <template>
   <ClientOnly>
     <UApp>
-      <div class="admin-layout flex min-h-screen transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
+      <div class="admin-layout flex h-screen overflow-hidden transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
 
         <!-- MODERN SIDEBAR -->
         <aside 
@@ -255,7 +255,7 @@ const toggleExpand = (id: number) => {
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-h-screen overflow-hidden">
+        <main class="flex-1 flex flex-col h-full overflow-hidden">
           <!-- Top Navbar -->
           <NavbarAdmin class="sticky top-0 z-40 backdrop-blur-xl navbar-theme">
             <template #right>

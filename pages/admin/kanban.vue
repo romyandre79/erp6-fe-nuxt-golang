@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="flex h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
     <!-- Project Sidebar -->
     <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       <!-- Sidebar Header -->
@@ -32,10 +32,10 @@
       <div class="flex-1 overflow-y-auto p-2">
         <div 
           v-for="project in filteredProjects" 
-          :key="project.id"
+          :key="project.projectid"
           class="mb-2 p-3 rounded-lg cursor-pointer transition-colors"
           :class="[
-            activeProject?.id === project.id 
+            activeProject?.projectid === project.projectid 
               ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' 
               : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-transparent',
             project.archived ? 'opacity-60' : ''
@@ -183,14 +183,15 @@
                 v-for="card in getColumnCards(column.status)"
                 :key="card.id"
                 class="cursor-move hover:shadow-lg transition-shadow"
-                :ui="{ body: { padding: 'p-4' } }"
+                :class="getCardColorClass(card.status, card.duedate)"
+                :ui="{ body: { padding: 'p-2' } }"
                 draggable="true"
                 @dragstart="onDragStart($event, card)"
                 @dragend="onDragEnd"
                 @click.stop="openEditModal(card)"
               >
-                <div v-if="card.priority" class="mb-3">
-                  <UBadge :color="getPriorityColor(card.priority)" variant="subtle" size="xs">
+                <div v-if="card.priority" class="mb-2">
+                  <UBadge :color="getPriorityColor(card.priority)" variant="solid" size="xs">
                     {{ card.priority }}
                   </UBadge>
                 </div>
@@ -204,7 +205,7 @@
                 <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div v-if="card.assignee" class="flex items-center gap-1">
                     <UIcon name="i-heroicons-user-circle" class="w-4 h-4" />
-                    <span>{{ card.assignee }}</span>
+                    <span>{{ activeProject?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee)?.username || card.assignee }}</span>
                   </div>
                   <div v-if="card.duedate" class="flex items-center gap-1">
                     <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
@@ -247,7 +248,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ editingProject?.id ? 'Edit Project' : 'Create Project' }}
+              {{ editingProject?.projectid ? 'Edit Project' : 'Create Project' }}
             </h3>
             <UButton
               icon="i-heroicons-x-mark"
@@ -568,9 +569,9 @@
                           @click="viewAttachment(file)"
                           class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline truncate block text-left"
                         >
-                          {{ file.name }}
+                          {{ file.originalfilename || file.name }}
                         </button>
-                        <span class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</span>
+                        <span class="text-xs text-gray-500">{{ formatFileSize(file.filesize || file.size) }}</span>
                       </div>
                     </div>
                     <UButton
@@ -583,10 +584,10 @@
                   </div>
                   
                   <!-- Image preview -->
-                  <div v-if="file.type?.startsWith('image/') && file.preview" class="px-3 pb-3">
+                  <div v-if="file.mimetype?.startsWith('image/') || file.type?.startsWith('image/')" class="px-3 pb-3">
                     <img 
-                      :src="file.preview" 
-                      :alt="file.name"
+                      :src="getAttachmentUrl(file)" 
+                      :alt="file.originalfilename || file.name"
                       class="max-w-full h-auto rounded border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-90"
                       style="max-height: 300px;"
                       @click="viewAttachment(file)"
@@ -708,30 +709,56 @@
                   </div>
                   <div class="flex-1">
                     <UTextarea
+                      v-model="newComment"
                       placeholder="Write a comment..."
                       :rows="2"
                       class="w-full"
                     />
-                    <div class="mt-2">
-                      <UButton size="xs" color="primary">Save</UButton>
+                    <div class="mt-2 text-right">
+                      <UButton size="xs" color="primary" @click="addComment">Post Comment</UButton>
                     </div>
                   </div>
                 </div>
                 
-                <!-- Sample Activity -->
-                <div v-if="isEditMode" class="flex gap-3">
-                  <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold">
-                    {{ editingCard.assignee?.charAt(0) || 'U' }}
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-sm">
-                      <span class="font-semibold">{{ editingCard.assignee || 'User' }}</span>
-                      <span class="text-gray-500 dark:text-gray-400"> added this card to {{ getColumnName(editingCard.status) }}</span>
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Just now
-                    </div>
-                  </div>
+                <!-- Comments List -->
+                <div v-if="editingCard.comments && editingCard.comments.length > 0" class="space-y-4 pt-2">
+                   <div v-for="(comment, idx) in editingCard.comments" :key="comment.cardcommentid || idx" class="flex gap-3 group">
+                       <!-- Avatar -->
+                      <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold">
+                        {{ 
+                            (activeProject?.members?.find((m: any) => m.userid == comment.userid)?.username || comment.userid || 'U').charAt(0).toUpperCase() 
+                        }}
+                      </div>
+                      
+                      <!-- Content -->
+                      <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                             <div class="text-sm">
+                                <span class="font-semibold text-gray-900 dark:text-white">
+                                    {{ activeProject?.members?.find((m: any) => m.userid == comment.userid)?.username || comment.userid || 'Unknown' }}
+                                </span>
+                                <span class="text-gray-500 dark:text-gray-400 text-xs ml-2">
+                                    {{ comment.created_at ? new Date(comment.created_at).toLocaleString() : 'Just now' }}
+                                </span>
+                             </div>
+                             <!-- Delete Button (visible on hover) -->
+                             <UButton
+                                icon="i-heroicons-trash"
+                                size="xs"
+                                color="gray"
+                                variant="ghost"
+                                class="opacity-0 group-hover:opacity-100 transition-opacity"
+                                @click="deleteComment(idx)"
+                             />
+                        </div>
+                        <div class="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+                            {{ comment.comment }}
+                        </div>
+                      </div>
+                   </div>
+                </div>
+                <div v-else class="text-center text-gray-500 text-sm py-2 italic opacity-70">
+                    No comments yet. Be the first to say something! 💬
                 </div>
               </div>
             </div>
@@ -768,18 +795,39 @@
                   </label>
                   <USelectMenu
                     v-model="editingCard.assignee"
-                    :items="activeProject?.members?.map((u: any) => ({ label: u.realname || u.email, id: u.userid || u.email })) || []"
-                    value-key="id"
+                    :items="memberOptions"
+                    value-attribute="id"
                     placeholder="Select assignee"
                     searchable
                     class="w-full"
-                  />
+                  >
+                    <template #label>
+                      <span v-if="editingCard.assignee">
+                         {{ memberOptions.find(opt => opt.id == (typeof editingCard.assignee === 'object' ? editingCard.assignee?.id : editingCard.assignee))?.label || (typeof editingCard.assignee === 'object' ? editingCard.assignee?.label : editingCard.assignee) }}
+                      </span>
+                      <span v-else class="text-gray-400">Select assignee</span>
+                    </template>
+                  </USelectMenu>
                   <!-- Show assignee avatar if assigned -->
                   <div v-if="editingCard.assignee" class="mt-2 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                    <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                      {{ editingCard.assignee.charAt(0).toUpperCase() }}
-                    </div>
-                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ editingCard.assignee }}</span>
+                    <!-- Handle object/array returned by component -->
+                    <template v-if="typeof editingCard.assignee === 'object'">
+                         <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
+                          {{ ((Array.isArray(editingCard.assignee) ? editingCard.assignee[0] : editingCard.assignee) || {}).label?.charAt(0).toUpperCase() || 'U' }}
+                        </div>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                          {{ ((Array.isArray(editingCard.assignee) ? editingCard.assignee[0] : editingCard.assignee) || {}).label || 'Unknown' }}
+                        </span>
+                    </template>
+                    <!-- Handle ID string/number -->
+                    <template v-else>
+                        <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
+                          {{ (activeProject?.members?.find((m: any) => (m.userid == editingCard.assignee || m.email == editingCard.assignee))?.username || String(editingCard.assignee)).charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                          {{ activeProject?.members?.find((m: any) => (m.userid == editingCard.assignee || m.email == editingCard.assignee))?.username || editingCard.assignee }}
+                        </span>
+                    </template>
                   </div>
                 </div>
 
@@ -876,7 +924,7 @@
 
         <div v-if="projectStats" class="space-y-6">
           <!-- Overview Cards -->
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-4 gap-4">
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ projectStats.totalCards }}</div>
               <div class="text-sm text-gray-600 dark:text-gray-400">Total Cards</div>
@@ -888,6 +936,10 @@
             <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ projectStats.completionRate }}%</div>
               <div class="text-sm text-gray-600 dark:text-gray-400">Progress</div>
+            </div>
+            <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+              <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ projectStats.totalFormatted }}</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">Total Hours</div>
             </div>
           </div>
 
@@ -904,16 +956,50 @@
               ></div>
             </div>
           </div>
-
-          <!-- Cards by Status -->
-          <div>
-            <h4 class="font-semibold mb-3">Cards by Status</h4>
-            <div class="space-y-2">
-              <div v-for="item in projectStats.cardsByStatus" :key="item.status" class="flex items-center gap-3">
-                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: item.color }"></div>
-                <span class="flex-1 text-sm">{{ item.status }}</span>
-                <span class="font-semibold">{{ item.count }}</span>
+          
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Workload by Assignee -->
+             <div>
+                <h4 class="font-semibold mb-3">Workload by Assignee</h4>
+                <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                  <div v-for="item in projectStats.assigneeStats" :key="item.name" class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                    <div class="flex items-center gap-2">
+                         <div class="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs">
+                             {{ item.name.charAt(0).toUpperCase() }}
+                         </div>
+                        <span class="text-sm font-medium">{{ item.name }}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="text-gray-500">{{ item.count }} cards</span>
+                        <span class="font-semibold text-blue-600 dark:text-blue-400">{{ item.duration }}</span>
+                    </div>
+                  </div>
+                   <div v-if="projectStats.assigneeStats.length === 0" class="text-sm text-gray-400 italic">No assignments yet</div>
+                </div>
               </div>
+          
+              <!-- Cards by Status -->
+              <div>
+                <h4 class="font-semibold mb-3">Cards by Status</h4>
+                <div class="space-y-2">
+                  <div v-for="item in projectStats.cardsByStatus" :key="item.status" class="flex items-center gap-3 p-2">
+                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: item.color }"></div>
+                    <span class="flex-1 text-sm">{{ item.status }}</span>
+                    <span class="font-semibold">{{ item.count }}</span>
+                  </div>
+                </div>
+              </div>
+          </div>
+          
+          <!-- Time Per Card -->
+           <div>
+            <h4 class="font-semibold mb-3">Time per Card</h4>
+            <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+               <div v-for="cardTime in projectStats.timePerCard" :key="cardTime.title" class="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/10 rounded">
+                  <span class="text-sm truncate flex-1 pr-2">{{ cardTime.title }}</span>
+                  <span class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ cardTime.duration }}</span>
+               </div>
+               <div v-if="projectStats.timePerCard.length === 0" class="text-sm text-gray-400 italic">No time entries recorded</div>
             </div>
           </div>
 
@@ -982,7 +1068,7 @@
               <USelectMenu
                 v-model="newMemberEmail"
                               :items="users.map(c => ({ label: c.username, id: c.useraccessid }))"
-              value-key="id"
+                value-attribute="id"
                 searchable
                 placeholder="Search user"
                 class="flex-1"
@@ -999,16 +1085,16 @@
           <!-- Members List -->
           <div class="space-y-2">
             <div
-              v-for="member in activeProject?.members"
-              :key="member.userId"
+              v-for="(member, index) in activeProject?.members"
+              :key="member.userid || member.userId || index"
               class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
             >
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold">
-                  {{ member.name?.charAt(0).toUpperCase() || 'U' }}
+                  {{ (member.username || member.name || 'U').charAt(0).toUpperCase() }}
                 </div>
                 <div>
-                  <div class="font-medium">{{ member.name }}</div>
+                  <div class="font-medium">{{ member.username || member.name || 'Unknown User' }}</div>
                   <div class="text-sm text-gray-500">{{ member.email }}</div>
                 </div>
               </div>
@@ -1118,16 +1204,34 @@ const loadProjectMembers = async () => {
     dataForm.append('search', 'true');
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
+    console.log('loadProjectMembers raw response:', res);
     
-    if (res.data?.data && Array.isArray(res.data.data)) {
-      activeProject.value.members = res.data.data;
-      console.log('Project members loaded:', activeProject.value.members);
-    } else {
-        activeProject.value.members = [];
+    let members = [];
+    if (res.data) {
+        if (Array.isArray(res.data)) {
+            members = res.data;
+        } else if (res.data.data && Array.isArray(res.data.data)) {
+            members = res.data.data;
+        } else if (res.data.rows && Array.isArray(res.data.rows)) {
+            members = res.data.rows;
+        }
     }
+    
+    // Fallback if members is empty but data exists in unexpected format
+    if (members.length === 0 && res.data && typeof res.data === 'object') {
+       console.log('Checking alternative data locations', res.data);
+    }
+
+    if (activeProject.value) {
+        activeProject.value.members = members;
+    }
+    console.log('Project members loaded and set:', activeProject.value?.members);
+
   } catch (error) {
     console.error('Error loading project members:', error);
-    activeProject.value.members = [];
+    if (activeProject.value) {
+        activeProject.value.members = [];
+    }
   }
 };
 
@@ -1252,12 +1356,85 @@ const projectStats = computed(() => {
   const createdDate = new Date(activeProject.value.createdat || activeProject.value.createdAt);
   const daysSinceCreation = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
   
+  // Calculate total time and time per card
+  let totalProjectMs = 0;
+  const timePerCard = projectCards.map((card: any) => {
+    let cardMs = 0;
+    if (card.timeEntries && Array.isArray(card.timeEntries)) {
+      card.timeEntries.forEach((entry: any) => {
+        if (entry.start && entry.end) {
+          const start = new Date(entry.start).getTime();
+          const end = new Date(entry.end).getTime();
+          if (end > start) cardMs += (end - start);
+        }
+      });
+    }
+    totalProjectMs += cardMs;
+    const mins = Math.floor(cardMs / 60000);
+    const hours = Math.floor(mins / 60);
+    return {
+      title: card.title,
+      durationMs: cardMs,
+      duration: hours > 0 ? `${hours}h ${mins % 60}m` : `${mins}m`
+    };
+  }).filter(c => c.durationMs > 0).sort((a, b) => b.durationMs - a.durationMs);
+  
+  const totalMins = Math.floor(totalProjectMs / 60000);
+  const totalHours = Math.floor(totalMins / 60);
+  const totalFormatted = totalHours > 0 ? `${totalHours}h ${totalMins % 60}m` : `${totalMins}m`;
+
+  // Workload by Assignee (Card count + Time)
+  const workloadByAssignee: Record<string, { count: number, timeMs: number, name: string }> = {};
+  
+  projectCards.forEach((card: any) => {
+    // Determine assignee ID/Name
+    let assigneeId = 'unassigned';
+    let assigneeName = 'Unassigned';
+    
+    if (card.assignee) {
+        if (typeof card.assignee === 'object') {
+            const assigneeObj = Array.isArray(card.assignee) ? card.assignee[0] : card.assignee;
+            assigneeId = assigneeObj.id || assigneeObj.userid || assigneeObj.email;
+            assigneeName = assigneeObj.label || assigneeObj.username || 'Unknown';
+        } else {
+            // Try to lookup user
+            const foundUser = activeProject.value?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee);
+            assigneeId = String(card.assignee);
+            assigneeName = foundUser ? foundUser.username : card.assignee;
+        }
+    }
+    
+    if (!workloadByAssignee[assigneeId]) {
+        workloadByAssignee[assigneeId] = { count: 0, timeMs: 0, name: assigneeName };
+    }
+    
+    workloadByAssignee[assigneeId].count++;
+    
+    // Add card time to assignee (Simplification: Card time attributed to current assignee)
+    // To be more precise, we'd need user IDs on time entries, but for now this is the best approximation
+    const cardTimeEntryMs = timePerCard.find(c => c.title === card.title)?.durationMs || 0;
+    workloadByAssignee[assigneeId].timeMs += cardTimeEntryMs;
+  });
+
+  const assigneeStats = Object.values(workloadByAssignee).map(stat => {
+    const mins = Math.floor(stat.timeMs / 60000);
+    const hours = Math.floor(mins / 60);
+    return {
+        name: stat.name,
+        count: stat.count,
+        duration: hours > 0 ? `${hours}h ${mins % 60}m` : `${mins}m`
+    };
+  }).sort((a, b) => b.count - a.count);
+
   return {
     totalCards,
     doneCards,
     completionRate,
     cardsByStatus,
-    daysSinceCreation
+    daysSinceCreation,
+    timePerCard,
+    totalFormatted,
+    assigneeStats
   };
 });
 
@@ -1298,6 +1475,7 @@ const loadProjects = async () => {
         activeProject.value = projects.value[0];
         await loadCards();
         await loadColumns();
+        await loadProjectMembers();
       }
     }
   } catch (error) {
@@ -1361,6 +1539,23 @@ const loadCards = async () => {
         
         if (res.data && Array.isArray(res.data.data)) {
           tasks.value[i].attachments = res.data.data;
+        }
+
+        dataForm = new FormData();
+        dataForm.append('flowname', 'getcardcomment');
+        dataForm.append('menu', 'admin');
+        dataForm.append('cardid', card.cardid.toString());
+        dataForm.append('search', 'true');
+        
+        res = await api.post('/api/admin/execute-flow', dataForm);
+        
+        if (res.data && Array.isArray(res.data.data)) {
+          tasks.value[i].comments = res.data.data.map((c: any) => ({
+            ...c,
+            created_at: formatDateTimeForInput(c.created_at) // Ensure date format
+          }));
+        } else {
+            tasks.value[i].comments = [];
         }
       }
     }
@@ -1541,6 +1736,44 @@ const confirmDeleteProject = async () => {
     });
   }
 };
+const updateMemberRole = async (member: any, newRole: string) => {
+  if (!member.projectmemberid) {
+     toast.add({
+      title: 'Error',
+      description: 'Member ID not found',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+    return;
+  }
+
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'updateprojectmemberrole');
+    dataForm.append('menu', 'admin');
+    dataForm.append('projectmemberid', member.projectmemberid.toString());
+    dataForm.append('projectid', member.projectid.toString());
+    dataForm.append('userid', member.userid.toString());
+    dataForm.append('role', newRole);
+    
+    await api.post('/api/admin/execute-flow', dataForm);
+    toast.add({
+      title: 'Member Role Updated',
+      description: `Role for ${member.username} updated to ${newRole}`,
+      color: 'green',
+      icon: 'i-heroicons-check-circle',
+    });
+    await loadProjectMembers(); // Assuming this function exists to refresh the list
+  } catch (error) {
+    console.error('Error updating member role:', error);
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update member role',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+  }
+};
 // Archive/Unarchive project
 const toggleArchiveProject = async (project: any) => {
   try {
@@ -1605,8 +1838,13 @@ const saveCard = async () => {
     dataForm.append('title', editingCard.value.title);
     dataForm.append('description', editingCard.value.description || '');
     dataForm.append('status', editingCard.value.status);
-    dataForm.append('assignee', editingCard.value.assignee || '');
-    dataForm.append('duedate', editingCard.value.duedate || '');
+    let assignee = editingCard.value.assignee;
+    if (Array.isArray(assignee)) assignee = assignee[0];
+    if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
+    dataForm.append('assignee', assignee || '');
+    let duedate = editingCard.value.duedate || '';
+    if (duedate) duedate = duedate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('duedate', duedate);
     dataForm.append('priority', editingCard.value.priority || 'medium');
     dataForm.append('tags', JSON.stringify(editingCard.value.tags || []));
     
@@ -1616,6 +1854,28 @@ const saveCard = async () => {
       const cardid = editingCard.value.cardid || res.data?.cardid;
       if (cardid) {
         await saveTimeEntries(cardid, editingCard.value.timeEntries);
+      }
+    }
+
+    // Save pending attachments if any
+    if (editingCard.value.attachments && editingCard.value.attachments.length > 0) {
+      const cardid = editingCard.value.cardid || res.data?.cardid;
+      if (cardid) {
+        for (const att of editingCard.value.attachments) {
+          if (att.file && !att.cardattachmentid) {
+            try {
+              const dataForm = new FormData();
+              dataForm.append('flowname', 'uploadattachment');
+              dataForm.append('menu', 'admin');
+              dataForm.append('projectid', activeProject.value.projectid.toString());
+              dataForm.append('cardid', cardid.toString());
+              dataForm.append('file', att.file);
+              await api.post('/api/admin/execute-flow', dataForm);
+            } catch (e) {
+              console.error('Error uploading pending attachment', e);
+            }
+          }
+        }
       }
     }
     toast.add({
@@ -1673,18 +1933,16 @@ const saveTimeEntries = async (cardid: number, entries: any[]) => {
     
     try {
       const dataForm = new FormData();
-      
+
+      dataForm.append('flowname', 'modiftimeentry');
       if (entry.cardtimeentryid) {
-        dataForm.append('flowname', 'updatetimeentry');
         dataForm.append('cardtimeentryid', entry.cardtimeentryid.toString());
-      } else {
-        dataForm.append('flowname', 'createtimeentry');
-        dataForm.append('cardid', cardid.toString());
-      }
-      
+      }      
+      dataForm.append('cardid', cardid.toString());
       dataForm.append('menu', 'admin');
-      dataForm.append('startdatetime', entry.start);
-      dataForm.append('enddatetime', entry.end);
+      dataForm.append('search', false);
+      dataForm.append('startdatetime', entry.start.replace('T', ' '));
+      dataForm.append('enddatetime', entry.end.replace('T', ' '));
       dataForm.append('note', entry.note || '');
       
       await api.post('/api/admin/execute-flow', dataForm);
@@ -1697,8 +1955,9 @@ const saveTimeEntries = async (cardid: number, entries: any[]) => {
 const saveColumns = async () => {
   try {
     const dataForm = new FormData();
-    dataForm.append('flowname', 'saveprojectcolumns');
+    dataForm.append('flowname', 'modifprojectcolumns');
     dataForm.append('menu', 'admin');
+    dataForm.append('search', false);
     dataForm.append('projectid', activeProject.value.projectid.toString());
     dataForm.append('columns', JSON.stringify(columns.value));
     
@@ -1727,54 +1986,81 @@ const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = target.files;
   
-  if (files && files.length > 0 && editingCard.value.cardid) {
+  if (files && files.length > 0) {
     for (const file of Array.from(files)) {
-      try {
-        const dataForm = new FormData();
-        dataForm.append('flowname', 'uploadattachment');
-        dataForm.append('menu', 'admin');
-        dataForm.append('cardid', editingCard.value.cardid.toString());
-        dataForm.append('file', file);
-        
-        const res = await api.post('/api/admin/execute-flow', dataForm);
-        
-        if (res.data) {
-          const attachment: any = {
-            cardattachmentid: res.data.cardattachmentid,
-            filename: res.data.filename,
-            originalfilename: file.name,
-            filepath: res.data.filepath,
-            filesize: file.size,
-            mimetype: file.type,
-          };
-          // Generate preview for images
-          if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              attachment.preview = e.target?.result;
+      if (editingCard.value.cardid) {
+        // Existing upload logic for saved cards
+        try {
+          const dataForm = new FormData();
+          dataForm.append('flowname', 'uploadattachment');
+          dataForm.append('menu', 'admin');
+          dataForm.append('search', false);
+          dataForm.append('cardid', editingCard.value.cardid.toString());
+          dataForm.append('projectid', activeProject.value.projectid.toString());
+          dataForm.append('file', file);
+          
+          const res = await api.post('/api/admin/execute-flow', dataForm);
+          
+          if (res.data) {
+            // Handle potentially nested response structure key "data.data[0]"
+            const uploadedFile = (res.data.data && res.data.data.data && Array.isArray(res.data.data.data)) 
+                ? res.data.data.data[0] 
+                : (res.data.data || res.data); // Fallback
+
+            const attachment: any = {
+              cardattachmentid: uploadedFile.cardattachmentid || uploadedFile.lastid,
+              filename: uploadedFile.filename,
+              originalfilename: file.name,
+              filepath: uploadedFile.filepath,
+              filesize: file.size,
+              mimetype: file.type,
             };
-            reader.readAsDataURL(file);
+            
+            // Generate preview for images
+            if (file.type.startsWith('image/')) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                attachment.preview = e.target?.result;
+              };
+              reader.readAsDataURL(file);
+            }
+            if (!editingCard.value.attachments) {
+              editingCard.value.attachments = [];
+            }
+            editingCard.value.attachments.push(attachment);
+            
+            toast.add({
+              title: 'File Uploaded',
+              description: `${file.name} uploaded successfully`,
+              color: 'green',
+              icon: 'i-heroicons-check-circle',
+            });
           }
-          if (!editingCard.value.attachments) {
-            editingCard.value.attachments = [];
-          }
-          editingCard.value.attachments.push(attachment);
+        } catch (error) {
+          console.error('Error uploading file:', error);
+          toast.add({
+            title: 'Upload Failed',
+            description: `Failed to upload ${file.name}`,
+            color: 'red',
+            icon: 'i-heroicons-exclamation-triangle',
+          });
         }
-        
-        toast.add({
-          title: 'File Uploaded',
-          description: `${file.name} uploaded successfully`,
-          color: 'green',
-          icon: 'i-heroicons-check-circle',
-        });
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        toast.add({
-          title: 'Upload Failed',
-          description: `Failed to upload ${file.name}`,
-          color: 'red',
-          icon: 'i-heroicons-exclamation-triangle',
-        });
+      } else {
+        // Pending attachment for new cards
+        const attachment: any = {
+          originalfilename: file.name, // Use originalfilename to match structure
+          filesize: file.size,
+          mimetype: file.type,
+          file: file // Store logic file
+        };
+        // Preview
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => { attachment.preview = e.target?.result; };
+          reader.readAsDataURL(file);
+        }
+        if (!editingCard.value.attachments) editingCard.value.attachments = [];
+        editingCard.value.attachments.push(attachment);
       }
     }
   }
@@ -1786,8 +2072,9 @@ const removeAttachment = async (index: number) => {
   if (attachment.cardattachmentid) {
     try {
       const dataForm = new FormData();
-      dataForm.append('flowname', 'deleteattachment');
+      dataForm.append('flowname', 'purgeattachment');
       dataForm.append('menu', 'admin');
+      dataForm.append('search', false);
       dataForm.append('cardattachmentid', attachment.cardattachmentid.toString());
       
       await api.post('/api/admin/execute-flow', dataForm);
@@ -1811,6 +2098,70 @@ const removeAttachment = async (index: number) => {
   }
   
   editingCard.value.attachments.splice(index, 1);
+};
+
+// Comments/Activities
+const newComment = ref('');
+
+const addComment = async () => {
+  if (!newComment.value || !editingCard.value.cardid) return;
+  
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'createcardcomment');
+    dataForm.append('menu', 'admin');
+    dataForm.append('cardid', editingCard.value.cardid.toString());
+    dataForm.append('comment', newComment.value);
+    
+    // Assume current user is the commenter
+    // In a real app, backend assigns user. Frontend just sends text.
+    
+    const res = await api.post('/api/admin/execute-flow', dataForm);
+    
+    if (res.data) {
+        if (!editingCard.value.comments) editingCard.value.comments = [];
+        
+        // Simulating the new comment structure returned or creating optimistic one
+        // Ideally backend returns the full comment object
+        const newCommentObj = {
+            cardcommentid: res.data.cardcommentid || Date.now(),
+            comment: newComment.value,
+            created_at: new Date().toISOString(),
+            userid: 'Me' // Placeholder, will be refreshed or handled by logic
+        };
+        
+        editingCard.value.comments.unshift(newCommentObj); // Add to top
+        newComment.value = '';
+        
+        toast.add({ title: 'Comment added', color: 'green' });
+        
+        // Reload cards to get proper user details for the comment if needed
+        await loadCards(); // Optional: might be heavy, but ensures consistency
+    }
+  } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.add({ title: 'Failed to add comment', color: 'red' });
+  }
+};
+
+const deleteComment = async (index: number) => {
+  const comment = editingCard.value.comments[index];
+  if (!comment.cardcommentid) return;
+  
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'deletecardcomment');
+    dataForm.append('menu', 'admin');
+    dataForm.append('cardcommentid', comment.cardcommentid.toString());
+    
+    await api.post('/api/admin/execute-flow', dataForm);
+    
+    editingCard.value.comments.splice(index, 1);
+    toast.add({ title: 'Comment deleted', color: 'orange' });
+  } catch (error) {
+     console.error('Error deleting comment:', error);
+     toast.add({ title: 'Failed to delete comment', color: 'red' });
+  }
 };
 
 const projectColors = [
@@ -1960,6 +2311,13 @@ const openDeleteModal = (project: any) => {
   projectToDelete.value = project;
   isDeleteModalOpen.value = true;
 };
+// Member options for dropdown
+const memberOptions = computed(() => 
+  activeProject.value?.members?.map((u: any) => ({ 
+    label: u.username || u.email, 
+    id: u.userid || u.email 
+  })) || []
+);
 
 // Filtered projects - now filtered on backend, so just return all
 const filteredProjects = computed(() => {
@@ -2018,7 +2376,7 @@ const handleCardClick = (card: any) => {
   openEditModal(card);
 };
 
-const onDrop = (event: DragEvent, newStatus: string) => {
+const onDrop = async (event: DragEvent, newStatus: string) => {
   event.preventDefault();
   
   if (!draggedCard.value) return;
@@ -2029,8 +2387,52 @@ const onDrop = (event: DragEvent, newStatus: string) => {
     return;
   }
 
-  // Update card status
+  // Update card status locally (optimistic)
   draggedCard.value.status = newStatus;
+  
+  // Persist to backend
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'modifcard');
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', false);
+    dataForm.append('cardid', draggedCard.value.cardid.toString());
+    dataForm.append('projectid', activeProject.value.projectid.toString());
+    dataForm.append('title', draggedCard.value.title);
+    dataForm.append('description', draggedCard.value.description || '');
+    dataForm.append('status', newStatus);
+    dataForm.append('priority', draggedCard.value.priority || 'medium');
+    
+    // Handle assignee (same logic as saveCard)
+    let assignee = draggedCard.value.assignee;
+    if (Array.isArray(assignee)) assignee = assignee[0];
+    if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
+    dataForm.append('assignee', assignee || '');
+    
+    let duedate = draggedCard.value.duedate || '';
+    if (duedate) duedate = duedate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('duedate', duedate);
+    
+    // Ensure tags is array before stringify
+    let tags = draggedCard.value.tags || [];
+    if (typeof tags === 'string') {
+        try { tags = JSON.parse(tags); } catch(e) { tags = []; }
+    }
+    dataForm.append('tags', JSON.stringify(tags));
+
+    await api.post('/api/admin/execute-flow', dataForm);
+  } catch (error) {
+    console.error('Error saving move:', error);
+    toast.add({
+      title: 'Error',
+      description: 'Failed to save card move',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+    // Revert on error
+    draggedCard.value.status = oldStatus;
+    return;
+  }
   
   toast.add({
     title: 'Card Moved',
@@ -2072,7 +2474,30 @@ const addTimeEntry = () => {
   });
 };
 
-const removeTimeEntry = (index: number) => {
+const removeTimeEntry = async (index: number) => {
+  const entry = editingCard.value.timeEntries[index];
+  
+  if (entry.cardtimeentryid) {
+    try {
+      const dataForm = new FormData();
+      dataForm.append('flowname', 'deletetimeentry');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'false');
+      dataForm.append('cardtimeentryid', entry.cardtimeentryid.toString());
+      
+      await api.post('/api/admin/execute-flow', dataForm);
+    } catch (error) {
+      console.error('Error deleting time entry:', error);
+      toast.add({
+        title: 'Error',
+        description: 'Failed to delete time entry',
+        color: 'red',
+        icon: 'i-heroicons-exclamation-triangle',
+      });
+      return;
+    }
+  }
+  
   editingCard.value.timeEntries.splice(index, 1);
   toast.add({
     title: 'Time Entry Removed',
@@ -2201,19 +2626,47 @@ const handlePaste = (event: ClipboardEvent) => {
   }
 };
 
+// Get attachment URL
+const getAttachmentUrl = (file: any) => {
+  if (file.preview) return file.preview;
+  if (file.file) return URL.createObjectURL(file.file);
+  
+  if (file.filepath) {
+      if (file.filepath.startsWith('http')) return file.filepath;
+      
+      const config = useRuntimeConfig();
+      const apiBase = config.public.apiBase || '';
+      
+      // Backend serves ./public folder at root /
+      // But DB stores "public/uploads/..."
+      // So we must remove "public/" from the path to match the serving URL
+      let path = file.filepath.replace(/^public\//, '').replace(/^\/public\//, '');
+      
+      const cleanPath = path.startsWith('/') ? path : '/' + path;
+      
+      // If apiBase is present, prepend it (removing potentially double slash if apiBase ends with /)
+      if (apiBase) {
+          return apiBase.replace(/\/$/, '') + cleanPath;
+      }
+      return cleanPath;
+  }
+  return '';
+};
+
 // View attachment (open in new tab or download)
 const viewAttachment = (file: any) => {
-  if (file.preview || file.file) {
-    const url = file.preview || URL.createObjectURL(file.file);
-    
-    if (file.type?.startsWith('image/')) {
+  const url = getAttachmentUrl(file);
+  
+  if (url) {
+    if (file.mimetype?.startsWith('image/') || file.type?.startsWith('image/')) {
       // Open image in new tab
       window.open(url, '_blank');
     } else {
       // Download file
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name;
+      a.download = file.originalfilename || file.name || 'download';
+      a.target = '_blank'; // Important for opening if download fails/browser handles it
       a.click();
     }
   }
@@ -2232,7 +2685,7 @@ const openCreateModal = (status: string) => {
   isEditMode.value = false;
   editingCard.value = {
     id: Date.now(),
-    projectId: activeProject.value?.id,
+    projectid: activeProject.value?.projectid,
     title: '',
     description: '',
     status,
@@ -2247,7 +2700,10 @@ const openCreateModal = (status: string) => {
 
 const openEditModal = (card: any) => {
   isEditMode.value = true;
-  editingCard.value = { ...card };
+  editingCard.value = { 
+    ...card,
+    duedate: formatDateForInput(card.duedate)
+  };
   // Load tags into input field
   tagsInput.value = parseTagsArray(card.tags).join(', ');
   isModalOpen.value = true;
@@ -2326,7 +2782,7 @@ const updateTags = () => {
 // Helper functions
 const getColumnCards = (status: string) => {
   if (!activeProject.value) return [];
-  return tasks.value.filter((card) => card.status === status && card.projectId === activeProject.value.id);
+  return tasks.value.filter((card) => card.status === status && card.projectid === activeProject.value.projectid);
 };
 
 const getColumnName = (status: string) => {
@@ -2340,11 +2796,17 @@ const getColumnName = (status: string) => {
   return names[status] || status;
 };
 
+const priorityColors = {
+  high: 'red',
+  urgent: 'red',
+  medium: 'orange',
+  low: 'green',
+  default: 'gray'
+};
+
 const getPriorityColor = (priority: string) => {
-  const p = priority?.toLowerCase();
-  if (p === 'high' || p === 'urgent') return 'red';
-  if (p === 'medium') return 'yellow';
-  return 'green';
+  const p = priority?.trim().toLowerCase();
+  return priorityColors[p as keyof typeof priorityColors] || priorityColors.default;
 };
 
 const formatDate = (date: string) => {
@@ -2356,6 +2818,20 @@ const formatDate = (date: string) => {
 const isOverdue = (date: string) => {
   if (!date) return false;
   return new Date(date) < new Date();
+};
+
+const getCardColorClass = (status: string, duedate: string) => {
+  if (status === 'done' || status === 'finish') return '!bg-white dark:!bg-gray-800';
+  if (!duedate) return 'bg-white dark:bg-gray-800';
+  
+  const now = new Date();
+  const due = new Date(duedate);
+  const diffTime = due.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return '!bg-red-100 dark:!bg-red-900/40'; // Overdue
+  if (diffDays <= 5) return '!bg-orange-100 dark:!bg-orange-900/40'; // Due within 5 days
+  return '!bg-white dark:!bg-gray-800'; // More than 5 days away
 };
 
 // ========== ADVANCED FEATURES FUNCTIONS ==========
@@ -2412,7 +2888,12 @@ const selectTemplate = (template: any) => {
 
 // Members Management Functions
 const openMembersModal = async () => {
-  await loadUsers();
+  if (activeProject.value) {
+    await Promise.all([
+      loadUsers(),
+      loadProjectMembers()
+    ]);
+  }
   isMembersModalOpen.value = true;
 };
 
@@ -2436,9 +2917,13 @@ const addMember = async () => {
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
     
+    // Find the user's name for the toast
+    const addedUser = users.value.find(u => u.useraccessid === newMemberEmail.value);
+    const userName = addedUser ? addedUser.username : newMemberEmail.value;
+
     toast.add({
       title: 'Member Added',
-      description: `${newMemberEmail.value} has been added to the project`,
+      description: `${userName} has been added to the project`,
       color: 'green',
       icon: 'i-heroicons-user-plus',
     });
@@ -2465,13 +2950,13 @@ const removeMember = async (member: any) => {
     dataForm.append('menu', 'admin');
     dataForm.append('search', false);
     dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('userid', member.memberid.toString());
+    dataForm.append('userid', member.userid.toString());
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
     
     toast.add({
       title: 'Member Removed',
-      description: `${member.name} has been removed from the project`,
+      description: `${member.username} has been removed from the project`,
       color: 'orange',
       icon: 'i-heroicons-user-minus',
     });
@@ -2479,6 +2964,7 @@ const removeMember = async (member: any) => {
     // Reload project members
     await loadProjectMembers();
   } catch (error) {
+    console.log('err ',error)
     toast.add({
       title: 'Error',
       description: 'Failed to remove member',
@@ -2488,36 +2974,6 @@ const removeMember = async (member: any) => {
   }
 };
 
-const updateMemberRole = async (member: any, newRole: string) => {
-  if (!activeProject.value) return;
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'modifprojectmember');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', false);
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('memberid', member.memberid.toString());
-    dataForm.append('role', newRole);
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    member.role = newRole;
-    
-    toast.add({
-      title: 'Role Updated',
-      description: `${member.name}'s role has been updated to ${newRole}`,
-      color: 'blue',
-      icon: 'i-heroicons-shield-check',
-    });
-  } catch (error) {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to update role',
-      color: 'red',
-      icon: 'i-heroicons-exclamation-triangle',
-    });
-  }
-};
 </script>
 
 <style scoped>
