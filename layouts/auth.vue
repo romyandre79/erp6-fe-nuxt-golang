@@ -126,7 +126,7 @@ const toggleExpand = (id: number) => {
 <template>
   <ClientOnly>
     <UApp>
-      <div class="admin-layout flex min-h-screen transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
+      <div class="admin-layout flex h-screen overflow-hidden transition-colors duration-300" style="background: var(--content-background, #f8fafc);">
 
         <!-- MODERN SIDEBAR -->
         <aside 
@@ -157,7 +157,7 @@ const toggleExpand = (id: number) => {
           <button 
             @click="toggleSidebar"
             class="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center shadow-lg transition-all duration-200 collapse-btn"
-            style="border-radius: var(--sidebar-collapse-radius); background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 100;"
+            style="border-radius: var(--sidebar-collapse-radius); background: var(--sidebar-collapse-background); color: var(--sidebar-collapse-color); z-index: 50;"
           >
             <i :class="[isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left', 'text-xs']"></i>
           </button>
@@ -255,7 +255,7 @@ const toggleExpand = (id: number) => {
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-h-screen overflow-hidden">
+        <main class="flex-1 flex flex-col h-full overflow-hidden">
           <!-- Top Navbar -->
           <NavbarAdmin class="sticky top-0 z-40 backdrop-blur-xl navbar-theme">
             <template #right>

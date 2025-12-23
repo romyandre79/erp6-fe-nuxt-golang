@@ -898,6 +898,58 @@ useHead({
                         </div>
                     </div>
                 </article>
+
+                <!-- Project Management Card -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-500/20 to-indigo-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-blue-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- Board -->
+                          <rect x="64" y="96" width="384" height="320" rx="16" />
+                          
+                          <!-- Columns -->
+                          <rect x="96" y="128" width="80" height="256" rx="8" />
+                          <rect x="216" y="128" width="80" height="256" rx="8" />
+                          <rect x="336" y="128" width="80" height="256" rx="8" />
+                          
+                          <!-- Cards -->
+                          <line x1="120" y1="160" x2="152" y2="160" />
+                          <line x1="120" y1="192" x2="152" y2="192" />
+                          
+                          <line x1="240" y1="160" x2="272" y2="160" />
+                          <circle cx="256" cy="208" r="16" class="text-indigo-400" />
+                          
+                          <path d="M352 160l32 32l-16 16" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">Trello-style</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">Project Management</h3>
+                        <p class="text-gray-400 mb-4">Visual project tracking with Kanban boards. Organizing tasks, deadlines, and team collaboration made simple.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Kanban</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Collaboration</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Tracking</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">Agile Workflow</span>
+                            <NuxtLink class="text-blue-400 hover:text-blue-300 text-sm font-semibold" to="/project">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
             </div>
 
             <!-- Stats Banner -->

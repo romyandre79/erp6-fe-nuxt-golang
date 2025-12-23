@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -1142,6 +1142,43 @@ function renderChart(container: any) {
   return h(ChartWrapper, { container, renderChild: renderContainer, formData: formData.value });
 }
 
+function renderOrgChart(container: any) {
+  if (!container) return null;
+  const FormOrgChart = resolveComponent('FormOrgChart');
+  return h(FormOrgChart, {
+      source: container.props.source,
+      config: container.props.config,
+      onCreate: container.props.onCreate,
+      onUpdate: container.props.onUpdate,
+      onDelete: container.props.onDelete,
+      modalKey: container.props.modalKey,
+      class: container.props.class,
+      'onOpen:modal': (key: string, data: any, isNew: boolean) => {
+          // Open modal logic
+          if(modalRefs[key]) {
+             modalRefs[key].value = true;
+             modalTitle.value = isNew ? 'Add Child Node' : 'Edit Node';
+             
+             // Populate form data
+             formData.value = { ...data };
+             
+             // If isNew, we might want to clear other fields but keep parent_id
+             if(isNew) {
+                 const parentKey = container.props.config?.parentKey || 'parent_id';
+                 const pid = data[parentKey];
+                 formData.value = {};
+                 formData.value[parentKey] = pid;
+             }
+          } else {
+              console.warn(`Modal ${key} not found`);
+          }
+      },
+      'onEdit:node': (node: any) => {
+          // Additional logic if needed, but open:modal handles it usually
+      }
+  });
+}
+
 function renderKanbanBoard(container: any) {
   if (!container) return null;
   
@@ -1342,6 +1379,9 @@ function renderContainer(container: any) {
 
         case 'kanbanboard':
           return renderKanbanBoard(component);
+        
+        case 'orgchart':
+          return renderOrgChart(component);
 
         case 'detailtable': {
       // Initialize formData for this table if not exists
