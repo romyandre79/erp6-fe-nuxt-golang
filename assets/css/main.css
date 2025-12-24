@@ -188,3 +188,7 @@
   background: var(--navbar-admin-background);
   color: var(--navbar-admin-color);
 }
+.kanban-board-container {
+  background: var(--kanban-board-bg, transparent);
+  transition: background 0.5s ease-in-out;
+}

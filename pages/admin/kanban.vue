@@ -134,7 +134,13 @@
       </div>
 
       <!-- Kanban Board -->
-      <div v-if="activeProject" class="flex-1 overflow-hidden p-6">
+      <div 
+        v-if="activeProject" 
+        class="flex-1 overflow-hidden p-6 kanban-board-container"
+        :style="{
+          '--kanban-board-bg': `linear-gradient(to bottom right, ${activeProject.color || '#3b82f6'}15, transparent)`
+        }"
+      >
     <div class="kanban-board w-full overflow-x-auto" style="display: block;">
       <div class="flex flex-row gap-4 pb-4" style="display: flex; flex-direction: row; min-height: 600px; flex-wrap: nowrap;">
         
@@ -506,7 +512,7 @@
           </div>
         </template>
 
-        <div class="grid grid-cols-12 gap-6 p-6">
+        <div class="grid grid-cols-12 gap-6 p-6" :key="editingCard.id">
           <!-- Main Content (Left Side) -->
           <div class="col-span-9 space-y-6">
             
@@ -2693,8 +2699,12 @@ const openCreateModal = (status: string) => {
     duedate: '',
     priority: 'medium',
     tags: [],
+    comments: [],
+    timeEntries: [],
+    attachments: [],
   };
   tagsInput.value = '';
+  newComment.value = '';
   isModalOpen.value = true;
 };
 
@@ -2702,10 +2712,14 @@ const openEditModal = (card: any) => {
   isEditMode.value = true;
   editingCard.value = { 
     ...card,
-    duedate: formatDateForInput(card.duedate)
+    duedate: formatDateForInput(card.duedate),
+    comments: card.comments || [],
+    timeEntries: card.timeEntries || [],
+    attachments: card.attachments || []
   };
   // Load tags into input field
   tagsInput.value = parseTagsArray(card.tags).join(', ');
+  newComment.value = '';
   isModalOpen.value = true;
 };
 
@@ -2720,8 +2734,12 @@ const closeModal = () => {
     duedate: '',
     priority: 'medium',
     tags: [],
+    comments: [],
+    timeEntries: [],
+    attachments: [],
   };
   tagsInput.value = '';
+  newComment.value = '';
 };
 
 // Helper functions for ADD TO CARD buttons
