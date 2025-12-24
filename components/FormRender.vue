@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart } from '#components';
+import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -1179,6 +1179,54 @@ function renderOrgChart(container: any) {
   });
 }
 
+function renderCalendar(container: any) {
+  if (!container) return null;
+  const FormCalendar = resolveComponent('FormCalendar');
+  return h(FormCalendar, {
+      source: container.props.source,
+      config: container.props.config,
+      height: container.props.height,
+      class: container.props.class,
+      menuName: String(route.params.slug),
+      'onItem-click': (item: any) => {
+          const modalKey = container.props.key?.replace('calendar', 'modal') || 'modalcalendar';
+          // or finding a modal with matching name pattern?
+          // Fallback to convention or prop
+          const targetModalKey = container.props.modalKey || container.props.key + '_modal';
+          
+          if(modalRefs[targetModalKey]) {
+             formData.value = { ...item };
+             modalRefs[targetModalKey].value = true;
+             modalTitle.value = 'Edit Item';
+          } else {
+             // Try to find a modal that might be relevant? 
+             // For now just warn
+             console.warn(`Modal ${targetModalKey} not found for Calendar item click`);
+          }
+      }
+  });
+}
+
+function renderGantt(container: any) {
+  if (!container) return null;
+  const FormGantt = resolveComponent('FormGantt');
+  return h(FormGantt, {
+      source: container.props.source,
+      config: container.props.config,
+      height: container.props.height,
+      class: container.props.class,
+      menuName: String(route.params.slug),
+      'onItem-click': (item: any) => {
+        const targetModalKey = container.props.modalKey || container.props.key + '_modal';
+          if(modalRefs[targetModalKey]) {
+             formData.value = { ...item };
+             modalRefs[targetModalKey].value = true;
+             modalTitle.value = 'Edit Item';
+          }
+      }
+  });
+}
+
 function renderKanbanBoard(container: any) {
   if (!container) return null;
   
@@ -1382,6 +1430,12 @@ function renderContainer(container: any) {
         
         case 'orgchart':
           return renderOrgChart(component);
+        
+        case 'calendar':
+          return renderCalendar(component);
+
+        case 'gantt':
+          return renderGantt(component);
 
         case 'detailtable': {
       // Initialize formData for this table if not exists

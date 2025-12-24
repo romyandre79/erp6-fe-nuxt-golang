@@ -286,7 +286,7 @@ const handleRedo = () => {
   }
 };
 
-// Keyboard shortcuts for undo/redo
+// Keyboard shortcuts for undo/redo AND Copy/Paste
 const handleKeyDown = (event: KeyboardEvent) => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
@@ -302,7 +302,96 @@ const handleKeyDown = (event: KeyboardEvent) => {
     event.preventDefault();
     handleRedo();
   }
+
+  // Copy: Ctrl+C
+  if (ctrlKey && event.key === 'c') {
+    handleCopy();
+  }
+
+  // Paste: Ctrl+V
+  if (ctrlKey && event.key === 'v') {
+    handlePaste();
+  }
 };
+
+/* ======================================================
+   Clipboard Logic (Copy/Paste)
+   ======================================================*/
+const clipboard = ref<any>(null);
+
+function handleCopy() {
+    const node = store.selectedNode;
+    if (!node) return;
+    
+    // Deep clone to avoid reference issues
+    try {
+        clipboard.value = JSON.parse(JSON.stringify(node));
+        toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
+    } catch (e) {
+        console.error('Failed to copy node', e);
+    }
+}
+
+function handlePaste() {
+    if (!clipboard.value || !editor) return;
+
+    try {
+        const cmp = clipboard.value;
+        
+        // Calculate new position (offset from clipboard source)
+        // Update clipboard so subsequent pastes are further offset
+        // User asked for "near old node"
+        cmp.pos_x += 30;
+        cmp.pos_y += 30;
+        
+        const x = cmp.pos_x;
+        const y = cmp.pos_y;
+
+        // Node Properties
+        const componentName = cmp.name;
+        const inputs = Object.keys(cmp.inputs).length;
+        const outputs = Object.keys(cmp.outputs).length;
+        const data = cmp.data || {}; 
+
+        // HTML Construction
+        const storeCmp = store.components.find((c: any) => (c.componentname || c.name)?.toLowerCase() === componentName?.toLowerCase());
+        const iconClass = storeCmp?.componentclass || storeCmp?.icon || 'fa-solid fa-cube';
+        const title = data.description || data.label || data.name || componentName;
+
+        const nodeHtml = `
+            <div class="node-icon-wrapper">
+                <div class="node-icon">
+                <i class="${iconClass}"></i>
+                </div>
+                <div class="node-label">${title}</div>
+            </div>
+        `;
+
+        const newId = editor.addNode(
+            componentName,
+            inputs,
+            outputs,
+            x,
+            y,
+            componentName, // Class name/Component type
+            data,
+            nodeHtml,
+            false 
+        );
+        
+        // Select the new node?
+         // Optionally we could auto-select the new node
+        
+        toast.add({ title: 'Pasted', description: 'Node pasted' });
+        
+        // Record state check
+        recordEditorState();
+
+    } catch (e) {
+        console.error('Failed to paste node', e);
+        toast.add({ title: 'Error', description: 'Failed to paste node', color: 'red' });
+    }
+}
 
 /* ======================================================
    Upload Plugin Logic
@@ -541,13 +630,11 @@ watch(
 function convertOldNodesToIcons() {
   if (!editor) return;
   
-  // Find all nodes with title-box (old style)
-  const oldNodes = document.querySelectorAll('.drawflow-node .title-box');
+  // Find all nodes (not just old title-box ones, to ensure all labels are up to date)
+  // But strictly, let's target .drawflow-node to iterate them all
+  const allNodes = document.querySelectorAll('.drawflow-node');
   
-  oldNodes.forEach((titleBox) => {
-    const nodeEl = titleBox.closest('.drawflow-node') as HTMLElement;
-    if (!nodeEl) return;
-    
+  allNodes.forEach((nodeEl: any) => {
     // Get node ID
     const nodeId = nodeEl.id?.replace('node-', '');
     if (!nodeId) return;
@@ -556,8 +643,9 @@ function convertOldNodesToIcons() {
     const nodeData = editor.drawflow.drawflow?.Home?.data?.[nodeId];
     if (!nodeData) return;
     
-    // Get the title text
-    const title = titleBox.textContent || nodeData.name || 'Unknown';
+    // Get the title text - PRIORITIZE User Data (description -> label -> name)
+    const data = nodeData.data || {};
+    const title = data.description || data.label || data.name || nodeData.name || 'Unknown';
     
     // Find component to get icon
     const component = store.components.find(
@@ -582,11 +670,36 @@ function convertOldNodesToIcons() {
     }
   });
   
-  console.log(`✅ Converted ${oldNodes.length} old nodes to icon style`);
-  
   // Update all connection paths after DOM changes
   updateAllConnections();
 }
+
+/**
+ * Watch for changes in the selected node's data to update the visual label in real-time.
+ */
+watch(
+  () => store.selectedNode?.data,
+  (newData, oldData) => {
+    const node = store.selectedNode;
+    if (!node || !newData) return;
+    
+    const nodeEl = document.getElementById(`node-${node.id}`);
+    if (!nodeEl) return;
+    
+    const labelEl = nodeEl.querySelector('.node-label');
+    if (labelEl) {
+      // Prioritize description -> label -> name -> component name
+      const title = newData.description || newData.label || newData.name || node.name;
+      if (title && labelEl.textContent !== title) {
+        labelEl.textContent = title;
+      }
+    } else {
+        // If label element doesn't exist yet (old style node?), force conversion
+        convertOldNodesToIcons();
+    }
+  },
+  { deep: true }
+);
 
 /* ======================================================
    Update all connection paths to match current DOM positions
