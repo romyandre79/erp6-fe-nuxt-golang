@@ -133,38 +133,76 @@
         </p>
       </div>
 
+      <!-- Tab Navigation -->
+      <!-- Views Wrapper -->
+      <div v-if="activeProject" class="flex flex-col flex-1 overflow-hidden">
+      <!-- Tab Navigation -->
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
+        <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <UButton 
+            v-for="view in ['kanban', 'list', 'calendar', 'gantt']"
+            :key="view"
+            :variant="currentView === view ? 'solid' : 'ghost'"
+            :color="currentView === view ? 'white' : 'gray'"
+            size="sm"
+            class="capitalize"
+            :class="{ '!text-gray-900 !bg-white shadow-sm': currentView === view }"
+            @click="currentView = view"
+          >
+            {{ view }}
+          </UButton>
+        </div>
+        
+        <!-- View Specific Actions -->
+        <div v-if="currentView === 'kanban'">
+           <UButton 
+              icon="i-heroicons-cog-6-tooth" 
+              color="gray" 
+              variant="ghost"
+              size="sm"
+              @click="openColumnManager"
+            >
+              Columns
+            </UButton>
+        </div>
+      </div>
+
+      <!-- Kanban Board -->
       <!-- Kanban Board -->
       <div 
-        v-if="activeProject" 
+        v-if="currentView === 'kanban'"
         class="flex-1 overflow-hidden p-6 kanban-board-container"
         :style="{
           '--kanban-board-bg': `linear-gradient(to bottom right, ${activeProject.color || '#3b82f6'}15, transparent)`
         }"
       >
-    <div class="kanban-board w-full overflow-x-auto" style="display: block;">
-      <div class="flex flex-row gap-4 pb-4" style="display: flex; flex-direction: row; min-height: 600px; flex-wrap: nowrap;">
-        
-        <!-- Dynamic Columns -->
-        <div 
-          v-for="(column, index) in columns" 
-          :key="column.status"
-          class="kanban-column" 
-          style="min-width: 320px; width: 320px; flex-shrink: 0;"
-          @drop="onDrop($event, column.status)"
-          @dragover.prevent
-          @dragenter.prevent
-        >
-          <UCard :ui="{ body: { padding: 'p-3' }, header: { padding: 'p-0' } }">
-            <template #header>
+        <!-- Kanban Board View -->
+        <!-- Kanban Board View -->
+        <div class="h-full">
+          <div class="kanban-board w-full overflow-x-auto h-full" style="display: block;">
+            <div class="flex flex-row gap-4 pb-4" style="display: flex; flex-direction: row; min-height: 100%; flex-wrap: nowrap;">
+              
+              <!-- Dynamic Columns -->
               <div 
-                class="flex items-center justify-between px-4 py-3 rounded-t-lg cursor-move"
-                :style="{ backgroundColor: getColumnHeaderColor(column.color) }"
-                draggable="true"
-                @dragstart="onColumnDragStart($event, index)"
-                @dragover.stop="onColumnDragOver($event, index)"
-                @dragend="onColumnDragEnd"
-                @contextmenu.prevent="openColumnContextMenu($event, column, index)"
+                v-for="(column, index) in columns" 
+                :key="column.status"
+                class="kanban-column" 
+                style="min-width: 320px; width: 320px; flex-shrink: 0;"
+                @drop="onDrop($event, column.status)"
+                @dragover.prevent
+                @dragenter.prevent
               >
+                <UCard :ui="{ body: { padding: 'p-3' }, header: { padding: 'p-0' } }">
+                  <template #header>
+                    <div 
+                      class="flex items-center justify-between px-4 py-3 rounded-t-lg cursor-move"
+                      :style="{ backgroundColor: getColumnHeaderColor(column.color) }"
+                      draggable="true"
+                      @dragstart="onColumnDragStart($event, index)"
+                      @dragover.stop="onColumnDragOver($event, index)"
+                      @dragend="onColumnDragEnd"
+                      @contextmenu.prevent="openColumnContextMenu($event, column, index)"
+                    >
                 <div class="flex items-center gap-2">
                   <UIcon name="i-heroicons-bars-3" class="w-4 h-4 text-white/80" />
                   <span class="text-lg">{{ column.icon }}</span>
@@ -224,9 +262,455 @@
             </div>
           </UCard>
         </div>
-
       </div>
     </div>
+  </div>
+</div>
+
+    <!-- LIST VIEW -->
+    <div v-if="currentView === 'list'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- List Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Task List</h3>
+            <div class="flex items-center gap-3">
+                <!-- Group By Dropdown -->
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">Group by:</span>
+                    <select 
+                        v-model="listGroupBy"
+                        class="text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 py-1"
+                    >
+                        <option value="status">Status</option>
+                        <option value="assignee">Responsible</option>
+                        <option value="priority">Priority</option>
+                    </select>
+                </div>
+                <UButton icon="i-heroicons-plus" color="primary" @click="openCreateModal('todo')">Add New</UButton>
+            </div>
+        </div>
+
+        <!-- List Content -->
+        <div class="flex-1 overflow-auto p-4 space-y-6">
+            <div v-for="(groupTasks, groupName) in groupedTasks" :key="groupName" class="space-y-2">
+                 <!-- Group Header -->
+                <div class="flex items-center gap-2 group cursor-pointer" @click="groupTasks._collapsed = !groupTasks._collapsed">
+                    <UIcon 
+                        name="i-heroicons-chevron-down" 
+                        class="w-4 h-4 text-gray-400 transition-transform" 
+                        :class="{ '-rotate-90': groupTasks._collapsed }" 
+                    />
+                    <h4 class="font-bold text-gray-700 dark:text-gray-300">{{ groupName }}</h4>
+                    <span class="text-xs text-gray-400 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">{{ groupTasks.length }}</span>
+                </div>
+
+                <!-- Task Table -->
+                 <div v-if="!groupTasks._collapsed" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                    <!-- Table Header (Optional, mostly implied) -->
+                    <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                        <div class="col-span-5">Task</div>
+                        <div class="col-span-2">Status</div>
+                        <div class="col-span-2">Due Date</div>
+                        <div class="col-span-1">Priority</div>
+                        <div class="col-span-2">Responsible</div>
+                    </div>
+
+                    <!-- Task Rows -->
+                    <div 
+                        v-for="task in groupTasks" 
+                        :key="task.cardid" 
+                        class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 items-center transition-colors cursor-pointer group/row"
+                        @click="openEditModal(task)"
+                    >
+                         <!-- Title Column -->
+                        <div class="col-span-5 flex items-center gap-3">
+                            <input 
+                                type="checkbox" 
+                                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" 
+                                :checked="task.status === 'done'"
+                                @click.stop
+                                @change="updateCardStatus(task, $event.target.checked ? 'done' : 'todo')" 
+                            />
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :class="{ 'line-through text-gray-400': task.status === 'done' }">
+                                    {{ task.title }}
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <template v-if="task.comments?.length">
+                                        <UIcon name="i-heroicons-chat-bubble-left" class="w-3 h-3 text-gray-400" />
+                                        <span class="text-[10px] text-gray-400">{{ task.comments.length }}</span>
+                                    </template>
+                                     <template v-if="task.attachments?.length">
+                                        <UIcon name="i-heroicons-paper-clip" class="w-3 h-3 text-gray-400" />
+                                        <span class="text-[10px] text-gray-400">{{ task.attachments.length }}</span>
+                                    </template>
+                                    <template v-if="task.tags?.length">
+                                        <span class="inline-flex gap-1">
+                                             <span v-for="tag in task.tags.slice(0, 2)" :key="tag" class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                                                 {{ tag }}
+                                             </span>
+                                             <span v-if="task.tags.length > 2" class="text-[10px] text-gray-400">+{{ task.tags.length - 2 }}</span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Column -->
+                        <div class="col-span-2">
+                             <UBadge 
+                                :color="columns.find(c => c.status === task.status)?.color || 'gray'" 
+                                variant="soft" 
+                                size="xs"
+                                class="capitalize"
+                             >
+                                {{ getColumnName(task.status) }}
+                             </UBadge>
+                        </div>
+                        
+                        <!-- Due Date Column -->
+                        <div class="col-span-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                            <template v-if="task.duedate">
+                                <UIcon name="i-heroicons-calendar" class="w-4 h-4 text-gray-400" />
+                                <span :class="{ 'text-red-500 font-medium': isOverdue(task.duedate) && task.status !== 'done' }">
+                                    {{ formatDate(task.duedate) }}
+                                </span>
+                            </template>
+                            <span v-else class="text-gray-400 italic text-xs">-</span>
+                        </div>
+
+                        <!-- Priority Column -->
+                        <div class="col-span-1">
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: getPriorityColorHex(task.priority) }"></div>
+                                <span class="text-xs capitalize text-gray-600">{{ task.priority || 'Medium' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Responsible Column -->
+                         <div class="col-span-2 flex items-center justify-end pr-2">
+                             <div 
+                                v-if="task.assignee" 
+                                class="flex items-center gap-2 px-2 py-1 rounded-full bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600"
+                             >
+                                 <UAvatar 
+                                    :alt="activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || task.assignee" 
+                                    size="2xs" 
+                                />
+                                <span class="text-xs truncate max-w-[80px]">
+                                    {{ activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || 'Unknown' }}
+                                </span>
+                             </div>
+                             <div v-else class="text-xs text-gray-400 italic">Unassigned</div>
+                         </div>
+                    </div>
+                    
+                    <!-- Inline Add Button -->
+                    <div 
+                        class="p-2 border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-gray-500 text-sm flex items-center gap-2 pl-4 transition-colors"
+                        @click="openCreateModal(listGroupBy === 'status' ? (columns.find(c => c.title === groupName)?.status || 'todo') : 'todo')"
+                    >
+                         <UIcon name="i-heroicons-plus" class="w-4 h-4" />
+                         Add task to {{ groupName }}
+                    </div>
+                </div>
+            </div>
+             <div v-if="Object.keys(groupedTasks).length === 0" class="text-center py-12">
+                 <UIcon name="i-heroicons-clipboard-document-list" class="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Empty List</h3>
+                 <p class="text-gray-500 mt-2">No tasks found. Create a new task to get started!</p>
+             </div>
+        </div>
+    </div>
+    <div v-if="currentView === 'calendar'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white capitalize">
+                    <span v-if="calendarViewMode === 'week'">
+                        {{ weekDays[0].toLocaleDateString('default', { month: 'short', day: 'numeric' }) }} - 
+                        {{ weekDays[6].toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                    </span>
+                    <span v-else-if="calendarViewMode === 'day'">
+                        {{ currentDate.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) }}
+                    </span>
+                    <span v-else>
+                        {{ currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' }) }}
+                    </span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <UButton icon="i-heroicons-chevron-left" variant="ghost" color="gray" @click="navigateCalendar(-1)" />
+                    <UButton label="Today" variant="soft" color="gray" size="xs" @click="goToToday" />
+                    <UButton icon="i-heroicons-chevron-right" variant="ghost" color="gray" @click="navigateCalendar(1)" />
+                </div>
+            </div>
+            
+            <!-- View Switcher -->
+            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button 
+                    v-for="mode in ['day', 'week', 'month', 'year']" 
+                    :key="mode"
+                    class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+                    :class="calendarViewMode === mode ? 'bg-white dark:bg-gray-600 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    @click="calendarViewMode = mode"
+                >
+                    {{ mode.charAt(0).toUpperCase() + mode.slice(1) }}
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Main Calendar Grid -->
+            <div class="flex-1 overflow-auto flex flex-col">
+                
+                <!-- WEEK VIEW (Resource / Bordio Style) -->
+                <div v-if="calendarViewMode === 'week'" class="flex-1 flex flex-col min-w-[800px]">
+                    <!-- Header Row -->
+                    <div class="grid grid-cols-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+                        <div class="p-3 text-sm font-semibold text-gray-500 sticky left-0 bg-gray-50 dark:bg-gray-750 z-10 border-r border-gray-200 dark:border-gray-700">Team</div>
+                        <div 
+                            v-for="day in weekDays" 
+                            :key="day.toISOString()" 
+                            class="p-2 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0 min-w-[140px]"
+                            :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': day.toDateString() === new Date().toDateString() }"
+                        >
+                            <div class="text-xs uppercase text-gray-500 font-semibold">{{ day.toLocaleDateString('default', { weekday: 'short' }) }}</div>
+                            <div class="text-lg font-bold" :class="{ 'text-primary-600': day.toDateString() === new Date().toDateString() }">
+                                {{ day.getDate() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resource Rows -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div 
+                            v-for="row in resourceRows" 
+                            :key="row.user.userid || 'unassigned'" 
+                            class="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700 min-h-[100px]"
+                        >
+                            <!-- User Header (Left Column) -->
+                             <div class="p-3 border-r border-gray-200 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-800 z-10 flex flex-col items-center justify-center gap-2">
+                                <template v-if="row.user.userid === 'unassigned'">
+                                    <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500">
+                                        <UIcon name="i-heroicons-question-mark-circle" class="w-6 h-6" />
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-500 text-center">Unassigned</span>
+                                </template>
+                                <template v-else>
+                                    <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800">
+                                        {{ (row.user.username || row.user.name || 'U').charAt(0).toUpperCase() }}
+                                    </div>
+                                    <span class="text-xs font-medium text-center truncate w-full px-1">{{ row.user.username || row.user.name }}</span>
+                                </template>
+                            </div>
+
+                            <!-- Day Cells -->
+                            <div 
+                                v-for="day in weekDays" 
+                                :key="day.toISOString()" 
+                                class="p-2 border-r border-gray-100 dark:border-gray-700/50 relative group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+                                @dragover.prevent
+                                @drop="onDropOnCalendar($event, day, row.user)"
+                            >
+                                <div class="space-y-2">
+                                    <div 
+                                        v-for="card in getTasksForResourceAndDate(row.tasks, day)" 
+                                        :key="card.cardid"
+                                        class="p-2 rounded bg-white dark:bg-gray-700 shadow-sm border-l-4 border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow text-xs group/card"
+                                        :style="{ borderLeftColor: getPriorityColorHex(card.priority) }"
+                                        draggable="true"
+                                        @dragstart="onDragStart($event, card)"
+                                        @click="openEditModal(card)"
+                                    >
+                                        <div class="font-medium truncate mb-1 text-gray-900 dark:text-gray-100">{{ card.title }}</div>
+                                        <div class="flex items-center gap-1 text-gray-500 dark:text-gray-400 scale-90 origin-left">
+                                            <UIcon v-if="card.timeEntries?.length" name="i-heroicons-clock" class="w-3 h-3" />
+                                            <span v-if="card.tags?.length" class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Add Button on Hover -->
+                                <button 
+                                    class="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 transition-opacity"
+                                    @click="openCreateModal('todo', day, row.user)"
+                                >
+                                    <UIcon name="i-heroicons-plus" class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MONTH VIEW (Classic Grid) -->
+                <div v-else-if="calendarViewMode === 'month'" class="flex-1 p-4">
+                     <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
+                        <!-- Header -->
+                        <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="bg-gray-50 dark:bg-gray-800 p-2 text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                            {{ day }}
+                        </div>
+                        <!-- Days -->
+                        <div 
+                            v-for="(day, index) in calendarDays" 
+                            :key="index" 
+                            class="bg-white dark:bg-gray-800 p-1 flex flex-col min-h-[100px] overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            :class="{ 'opacity-50 bg-gray-50/50': !day.currentMonth }"
+                            @dragover.prevent
+                            @drop="onDropOnCalendar($event, day.date)"
+                        >
+                            <div class="text-right text-xs p-1 font-medium text-gray-500" :class="{ 'text-primary-600 font-bold': day.date.toDateString() === new Date().toDateString() }">
+                                {{ day.day }}
+                            </div>
+                            <div class="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
+                                <div 
+                                    v-for="card in getCardsForDate(day.date)" 
+                                    :key="card.id"
+                                    class="p-1 rounded text-[10px] leading-tight bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-100 dark:border-blue-800 truncate cursor-pointer hover:opacity-80"
+                                    draggable="true"
+                                    @dragstart="onDragStart($event, card)"
+                                    @click="openEditModal(card)"
+                                >
+                                    {{ card.title }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DAY VIEW -->
+                <div v-else-if="calendarViewMode === 'day'" class="flex-1 p-4 flex justify-center bg-gray-50 dark:bg-gray-900">
+                    <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+                         <!-- Simple Day List Implementation -->
+                        <div class="p-4 border-b border-gray-100 dark:border-gray-700 font-medium text-gray-500">
+                            Tasks for {{ currentDate.toLocaleDateString() }}
+                        </div>
+                        <div class="p-4 space-y-3 flex-1 overflow-y-auto">
+                            <div 
+                                v-for="card in getCardsForDate(currentDate)" 
+                                :key="card.id"
+                                class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                                @click="openEditModal(card)"
+                            >
+                                <div class="w-1 h-8 rounded-full" :style="{ backgroundColor: getPriorityColorHex(card.priority) }"></div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ card.title }}</div>
+                                    <div class="text-xs text-gray-500">{{ card.description || 'No description' }}</div>
+                                </div>
+                                <div v-if="card.assignee" class="flex items-center gap-2">
+                                     <UAvatar :alt="activeProject?.members?.find((m:any) => m.userid == card.assignee)?.username" size="xs" />
+                                </div>
+                            </div>
+                            <div v-if="getCardsForDate(currentDate).length === 0" class="text-center py-10 text-gray-400 italic">
+                                No tasks scheduled for today.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <!-- YEAR VIEW (Placeholder) -->
+                <div v-else-if="calendarViewMode === 'year'" class="flex-1 flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                        <UIcon name="i-heroicons-calendar-days" class="w-16 h-16 mx-auto mb-2 opacity-50" />
+                        <p>Year view coming soon</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- WAITING LIST SIDEBAR -->
+            <div class="w-80 border-l border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-col">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <h4 class="font-semibold text-gray-700 dark:text-gray-300">Waiting List</h4>
+                    <UBadge color="gray" variant="soft">{{ waitingListTasks.length }}</UBadge>
+                </div>
+                <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                    <UCard
+                        v-for="card in waitingListTasks"
+                        :key="card.id"
+                        class="cursor-move hover:shadow-md transition-shadow border-l-4 border-transparent hover:border-gray-300 dark:hover:border-gray-500"
+                        :ui="{ body: { padding: 'p-3' } }"
+                        draggable="true"
+                        @dragstart="onDragStart($event, card)"
+                        @click="openEditModal(card)"
+                    >
+                        <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">{{ card.title }}</div>
+                         <div class="flex items-center justify-between text-xs text-gray-500">
+                             <span>{{ card.priority || 'No priority' }}</span>
+                             <UIcon v-if="!card.assignee" name="i-heroicons-user" class="w-3 h-3 opacity-50" />
+                         </div>
+                    </UCard>
+                    <div v-if="waitingListTasks.length === 0" class="text-center py-8 text-gray-400 text-xs italic">
+                        No tasks in waiting list.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gantt View -->
+    <div v-if="currentView === 'gantt'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- Gantt Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                {{ new Date(ganttYear, ganttMonth).toLocaleString('default', { month: 'long', year: 'numeric' }) }}
+            </h3>
+            <div class="flex items-center gap-2">
+                <UButton icon="i-heroicons-chevron-left" variant="ghost" color="gray" @click="prevGanttMonth" />
+                <UButton icon="i-heroicons-chevron-right" variant="ghost" color="gray" @click="nextGanttMonth" />
+            </div>
+        </div>
+
+        <!-- Gantt Chart -->
+        <div class="flex-1 overflow-auto flex">
+             <!-- Task List (Sticky Left) -->
+             <div class="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
+                <div class="h-10 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 px-4 flex items-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    Task
+                </div>
+                <div class="bg-white dark:bg-gray-800">
+                    <div 
+                        v-for="task in ganttTasks" 
+                        :key="task.id" 
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                        @click="openEditModal(task)"
+                    >
+                        {{ task.title }}
+                    </div>
+                </div>
+             </div>
+
+             <!-- Timeline -->
+             <div class="flex-1 overflow-x-auto">
+                <div class="min-w-max">
+                    <!-- Days Header -->
+                    <div class="h-10 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 grid" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
+                        <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-200 dark:border-gray-600/50 text-center text-xs leading-10 text-gray-500">
+                            {{ d }}
+                        </div>
+                    </div>
+
+                    <!-- Bars -->
+                     <div class="relative bg-white dark:bg-gray-800">
+                         <!-- Grid Lines -->
+                        <div class="absolute inset-0 grid pointer-events-none" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
+                            <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-100 dark:border-gray-800 h-full"></div>
+                        </div>
+
+                        <!-- Rows -->
+                        <div v-for="task in ganttTasks" :key="task.id" class="h-10 border-b border-gray-100 dark:border-gray-800 relative grid items-center" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
+                            <div 
+                                class="h-6 rounded text-xs text-white px-2 flex items-center truncate shadow-sm cursor-pointer hover:opacity-90 relative z-10"
+                                :class="getPriorityColor(task.priority) === 'red' ? 'bg-red-500' : (getPriorityColor(task.priority) === 'orange' ? 'bg-orange-500' : (getPriorityColor(task.priority) === 'yellow' ? 'bg-yellow-500' : 'bg-blue-500'))"
+                                :style="`grid-column: ${task.ganttStart} / span ${task.ganttDuration}`"
+                                @click="openEditModal(task)"
+                            >
+                                {{ task.title }}
+                            </div>
+                        </div>
+                     </div>
+                </div>
+             </div>
+        </div>
+    </div>
+
+      <!-- Empty State -->
       </div>
 
       <!-- Empty State -->
@@ -2687,7 +3171,7 @@ const formatFileSize = (bytes: number) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
-const openCreateModal = (status: string) => {
+const openCreateModal = (status: string, initialDate?: Date, initialUser?: any) => {
   isEditMode.value = false;
   editingCard.value = {
     id: Date.now(),
@@ -2695,8 +3179,8 @@ const openCreateModal = (status: string) => {
     title: '',
     description: '',
     status,
-    assignee: '',
-    duedate: '',
+    assignee: initialUser ? (initialUser.userid === 'unassigned' ? '' : initialUser.userid) : '',
+    duedate: initialDate ? initialDate.toISOString().split('T')[0] : '',
     priority: 'medium',
     tags: [],
     comments: [],
@@ -2830,12 +3314,15 @@ const getPriorityColor = (priority: string) => {
 const formatDate = (date: string) => {
   if (!date) return '';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return ''; // Return empty if invalid date
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const isOverdue = (date: string) => {
   if (!date) return false;
-  return new Date(date) < new Date();
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return false;
+  return d < new Date();
 };
 
 const getCardColorClass = (status: string, duedate: string) => {
@@ -2844,6 +3331,8 @@ const getCardColorClass = (status: string, duedate: string) => {
   
   const now = new Date();
   const due = new Date(duedate);
+  if (isNaN(due.getTime())) return 'bg-white dark:bg-gray-800';
+  
   const diffTime = due.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
@@ -2851,6 +3340,11 @@ const getCardColorClass = (status: string, duedate: string) => {
   if (diffDays <= 5) return '!bg-orange-100 dark:!bg-orange-900/40'; // Due within 5 days
   return '!bg-white dark:!bg-gray-800'; // More than 5 days away
 };
+
+// ... lines 3010-3250 ...
+
+
+
 
 // ========== ADVANCED FEATURES FUNCTIONS ==========
 
@@ -2992,6 +3486,448 @@ const removeMember = async (member: any) => {
   }
 };
 
+
+// View State
+const currentView = ref('kanban');
+
+// Calendar State
+const calendarViewMode = ref('week'); // 'day', 'week', 'month', 'year'
+const currentDate = ref(new Date());
+
+// Derived state for Month/Year (kept for backward compatibility or month view)
+const currentMonth = computed({
+    get: () => currentDate.value.getMonth(),
+    set: (val) => {
+        const d = new Date(currentDate.value);
+        d.setMonth(val);
+        currentDate.value = d;
+    }
+});
+const currentYear = computed({
+    get: () => currentDate.value.getFullYear(),
+    set: (val) => {
+        const d = new Date(currentDate.value);
+        d.setFullYear(val);
+        currentDate.value = d;
+    }
+});
+
+const weekStart = computed(() => {
+  const d = new Date(currentDate.value);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
+  return new Date(d.setDate(diff));
+});
+
+const weekDays = computed(() => {
+  const start = weekStart.value;
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    days.push(d);
+  }
+  return days;
+});
+
+// Resource Grouping (User Rows)
+const resourceRows = computed(() => {
+    // 1. Get all members
+    const members = activeProject.value?.members || [];
+    
+    // 2. Map members to rows with their tasks for the current view range
+    const rows = members.map((member: any) => {
+        return {
+            user: member,
+            tasks: tasks.value.filter(t => {
+                // Check if assigned to this user
+                let assigned = false;
+                if (typeof t.assignee === 'object') {
+                    assigned = (t.assignee.id == member.userid || t.assignee.userid == member.userid || t.assignee.email == member.email);
+                } else {
+                    assigned = (t.assignee == member.userid || t.assignee == member.email);
+                }
+                return assigned;
+            })
+        };
+    });
+
+    // 3. Add "Unassigned" row if there are unassigned tasks
+    const unassignedTasks = tasks.value.filter(t => !t.assignee || t.assignee === 'unassigned' || t.assignee === '');
+    if (unassignedTasks.length > 0) {
+        rows.push({
+            user: { userid: 'unassigned', username: 'Unassigned', email: '', avatar: null },
+            tasks: unassignedTasks
+        });
+    }
+    
+    return rows;
+});
+
+const waitingListTasks = computed(() => {
+    return tasks.value.filter(t => {
+        // Task is in waiting list if:
+        // 1. No due date
+        // 2. OR status is 'backlog' (optional preference)
+        return !t.duedate;
+    });
+});
+
+const getTasksForResourceAndDate = (resourceTasks: any[], date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return resourceTasks.filter(t => t.duedate && t.duedate.startsWith(dateStr));
+};
+
+const goToToday = () => {
+    currentDate.value = new Date();
+};
+
+const navigateCalendar = (direction: number) => {
+    const d = new Date(currentDate.value);
+    if (calendarViewMode.value === 'day') {
+        d.setDate(d.getDate() + direction);
+    } else if (calendarViewMode.value === 'week') {
+        d.setDate(d.getDate() + (direction * 7));
+    } else if (calendarViewMode.value === 'month') {
+        d.setMonth(d.getMonth() + direction);
+    } else if (calendarViewMode.value === 'year') {
+        d.setFullYear(d.getFullYear() + direction);
+    }
+    currentDate.value = d;
+};
+
+
+const calendarDays = computed(() => {
+  const year = currentYear.value;
+  const month = currentMonth.value;
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  const daysInMonth = lastDay.getDate();
+  const startingDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Adjust for Monday start
+  
+  const days = [];
+  
+  // Previous month padding
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  for (let i = 0; i < startingDay; i++) {
+    days.push({
+      day: prevMonthLastDay - startingDay + i + 1,
+      currentMonth: false,
+      date: new Date(year, month - 1, prevMonthLastDay - startingDay + i + 1)
+    });
+  }
+  
+  // Current month
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push({
+      day: i,
+      currentMonth: true,
+      date: new Date(year, month, i)
+    });
+  }
+  
+  // Next month padding
+  const remainingDays = 42 - days.length;
+  for (let i = 1; i <= remainingDays; i++) {
+    days.push({
+      day: i,
+      currentMonth: false,
+      date: new Date(year, month + 1, i)
+    });
+  }
+  
+  return days;
+});
+
+const nextMonth = () => {
+  if (currentMonth.value === 11) {
+    currentMonth.value = 0;
+    currentYear.value++;
+  } else {
+    currentMonth.value++;
+  }
+};
+
+const prevMonth = () => {
+  if (currentMonth.value === 0) {
+    currentMonth.value = 11;
+    currentYear.value--;
+  } else {
+    currentMonth.value--;
+  }
+};
+
+const getCardsForDate = (date: Date) => {
+  const dateStr = date.toISOString().split('T')[0];
+  return tasks.value.filter(card => {
+    if (!card.duedate) return false;
+    return card.duedate.startsWith(dateStr);
+  });
+};
+
+// Gantt State
+const ganttMonth = ref(new Date().getMonth());
+const ganttYear = ref(new Date().getFullYear());
+
+const ganttDaysInMonth = computed(() => {
+  return new Date(ganttYear.value, ganttMonth.value + 1, 0).getDate();
+});
+
+const ganttTasks = computed(() => {
+  if (!tasks.value) return [];
+  
+  // Current Month Range
+  const startOfMonth = new Date(ganttYear.value, ganttMonth.value, 1);
+  const endOfMonth = new Date(ganttYear.value, ganttMonth.value + 1, 0);
+  
+  // Filter tasks that overlap with current month
+  return tasks.value.map(task => {
+    let startDate = task.created_at ? new Date(task.created_at) : new Date();
+    // Validate startDate
+    if (isNaN(startDate.getTime())) startDate = new Date(); // Fallback to now if invalid
+
+    // Validate endDate
+    let endDate;
+    if (task.duedate) {
+        endDate = new Date(task.duedate);
+        if (isNaN(endDate.getTime())) {
+            endDate = new Date(startDate.getTime() + 86400000); // Fallback 1 day
+        }
+    } else {
+        endDate = new Date(startDate.getTime() + 86400000); // Default 1 day
+    }
+    
+    // Check overlap
+    if (endDate < startOfMonth || startDate > endOfMonth) return null;
+    
+    // Calculate grid position (1-based day)
+    let startDay = startDate.getDate();
+    let endDay = endDate.getDate();
+    
+    // Clamp to month boundaries
+    if (startDate < startOfMonth) startDay = 1;
+    if (endDate > endOfMonth) endDay = ganttDaysInMonth.value;
+    
+    const duration = Math.max(1, endDay - startDay + 1);
+    
+    return {
+      ...task,
+      ganttStart: startDay,
+      ganttDuration: duration
+    };
+  }).filter(t => t !== null).sort((a, b) => a.ganttStart - b.ganttStart);
+});
+
+const nextGanttMonth = () => {
+  if (ganttMonth.value === 11) {
+    ganttMonth.value = 0;
+    ganttYear.value++;
+  } else {
+    ganttMonth.value++;
+  }
+};
+
+const prevGanttMonth = () => {
+  if (ganttMonth.value === 0) {
+    ganttMonth.value = 11;
+    ganttYear.value--;
+  } else {
+    ganttMonth.value--;
+  }
+};
+
+// List View State & Logic
+const listGroupBy = ref('status'); // 'status', 'assignee', 'priority'
+
+const groupedTasks = computed(() => {
+    const groups: Record<string, any[]> = {};
+    const unscheduledKey = 'Unscheduled / No Group';
+    
+    tasks.value.forEach(card => {
+        let key = unscheduledKey;
+        
+        if (listGroupBy.value === 'status') {
+             // Find column title for status key
+            const col = columns.value.find(c => c.status === card.status);
+            key = col ? col.title : (card.status || unscheduledKey);
+        } else if (listGroupBy.value === 'assignee') {
+            if (card.assignee) {
+                if (typeof card.assignee === 'object') {
+                    key = card.assignee.username || card.assignee.name || 'Unknown';
+                } else {
+                     // Try to resolve ID
+                    const member = activeProject.value?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee);
+                    key = member ? member.username : String(card.assignee);
+                }
+            } else {
+                key = 'Unassigned';
+            }
+        } else if (listGroupBy.value === 'priority') {
+            key = card.priority ? (card.priority.charAt(0).toUpperCase() + card.priority.slice(1)) : 'No Priority';
+        }
+        
+        if (!groups[key]) {
+            groups[key] = [];
+        }
+        groups[key].push(card);
+    });
+    
+    // Sort keys?
+    // For status, ideally sort by column order
+    if (listGroupBy.value === 'status') {
+         const orderedKeys: string[] = [];
+         columns.value.forEach(c => {
+             if (groups[c.title]) orderedKeys.push(c.title);
+         });
+         // Add any remaining keys
+         Object.keys(groups).forEach(k => {
+             if (!orderedKeys.includes(k)) orderedKeys.push(k);
+         });
+         
+         // Reconstruct object in order (for v-for iteration order mostly works in modern JS browsers)
+         const orderedGroups: Record<string, any[]> = {};
+         orderedKeys.forEach(k => orderedGroups[k] = groups[k]);
+         return orderedGroups;
+    }
+    
+    return groups;
+});
+
+
+const getPriorityColorHex = (priority: string) => {
+    switch (priority) {
+        case 'high': return '#ef4444'; // red-500
+        case 'medium': return '#f97316'; // orange-500
+        case 'low': return '#3b82f6'; // blue-500
+        default: return '#9ca3af'; // gray-400
+    }
+};
+
+const onDropOnCalendar = async (event: DragEvent, newDate: Date, newUser?: any) => {
+    event.preventDefault();
+    if (!draggedCard.value) return;
+
+    const card = draggedCard.value;
+    const dateStr = newDate.toISOString().split('T')[0];
+    
+    // Check if anything changed
+    // Note: due date might be full ISO in card, so compare date part
+    const currentDueDate = card.duedate ? card.duedate.split('T')[0] : '';
+    const currentAssignee = typeof card.assignee === 'object' ? (card.assignee.userid || card.assignee.id) : card.assignee;
+    
+    const newUserId = newUser ? (newUser.userid === 'unassigned' ? '' : newUser.userid) : currentAssignee;
+    
+    // If exact same date and user (or user not provided/changed), skip
+    if (currentDueDate === dateStr && currentAssignee == newUserId) {
+        draggedCard.value = null;
+        return;
+    }
+
+    // Optimistic Update
+    card.duedate = dateStr;
+    if (newUser) {
+        card.assignee = newUserId;
+    }
+
+    try {
+        const dataForm = new FormData();
+        dataForm.append('flowname', 'modifcard');
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', false);
+        dataForm.append('cardid', card.cardid.toString());
+        dataForm.append('projectid', activeProject.value.projectid.toString());
+        dataForm.append('title', card.title);
+        dataForm.append('status', card.status);
+        dataForm.append('description', card.description || '');
+        dataForm.append('priority', card.priority || 'medium');
+        dataForm.append('duedate', dateStr);
+        dataForm.append('assignee', newUserId || '');
+        
+        // Handle Tags
+         let tags = card.tags || [];
+        if (typeof tags === 'string') {
+            try { tags = JSON.parse(tags); } catch(e) { tags = []; }
+        }
+        dataForm.append('tags', JSON.stringify(tags));
+
+        await api.post('/api/admin/execute-flow', dataForm);
+        
+        toast.add({
+            title: 'Card Updated',
+            description: `Rescheduled to ${dateStr}` + (newUser ? ` and assigned to ${newUser.username}` : ''),
+            color: 'green',
+            icon: 'i-heroicons-calendar',
+        });
+    } catch (error) {
+        console.error('Error rescheduling card:', error);
+        toast.add({
+            title: 'Error',
+            description: 'Failed to reschedule card',
+            color: 'red',
+            icon: 'i-heroicons-exclamation-triangle',
+        });
+        // Revert (reload cards to be safe or manually revert)
+        await loadCards(); // Safest
+    }
+    
+    draggedCard.value = null;
+};
+
+const updateCardStatus = async (card: any, newStatus: string) => {
+    try {
+        const dataForm = new FormData();
+        dataForm.append('flowname', 'modifcard');
+        dataForm.append('menu', 'admin');
+        dataForm.append('search', false);
+        dataForm.append('cardid', card.cardid.toString());
+        dataForm.append('projectid', activeProject.value.projectid.toString());
+        dataForm.append('title', card.title);
+        dataForm.append('description', card.description || '');
+        dataForm.append('status', newStatus);
+        
+        // Preserve other fields
+        dataForm.append('priority', card.priority || 'medium');
+        
+        let assignee = card.assignee;
+        if (typeof assignee === 'object') assignee = assignee.userid || assignee.id;
+        dataForm.append('assignee', assignee || '');
+        
+        // Preserve duedate
+        let duedate = card.duedate || '';
+        if (duedate && duedate.includes('T')) duedate = duedate.split('T')[0];
+        dataForm.append('duedate', duedate);
+        
+        // Handle Tags
+        let tags = card.tags || [];
+        if (typeof tags === 'string') {
+            try { tags = JSON.parse(tags); } catch(e) { tags = []; }
+        }
+        dataForm.append('tags', JSON.stringify(tags));
+
+        await api.post('/api/admin/execute-flow', dataForm);
+        
+        // Optimistic update
+        card.status = newStatus;
+        
+        toast.add({
+            title: 'Task Updated',
+            description: `Task marked as ${getColumnName(newStatus)}`,
+            color: 'green',
+            icon: 'i-heroicons-check-circle',
+        });
+    } catch (error) {
+         console.error('Error updating status:', error);
+         toast.add({
+            title: 'Error',
+            description: 'Failed to update task status',
+            color: 'red',
+            icon: 'i-heroicons-exclamation-triangle',
+        });
+    }
+};
+
 </script>
 
 <style scoped>
@@ -3006,3 +3942,5 @@ const removeMember = async (member: any) => {
   cursor: grabbing;
 }
 </style>
+
+
