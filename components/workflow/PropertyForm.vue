@@ -4,7 +4,19 @@
       <h3 class="text-lg font-semibold">{{ componentName ?? 'Properties' }}</h3>
     </div>
 
-    <div v-if="fields.length === 0" class="text-sm text-gray-500">No properties available for this component.</div>
+    <!-- GLOBAL NODE LABEL (Static Field) -->
+    <div class="space-y-1 border-b pb-4">
+      <label class="block text-sm font-medium text-gray-700">Node Label (Description)</label>
+      <input
+        v-model="nodeDescription"
+        placeholder="Enter custom node name..."
+        class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        @input="updateNodeDescription"
+      />
+      <p class="text-xs text-gray-400">Custom name to display on the workflow canvas</p>
+    </div>
+
+    <div v-if="fields.length === 0" class="text-sm text-gray-500">No specific properties available for this component.</div>
 
     <form v-else class="space-y-3 pb-4" @submit.prevent>
       <template v-for="field in fields" :key="field.componentdetailid">
@@ -71,6 +83,7 @@ const store = useWorkflowStore();
 
 // local reactive form
 const form = reactive<Record<string, any>>({});
+const nodeDescription = ref('');
 
 // fields array (normalized from store.componentProperties or from store.loadComponentProperties result)
 const fields = ref<any[]>([]);
@@ -110,7 +123,7 @@ function initFormFromFields() {
   fields.value.sort((a: any, b: any) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   // ambil node data dari editor
-  let nodeData = {};
+  let nodeData: any = {};
   const editor = (window as any).editor;
   if (editor) {
     const home = editor.drawflow?.drawflow?.Home?.data;
@@ -122,6 +135,9 @@ function initFormFromFields() {
       }
     }
   }
+
+  // Init Node Description
+  nodeDescription.value = nodeData.description || nodeData.label || '';
 
   // isi form
   const updates: Record<string, any> = {};
@@ -161,6 +177,11 @@ function initFormFromFields() {
   if (Object.keys(updates).length > 0) {
     store.updateSelectedNodeData(updates);
   }
+}
+
+function updateNodeDescription() {
+    if (!props.nodeId) return;
+    store.updateNodeData(props.nodeId, { description: nodeDescription.value });
 }
 
 // UPDATE specific node data (immediate)
@@ -214,15 +235,14 @@ watch(
 
 /* Also watch store.selectedNode: if user selects different node, re-init form from node.data */
 watch(
-  () => store.selectedNode,
-  (node) => {
-    // If selectedNode has its own data map, prefer it
-    if (!node) return;
-    // If currently showing properties for a different component name, skip (componentName prop usually updated by parent)
-    // But still reinit values if fields loaded
-    initFormFromFields();
+  () => store.selectedNode?.id,
+  (newId, oldId) => {
+    // If selectedNode changes (different ID), re-init
+    if (newId && newId !== oldId) {
+      initFormFromFields();
+    }
   },
-  { deep: true },
+  { deep: false },
 );
 </script>
 

@@ -787,5 +787,46 @@ export const layoutContainers = [
       class: 'w-full h-[600px]',
     },
     children: [],
+  },
+  {
+    type: 'calendar',
+    label: 'Calendar',
+    icon: 'heroicons:calendar',
+    component: 'FormCalendar',
+    props: {
+      key: 'calendar_1',
+      source: '',
+      config: {
+        dateField: 'duedate',
+        titleField: 'title',
+        descriptionField: 'description',
+        colorField: 'priority',
+        idField: 'id'
+      },
+      height: '600px',
+      class: 'w-full',
+    },
+    children: [],
+  },
+  {
+    type: 'gantt',
+    label: 'Gantt Chart',
+    icon: 'heroicons:chart-bar',
+    component: 'FormGantt',
+    props: {
+        key: 'gantt_1',
+        source: '',
+        config: {
+            idField: 'id',
+            titleField: 'title',
+            startField: 'created_at',
+            endField: 'duedate',
+            colorField: 'priority',
+            progressField: 'progress'
+        },
+        height: '600px',
+        class: 'w-full',
+    },
+    children: [],
   }
 ];
