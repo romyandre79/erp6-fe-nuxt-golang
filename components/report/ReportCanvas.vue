@@ -56,21 +56,39 @@
         v-for="band in reportStore.currentTemplate?.bands"
         :key="band.type"
         class="relative group"
-        :class="{'border-b border-dashed border-gray-300': !previewMode}"
+        :class="{
+          'border-b border-dashed border-gray-300': !previewMode,
+          'bg-gray-50': !previewMode && band.visible === false
+        }"
         :style="{ height: `${band.height}px` }"
-        @dragover.prevent
-        @drop="onDrop($event, band.type)"
+        v-show="!previewMode || band.visible !== false"
+        @dragover="onDragOver($event, band)"
+        @drop="onDrop($event, band)"
       >
         <!-- Band Label -->
         <div 
           v-if="!previewMode" 
-          class="absolute -left-0 top-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-br border-b border-r border-blue-200 z-10 opacity-70 group-hover:opacity-100 transition-opacity select-none pointer-events-none"
+          class="absolute -left-0 top-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-br border-b border-r border-blue-200 z-10 opacity-70 group-hover:opacity-100 transition-opacity select-none flex items-center gap-1"
         >
-          {{ band.type.toUpperCase() }}
+          <span>{{ band.type.toUpperCase() }}</span>
+          <UIcon 
+             :name="band.visible !== false ? 'i-heroicons-eye' : 'i-heroicons-eye-slash'" 
+             class="w-3 h-3 cursor-pointer hover:text-blue-900"
+             @click.stop="reportStore.toggleBandVisibility(band.type)"
+          />
         </div>
 
         <!-- Drop Zone Indicator (Visual only) -->
         <div v-if="!previewMode" class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity"></div>
+
+        <!-- Band Resize Handle -->
+        <div 
+          v-if="!previewMode" 
+          class="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize z-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+          @mousedown.stop="startResizeBand($event, band)"
+        >
+             <div class="w-full h-px bg-blue-400"></div>
+        </div>
 
         <!-- Elements in Band -->
         <div
@@ -206,8 +224,16 @@ function onCanvasDrop(event: DragEvent) {
   }
 }
 
-function onDrop(event: DragEvent, bandType: string) {
+function onDragOver(event: DragEvent, band: any) {
   if (props.previewMode) return;
+  if (band.visible === false) return; 
+  event.preventDefault();
+}
+
+function onDrop(event: DragEvent, band: any) {
+  if (props.previewMode) return;
+  if (band.visible === false) return;
+
   event.preventDefault();
   event.stopPropagation(); // Stop propagation so canvas drop doesn't trigger
   const data = event.dataTransfer?.getData('application/json');
@@ -215,6 +241,8 @@ function onDrop(event: DragEvent, bandType: string) {
 
   const component = JSON.parse(data);
   if (component.category === 'structure') return; // Cannot drop band into band
+
+  const bandType = band.type;
 
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = Math.round((event.clientX - rect.left) / (reportStore.zoom / 100));
@@ -278,6 +306,19 @@ function startResize(event: MouseEvent, element: ReportElement, position: string
   document.addEventListener('mouseup', onMouseUp);
 }
 
+function startResizeBand(event: MouseEvent, band: any) {
+  if (props.previewMode) return;
+  dragState = {
+    type: 'resizeBand',
+    band,
+    startX: event.clientX,
+    startY: event.clientY,
+    elementStartHeight: band.height, // Use band.height directly
+  };
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+}
+
 function onMouseMove(event: MouseEvent) {
   if (!dragState) return;
 
@@ -317,6 +358,9 @@ function onMouseMove(event: MouseEvent) {
     }
 
     reportStore.updateElement(dragState.element.id, updates);
+  } else if (dragState.type === 'resizeBand') {
+     const newHeight = Math.max(10, dragState.elementStartHeight + deltaY);
+     reportStore.updateBand(dragState.band.type, { height: newHeight });
   }
 }
 

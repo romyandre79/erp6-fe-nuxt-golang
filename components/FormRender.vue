@@ -588,6 +588,9 @@ function navigate(key: any) {
   } else if (key.includes('db-designer') && selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
+  } else if (key.includes('report-designer') && selectedRows.value.length === 0) {
+    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
+    return;
   } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['menuname']);
   } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
@@ -596,6 +599,8 @@ function navigate(key: any) {
     navigateTo(key + '/' + selectedRows.value[0]['wfname']);
   } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['themename']);
+  } else if (key.includes('report-designer') && selectedRows.value.length > 0) {
+    navigateTo(key + '/' + selectedRows.value[0]['reportid']);
   } else if (key.includes('db-designer') && selectedRows.value.length > 0) {
     navigateTo(key + '/' + selectedRows.value[0]['objectname']);
   } else {

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-black p-4">
+  <div class="min-h-screen bg-gray-50 p-4">
     <MediaManager apiBase="/api/admin/sysinfo/files" />
   </div>
 </template>

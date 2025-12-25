@@ -10,9 +10,24 @@ export interface ReportElement {
   properties: Record<string, any>;
 }
 
+export interface ReportParameter {
+  name: string;
+  class: string;
+  defaultValue?: string;
+}
+
+export interface ReportVariable {
+  name: string;
+  class: string;
+  calculation: string;
+  expression?: string;
+  initialValue?: string;
+}
+
 export interface ReportBand {
   type: string;
   height: number;
+  visible?: boolean;
   elements: ReportElement[];
 }
 
@@ -31,8 +46,12 @@ export interface ReportTemplate {
     top: number;
     bottom: number;
   };
+  columnCount: number;
+  columnWidth: number;
+  columnSpacing: number;
   bands: ReportBand[];
-  parameters: any[];
+  parameters: ReportParameter[];
+  variables: ReportVariable[];
   dataSource: string;
   
   // Advanced Properties
@@ -126,31 +145,79 @@ export const useReportStore = defineStore('report', {
       }
     },
 
-    addBand(bandType: string, height: number = 50) {
+    addBand(type: string, height: number = 50) {
       if (!this.currentTemplate) return;
-
       // Check if band already exists
-      const existingBand = this.currentTemplate.bands.find((b) => b.type === bandType);
-      if (existingBand) {
-        // Band exists, maybe toggle visibility or just return?
-        // User might expect it to 'appear' if it was hidden/removed.
-        return;
-      }
-
-      // Add new band
+      if (this.currentTemplate.bands.find(b => b.type === type)) return;
+      
       this.currentTemplate.bands.push({
-        type: bandType,
-        height: height,
+        type,
+        height,
         elements: []
       });
-      
-      // Sort bands based on standard order
+      this.sortBands();
+      this.saveState();
+    },
+
+    updateBand(type: string, updates: any) {
+      if (!this.currentTemplate) return;
+      const band = this.currentTemplate.bands.find(b => b.type === type);
+      if (band) {
+        Object.assign(band, updates);
+        this.saveState();
+      }
+    },
+
+    sortBands() {
+      if (!this.currentTemplate) return;
       const order = ['title', 'pageHeader', 'columnHeader', 'detail', 'columnFooter', 'pageFooter', 'summary'];
       this.currentTemplate.bands.sort((a, b) => {
         return order.indexOf(a.type) - order.indexOf(b.type);
       });
+    },
 
-      this.saveState();
+    // Parameters
+    addParameter(param: ReportParameter) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.parameters.push(param);
+        this.saveState();
+    },
+    updateParameter(index: number, param: ReportParameter) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.parameters[index] = param;
+        this.saveState();
+    },
+    deleteParameter(index: number) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.parameters.splice(index, 1);
+        this.saveState();
+    },
+
+    // Variables
+    addVariable(variable: ReportVariable) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.variables.push(variable);
+        this.saveState();
+    },
+    updateVariable(index: number, variable: ReportVariable) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.variables[index] = variable;
+        this.saveState();
+    },
+    deleteVariable(index: number) {
+        if (!this.currentTemplate) return;
+        this.currentTemplate.variables.splice(index, 1);
+        this.saveState();
+    },
+
+    // Band Visibility
+    toggleBandVisibility(bandType: string) {
+        if (!this.currentTemplate) return;
+        const band = this.currentTemplate.bands.find(b => b.type === bandType);
+        if (band) {
+            band.visible = band.visible === undefined ? false : !band.visible;
+            this.saveState();
+        }
     },
 
     setZoom(zoom: number) {
@@ -208,7 +275,7 @@ export const useReportStore = defineStore('report', {
       this.currentTemplate = nextState;
     },
 
-    async loadTemplate(id: number) {
+    async loadTemplate(id: string | number) {
       this.loading = true;
       const api = useApi();
       try {
@@ -221,25 +288,29 @@ export const useReportStore = defineStore('report', {
         const response = await api.post('/api/admin/execute-flow', dataForm);
         
         if (response.code === 200 && response.data) {
-          const data = response.data.data || response.data; // Check structure
+          const data = response.data.data; // Check structure
           
           let template: ReportTemplate;
           // The flow likely returns the record fields directly
           if (data.templatejson) {
             const parsed = JSON.parse(data.templatejson);
             template = {
-              reportTemplateID: data.id || data.reporttemplateid, // Check what flow returns
+              reportTemplateID: data.reportid, // Check what flow returns
               reportName: data.reportname,
               reportDesc: data.reportdesc,
               reportCategory: data.reportcategory,
               reportType: data.reporttype,
-              pageWidth: parsed.pageWidth || data.pagewidth,
-              pageHeight: parsed.pageHeight || data.pageheight,
-              orientation: parsed.orientation || data.orientation,
+              pageWidth: parsed.pageWidth || data.pagewidth || 595,
+              pageHeight: parsed.pageHeight || data.pageheight || 842,
+              orientation: parsed.orientation || data.orientation || 'portrait',
               margins: parsed.margins || { left: 20, right: 20, top: 20, bottom: 20 },
               bands: parsed.bands || [],
               parameters: data.parameters ? JSON.parse(data.parameters) : [],
+              variables: data.variables ? JSON.parse(data.variables) : [],
               dataSource: data.datasource || '',
+              columnCount: parsed.columnCount || 1,
+              columnWidth: parsed.columnWidth || (parsed.pageWidth ? parsed.pageWidth - (parsed.margins?.left || 20) - (parsed.margins?.right || 20) : 555),
+              columnSpacing: parsed.columnSpacing || 0,
               language: parsed.language || 'java',
               imports: parsed.imports || '',
               formatFactoryClass: parsed.formatFactoryClass || '',
@@ -274,12 +345,16 @@ export const useReportStore = defineStore('report', {
                 { type: 'detail', height: 100, elements: [] },
                 { type: 'columnFooter', height: 30, elements: [] },
                 { type: 'pageFooter', height: 30, elements: [] },
-                { type: 'summary', height: 50, elements: [] },
+                { type: 'summary', height: 50, elements: [], visible: true },
               ],
               parameters: [],
+              variables: [],
               dataSource: '',
+              columnCount: 1,
+              columnWidth: 555,
+              columnSpacing: 0,
               language: 'java',
-              whenNoDataType: 'NoPages'
+              whenNoDataType: 'NoPages',
             };
           }
 
@@ -305,6 +380,9 @@ export const useReportStore = defineStore('report', {
         pageHeight: this.currentTemplate.pageHeight,
         orientation: this.currentTemplate.orientation,
         margins: this.currentTemplate.margins,
+        columnCount: this.currentTemplate.columnCount,
+        columnWidth: this.currentTemplate.columnWidth,
+        columnSpacing: this.currentTemplate.columnSpacing,
         bands: this.currentTemplate.bands,
         // Advanced Properties
         language: this.currentTemplate.language,
@@ -326,6 +404,7 @@ export const useReportStore = defineStore('report', {
       dataForm.append('flowname', 'modifreport');
         dataForm.append('menu', 'admin');
         dataForm.append('search', 'true');
+      console.log(this.currentTemplate);
       
       if (this.currentTemplate.reportTemplateID) {
           dataForm.append('reportid', this.currentTemplate.reportTemplateID.toString());
@@ -337,6 +416,7 @@ export const useReportStore = defineStore('report', {
       dataForm.append('reporttype', this.currentTemplate.reportType);
       dataForm.append('templatejson', templateJSON);
       dataForm.append('parameters', JSON.stringify(this.currentTemplate.parameters));
+      dataForm.append('variables', JSON.stringify(this.currentTemplate.variables));
       dataForm.append('datasource', this.currentTemplate.dataSource);
       dataForm.append('pagewidth', this.currentTemplate.pageWidth.toString());
       dataForm.append('pageheight', this.currentTemplate.pageHeight.toString());
@@ -374,16 +454,20 @@ export const useReportStore = defineStore('report', {
         pageHeight: 842,
         orientation: 'portrait',
         margins: { left: 20, right: 20, top: 20, bottom: 20 },
+        columnCount: 1,
+        columnWidth: 555,
+        columnSpacing: 0,
         bands: [
-          { type: 'title', height: 50, elements: [] },
-          { type: 'pageHeader', height: 30, elements: [] },
-          { type: 'columnHeader', height: 30, elements: [] },
-          { type: 'detail', height: 100, elements: [] },
-          { type: 'columnFooter', height: 30, elements: [] },
-          { type: 'pageFooter', height: 30, elements: [] },
-          { type: 'summary', height: 50, elements: [] },
+          { type: 'title', height: 50, elements: [], visible: true },
+          { type: 'pageHeader', height: 30, elements: [], visible: true },
+          { type: 'columnHeader', height: 30, elements: [], visible: true },
+          { type: 'detail', height: 100, elements: [], visible: true },
+          { type: 'columnFooter', height: 30, elements: [], visible: true },
+          { type: 'pageFooter', height: 30, elements: [], visible: true },
+          { type: 'summary', height: 50, elements: [], visible: true },
         ],
         parameters: [],
+        variables: [],
         dataSource: '',
         language: 'java',
         whenNoDataType: 'NoPages',

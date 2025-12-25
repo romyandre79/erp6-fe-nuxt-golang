@@ -44,7 +44,7 @@
     </div>
 
     <!-- 🔹 Canvas Tengah -->
-    <main class="flex-1 p-5 overflow-auto w-full bg-white dark:bg-black">
+    <main class="flex-1 p-5 overflow-auto w-full">
       <div
         v-if="previewMode"
         class="flex items-center justify-between sticky top-0 z-50 px-6 py-3 transition-colors duration-300 backdrop-blur-md"
@@ -90,7 +90,7 @@
     </main>
 
     <!-- 🔹 Tree View + Property Panel -->
-    <aside class="w-1/4 bg-white border-l p-4 overflow-y-auto dark:bg-black">
+    <aside class="w-1/4 border-l p-4 overflow-y-auto">
       <h3 class="font-semibold mb-3">Form Structure</h3>
       <TreeView :nodes="canvasComponents" :selected="selected" @select="selectComponent" />
 

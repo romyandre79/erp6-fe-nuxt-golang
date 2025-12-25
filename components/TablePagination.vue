@@ -144,6 +144,22 @@
 
     <!-- Table -->
     <div class="w-full rounded-xl overflow-x-auto">
+          <TableControls
+        v-model:pageSize="pageSize"
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        :loading="loading"
+        :enablePaging="enablePaging"
+        :enablePageSize="enablePageSize"
+        :pageSizeOptions="pageSizeOptions"
+        :totalRecords="totalRecords"
+        @page-size-change="handlePageSizeChange(fetchData)"
+        @first-page="firstPage(fetchData)"
+        @prev-page="prevPage(fetchData)"
+        @next-page="nextPage(fetchData)"
+        @last-page="lastPage(fetchData)"
+      />
+
       <table class="w-full">
         <thead class="text-sm uppercase font-semibold" @dragover.prevent @drop="handleDropOnHeader">
           <!-- Header Row -->

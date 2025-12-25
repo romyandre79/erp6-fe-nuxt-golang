@@ -288,6 +288,12 @@ const handleRedo = () => {
 
 // Keyboard shortcuts for undo/redo AND Copy/Paste
 const handleKeyDown = (event: KeyboardEvent) => {
+  // Ignore shortcuts if user is focusing on an input field
+  const target = event.target as HTMLElement;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+    return;
+  }
+
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
 
@@ -318,39 +324,103 @@ const handleKeyDown = (event: KeyboardEvent) => {
    Clipboard Logic (Copy/Paste)
    ======================================================*/
 const clipboard = ref<any>(null);
+const lastPastedText = ref('');
+const pasteCount = ref(0);
 
-function handleCopy() {
+async function handleCopy() {
     const node = store.selectedNode;
     if (!node) return;
     
     // Deep clone to avoid reference issues
     try {
-        clipboard.value = JSON.parse(JSON.stringify(node));
-        toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
+        const nodeStr = JSON.stringify(node);
+        clipboard.value = JSON.parse(nodeStr); // Keep internal clipboard as backup
+        
+        // Try writing to system clipboard
+        try {
+          await navigator.clipboard.writeText(nodeStr);
+          toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
+        } catch (sysErr) {
+          console.warn('System clipboard write failed', sysErr);
+          toast.add({ title: 'Copied', description: 'Node copied to internal clipboard only' });
+        }
     } catch (e) {
         console.error('Failed to copy node', e);
+        toast.add({ title: 'Error', description: 'Failed to copy node', color: 'red' });
     }
 }
 
-function handlePaste() {
-    if (!clipboard.value || !editor) return;
+async function handlePaste() {
+    if (!editor) return;
 
     try {
-        const cmp = clipboard.value;
+        let text = '';
+        let fromSystem = false;
         
-        // Calculate new position (offset from clipboard source)
-        // Update clipboard so subsequent pastes are further offset
-        // User asked for "near old node"
-        cmp.pos_x += 30;
-        cmp.pos_y += 30;
+        // Try reading from system clipboard first
+        try {
+            text = await navigator.clipboard.readText();
+            fromSystem = true;
+        } catch (e) {
+            console.warn('System clipboard read failed', e);
+        }
+
+        // Fallback to internal clipboard if system empty or failed
+        if (!text && clipboard.value) {
+            text = JSON.stringify(clipboard.value);
+            fromSystem = false;
+        }
+
+        if (!text) return;
+
+        let cmp: any = null;
+        let isOrdinaryText = false;
+
+        try {
+            cmp = JSON.parse(text);
+        } catch (e) {
+            isOrdinaryText = true;
+        }
+
+        // "Check again, is object or ordinary text" logic
+        if (isOrdinaryText || !cmp || typeof cmp !== 'object') {
+             toast.add({ title: 'Paste Info', description: 'Clipboard contains ordinary text, not a workflow node.', color: 'orange' });
+             return; 
+        }
+
+        // Validate it looks like a node
+        // A exported node usually has: id, name, data, class, html, typenode, inputs, outputs, pos_x, pos_y
+        if (!cmp.name && !cmp.componentname) {
+             toast.add({ title: 'Paste Error', description: 'Invalid node structure in clipboard.', color: 'red' });
+             return;
+        }
+
+        // Handle Offset Logic for smart pasting
+        if (text === lastPastedText.value) {
+            pasteCount.value++;
+        } else {
+            lastPastedText.value = text;
+            pasteCount.value = 1;
+        }
+
+        // Add offset so nodes don't stack exactly on top of each other
+        const offset = 30 * pasteCount.value;
         
-        const x = cmp.pos_x;
-        const y = cmp.pos_y;
+        const x = (cmp.pos_x || 100) + offset;
+        const y = (cmp.pos_y || 100) + offset;
 
         // Node Properties
-        const componentName = cmp.name;
-        const inputs = Object.keys(cmp.inputs).length;
-        const outputs = Object.keys(cmp.outputs).length;
+        const componentName = cmp.name || cmp.componentname;
+        
+        // Handle inputs/outputs count safely
+        let inputs = 1;
+        if (typeof cmp.inputs === 'number') inputs = cmp.inputs;
+        else if (typeof cmp.inputs === 'object') inputs = Object.keys(cmp.inputs).length;
+        
+        let outputs = 1;
+        if (typeof cmp.outputs === 'number') outputs = cmp.outputs;
+        else if (typeof cmp.outputs === 'object') outputs = Object.keys(cmp.outputs).length;
+
         const data = cmp.data || {}; 
 
         // HTML Construction
@@ -379,17 +449,14 @@ function handlePaste() {
             false 
         );
         
-        // Select the new node?
-         // Optionally we could auto-select the new node
-        
-        toast.add({ title: 'Pasted', description: 'Node pasted' });
+        toast.add({ title: 'Pasted', description: 'Node pasted successfully' });
         
         // Record state check
         recordEditorState();
 
     } catch (e) {
         console.error('Failed to paste node', e);
-        toast.add({ title: 'Error', description: 'Failed to paste node', color: 'red' });
+        toast.add({ title: 'Error', description: 'Failed to paste node: ' + e, color: 'red' });
     }
 }
 
