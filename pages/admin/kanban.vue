@@ -9,7 +9,7 @@
 
     <!-- Project Sidebar -->
     <div 
-        class="fixed md:relative inset-y-0 left-0 z-30 w-64 border-r flex flex-col transform transition-transform duration-300 md:translate-x-0 bg-white dark:bg-gray-900" 
+        class="fixed md:relative inset-y-0 left-0 z-30 w-64 border-r flex flex-col transform transition-transform duration-300 md:translate-x-0" 
         :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         style="background: var(--panel-background); border-color: var(--border-color);"
     >
@@ -879,7 +879,7 @@
     @click.self="closeColumnManager"
   >
     <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
-      <UCard>
+      <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Manage Columns</h3>
@@ -1433,7 +1433,7 @@
     @click.self="closeStatisticsModal"
   >
     <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
-      <UCard>
+      <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Project Statistics</h3>
@@ -1536,11 +1536,11 @@
   <!-- Template Selection Modal -->
   <div 
     v-if="isTemplateModalOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
     @click.self="() => isTemplateModalOpen = false"
   >
     <div class="relative w-full max-w-3xl rounded-lg shadow-xl">
-      <UCard>
+      <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
           <h3 class="text-lg font-semibold">Choose a Template</h3>
         </template>
@@ -1549,7 +1549,8 @@
           <div
             v-for="template in projectTemplates"
             :key="template.id"
-            class="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
+            class="p-6 border-2 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
+            style="border-color: var(--border-color);"
             @click="selectTemplate(template)"
           >
             <div class="text-4xl mb-3">{{ template.icon }}</div>
@@ -1567,11 +1568,11 @@
   <!-- Members Modal -->
   <div 
     v-if="isMembersModalOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
     @click.self="closeMembersModal"
   >
     <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
-      <UCard>
+      <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Project Members</h3>
@@ -1581,7 +1582,7 @@
 
         <div class="space-y-4">
           <!-- Add Member Form -->
-          <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div class="p-4 rounded-lg" style="background: var(--body-background);">
             <h4 class="font-medium mb-3">Add New Member</h4>
             <div class="flex gap-2">
               <USelectMenu
@@ -1592,7 +1593,7 @@
                 placeholder="Search user"
                 class="flex-1"
               />
-              <select v-model="newMemberRole" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md">
+              <select v-model="newMemberRole" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md" style="background: var(--panel-background); color: var(--body-text);">
                 <option value="viewer">Viewer</option>
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
@@ -3427,11 +3428,11 @@ const isOverdue = (date: string) => {
 
 const getCardColorClass = (status: string, duedate: string) => {
   if (status === 'done' || status === 'finish') return '!bg-white dark:!bg-gray-800';
-  if (!duedate) return 'bg-white dark:bg-gray-800';
+  if (!duedate) return '';
   
   const now = new Date();
   const due = new Date(duedate);
-  if (isNaN(due.getTime())) return 'bg-white dark:bg-gray-800';
+  if (isNaN(due.getTime())) return '';
   
   const diffTime = due.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
