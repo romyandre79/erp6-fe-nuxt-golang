@@ -39,6 +39,8 @@
     >
       &gt;&gt;
     </button>
+
+    <span class="text-base-content/70"> Total Records {{ totalRecords || 0 }} </span>
   </div>
 </template>
 
@@ -48,6 +50,7 @@ import { computed } from 'vue';
 const props = defineProps({
   currentPage: Number,
   totalPages: Number,
+  totalRecords: Number,
   pageSize: Number,
   loading: Boolean,
   enablePaging: Boolean,
