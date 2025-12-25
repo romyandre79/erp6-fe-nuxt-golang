@@ -1404,7 +1404,7 @@
                   @click="saveCard"
                 >
                   <UIcon name="i-heroicons-check" class="w-4 h-4 mr-2" />
-                  {{ isEditMode ? 'Save' : 'Create' }}
+                  'Save'
                 </UButton>
                 <UButton
                   v-if="isEditMode"
@@ -1657,6 +1657,7 @@ import { useToast } from '#imports';
 
 definePageMeta({
   layout: 'auth',
+  middleware: 'auth'
 });
 
 const toast = useToast();
@@ -2413,6 +2414,28 @@ const saveCard = async () => {
       icon: 'i-heroicons-exclamation-triangle',
     });
     return;
+  }
+  
+  // Date Validation
+  if (editingCard.value.duedate) {
+      if (activeProject.value.startdate && editingCard.value.duedate < activeProject.value.startdate) {
+          toast.add({
+              title: 'Validation Error',
+              description: `Due date cannot be earlier than project start date (${activeProject.value.startdate})`,
+              color: 'red',
+              icon: 'i-heroicons-exclamation-triangle',
+          });
+          return;
+      }
+      if (activeProject.value.enddate && editingCard.value.duedate > activeProject.value.enddate) {
+          toast.add({
+              title: 'Validation Error',
+              description: `Due date cannot be later than project end date (${activeProject.value.enddate})`,
+              color: 'red',
+              icon: 'i-heroicons-exclamation-triangle',
+          });
+          return;
+      }
   }
   try {
     const dataForm = new FormData();
@@ -3518,21 +3541,21 @@ const closeMembersModal = () => {
 
 const addMember = async () => {
   if (!newMemberEmail.value || !activeProject.value) return;
-  
+  console.log(newMemberEmail.value)
   try {
     const dataForm = new FormData();
     dataForm.append('flowname', 'modifprojectmember');
     dataForm.append('menu', 'admin');
     dataForm.append('search', false);
     dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('userid', newMemberEmail.value);
+    dataForm.append('userid', newMemberEmail.value.id);
     dataForm.append('role', newMemberRole.value);
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
     
     // Find the user's name for the toast
-    const addedUser = users.value.find(u => u.useraccessid === newMemberEmail.value);
-    const userName = addedUser ? addedUser.username : newMemberEmail.value;
+    const addedUser = users.value.find(u => u.useraccessid === newMemberEmail.value.id);
+    const userName = addedUser ? addedUser.username : newMemberEmail.value.label;
 
     toast.add({
       title: 'Member Added',
