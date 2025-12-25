@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-zinc-100 dark:bg-black flex items-center justify-center p-0 sm:p-4 font-sans">
+  <div class="min-h-screen bg-zinc-100 flex items-center justify-center p-0 sm:p-4 font-sans">
     <!-- Mobile Frame Container -->
     <div class="w-full max-w-md bg-white dark:bg-zinc-950 min-h-screen sm:min-h-[850px] sm:h-[850px] sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col border-[8px] border-zinc-900 dark:border-zinc-800 box-border ring-1 ring-white/10">
       

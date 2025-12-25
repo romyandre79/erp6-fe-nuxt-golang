@@ -13,7 +13,7 @@
     <component
       :is="resolveComponent(node.type)"
       v-if="isContainer"
-      class="w-full h-full col-span-full relative border border-transparent min-h-[50px] p-3 rounded bg-white dark:bg-black dark:text-white transition-all duration-150 group-hover/container:border-gray-200 hover:!border-blue-300 hover:bg-blue-50/10"
+      class="w-full h-full col-span-full relative border border-transparent min-h-[50px] p-3 rounded transition-all duration-150 group-hover/container:border-gray-200 hover:!border-blue-300 hover:bg-blue-50/10"
       :class="[
         isDragOver ? 'border-blue-400 bg-blue-50' : '',
         node.type === 'search' ? '!border-dashed !border-green-200 bg-green-50/20' : '',
@@ -66,7 +66,7 @@
     <!-- 🔹 Leaf node -->
     <div
       v-else
-      class="p-2 border rounded bg-white cursor-pointer hover:border-blue-400 dark:bg-black"
+      class="p-2 border roundedcursor-pointer hover:border-blue-400"
       @click.stop="emitSelect"
       draggable="false"
     >

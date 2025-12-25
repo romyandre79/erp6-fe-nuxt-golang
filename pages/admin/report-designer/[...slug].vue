@@ -62,12 +62,7 @@
              <ReportSidebar />
           </div>
           <div v-show="activeTab === 'properties'" class="p-4 h-full">
-            <ReportProperties v-if="reportStore.selectedElement" />
-            <div v-else class="flex flex-col items-center justify-center h-64 text-gray-400">
-              <UIcon name="i-heroicons-cursor-arrow-rays" class="text-4xl mb-3 opacity-50" />
-              <p class="text-sm font-medium">No element selected</p>
-              <p class="text-xs mt-1">Select an element on the canvas to view its properties</p>
-            </div>
+            <ReportProperties />
           </div>
         </div>
       </div>
@@ -122,6 +117,7 @@ watch(() => reportStore.selectedElement, (newVal) => {
 
 async function loadReport() {
   const id = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug;
+  console.log('id ',id)
   if (!id) {
     // No ID provided, initialize a new blank report
     reportStore.initializeNewTemplate();
@@ -130,7 +126,7 @@ async function loadReport() {
 
   try {
     isLoading.value = true;
-    await reportStore.loadTemplate(parseInt(id));
+    await reportStore.loadTemplate(id);
   } catch (error) {
     toast.add({ title: 'Error', description: 'Failed to load report template', color: 'red' });
     // If load fails, maybe redirect or init new? 

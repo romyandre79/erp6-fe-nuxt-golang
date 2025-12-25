@@ -1,10 +1,21 @@
 <template>
-  <div class="flex h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+  <div class="flex h-[calc(100vh-64px)] border-t" style="background: var(--body-background); border-color: var(--border-color);">
+    <!-- Mobile Sidebar Overlay -->
+    <div 
+        v-if="isSidebarOpen" 
+        class="fixed inset-0 bg-black/50 z-20 md:hidden"
+        @click="isSidebarOpen = false"
+    ></div>
+
     <!-- Project Sidebar -->
-    <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <div 
+        class="fixed md:relative inset-y-0 left-0 z-30 w-64 border-r flex flex-col transform transition-transform duration-300 md:translate-x-0 bg-white dark:bg-gray-900" 
+        :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+        style="background: var(--panel-background); border-color: var(--border-color);"
+    >
       <!-- Sidebar Header -->
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Projects</h2>
+      <div class="p-4 border-b" style="border-color: var(--border-color);">
+        <h2 class="text-lg font-semibold mb-3">Projects</h2>
         <UButton 
           block 
           color="primary" 
@@ -17,7 +28,7 @@
         
         <!-- Archive Toggle -->
         <div class="mt-3 flex items-center justify-between">
-          <label class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer" @click="showArchived = !showArchived">
+          <label class="text-sm  cursor-pointer" @click="showArchived = !showArchived">
             Show Archived
           </label>
           <input 
@@ -36,10 +47,11 @@
           class="mb-2 p-3 rounded-lg cursor-pointer transition-colors"
           :class="[
             activeProject?.projectid === project.projectid 
-              ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' 
-              : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-transparent',
+              ? 'border-primary-500' 
+              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600',
             project.archived ? 'opacity-60' : ''
           ]"
+          style="background: var(--body-background); border-width: 2px;"
           @click="selectProject(project)"
         >
           <div class="flex items-center justify-between">
@@ -48,13 +60,13 @@
                 class="w-3 h-3 rounded-full flex-shrink-0" 
                 :style="{ backgroundColor: project.color || '#3b82f6' }"
               ></div>
-              <span class="font-medium text-sm text-gray-900 dark:text-white truncate">
+              <span class="font-medium text-sm truncate">
                 {{ project.name }}
               </span>
               <UIcon 
                 v-if="project.archived" 
                 name="i-heroicons-archive-box" 
-                class="w-3 h-3 text-gray-400 flex-shrink-0"
+                class="w-3 h-3  flex-shrink-0"
               />
             </div>
             <div class="flex gap-1">
@@ -82,25 +94,34 @@
               />
             </div>
           </div>
-          <p v-if="project.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+          <p v-if="project.description" class="text-xs  mt-1 truncate">
             {{ project.description }}
           </p>
         </div>
 
-        <div v-if="projects.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+        <div v-if="projects.length === 0" class="text-center py-8  text-sm">
           No projects yet. Create one to get started!
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden" ref="mainContentRef">
       <!-- Header -->
-      <div class="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="p-6 border-b" style="background: var(--panel-background); border-color: var(--border-color);">
         <div class="flex items-center justify-between mb-2">
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ activeProject?.name || 'Select a Project' }}
-          </h1>
+          <div class="flex items-center gap-2">
+             <UButton 
+                icon="i-heroicons-bars-3" 
+                color="gray" 
+                variant="ghost" 
+                class="md:hidden" 
+                @click="isSidebarOpen = true" 
+             />
+             <h1 class="text-3xl font-bold ">
+               {{ activeProject?.name || 'Select a Project' }}
+             </h1>
+          </div>
           <div v-if="activeProject" class="flex gap-2">
             <UButton 
               icon="i-heroicons-chart-bar" 
@@ -126,9 +147,25 @@
             >
               Manage Columns
             </UButton>
+            <UButton 
+              icon="i-heroicons-photo" 
+              color="gray" 
+              variant="soft" 
+              @click="exportView('png')"
+            >
+              PNG
+            </UButton>
+            <UButton 
+              icon="i-heroicons-document-text" 
+              color="gray" 
+              variant="soft" 
+              @click="exportView('pdf')"
+            >
+              PDF
+            </UButton>
           </div>
         </div>
-        <p class="text-gray-600 dark:text-gray-400">
+        <p class="">
           {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
         </p>
       </div>
@@ -137,46 +174,32 @@
       <!-- Views Wrapper -->
       <div v-if="activeProject" class="flex flex-col flex-1 overflow-hidden">
       <!-- Tab Navigation -->
-      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
-        <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-          <UButton 
+      <div class="px-6 py-4 border-b flex items-center justify-between" style="background: var(--panel-background); border-color: var(--border-color);">
+        <div class="flex items-center gap-1 rounded-lg p-1" style="background: var(--button-background); border: 1px solid var(--border-color);">
+           <UButton 
             v-for="view in ['kanban', 'list', 'calendar', 'gantt']"
             :key="view"
-            :variant="currentView === view ? 'solid' : 'ghost'"
-            :color="currentView === view ? 'white' : 'gray'"
+            variant="ghost"
             size="sm"
             class="capitalize"
-            :class="{ '!text-gray-900 !bg-white shadow-sm': currentView === view }"
+            :class="currentView === view ? 'btnPrimary' : 'text-[var(--body-color)]'"
             @click="currentView = view"
           >
             {{ view }}
           </UButton>
-        </div>
-        
-        <!-- View Specific Actions -->
-        <div v-if="currentView === 'kanban'">
-           <UButton 
-              icon="i-heroicons-cog-6-tooth" 
-              color="gray" 
-              variant="ghost"
-              size="sm"
-              @click="openColumnManager"
-            >
-              Columns
-            </UButton>
+                <UButton icon="i-heroicons-plus" color="primary" @click="openCreateModal('todo')">Add New</UButton>
         </div>
       </div>
 
       <!-- Kanban Board -->
-      <!-- Kanban Board -->
       <div 
         v-if="currentView === 'kanban'"
-        class="flex-1 overflow-hidden p-6 kanban-board-container"
+        ref="kanbanViewRef"
+        class="flex-1 overflow-hidden p-6 kanban-board-container hidden-scrollbar"
         :style="{
           '--kanban-board-bg': `linear-gradient(to bottom right, ${activeProject.color || '#3b82f6'}15, transparent)`
         }"
       >
-        <!-- Kanban Board View -->
         <!-- Kanban Board View -->
         <div class="h-full">
           <div class="kanban-board w-full overflow-x-auto h-full" style="display: block;">
@@ -192,7 +215,7 @@
                 @dragover.prevent
                 @dragenter.prevent
               >
-                <UCard :ui="{ body: { padding: 'p-3' }, header: { padding: 'p-0' } }">
+                <UCard :ui="{ body: { padding: 'p-3' }, header: { padding: 'p-0' }, background: 'bg-transparent', ring: 'ring-0', shadow: 'shadow-none' }" class="h-full flex flex-col" style="background: var(--panel-background); border: 1px solid var(--border-color);">
                   <template #header>
                     <div 
                       class="flex items-center justify-between px-4 py-3 rounded-t-lg cursor-move"
@@ -213,7 +236,7 @@
                 </div>
                 <UButton 
                   icon="i-heroicons-plus" 
-                  size="xs" 
+                  size="sm" 
                   color="white"
                   variant="ghost"
                   class="text-white hover:bg-white/20"
@@ -233,20 +256,21 @@
                 @dragstart="onDragStart($event, card)"
                 @dragend="onDragEnd"
                 @click.stop="openEditModal(card)"
+                style="background: var(--panel-background); border: 1px solid var(--border-color); color: var(--body-color);"
               >
                 <div v-if="card.priority" class="mb-2">
-                  <UBadge :color="getPriorityColor(card.priority)" variant="solid" size="xs">
+                  <UBadge :color="getPriorityColor(card.priority)" variant="solid" size="sm">
                     {{ card.priority }}
                   </UBadge>
                 </div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ card.title }}</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{{ card.description }}</p>
+                <h4 class="font-semibold mb-2" style="color: var(--h2-color);">{{ card.title }}</h4>
+                <p class="text-sm mb-3 line-clamp-2" style="color: var(--p-color);">{{ card.description }}</p>
                 <div v-if="card.tags?.length" class="flex flex-wrap gap-1 mb-3">
-                  <UBadge v-for="(tag, idx) in card.tags" :key="idx" color="blue" variant="soft" size="xs">
+                  <UBadge v-for="(tag, idx) in card.tags" :key="idx" color="blue" variant="soft" size="sm">
                     {{ tag }}
                   </UBadge>
                 </div>
-                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between text-xs  pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div v-if="card.assignee" class="flex items-center gap-1">
                     <UIcon name="i-heroicons-user-circle" class="w-4 h-4" />
                     <span>{{ activeProject?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee)?.username || card.assignee }}</span>
@@ -268,24 +292,23 @@
 </div>
 
     <!-- LIST VIEW -->
-    <div v-if="currentView === 'list'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div v-if="currentView === 'list'" ref="listViewRef" class="h-full flex flex-col rounded-lg shadow-sm border overflow-hidden" style="background: var(--panel-background); border-color: var(--border-color);">
         <!-- List Header -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Task List</h3>
+        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+            <h3 class="text-xl font-bold ">Task List</h3>
             <div class="flex items-center gap-3">
                 <!-- Group By Dropdown -->
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-500">Group by:</span>
+                    <span class="text-sm text-gray-500 hidden sm:inline">Group by:</span>
                     <select 
                         v-model="listGroupBy"
-                        class="text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 py-1"
+                        class="text-sm border-gray-300 dark:border-gray-600 rounded-md py-1"
                     >
                         <option value="status">Status</option>
                         <option value="assignee">Responsible</option>
                         <option value="priority">Priority</option>
                     </select>
                 </div>
-                <UButton icon="i-heroicons-plus" color="primary" @click="openCreateModal('todo')">Add New</UButton>
             </div>
         </div>
 
@@ -296,33 +319,33 @@
                 <div class="flex items-center gap-2 group cursor-pointer" @click="groupTasks._collapsed = !groupTasks._collapsed">
                     <UIcon 
                         name="i-heroicons-chevron-down" 
-                        class="w-4 h-4 text-gray-400 transition-transform" 
+                        class="w-4 h-4  transition-transform" 
                         :class="{ '-rotate-90': groupTasks._collapsed }" 
                     />
-                    <h4 class="font-bold text-gray-700 dark:text-gray-300">{{ groupName }}</h4>
-                    <span class="text-xs text-gray-400 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">{{ groupTasks.length }}</span>
+                    <h4 class="font-bold ">{{ groupName }}</h4>
+                    <span class="text-xs  px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">{{ groupTasks.length }}</span>
                 </div>
 
                 <!-- Task Table -->
-                 <div v-if="!groupTasks._collapsed" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                 <div v-if="!groupTasks._collapsed" class="border rounded-lg shadow-sm overflow-x-auto" style="background: var(--panel-background); border-color: var(--border-color);">
                     <!-- Table Header (Optional, mostly implied) -->
-                    <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-700">
-                        <div class="col-span-5">Task</div>
+                    <div class="grid grid-cols-12 gap-4 px-4 py-2 border-b text-xs font-semibold text-gray-500 min-w-[700px]" style="border-color: var(--border-color);">
+                        <div class="col-span-4">Task</div>
                         <div class="col-span-2">Status</div>
                         <div class="col-span-2">Due Date</div>
-                        <div class="col-span-1">Priority</div>
-                        <div class="col-span-2">Responsible</div>
+                        <div class="col-span-2">Priority</div>
+                        <div class="col-span-2 text-right pr-2">Responsible</div>
                     </div>
 
                     <!-- Task Rows -->
                     <div 
                         v-for="task in groupTasks" 
                         :key="task.cardid" 
-                        class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 items-center transition-colors cursor-pointer group/row"
+                        class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 items-center transition-colors cursor-pointer group/row min-w-[700px]"
                         @click="openEditModal(task)"
                     >
                          <!-- Title Column -->
-                        <div class="col-span-5 flex items-center gap-3">
+                        <div class="col-span-4 flex items-center gap-3">
                             <input 
                                 type="checkbox" 
                                 class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" 
@@ -331,24 +354,24 @@
                                 @change="updateCardStatus(task, $event.target.checked ? 'done' : 'todo')" 
                             />
                             <div class="min-w-0">
-                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :class="{ 'line-through text-gray-400': task.status === 'done' }">
+                                <div class="text-sm font-medium  truncate" :class="{ 'line-through': task.status === 'done' }">
                                     {{ task.title }}
                                 </div>
                                 <div class="flex items-center gap-2 mt-1">
                                     <template v-if="task.comments?.length">
-                                        <UIcon name="i-heroicons-chat-bubble-left" class="w-3 h-3 text-gray-400" />
-                                        <span class="text-[10px] text-gray-400">{{ task.comments.length }}</span>
+                                        <UIcon name="i-heroicons-chat-bubble-left" class="w-3 h-3 " />
+                                        <span class="text-[10px] ">{{ task.comments.length }}</span>
                                     </template>
                                      <template v-if="task.attachments?.length">
-                                        <UIcon name="i-heroicons-paper-clip" class="w-3 h-3 text-gray-400" />
-                                        <span class="text-[10px] text-gray-400">{{ task.attachments.length }}</span>
+                                        <UIcon name="i-heroicons-paper-clip" class="w-3 h-3 " />
+                                        <span class="text-[10px] ">{{ task.attachments.length }}</span>
                                     </template>
                                     <template v-if="task.tags?.length">
                                         <span class="inline-flex gap-1">
                                              <span v-for="tag in task.tags.slice(0, 2)" :key="tag" class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
                                                  {{ tag }}
                                              </span>
-                                             <span v-if="task.tags.length > 2" class="text-[10px] text-gray-400">+{{ task.tags.length - 2 }}</span>
+                                             <span v-if="task.tags.length > 2" class="text-[10px] ">+{{ task.tags.length - 2 }}</span>
                                         </span>
                                     </template>
                                 </div>
@@ -360,7 +383,7 @@
                              <UBadge 
                                 :color="columns.find(c => c.status === task.status)?.color || 'gray'" 
                                 variant="soft" 
-                                size="xs"
+                                size="sm"
                                 class="capitalize"
                              >
                                 {{ getColumnName(task.status) }}
@@ -368,21 +391,21 @@
                         </div>
                         
                         <!-- Due Date Column -->
-                        <div class="col-span-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                        <div class="col-span-2 text-sm flex items-center gap-2">
                             <template v-if="task.duedate">
-                                <UIcon name="i-heroicons-calendar" class="w-4 h-4 text-gray-400" />
+                                <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
                                 <span :class="{ 'text-red-500 font-medium': isOverdue(task.duedate) && task.status !== 'done' }">
                                     {{ formatDate(task.duedate) }}
                                 </span>
                             </template>
-                            <span v-else class="text-gray-400 italic text-xs">-</span>
+                            <span v-else class=" italic text-xs">-</span>
                         </div>
 
                         <!-- Priority Column -->
-                        <div class="col-span-1">
-                            <div class="flex items-center gap-1.5">
+                        <div class="col-span-2">
+                            <div class="flex text-sm items-center gap-1.5">
                                 <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: getPriorityColorHex(task.priority) }"></div>
-                                <span class="text-xs capitalize text-gray-600">{{ task.priority || 'Medium' }}</span>
+                                <span class="capitalize text-gray-600">{{ task.priority || 'Medium' }}</span>
                             </div>
                         </div>
 
@@ -394,13 +417,13 @@
                              >
                                  <UAvatar 
                                     :alt="activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || task.assignee" 
-                                    size="2xs" 
+                                    size="sm" 
                                 />
-                                <span class="text-xs truncate max-w-[80px]">
+                                <span class="text-sm truncate max-w-[80px]">
                                     {{ activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || 'Unknown' }}
                                 </span>
                              </div>
-                             <div v-else class="text-xs text-gray-400 italic">Unassigned</div>
+                             <div v-else class="text-sm  italic">Unassigned</div>
                          </div>
                     </div>
                     
@@ -416,16 +439,16 @@
             </div>
              <div v-if="Object.keys(groupedTasks).length === 0" class="text-center py-12">
                  <UIcon name="i-heroicons-clipboard-document-list" class="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Empty List</h3>
+                 <h3 class="text-lg font-medium ">Empty List</h3>
                  <p class="text-gray-500 mt-2">No tasks found. Create a new task to get started!</p>
              </div>
         </div>
     </div>
-    <div v-if="currentView === 'calendar'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div v-if="currentView === 'calendar'" ref="calendarViewRef" class="h-full flex flex-col rounded-lg shadow-sm border overflow-hidden" style="background: var(--panel-background); border-color: var(--border-color);">
         <!-- Calendar Header -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
             <div class="flex items-center gap-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white capitalize">
+                <h3 class="text-xl font-bold capitalize">
                     <span v-if="calendarViewMode === 'week'">
                         {{ weekDays[0].toLocaleDateString('default', { month: 'short', day: 'numeric' }) }} - 
                         {{ weekDays[6].toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' }) }}
@@ -439,18 +462,18 @@
                 </h3>
                 <div class="flex items-center gap-2">
                     <UButton icon="i-heroicons-chevron-left" variant="ghost" color="gray" @click="navigateCalendar(-1)" />
-                    <UButton label="Today" variant="soft" color="gray" size="xs" @click="goToToday" />
+                    <UButton label="Today" variant="soft" color="gray" size="sm" @click="goToToday" />
                     <UButton icon="i-heroicons-chevron-right" variant="ghost" color="gray" @click="navigateCalendar(1)" />
                 </div>
             </div>
             
             <!-- View Switcher -->
-            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div class="flex rounded-lg p-1" style="background: var(--button-background); border: 1px solid var(--border-color);">
                 <button 
                     v-for="mode in ['day', 'week', 'month', 'year']" 
                     :key="mode"
                     class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
-                    :class="calendarViewMode === mode ? 'bg-white dark:bg-gray-600 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    :class="calendarViewMode === mode ? 'btnPrimary' : 'text-[var(--body-color)]'"
                     @click="calendarViewMode = mode"
                 >
                     {{ mode.charAt(0).toUpperCase() + mode.slice(1) }}
@@ -465,12 +488,12 @@
                 <!-- WEEK VIEW (Resource / Bordio Style) -->
                 <div v-if="calendarViewMode === 'week'" class="flex-1 flex flex-col min-w-[800px]">
                     <!-- Header Row -->
-                    <div class="grid grid-cols-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
-                        <div class="p-3 text-sm font-semibold text-gray-500 sticky left-0 bg-gray-50 dark:bg-gray-750 z-10 border-r border-gray-200 dark:border-gray-700">Team</div>
+                    <div class="grid grid-cols-8 border-b" style="background: var(--table-head-background); border-color: var(--border-color);">
+                        <div class="p-3 text-sm font-semibold sticky left-0 z-10 border-r" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">Team</div>
                         <div 
                             v-for="day in weekDays" 
                             :key="day.toISOString()" 
-                            class="p-2 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0 min-w-[140px]"
+                            class="p-2 text-center border-r last:border-r-0 min-w-[140px]" style="border-color: var(--border-color);"
                             :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': day.toDateString() === new Date().toDateString() }"
                         >
                             <div class="text-xs uppercase text-gray-500 font-semibold">{{ day.toLocaleDateString('default', { weekday: 'short' }) }}</div>
@@ -488,7 +511,7 @@
                             class="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700 min-h-[100px]"
                         >
                             <!-- User Header (Left Column) -->
-                             <div class="p-3 border-r border-gray-200 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-800 z-10 flex flex-col items-center justify-center gap-2">
+                             <div class="p-3 border-r sticky left-0 z-10 flex flex-col items-center justify-center gap-2" style="background: var(--panel-background); border-color: var(--border-color);">
                                 <template v-if="row.user.userid === 'unassigned'">
                                     <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500">
                                         <UIcon name="i-heroicons-question-mark-circle" class="w-6 h-6" />
@@ -515,14 +538,14 @@
                                     <div 
                                         v-for="card in getTasksForResourceAndDate(row.tasks, day)" 
                                         :key="card.cardid"
-                                        class="p-2 rounded bg-white dark:bg-gray-700 shadow-sm border-l-4 border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow text-xs group/card"
+                                        class="p-2 rounded shadow-sm border-l-4 border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow text-xs group/card"
                                         :style="{ borderLeftColor: getPriorityColorHex(card.priority) }"
                                         draggable="true"
                                         @dragstart="onDragStart($event, card)"
                                         @click="openEditModal(card)"
                                     >
-                                        <div class="font-medium truncate mb-1 text-gray-900 dark:text-gray-100">{{ card.title }}</div>
-                                        <div class="flex items-center gap-1 text-gray-500 dark:text-gray-400 scale-90 origin-left">
+                                        <div class="font-medium truncate mb-1">{{ card.title }}</div>
+                                        <div class="flex items-center gap-1  scale-90 origin-left">
                                             <UIcon v-if="card.timeEntries?.length" name="i-heroicons-clock" class="w-3 h-3" />
                                             <span v-if="card.tags?.length" class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
                                         </div>
@@ -530,7 +553,7 @@
                                 </div>
                                 <!-- Add Button on Hover -->
                                 <button 
-                                    class="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 transition-opacity"
+                                    class="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600  transition-opacity"
                                     @click="openCreateModal('todo', day, row.user)"
                                 >
                                     <UIcon name="i-heroicons-plus" class="w-4 h-4" />
@@ -541,18 +564,19 @@
                 </div>
 
                 <!-- MONTH VIEW (Classic Grid) -->
-                <div v-else-if="calendarViewMode === 'month'" class="flex-1 p-4">
-                     <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
+                <div v-else-if="calendarViewMode === 'month'" class="flex-1 p-4 overflow-auto">
+                     <div class="grid grid-cols-7 gap-px rounded-lg overflow-hidden h-full min-w-[700px]" style="background: var(--border-color); border: 1px solid var(--border-color);">
                         <!-- Header -->
-                        <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="bg-gray-50 dark:bg-gray-800 p-2 text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day" class="p-2 text-center text-sm font-semibold" style="background: var(--panel-background);">
                             {{ day }}
                         </div>
                         <!-- Days -->
                         <div 
                             v-for="(day, index) in calendarDays" 
                             :key="index" 
-                            class="bg-white dark:bg-gray-800 p-1 flex flex-col min-h-[100px] overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                            :class="{ 'opacity-50 bg-gray-50/50': !day.currentMonth }"
+                            class="p-1 flex flex-col min-h-[100px] overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            :class="{ 'opacity-50': !day.currentMonth }"
+                            style="background: var(--panel-background);"
                             @dragover.prevent
                             @drop="onDropOnCalendar($event, day.date)"
                         >
@@ -576,8 +600,8 @@
                 </div>
 
                 <!-- DAY VIEW -->
-                <div v-else-if="calendarViewMode === 'day'" class="flex-1 p-4 flex justify-center bg-gray-50 dark:bg-gray-900">
-                    <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+                <div v-else-if="calendarViewMode === 'day'" class="flex-1 p-4 flex justify-center" style="background: var(--body-background);">
+                    <div class="w-full max-w-2xl rounded shadow-sm border flex flex-col" style="background: var(--panel-background); border-color: var(--border-color);">
                          <!-- Simple Day List Implementation -->
                         <div class="p-4 border-b border-gray-100 dark:border-gray-700 font-medium text-gray-500">
                             Tasks for {{ currentDate.toLocaleDateString() }}
@@ -591,21 +615,21 @@
                             >
                                 <div class="w-1 h-8 rounded-full" :style="{ backgroundColor: getPriorityColorHex(card.priority) }"></div>
                                 <div class="flex-1">
-                                    <div class="font-medium text-gray-900 dark:text-white">{{ card.title }}</div>
+                                    <div class="font-medium">{{ card.title }}</div>
                                     <div class="text-xs text-gray-500">{{ card.description || 'No description' }}</div>
                                 </div>
                                 <div v-if="card.assignee" class="flex items-center gap-2">
-                                     <UAvatar :alt="activeProject?.members?.find((m:any) => m.userid == card.assignee)?.username" size="xs" />
+                                     <UAvatar :alt="activeProject?.members?.find((m:any) => m.userid == card.assignee)?.username" size="sm" />
                                 </div>
                             </div>
-                            <div v-if="getCardsForDate(currentDate).length === 0" class="text-center py-10 text-gray-400 italic">
+                            <div v-if="getCardsForDate(currentDate).length === 0" class="text-center py-10  italic">
                                 No tasks scheduled for today.
                             </div>
                         </div>
                     </div>
                 </div>
                  <!-- YEAR VIEW (Placeholder) -->
-                <div v-else-if="calendarViewMode === 'year'" class="flex-1 flex items-center justify-center text-gray-400">
+                <div v-else-if="calendarViewMode === 'year'" class="flex-1 flex items-center justify-center ">
                     <div class="text-center">
                         <UIcon name="i-heroicons-calendar-days" class="w-16 h-16 mx-auto mb-2 opacity-50" />
                         <p>Year view coming soon</p>
@@ -617,7 +641,7 @@
             <!-- WAITING LIST SIDEBAR -->
             <div class="w-80 border-l border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-col">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <h4 class="font-semibold text-gray-700 dark:text-gray-300">Waiting List</h4>
+                    <h4 class="font-semibold ">Waiting List</h4>
                     <UBadge color="gray" variant="soft">{{ waitingListTasks.length }}</UBadge>
                 </div>
                 <div class="flex-1 overflow-y-auto p-3 space-y-2">
@@ -630,13 +654,13 @@
                         @dragstart="onDragStart($event, card)"
                         @click="openEditModal(card)"
                     >
-                        <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">{{ card.title }}</div>
+                        <div class="text-sm font-medium mb-1">{{ card.title }}</div>
                          <div class="flex items-center justify-between text-xs text-gray-500">
                              <span>{{ card.priority || 'No priority' }}</span>
                              <UIcon v-if="!card.assignee" name="i-heroicons-user" class="w-3 h-3 opacity-50" />
                          </div>
                     </UCard>
-                    <div v-if="waitingListTasks.length === 0" class="text-center py-8 text-gray-400 text-xs italic">
+                    <div v-if="waitingListTasks.length === 0" class="text-center py-8  text-xs italic">
                         No tasks in waiting list.
                     </div>
                 </div>
@@ -645,10 +669,10 @@
     </div>
 
     <!-- Gantt View -->
-    <div v-if="currentView === 'gantt'" class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div v-if="currentView === 'gantt'" ref="ganttViewRef" class="h-full flex flex-col rounded-lg shadow-sm border overflow-hidden" style="background: var(--panel-background); border-color: var(--border-color);">
         <!-- Gantt Header -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+            <h3 class="text-xl font-bold">
                 {{ new Date(ganttYear, ganttMonth).toLocaleString('default', { month: 'long', year: 'numeric' }) }}
             </h3>
             <div class="flex items-center gap-2">
@@ -660,11 +684,11 @@
         <!-- Gantt Chart -->
         <div class="flex-1 overflow-auto flex">
              <!-- Task List (Sticky Left) -->
-             <div class="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
-                <div class="h-10 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 px-4 flex items-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+             <div class="w-64 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Task
                 </div>
-                <div class="bg-white dark:bg-gray-800">
+                <div style="background: var(--panel-background);">
                     <div 
                         v-for="task in ganttTasks" 
                         :key="task.id" 
@@ -680,14 +704,14 @@
              <div class="flex-1 overflow-x-auto">
                 <div class="min-w-max">
                     <!-- Days Header -->
-                    <div class="h-10 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 grid" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
+                    <div class="h-10 border-b grid" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
                         <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-200 dark:border-gray-600/50 text-center text-xs leading-10 text-gray-500">
                             {{ d }}
                         </div>
                     </div>
 
                     <!-- Bars -->
-                     <div class="relative bg-white dark:bg-gray-800">
+                     <div class="relative">
                          <!-- Grid Lines -->
                         <div class="absolute inset-0 grid pointer-events-none" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
                             <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-100 dark:border-gray-800 h-full"></div>
@@ -716,9 +740,9 @@
       <!-- Empty State -->
       <div v-else class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <UIcon name="i-heroicons-folder-open" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Project Selected</h3>
-          <p class="text-gray-500 dark:text-gray-400 mb-4">Select a project from the sidebar to view its board</p>
+          <UIcon name="i-heroicons-folder-open" class="w-16 h-16  mx-auto mb-4" />
+          <h3 class="text-lg font-semibold mb-2">No Project Selected</h3>
+          <p class=" mb-4">Select a project from the sidebar to view its board</p>
           <UButton color="primary" @click="openProjectModal(null)">
             Create Your First Project
           </UButton>
@@ -733,11 +757,11 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="closeProjectModal"
   >
-    <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-      <UCard>
+    <div class="relative w-full max-w-md rounded-lg shadow-xl">
+      <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="text-lg font-semibold">
               {{ editingProject?.projectid ? 'Edit Project' : 'Create Project' }}
             </h3>
             <UButton
@@ -752,17 +776,17 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Name</label>
+            <label class="block text-sm font-medium  mb-1">Project Name</label>
             <UInput v-model="editingProject.name" placeholder="My Project" class="w-full" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label class="block text-sm font-medium  mb-1">Description</label>
             <UTextarea v-model="editingProject.description" placeholder="Project description..." :rows="3" class="w-full" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+            <label class="block text-sm font-medium  mb-1">Company</label>
             <USelectMenu
               v-model="editingProject.companyid"
               :items="companies.map(c => ({ label: c.companyname, id: c.companyid }))"
@@ -775,25 +799,27 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+              <label class="block text-sm font-medium  mb-1">Start Date</label>
               <input
                 v-model="editingProject.startdate"
                 type="date"
-                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                style="background: var(--body-background); color: var(--body-text);"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+              <label class="block text-sm font-medium  mb-1">End Date</label>
               <input
                 v-model="editingProject.enddate"
                 type="date"
-                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                style="background: var(--body-background); color: var(--body-text);"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+            <label class="block text-sm font-medium  mb-1">Color</label>
             <div class="flex gap-2">
               <div
                 v-for="color in projectColors"
@@ -827,11 +853,11 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="isDeleteModalOpen = false"
   >
-    <div class="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
+    <div class="relative w-full max-w-sm rounded-lg shadow-xl p-6">
       <div class="text-center">
         <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Project?</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">
+        <h3 class="text-lg font-semibold mb-2">Delete Project?</h3>
+        <p class=" mb-6">
           Are you sure you want to delete "{{ projectToDelete?.name }}"? All cards and data will be lost.
         </p>
         <div class="flex gap-2 justify-center">
@@ -852,11 +878,11 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="closeColumnManager"
   >
-    <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+    <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Manage Columns</h3>
+            <h3 class="text-lg font-semibold">Manage Columns</h3>
             <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" size="sm" @click="closeColumnManager" />
           </div>
         </template>
@@ -908,7 +934,7 @@
               <div class="flex gap-1">
                 <UButton 
                   icon="i-heroicons-arrow-up" 
-                  size="xs" 
+                  size="sm" 
                   color="gray" 
                   variant="ghost"
                   :disabled="index === 0"
@@ -916,7 +942,7 @@
                 />
                 <UButton 
                   icon="i-heroicons-arrow-down" 
-                  size="xs" 
+                  size="sm" 
                   color="gray" 
                   variant="ghost"
                   :disabled="index === columns.length - 1"
@@ -924,7 +950,7 @@
                 />
                 <UButton 
                   icon="i-heroicons-trash" 
-                  size="xs" 
+                  size="sm" 
                   color="red" 
                   variant="ghost"
                   @click="deleteColumn(index)"
@@ -963,16 +989,17 @@
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
         
         <UCard 
-          class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full my-8 shadow-xl"
+          class="relative rounded-lg max-w-4xl w-full my-8 shadow-xl"
           @click.stop
           @paste="handlePaste"
           :ui="{ body: { padding: 'p-0' }, header: { padding: 'px-6 py-4' }, ring: '', divide: '' }"
+          style="background: var(--panel-background); border: 1px solid var(--border-color);"
         >
         <template #header>
           <div class="flex items-start justify-between">
             <div class="flex-1 pr-4">
               <div class="flex items-start gap-3 mb-2">
-                <UIcon name="i-heroicons-credit-card" class="w-6 h-6 text-gray-600 dark:text-gray-400 mt-1 flex-shrink-0" />
+                <UIcon name="i-heroicons-credit-card" class="w-6 h-6  mt-1 flex-shrink-0" />
                 <UInput
                   v-model="editingCard.title"
                   placeholder="Card title"
@@ -981,7 +1008,7 @@
                   class="flex-1"
                 />
               </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400 ml-9">
+              <p class="text-sm  ml-9">
                 in list <span class="font-medium">{{ getColumnName(editingCard.status) }}</span>
               </p>
             </div>
@@ -1003,8 +1030,8 @@
             <!-- Description Section -->
             <div>
               <div class="flex items-center gap-2 mb-2">
-                <UIcon name="i-heroicons-bars-3-bottom-left" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Description</h3>
+                <UIcon name="i-heroicons-bars-3-bottom-left" class="w-5 h-5 " />
+                <h3 class="text-sm font-semibold ">Description</h3>
               </div>
               <UTextarea
                 v-model="editingCard.description"
@@ -1018,13 +1045,13 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
-                  <UIcon name="i-heroicons-paper-clip" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Attachments</h3>
+                  <UIcon name="i-heroicons-paper-clip" class="w-5 h-5 " />
+                  <h3 class="text-sm font-semibold ">Attachments</h3>
                 </div>
                 <label class="cursor-pointer">
                   <UButton
                     icon="i-heroicons-plus"
-                    size="xs"
+                    size="sm"
                     color="gray"
                     variant="soft"
                     as="span"
@@ -1045,7 +1072,8 @@
                 <div
                   v-for="(file, idx) in editingCard.attachments"
                   :key="idx"
-                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg overflow-hidden"
+                  class="rounded-lg overflow-hidden"
+                  style="background: var(--body-background); border: 1px solid var(--border-color);"
                 >
                   <!-- File info row -->
                   <div class="flex items-center justify-between p-3">
@@ -1066,7 +1094,7 @@
                     </div>
                     <UButton
                       icon="i-heroicons-trash"
-                      size="xs"
+                      size="sm"
                       color="red"
                       variant="ghost"
                       @click="removeAttachment(idx)"
@@ -1078,8 +1106,8 @@
                     <img 
                       :src="getAttachmentUrl(file)" 
                       :alt="file.originalfilename || file.name"
-                      class="max-w-full h-auto rounded border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-90"
-                      style="max-height: 300px;"
+                      class="max-w-full h-auto rounded cursor-pointer hover:opacity-90"
+                      style="border: 1px solid var(--border-color); max-height: 300px;"
                       @click="viewAttachment(file)"
                     />
                   </div>
@@ -1087,7 +1115,7 @@
               </div>
               
               <!-- Empty state -->
-              <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic py-2">
+              <div v-else class="text-sm  italic py-2">
                 No attachments yet. Click "Add" or paste (Ctrl+V) to attach files.
               </div>
             </div>
@@ -1096,12 +1124,12 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
-                  <UIcon name="i-heroicons-clock" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Time Tracking</h3>
+                  <UIcon name="i-heroicons-clock" class="w-5 h-5 " />
+                  <h3 class="text-sm font-semibold ">Time Tracking</h3>
                 </div>
                 <UButton 
                   icon="i-heroicons-plus" 
-                  size="xs" 
+                  size="sm" 
                   color="primary" 
                   variant="soft"
                   @click="addTimeEntry"
@@ -1115,44 +1143,45 @@
                 <div
                   v-for="(entry, idx) in editingCard.timeEntries"
                   :key="idx"
-                  class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                  class="p-3 rounded-lg"
+                  style="background: var(--body-background); border: 1px solid var(--border-color);"
                 >
                   <div class="grid grid-cols-2 gap-2 mb-2">
                     <!-- Start DateTime -->
                     <div>
-                      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                      <label class="block text-xs font-medium  mb-1">
                         Start
                       </label>
                       <input
                         v-model="entry.start"
                         type="datetime-local"
-                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded "
                       />
                     </div>
                     
                     <!-- End DateTime -->
                     <div>
-                      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                      <label class="block text-xs font-medium  mb-1">
                         End
                       </label>
                       <input
                         v-model="entry.end"
                         type="datetime-local"
-                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded "
                       />
                     </div>
                   </div>
                   
                   <!-- Note -->
                   <div class="mb-2">
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    <label class="block text-xs font-medium  mb-1">
                       Note (optional)
                     </label>
                     <input
                       v-model="entry.note"
                       type="text"
                       placeholder="What did you work on?"
-                      class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded "
                     />
                   </div>
                   
@@ -1172,16 +1201,16 @@
                 </div>
                 
                 <!-- Total Duration -->
-                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="p-3 rounded-lg" style="background: var(--body-background); border: 1px solid var(--border-color);">
                   <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Time Logged:</span>
+                    <span class="text-sm font-medium ">Total Time Logged:</span>
                     <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ calculateTotalDuration }}</span>
                   </div>
                 </div>
               </div>
               
               <!-- Empty State -->
-              <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic py-2">
+              <div v-else class="text-sm  italic py-2">
                 No time entries yet. Click "Add Entry" to start tracking time.
               </div>
             </div>
@@ -1189,8 +1218,8 @@
             <!-- Activity Section -->
             <div>
               <div class="flex items-center gap-2 mb-3">
-                <UIcon name="i-heroicons-list-bullet" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Activity</h3>
+                <UIcon name="i-heroicons-list-bullet" class="w-5 h-5 " />
+                <h3 class="text-sm font-semibold ">Activity</h3>
               </div>
               <div class="space-y-3">
                 <div class="flex gap-3">
@@ -1205,7 +1234,7 @@
                       class="w-full"
                     />
                     <div class="mt-2 text-right">
-                      <UButton size="xs" color="primary" @click="addComment">Post Comment</UButton>
+                      <UButton size="sm" color="primary" @click="addComment">Post Comment</UButton>
                     </div>
                   </div>
                 </div>
@@ -1224,24 +1253,24 @@
                       <div class="flex-1">
                         <div class="flex justify-between items-start">
                              <div class="text-sm">
-                                <span class="font-semibold text-gray-900 dark:text-white">
+                                <span class="font-semibold ">
                                     {{ activeProject?.members?.find((m: any) => m.userid == comment.userid)?.username || comment.userid || 'Unknown' }}
                                 </span>
-                                <span class="text-gray-500 dark:text-gray-400 text-xs ml-2">
+                                <span class=" text-xs ml-2">
                                     {{ comment.created_at ? new Date(comment.created_at).toLocaleString() : 'Just now' }}
                                 </span>
                              </div>
                              <!-- Delete Button (visible on hover) -->
                              <UButton
                                 icon="i-heroicons-trash"
-                                size="xs"
+                                size="sm"
                                 color="gray"
                                 variant="ghost"
                                 class="opacity-0 group-hover:opacity-100 transition-opacity"
                                 @click="deleteComment(idx)"
                              />
                         </div>
-                        <div class="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+                        <div class="text-sm  mt-1 whitespace-pre-wrap">
                             {{ comment.comment }}
                         </div>
                       </div>
@@ -1258,17 +1287,17 @@
           <div class="col-span-3 space-y-4">
             <!-- Card Details Section -->
             <div>
-              <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Card Details</h4>
+              <h4 class="text-xs font-semibold  uppercase mb-3">Card Details</h4>
               <div class="space-y-3">
                 <!-- Priority -->
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-flag" class="w-3 h-3 inline mr-1" />
                     Priority
                   </label>
                   <select
                     v-model="editingCard.priority"
-                    class="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="">Select priority</option>
                     <option value="low">Low</option>
@@ -1279,7 +1308,7 @@
 
                 <!-- Assignee -->
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-user" class="w-3 h-3 inline mr-1" />
                     Assignee
                   </label>
@@ -1295,17 +1324,17 @@
                       <span v-if="editingCard.assignee">
                          {{ memberOptions.find(opt => opt.id == (typeof editingCard.assignee === 'object' ? editingCard.assignee?.id : editingCard.assignee))?.label || (typeof editingCard.assignee === 'object' ? editingCard.assignee?.label : editingCard.assignee) }}
                       </span>
-                      <span v-else class="text-gray-400">Select assignee</span>
+                      <span v-else class="">Select assignee</span>
                     </template>
                   </USelectMenu>
                   <!-- Show assignee avatar if assigned -->
-                  <div v-if="editingCard.assignee" class="mt-2 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                  <div v-if="editingCard.assignee" class="mt-2 flex items-center gap-2 p-2 rounded" style="background: var(--body-background); border: 1px solid var(--border-color);">
                     <!-- Handle object/array returned by component -->
                     <template v-if="typeof editingCard.assignee === 'object'">
                          <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
                           {{ ((Array.isArray(editingCard.assignee) ? editingCard.assignee[0] : editingCard.assignee) || {}).label?.charAt(0).toUpperCase() || 'U' }}
                         </div>
-                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                        <span class="text-sm ">
                           {{ ((Array.isArray(editingCard.assignee) ? editingCard.assignee[0] : editingCard.assignee) || {}).label || 'Unknown' }}
                         </span>
                     </template>
@@ -1314,7 +1343,7 @@
                         <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
                           {{ (activeProject?.members?.find((m: any) => (m.userid == editingCard.assignee || m.email == editingCard.assignee))?.username || String(editingCard.assignee)).charAt(0).toUpperCase() }}
                         </div>
-                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                        <span class="text-sm ">
                           {{ activeProject?.members?.find((m: any) => (m.userid == editingCard.assignee || m.email == editingCard.assignee))?.username || editingCard.assignee }}
                         </span>
                     </template>
@@ -1323,7 +1352,7 @@
 
                 <!-- Tags/Labels -->
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-tag" class="w-3 h-3 inline mr-1" />
                     Labels
                   </label>
@@ -1349,7 +1378,7 @@
 
                 <!-- Due Date -->
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-calendar" class="w-3 h-3 inline mr-1" />
                     Due Date
                   </label>
@@ -1364,7 +1393,7 @@
 
             <!-- Actions Section -->
             <div>
-              <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Actions</h4>
+              <h4 class="text-xs font-semibold  uppercase mb-3">Actions</h4>
               <div class="space-y-2">
                 <UButton 
                   block 
@@ -1403,7 +1432,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="closeStatisticsModal"
   >
-    <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+    <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -1417,19 +1446,19 @@
           <div class="grid grid-cols-4 gap-4">
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ projectStats.totalCards }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Total Cards</div>
+              <div class="text-sm ">Total Cards</div>
             </div>
             <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ projectStats.doneCards }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Completed</div>
+              <div class="text-sm ">Completed</div>
             </div>
             <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ projectStats.completionRate }}%</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Progress</div>
+              <div class="text-sm ">Progress</div>
             </div>
             <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
               <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ projectStats.totalFormatted }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Total Hours</div>
+              <div class="text-sm ">Total Hours</div>
             </div>
           </div>
 
@@ -1437,7 +1466,7 @@
           <div>
             <div class="flex justify-between text-sm mb-2">
               <span class="font-medium">Overall Progress</span>
-              <span class="text-gray-600 dark:text-gray-400">{{ projectStats.completionRate }}%</span>
+              <span class="">{{ projectStats.completionRate }}%</span>
             </div>
             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
               <div 
@@ -1464,7 +1493,7 @@
                         <span class="font-semibold text-blue-600 dark:text-blue-400">{{ item.duration }}</span>
                     </div>
                   </div>
-                   <div v-if="projectStats.assigneeStats.length === 0" class="text-sm text-gray-400 italic">No assignments yet</div>
+                   <div v-if="projectStats.assigneeStats.length === 0" class="text-sm  italic">No assignments yet</div>
                 </div>
               </div>
           
@@ -1489,13 +1518,13 @@
                   <span class="text-sm truncate flex-1 pr-2">{{ cardTime.title }}</span>
                   <span class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ cardTime.duration }}</span>
                </div>
-               <div v-if="projectStats.timePerCard.length === 0" class="text-sm text-gray-400 italic">No time entries recorded</div>
+               <div v-if="projectStats.timePerCard.length === 0" class="text-sm  italic">No time entries recorded</div>
             </div>
           </div>
 
           <!-- Project Info -->
           <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div class="text-sm text-gray-600 dark:text-gray-400">
+            <div class="text-sm ">
               Project created {{ projectStats.daysSinceCreation }} days ago
             </div>
           </div>
@@ -1510,7 +1539,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="() => isTemplateModalOpen = false"
   >
-    <div class="relative w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+    <div class="relative w-full max-w-3xl rounded-lg shadow-xl">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Choose a Template</h3>
@@ -1525,7 +1554,7 @@
           >
             <div class="text-4xl mb-3">{{ template.icon }}</div>
             <h4 class="font-semibold mb-1">{{ template.name }}</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ template.description }}</p>
+            <p class="text-sm ">{{ template.description }}</p>
             <div class="mt-3 text-xs text-gray-500">
               {{ template.columns.length }} columns
             </div>
@@ -1541,7 +1570,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
     @click.self="closeMembersModal"
   >
-    <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+    <div class="relative w-full max-w-2xl rounded-lg shadow-xl">
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -1563,7 +1592,7 @@
                 placeholder="Search user"
                 class="flex-1"
               />
-              <select v-model="newMemberRole" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+              <select v-model="newMemberRole" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md">
                 <option value="viewer">Viewer</option>
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
@@ -1577,7 +1606,7 @@
             <div
               v-for="(member, index) in activeProject?.members"
               :key="member.userid || member.userId || index"
-              class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+              class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
             >
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold">
@@ -1592,7 +1621,7 @@
                 <select 
                   :value="member.role"
                   @change="updateMemberRole(member, $event.target.value)"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md"
                   :disabled="member.role === 'owner'"
                 >
                   <option value="viewer">Viewer</option>
@@ -1603,7 +1632,7 @@
                 <UButton 
                   v-if="member.role !== 'owner'"
                   icon="i-heroicons-trash" 
-                  size="xs" 
+                  size="sm" 
                   color="red" 
                   variant="ghost"
                   @click="removeMember(member)"
@@ -1623,6 +1652,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useToast } from '#imports';
+// Imports removed for dynamic loading
 
 definePageMeta({
   layout: 'auth',
@@ -1639,6 +1669,76 @@ const isDeleteModalOpen = ref(false);
 const editingProject = ref<any>({});
 const projectToDelete = ref<any>(null);
 const showArchived = ref(false);
+const isSidebarOpen = ref(false);
+
+// View Refs for Export
+const mainContentRef = ref<HTMLElement | null>(null);
+const kanbanViewRef = ref<HTMLElement | null>(null);
+const listViewRef = ref<HTMLElement | null>(null);
+const calendarViewRef = ref<HTMLElement | null>(null);
+const ganttViewRef = ref<HTMLElement | null>(null);
+
+const exportView = async (format: 'png' | 'pdf') => {
+  // Debug alert to confirm function call
+  // alert('Export function triggered: ' + format); 
+
+  let element = null;
+  let filename = `project-${activeProject.value?.name || 'export'}-${currentView.value}`;
+
+  // Use mainContentRef to capture header + view if available
+  if (mainContentRef.value) {
+     element = mainContentRef.value;
+  } else {
+    // Fallback to specific views
+    if (currentView.value === 'kanban') element = kanbanViewRef.value;
+    else if (currentView.value === 'list') element = listViewRef.value;
+    else if (currentView.value === 'calendar') element = calendarViewRef.value;
+    else if (currentView.value === 'gantt') element = ganttViewRef.value;
+  }
+
+  if (!element) {
+    console.error('Export Error: element not found');
+    alert('Export Error: Could not find view element. Try reloading.');
+    return;
+  }
+
+  const toastId = toast.add({ title: 'Exporting...', description: 'Generating ' + format.toUpperCase(), color: 'blue', timeout: 0 });
+
+  try {
+    // Dynamic imports to avoid initialization issues
+    const { toPng } = await import('html-to-image');
+    const jsPDFModule = await import('jspdf');
+    const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
+
+     // Small delay to ensure rendering
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const dataUrl = await toPng(element, { cacheBust: true, backgroundColor: '#ffffff' });
+
+    if (format === 'png') {
+      const link = document.createElement('a');
+      link.download = `${filename}.png`;
+      link.href = dataUrl;
+      link.click();
+    } else {
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [element.offsetWidth, element.offsetHeight]
+      });
+      pdf.addImage(dataUrl, 'PNG', 0, 0, element.offsetWidth, element.offsetHeight);
+      pdf.save(`${filename}.pdf`);
+    }
+    
+    // Remove loading toast by creating success
+    toast.add({ title: 'Success', description: 'Export completed!', color: 'green', timeout: 3000 });
+
+  } catch (error: any) {
+    console.error('Export error:', error);
+    alert('Export failed: ' + error.message || error);
+    toast.add({ title: 'Export Failed', description: 'An error occurred during export.', color: 'red' });
+  }
+};
 
 // Helper function to convert ISO datetime to datetime-local format
 // Converts: "2025-12-21T09:00:00Z" -> "2025-12-21T09:00"
