@@ -356,6 +356,7 @@
         :enablePaging="enablePaging"
         :enablePageSize="enablePageSize"
         :pageSizeOptions="pageSizeOptions"
+                :totalRecords="totalRecords"
         @page-size-change="handlePageSizeChange(fetchData)"
         @first-page="firstPage(fetchData)"
         @prev-page="prevPage(fetchData)"

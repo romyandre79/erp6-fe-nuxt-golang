@@ -442,9 +442,12 @@
                                    target="_blank" 
                                    class="flex items-center gap-2 p-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs"
                                 >
-                                    <i class="fa-solid fa-paperclip"></i>
-                                    <span class="truncate max-w-[150px]">{{ msg.attachment.split('/').pop() }}</span>
-                                    <i class="fa-solid fa-download ml-auto"></i>
+                                    <i class="fa-solid fa-paperclip text-lg text-gray-500 dark:text-gray-400"></i>
+                                    <div class="flex-1 min-w-0">
+                                         <p class="truncate font-medium text-gray-700 dark:text-gray-200">{{ msg.attachment.split('/').pop() }}</p>
+                                         <p class="text-[10px] text-gray-500" v-if="msg.filesize">{{ formatBytes(msg.filesize) }}</p>
+                                    </div>
+                                    <i class="fa-solid fa-download ml-2 text-indigo-600 hover:text-indigo-800 transition-colors"></i>
                                 </a>
                             </div>
                             <p v-if="msg.text">{{ msg.text }}</p>
@@ -570,7 +573,16 @@ const chatInput = ref('');
 const showEmojiPicker = ref(false);
 const attachment = ref<string|null>(null);
 const attachmentName = ref<string|null>(null);
+const attachmentSize = ref<number|null>(null);
 const fileInput = ref<HTMLInputElement|null>(null);
+
+const formatBytes = (bytes: number) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string, attachment?: string}[]>>({});
 const unreadCounts = ref<Record<number, number>>({});
 const isAiProcessing = ref(false);
@@ -640,6 +652,10 @@ watch(isChatOpen, (val) => {
     if (val && activeTab.value === 'people' && users.value.length === 0) fetchUsers();
 });
 
+watch(activeTab, (val) => {
+    if (val === 'people' && users.value.length === 0) fetchUsers();
+});
+
 const scrollToBottom = async (container: HTMLElement|null) => {
     await nextTick();
     if (container) container.scrollTop = container.scrollHeight;
@@ -686,10 +702,15 @@ const fetchUsers = async () => {
         formData.append('senderid', String(myUserId.value || ''));
         
         const { data }: any = await post('/api/admin/execute-flow', formData);
-        users.value = data?.result || data?.data || data || [];
+        
+        let fetchedType = data?.result || data?.data || [];
+        if (!Array.isArray(fetchedType)) fetchedType = [];
+        
+        users.value = fetchedType;
+        
         // Init unread counts if needed
         users.value.forEach((u: any) => {
-            if (!unreadCounts.value[u.useraccessid]) unreadCounts.value[u.useraccessid] = 0;
+            if (u && u.useraccessid && !unreadCounts.value[u.useraccessid]) unreadCounts.value[u.useraccessid] = 0;
         });
     } catch(e) {
         console.error(e);
@@ -727,8 +748,10 @@ const fetchChatHistory = async (targetId: number) => {
              // Map backend definition: senderid -> senderId, created_at -> timestamp
              chatHistory.value[targetId] = history.map((d: any) => ({
                  text: d.message,
-                 senderId: d.senderid,
-                 timestamp: d.created_at
+                 senderId: d.sender_id || d.senderid,
+                 timestamp: d.created_at,
+                 attachment: d.attachment,
+                 filesize: d.filesize
              }));
         }
     } catch(e) {
@@ -867,6 +890,7 @@ const handleWsMessage = async (payload: any) => {
         chatHistory.value[senderId].push({
             text: payload.data.text,
             attachment: payload.data.attachment,
+            filesize: payload.data.filesize,
             senderId: senderId,
             timestamp: payload.data.timestamp || new Date().toISOString()
         });
@@ -886,6 +910,13 @@ const handleWsMessage = async (payload: any) => {
         const user = users.value.find(u => u.useraccessid === payload.user_id);
         if (user) {
             user.isonline = payload.isonline;
+        } else {
+            // New user coming online (or previously filtered out?) -> Refetch list
+            // Only refetch if we are on the tab or list is populated (to avoid random fetches)
+            if (activeTab.value === 'people' || users.value.length > 0) {
+                 console.log("New user status detected, refreshing list...");
+                 fetchUsers();
+            }
         }
     }
 
@@ -931,23 +962,17 @@ const handleFileUpload = async (event: Event) => {
     try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('path', 'chat_uploads'); // Upload to public/chat_uploads
+        formData.append('path', 'chat_uploads'); 
         
-        // Helper to upload using useApi or direct fetch? useApi wrapper doesn't support multipart easily if generic.
-        // Let's use direct fetch with token
         const { data }: any = await post('/api/media/upload', formData);
-        
-        // Assuming response is { message: "Upload success" } but we need the path.
-        // Wait, mediamgrcontroller.go UploadMedia returns { "message": "Upload success" } but NOT the path/filename?
-        // Actually it saves with original filename. So path is path + filename.
-        // We should construct it.
         
         attachment.value = `chat_uploads/${file.name}`;
         attachmentName.value = file.name;
+        attachmentSize.value = file.size;
         
-    } catch (e) {
+    } catch (e: any) {
         console.error("Upload failed", e);
-        alert("Upload failed.");
+        alert("Upload failed: " + (e.message || e));
     } finally {
         input.value = '';
     }
@@ -956,6 +981,7 @@ const handleFileUpload = async (event: Event) => {
 const removeAttachment = () => {
     attachment.value = null;
     attachmentName.value = null;
+    attachmentSize.value = null;
 };
 
 const addEmoji = (emoji: string) => {
@@ -967,6 +993,7 @@ const sendChatMessage = () => {
     if ((!chatInput.value.trim() && !attachment.value) || !selectedUser.value) return;
     const text = chatInput.value;
     const att = attachment.value;
+    const attSize = attachmentSize.value;
     const targetId = selectedUser.value.useraccessid;
     const timestamp = new Date().toISOString();
 
@@ -977,7 +1004,7 @@ const sendChatMessage = () => {
         const payload = JSON.stringify({
             type: 'chat',
             targetid: targetId,
-            data: { text, attachment: att, timestamp }
+            data: { text, attachment: att, filesize: attSize, timestamp }
         });
         socket.send(payload);
         console.log("Sent payload:", payload);
@@ -990,12 +1017,14 @@ const sendChatMessage = () => {
     chatHistory.value[targetId].push({
         text,
         attachment: att,
+        filesize: attSize,
         senderId: myUserId.value,
         timestamp
     });
     chatInput.value = '';
     attachment.value = null;
     attachmentName.value = null;
+    attachmentSize.value = null;
     scrollToBottom(chatMessagesContainer.value);
 };
 

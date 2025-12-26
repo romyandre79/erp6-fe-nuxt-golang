@@ -85,11 +85,16 @@ export const useNotificationStore = defineStore('notification', {
             // The backend sends: { type: "chat", data: chatLog_Struct }
             chatStore.addMessage(payload.data)
             
+            // Try to find sender name
+            const senderId = payload.senderid;
+            const sender = chatStore.activeUsers.find((u: any) => u.useraccessid === senderId);
+            const senderName = sender ? sender.realname : `User ${senderId}`;
+
             // Also Show Toast for chat? User said "Chat show to chat", but maybe a notification is nice if not open?
             // "notification different" implies keep them separate.
             const toast = useToast()
             toast.add({ 
-              title: `Message from User ${payload.data.senderid}`, 
+              title: `Message from ${senderName}`, 
               description: payload.data.message,
               icon: 'i-heroicons-chat-bubble-left-right',
               color: 'primary'
