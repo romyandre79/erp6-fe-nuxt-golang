@@ -244,34 +244,34 @@
             </transition>
 
             <!-- Speech Bubble Tail for open state -->
-            <div v-if="isChatOpen" class="absolute -top-4 right-12 w-4 h-4 bg-white dark:bg-gray-800 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
+            <div v-if="isChatOpen" class="absolute -top-4 right-12 w-4 h-4 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
         </div>
     </div>
 
     <!-- Main Window -->
     <transition name="fade-slide">
-      <div v-if="isChatOpen" class="fixed bottom-32 right-8 z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden border-2 border-gray-200 dark:border-gray-700 h-[600px] origin-bottom-right">
+      <div v-if="isChatOpen" class="admin-layout fixed bottom-32 right-8 z-50 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden border-2 border-gray-200 dark:border-gray-700 h-[600px] origin-bottom-right bg-white dark:bg-gray-800">
         
         <!-- Tabs Header -->
-        <div class="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex">
+        <div class="border-b border-gray-200 dark:border-gray-700 flex">
             <button 
                 @click="activeTab = 'ai'"
                 class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative"
-                :class="activeTab === 'ai' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                :class="activeTab === 'ai' ? 'text-indigo-600 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
             >
                 AI Assistant
             </button>
             <button 
                 @click="activeTab = 'people'"
                 class="flex-1 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative"
-                :class="activeTab === 'people' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                :class="activeTab === 'people' ? 'text-indigo-600 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
             >
                 People
             </button>
              <button 
                 @click="activeTab = 'settings'"
                 class="w-12 py-3 text-sm font-semibold flex justify-center items-center gap-2 transition-colors relative border-l border-gray-200 dark:border-gray-700"
-                :class="activeTab === 'settings' ? 'text-indigo-600 bg-white dark:bg-gray-800 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                :class="activeTab === 'settings' ? 'text-indigo-600 border-t-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
             >
                 <i class="fa-solid fa-gear"></i>
             </button>
@@ -285,7 +285,7 @@
                  <span>Ask me to create widgets or menus!</span>
             </div>
              <!-- Messages -->
-             <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900" ref="aiMessagesContainer">
+             <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="aiMessagesContainer">
                 <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['flex', msg.sender === 'user' ? 'justify-end' : 'justify-start']">
                     <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
                     {{ msg.text }}
@@ -293,7 +293,7 @@
                 </div>
              </div>
              <!-- Input -->
-             <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+             <div class="p-3 border-t border-gray-200 dark:border-gray-700">
                 <form @submit.prevent="sendAiMessage" class="flex gap-2">
                     <input v-model="aiInput" type="text" placeholder="Type a command..." class="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     <button type="submit" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700">
@@ -309,7 +309,7 @@
              
              <div class="grid grid-cols-2 gap-4">
                  <!-- Clippy Item -->
-                 <div @click="setCharacter('clippy')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'clippy' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('clippy')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'clippy' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">📎</span>
                      </div>
@@ -317,7 +317,7 @@
                  </div>
                  
                  <!-- Robot Item -->
-                 <div @click="setCharacter('robot')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'robot' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('robot')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'robot' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">🤖</span>
                      </div>
@@ -325,7 +325,7 @@
                  </div>
 
                  <!-- Cat Item -->
-                 <div @click="setCharacter('cat')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'cat' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('cat')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'cat' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">🐱</span>
                      </div>
@@ -333,7 +333,7 @@
                  </div>
 
                  <!-- Office Item -->
-                 <div @click="setCharacter('fox')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'fox' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('fox')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'fox' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">🦊</span>
                      </div>
@@ -341,7 +341,7 @@
                  </div>
 
                  <!-- Office Item -->
-                 <div @click="setCharacter('dog')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'dog' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('dog')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'dog' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">🐶</span>
                      </div>
@@ -349,7 +349,7 @@
                  </div>
 
                  <!-- Teacher Item -->
-                 <div @click="setCharacter('panda')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'panda' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('panda')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'panda' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">🐼</span>
                      </div>
@@ -357,7 +357,7 @@
                  </div>
 
                   <!-- Custom Item -->
-                 <div @click="setCharacter('custom')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'custom' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300']">
+                 <div @click="setCharacter('custom')" :class="['cursor-pointer p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all', assistantCharacter === 'custom' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300']">
                      <div class="h-16 w-16 flex items-center justify-center">
                          <span class="text-4xl">✨</span>
                      </div>
@@ -366,7 +366,7 @@
              </div>
              
              <!-- Custom Image Input -->
-             <div v-if="assistantCharacter === 'custom'" class="mt-6 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
+             <div v-if="assistantCharacter === 'custom'" class="mt-6 p-4 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Image URL</label>
                  <input 
                     type="text" 
@@ -410,7 +410,7 @@
             <!-- Chat Room -->
             <div v-else class="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-900">
                 <!-- Chat Header -->
-                <div class="bg-white dark:bg-gray-800 p-3 flex items-center gap-3 shadow-sm z-10">
+                <div class="p-3 flex items-center gap-3 shadow-sm z-10">
                     <button @click="selectedUser = null" class="text-gray-500 hover:text-gray-700">
                         <i class="fa-solid fa-arrow-left"></i>
                     </button>
@@ -429,7 +429,7 @@
                 <!-- Chat Messages -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" ref="chatMessagesContainer">
                      <div v-for="(msg, idx) in chatHistory[selectedUser.useraccessid] || []" :key="idx" :class="['flex', msg.senderId === myUserId ? 'justify-end' : 'justify-start']">
-                        <div :class="['max-w-[75%] rounded-xl px-4 py-2 text-sm relative', msg.senderId === myUserId ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-700 rounded-tl-none']">
+                        <div :class="['max-w-[75%] rounded-xl px-4 py-2 text-sm relative', msg.senderId === myUserId ? 'bg-blue-600 text-white rounded-tr-none' : 'text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-700 rounded-tl-none']">
                             <!-- Attachment Render -->
                             <div v-if="msg.attachment" class="mb-2">
                                 <img v-if="msg.attachment.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
@@ -457,9 +457,9 @@
                 </div>
 
                 <!-- Chat Input -->
-                <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 relative">
+                <div class="p-3 border-t border-gray-200 dark:border-gray-700 relative">
                     <!-- Emoji Picker -->
-                    <div v-if="showEmojiPicker" class="absolute bottom-16 left-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-2 z-50 animate-fade-in w-64">
+                    <div v-if="showEmojiPicker" class="absolute bottom-16 left-4 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-2 z-50 animate-fade-in w-64">
                          <div class="grid grid-cols-6 gap-1">
                              <button v-for="emoji in emojis" :key="emoji" @click="addEmoji(emoji)" class="text-xl p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">{{ emoji }}</button>
                          </div>
@@ -521,7 +521,7 @@
      </div>
      
      <!-- Incoming Call Modal -->
-     <div v-if="incomingCall" class="fixed top-6 right-6 z-50 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl border-l-4 border-green-500 w-72 animate-bounce-in">
+     <div v-if="incomingCall" class="fixed top-6 right-6 z-50 p-4 rounded-xl shadow-2xl border-l-4 border-green-500 w-72 animate-bounce-in">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                  <i class="fa-solid fa-video text-xl animate-pulse"></i>
