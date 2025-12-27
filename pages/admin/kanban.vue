@@ -177,8 +177,8 @@
           {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
         </p>
         <p class="">
-          {{ toLocalDatetime(activeProject?.startdate)   || toLocalDatetime(activeProject?.enddate) }} - 
-          {{ toLocalDatetime(activeProject?.enddate) }}
+          {{ formatDate(activeProject?.startdate)   || formatDate(activeProject?.enddate) }} - 
+          {{ formatDate(activeProject?.enddate) }}
         </p>
       </div>
 
@@ -700,12 +700,7 @@
         <!-- Gantt Header -->
         <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
             <h3 class="text-xl font-bold">
-                <template v-if="activeProject?.startdate && activeProject?.enddate">
-                    {{ formatDate(activeProject.startdate) }} - {{ formatDate(activeProject.enddate) }}
-                </template>
-                <template v-else>
                     Project Timeline
-                </template>
             </h3>
             <div class="text-sm text-gray-500">
                 {{ ganttTotalDays }} days
@@ -721,17 +716,64 @@
                 </div>
                 <div style="background: var(--panel-background);">
                     <div 
+                        v-for="(task, taskIndex) in ganttTasks" 
+                        :key="task.id" 
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-move"
+                        draggable="true"
+                        @dragstart="onGanttDragStart($event, taskIndex)"
+                        @dragover.prevent="onGanttDragOver($event, taskIndex)"
+                        @drop="onGanttDrop($event, taskIndex)"
+                        @dragend="onGanttDragEnd"
+                        @click="openEditModal(task)"
+                        :style="{ opacity: draggedGanttIndex === taskIndex ? 0.5 : 1 }"
+                    >
+                        <UIcon name="i-heroicons-bars-3" class="w-4 h-4 mr-2 text-gray-400" />
+                        {{ task.title }}
+                    </div>
+                </div>
+             </div>
+			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+                    Start Date
+                </div>
+                <div style="background: var(--panel-background);">
+                    <div 
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
-                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-move transition-opacity"
-                        draggable="true"
-                        @dragstart="onGanttTaskDragStart($event, index)"
-                        @dragover="onGanttTaskDragOver($event, index)"
-                        @dragend="onGanttTaskDragEnd"
-                        @click="openEditModal(task)"
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
                         :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
                     >
-                        {{ task.title }}
+                        {{ formatDate(task.startdate) }}
+                    </div>
+                </div>
+             </div>
+			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+                    End Date
+                </div>
+                <div style="background: var(--panel-background);">
+                    <div 
+                        v-for="(task, index) in ganttTasks" 
+                        :key="task.id" 
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
+                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                    >
+                        {{ formatDate(task.enddate) }}
+                    </div>
+                </div>
+             </div>
+			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+                    Duration
+                </div>
+                <div style="background: var(--panel-background);">
+                    <div 
+                        v-for="(task, index) in ganttTasks" 
+                        :key="task.id" 
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
+                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                    >
+                        {{ task.ganttDuration }}
                     </div>
                 </div>
              </div>
@@ -1933,13 +1975,15 @@ definePageMeta({
 
 const toast = useToast();
 const api = useApi();
+const user = useUserStore();
+const projectStore = useProjectStore();
 
 // Date Helper Functions - Convert between ISO and local format
 const toLocalDatetime = (isoString: string | null | undefined): string => {
   if (!isoString) return '';
   try {
     // Remove 'Z' and 'T', replace with space
-    return isoString.replace('T', ' ').replace('Z', '').split('.')[0];
+	return new Date(isoString.toLocaleString())
   } catch (e) {
     return isoString;
   }
@@ -2062,45 +2106,32 @@ const users = ref<any[]>([]);
 
 // Load users from API
 const loadUsers = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchuserauth');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    if (res.data?.data && Array.isArray(res.data.data)) {
-      users.value = res.data.data;
-    }
-  } catch (error) {
-    console.error('Error loading users:', error);
-  }
+	const res = await projectStore.loadUsers();
+
+	if (res.data?.data && Array.isArray(res.data.data)) {
+	  users.value = res.data.data;
+	} else {
+		console.error('Error loading users:', error);
+		toast.add({
+		  title: 'Error',
+		  description: projectStore.error,
+		  color: 'red',
+		  icon: 'i-heroicons-exclamation-triangle',
+		});
+	}
 };
 
 // Load project members
 const loadProjectMembers = async () => {
   if (!activeProject.value || !activeProject.value.projectid) return;
   
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchprojectmember');
-    dataForm.append('menu', 'admin');
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    console.log('loadProjectMembers raw response:', res);
-    
+    const res = await projectStore.loadProjectMembers(activeProject.value);
+	
+	if (res.code == 200) {
+	
     let members = [];
-    if (res.data) {
-        if (Array.isArray(res.data)) {
-            members = res.data;
-        } else if (res.data.data && Array.isArray(res.data.data)) {
-            members = res.data.data;
-        } else if (res.data.rows && Array.isArray(res.data.rows)) {
-            members = res.data.rows;
-        }
+    if (res.data?.data && Array.isArray(res.data?.data)) {
+		members = res.data.data;
     }
     
     // Fallback if members is empty but data exists in unexpected format
@@ -2113,8 +2144,8 @@ const loadProjectMembers = async () => {
     }
     console.log('Project members loaded and set:', activeProject.value?.members);
 
-  } catch (error) {
-    console.error('Error loading project members:', error);
+  } else {
+    console.error('Error loading project members:', projectStore.error);
     if (activeProject.value) {
         activeProject.value.members = [];
     }
@@ -2322,16 +2353,8 @@ onMounted(async () => {
 });
 
 // Load projects from API
-const loadProjects = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchprojects');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    // Filter by archive status - MySQL uses 0/1 for BOOLEAN
-    dataForm.append('archived', showArchived.value ? '1' : '0');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
+const loadProjects = async () => {    
+    const res = await projectStore.loadProjects(showArchived.value);
     
     if (res.data && Array.isArray(res.data.data)) {
       projects.value = res.data.data.map((data: any)=>({
@@ -2339,21 +2362,19 @@ const loadProjects = async () => {
         startdate: formatDateTimeForInput(data.startdate),
         enddate: formatDateTimeForInput(data.enddate)
       }));
-      console.log(projects.value)
+	  
+	  columns.value = projects.value.columns
       
       // Set first project if none selected
       if (!activeProject.value && projects.value.length > 0) {
         activeProject.value = projects.value[0];
         await loadCards();
-        await loadColumns();
         await loadProjectMembers();
       }
-    }
-  } catch (error) {
-    console.error('Error loading projects:', error);
+    } else {
     toast.add({
       title: 'Error',
-      description: 'Failed to load projects',
+      description: projectStore.error,
       color: 'red',
       icon: 'i-heroicons-exclamation-triangle',
     });
@@ -2368,39 +2389,18 @@ const roleOptions = ref<any[]>([
 
 // Load roles from API
 const loadRoles = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchcombogroupauth');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    if (res.data?.data && Array.isArray(res.data.data)) {
-      roleOptions.value = res.data.data
-    }
-  } catch (error) {
-    console.error('Error loading roles:', error);
-  }
+	const res = await projectStore.loadRoles();
+	if (res.data?.data && Array.isArray(res.data.data)) {
+	  roleOptions.value = res.data.data
+	}
 };
 
 // Load project templates from API
 const loadProjectTemplates = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchprojecttemplates');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    if (res.data?.data && Array.isArray(res.data.data)) {
-      projectTemplates.value = res.data.data;
-      console.log('📋 Loaded project templates:', projectTemplates.value);
-    }
-  } catch (error) {
-    console.error('Error loading project templates:', error);
-  }
+  const res = await projectStore.loadProjectTemplates();
+	if (res.data?.data && Array.isArray(res.data.data)) {
+	  projectTemplates.value = res.data.data;
+	}
 };
 
 // Select a template and open project modal with template's columns
@@ -2426,12 +2426,7 @@ const selectTemplate = (template: any) => {
   
   // Set columns to template columns (or empty for blank template)
   columns.value = templateColumns.length > 0 ? JSON.parse(JSON.stringify(templateColumns)) : [];
-  
-  console.log('📋 Selected template:', template.name);
-  console.log('📊 Template columns parsed:', templateColumns);
-  console.log('✅ Columns.value set to:', columns.value);
-  console.log('🔢 Column count:', columns.value.length);
-  
+    
   // Initialize new project with template data
   editingProject.value = {
     name: '',
@@ -2447,19 +2442,31 @@ const selectTemplate = (template: any) => {
   console.log('📋 Selected template:', template.name, 'with', columns.value.length, 'columns');
 };
 
-const getCurrentUserRole = () => {
-  return 'developer'; // TODO: Get from auth system
+const getCurrentUserRole = async() => {
+  if (!activeProject.value.members) 
+	return;
+  await user.loadAuth()
+  const userGroup = activeProject.value.members.find(
+	  (member) => member.userid == user.user?.userid
+	);
+  const usergroup = Number(userGroup?.role) ?? null;
+  return usergroup;
 };
 
-const hasColumnPermission = (column: any, action: 'delete' | 'moveOut' | 'moveIn') => {
-  if (!column || !column.permissions) return true;
-  const userRole = getCurrentUserRole();
+const hasColumnPermission = async (column: any, action: 'delete' | 'moveOut' | 'moveIn') => {
+  let allow = false;
+  if (!column || !column.permissions) allow = true;
+  const userRole = await getCurrentUserRole();
   const permissionKey = `can${action.charAt(0).toUpperCase() + action.slice(1)}`;
   const allowedRoles = column.permissions[permissionKey];
-  if (!allowedRoles || allowedRoles.length === 0) return true;
-  if (allowedRoles.includes('*')) return true;
-  if (allowedRoles.includes(userRole)) return true;
-  return false;
+  console.log ('member uer  ',userRole)
+  console.log ('member allow ',allowedRoles)
+  if (!allowedRoles || allowedRoles.length === 0) allow = true;
+  if (!allowedRoles || allowedRoles.length === 0) allow = true;
+  if (allowedRoles.includes('*')) allow = true;
+  if (allowedRoles.includes(userRole)) allow = true;
+  console.log ('member allow ',allow)
+  return allow;
 };
 
 const getColumnByStatus = (status: string) => {
@@ -2534,32 +2541,17 @@ const moveColumn = (index: number, direction: number) => {
 const loadCards = async () => {
   if (!activeProject.value) return;
   
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'getcards');
-    dataForm.append('menu', 'admin');
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('search', 'true');
-    
-    let res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    if (res.data && Array.isArray(res.data.data)) {
-      tasks.value = res.data.data.map((card: any) => ({
+  const res = await projectStore.loadCards(activeProject.value);
+  if (res.code == 200 && Array.isArray(res.data.data)) {
+	tasks.value = res.data.data.map((card: any) => ({
         ...card,
         tags: Array.isArray(card.tags) ? card.tags : (card.tags ? JSON.parse(card.tags) : []),
         timeEntries: card.timeEntries || [],
         attachments: card.attachments || []
       }));
-      
-      for (let i = 0; i < tasks.value.length; i++) {
+	 for (let i = 0; i < tasks.value.length; i++) {
         const card = tasks.value[i];
-        let dataForm = new FormData();
-        dataForm.append('flowname', 'getcardtime');
-        dataForm.append('menu', 'admin');
-        dataForm.append('cardid', card.cardid.toString());
-        dataForm.append('search', 'true');
-        
-        let res = await api.post('/api/admin/execute-flow', dataForm);
+        let res = await projectStore.getCardTime(card.cardid);
         
         if (res.data && Array.isArray(res.data.data)) {
           // Convert ISO datetime to datetime-local format for input fields
@@ -2569,26 +2561,14 @@ const loadCards = async () => {
             end: formatDateTimeForInput(entry.enddatetime)
           }));
         }
-
-        dataForm = new FormData();
-        dataForm.append('flowname', 'getcardattachment');
-        dataForm.append('menu', 'admin');
-        dataForm.append('cardid', card.cardid.toString());
-        dataForm.append('search', 'true');
         
-        res = await api.post('/api/admin/execute-flow', dataForm);
+        res = await projectStore.getCardAttachment(card.cardid);
         
         if (res.data && Array.isArray(res.data.data)) {
           tasks.value[i].attachments = res.data.data;
         }
 
-        dataForm = new FormData();
-        dataForm.append('flowname', 'getcardcomment');
-        dataForm.append('menu', 'admin');
-        dataForm.append('cardid', card.cardid.toString());
-        dataForm.append('search', 'true');
-        
-        res = await api.post('/api/admin/execute-flow', dataForm);
+        res = await projectStore.getCardComment(card.cardid);
         
         if (res.data && Array.isArray(res.data.data)) {
           tasks.value[i].comments = res.data.data.map((c: any) => ({
@@ -2599,10 +2579,8 @@ const loadCards = async () => {
             tasks.value[i].comments = [];
         }
       }
-    }
-  } catch (error) {
-    console.error('Error loading cards:', error);
-    toast.add({
+  } else {
+  toast.add({
       title: 'Error',
       description: 'Failed to load cards',
       color: 'red',
@@ -2610,39 +2588,11 @@ const loadCards = async () => {
     });
   }
 };
-// Load columns for active project
-const loadColumns = async () => {
-  if (!activeProject.value) return;
-  
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'getprojectcolumns');
-    dataForm.append('menu', 'admin');
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    if (res.data && Array.isArray(res.data.data)) {
-      columns.value = res.data.data.sort((a, b) => a.position - b.position);
-    }
-  } catch (error) {
-    console.error('Error loading columns:', error);
-    // Use default columns if load fails
-    columns.value = [
-      { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
-      { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
-      { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
-      { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6' },
-      { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
-    ];
-  }
-};
+
 // Select project
 const selectProject = async (project: any) => {
   activeProject.value = project;
   await loadCards();
-  await loadColumns();
   await loadProjectMembers();
 };
 // Save project (create or update)
@@ -2870,8 +2820,6 @@ const saveCard = async () => {
   
   // Date Validation
   if (editingCard.value.enddate) {
-    console.log('due ',editingCard.value.enddate)
-    console.log('start ',activeProject.value.startdate)
       if (activeProject.value.startdate && editingCard.value.enddate.split('T')[0] < activeProject.value.startdate.split('T')[0]) {
           toast.add({
               title: 'Validation Error',
@@ -2891,83 +2839,26 @@ const saveCard = async () => {
           return;
       }
   }
-  try {
-    const dataForm = new FormData();
-    
-    dataForm.append('flowname', 'modifcard');
-
-    if (editingCard.value.cardid) {
-      dataForm.append('cardid', editingCard.value.cardid.toString());
-    }
-    
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', false);
-    dataForm.append('title', editingCard.value.title);
-    dataForm.append('description', editingCard.value.description || '');
-    dataForm.append('status', editingCard.value.status);
-    let assignee = editingCard.value.assignee;
-    if (Array.isArray(assignee)) assignee = assignee[0];
-    if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
-    dataForm.append('assignee', assignee || '');
-    let startdate = editingCard.value.startdate || '';
-    if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('startdate', startdate);
-    let enddate = editingCard.value.enddate || '';
-    if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('enddate', enddate);
-    dataForm.append('priority', editingCard.value.priority || 'medium');
-    dataForm.append('tags', JSON.stringify(editingCard.value.tags || []));
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-    // Save time entries if any
-    if (editingCard.value.timeEntries && editingCard.value.timeEntries.length > 0) {
-      const cardid = editingCard.value.cardid || res.data?.cardid;
-      if (cardid) {
-        await saveTimeEntries(cardid, editingCard.value.timeEntries);
-      }
-    }
-
-    // Save pending attachments if any
-    if (editingCard.value.attachments && editingCard.value.attachments.length > 0) {
-      const cardid = editingCard.value.cardid || res.data?.cardid;
-      if (cardid) {
-        for (const att of editingCard.value.attachments) {
-          if (att.file && !att.cardattachmentid) {
-            try {
-              const dataForm = new FormData();
-              dataForm.append('flowname', 'uploadattachment');
-              dataForm.append('menu', 'admin');
-              dataForm.append('projectid', activeProject.value.projectid.toString());
-              dataForm.append('cardid', cardid.toString());
-              dataForm.append('file', att.file);
-              await api.post('/api/admin/execute-flow', dataForm);
-            } catch (e) {
-              console.error('Error uploading pending attachment', e);
-            }
-          }
-        }
-      }
-    }
+  const res = await projectStore.saveCard(editingCard.value, activeProject.value);
+  if (res?.code == 200) {
     toast.add({
       title: editingCard.value.cardid ? 'Card Updated' : 'Card Created',
       description: editingCard.value.cardid 
         ? 'Card has been updated successfully' 
         : 'Card has been created successfully',
-      color: 'green',
+      color: 'success',
       icon: 'i-heroicons-check-circle',
     });
     closeModal();
     await loadCards();
-  } catch (error) {
-    console.error('Error saving card:', error);
+  } else {
     toast.add({
       title: 'Error',
       description: 'Failed to save card',
-      color: 'red',
+      color: 'error',
       icon: 'i-heroicons-exclamation-triangle',
     });
-  }
+  }  
 };
 // Delete card
 const deleteCard = async () => {
@@ -3011,54 +2902,20 @@ const deleteCard = async () => {
     });
   }
 };
-// Save time entries
-const saveTimeEntries = async (cardid: number, entries: any[]) => {
-  for (const entry of entries) {
-    if (!entry.start || !entry.end) continue;
-    
-    try {
-      const dataForm = new FormData();
 
-      dataForm.append('flowname', 'modiftimeentry');
-      if (entry.cardtimeentryid) {
-        dataForm.append('cardtimeentryid', entry.cardtimeentryid.toString());
-      }      
-      dataForm.append('cardid', cardid.toString());
-      dataForm.append('menu', 'admin');
-      dataForm.append('search', false);
-      dataForm.append('startdatetime', entry.start.replace('T', ' '));
-      dataForm.append('enddatetime', entry.end.replace('T', ' '));
-      dataForm.append('note', entry.note || '');
-      
-      await api.post('/api/admin/execute-flow', dataForm);
-    } catch (error) {
-      console.error('Error saving time entry:', error);
-    }
-  }
-};
 // Save columns
 const saveColumns = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'modifprojectcolumns');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', false);
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('columns', JSON.stringify(columns.value));
-    
-    await api.post('/api/admin/execute-flow', dataForm);
-    
-    toast.add({
+  const res = await projectStore.saveColumns(activeProject.value.projectid.toString(),columns.value)
+  if (res?.code == 200) {
+	toast.add({
       title: 'Columns Saved',
       description: 'Column configuration has been updated',
       color: 'green',
       icon: 'i-heroicons-check-circle',
     });
-    
-    closeColumnManager();
-  } catch (error) {
-    console.error('Error saving columns:', error);
-    toast.add({
+	closeColumnManager();
+  } else {
+	toast.add({
       title: 'Error',
       description: 'Failed to save columns',
       color: 'red',
@@ -3591,7 +3448,8 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
 
   // Check move-out permission from source column
   const sourceColumn = getColumnByStatus(oldStatus);
-  if (!hasColumnPermission(sourceColumn, 'moveOut')) {
+  const haOut = await hasColumnPermission(sourceColumn, 'moveOut')
+  if (!haOut) {
     toast.add({
       title: 'Permission Denied',
       description: `You don't have permission to move cards out of "${sourceColumn?.title || oldStatus}"`,
@@ -3604,7 +3462,8 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
   
   // Check move-in permission to target column
   const targetColumn = getColumnByStatus(newStatus);
-  if (!hasColumnPermission(targetColumn, 'moveIn')) {
+  const haIn = await hasColumnPermission(targetColumn, 'moveIn')
+  if (!haIn) {
     toast.add({
       title: 'Permission Denied',
       description: `You don't have permission to move cards into "${targetColumn?.title || newStatus}"`,
@@ -3614,65 +3473,29 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
     draggedCard.value = null;
     return;
   }
-
-  // Update card status locally (optimistic)
+  
   draggedCard.value.status = newStatus;
   
   // Persist to backend
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'modifcard');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', false);
-    dataForm.append('cardid', draggedCard.value.cardid.toString());
-    dataForm.append('projectid', activeProject.value.projectid.toString());
-    dataForm.append('title', draggedCard.value.title);
-    dataForm.append('description', draggedCard.value.description || '');
-    dataForm.append('status', newStatus);
-    dataForm.append('priority', draggedCard.value.priority || 'medium');
-    
-    // Handle assignee (same logic as saveCard)
-    let assignee = draggedCard.value.assignee;
-    if (Array.isArray(assignee)) assignee = assignee[0];
-    if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
-    dataForm.append('assignee', assignee || '');
-    
-    let startdate = draggedCard.value.startdate || draggedCard.value.enddate;
-    if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('startdate', startdate);
-    let enddate = draggedCard.value.enddate || '';
-    if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('enddate', enddate);
-    
-    // Ensure tags is array before stringify
-    let tags = draggedCard.value.tags || [];
-    if (typeof tags === 'string') {
-        try { tags = JSON.parse(tags); } catch(e) { tags = []; }
-    }
-    dataForm.append('tags', JSON.stringify(tags));
+  const res = await projectStore.saveCard(draggedCard.value,activeProject.value)
+  if (res?.code == 200) {
+	  toast.add({
+		title: 'Card Moved',
+		description: `Moved to ${getColumnName(newStatus)}`,
+		color: 'green',
+		icon: 'i-heroicons-check-circle',
+	  });
 
-    await api.post('/api/admin/execute-flow', dataForm);
-  } catch (error) {
-    console.error('Error saving move:', error);
-    toast.add({
-      title: 'Error',
-      description: 'Failed to save card move',
-      color: 'red',
-      icon: 'i-heroicons-exclamation-triangle',
-    });
-    // Revert on error
-    draggedCard.value.status = oldStatus;
-    return;
+	  draggedCard.value = null;
+  } else {
+	  toast.add({
+		  title: 'Error',
+		  description: 'Failed to save card move',
+		  color: 'error',
+		  icon: 'i-heroicons-exclamation-triangle',
+		});
   }
-  
-  toast.add({
-    title: 'Card Moved',
-    description: `Moved to ${getColumnName(newStatus)}`,
-    color: 'green',
-    icon: 'i-heroicons-check-circle',
-  });
-
-  draggedCard.value = null;
+    return;
 };
 
 // Modal state
@@ -4093,11 +3916,6 @@ const getCardColorClass = (status: string, enddate: string) => {
   return '!bg-white dark:!bg-gray-800'; // More than 5 days away
 };
 
-// ... lines 3010-3250 ...
-
-
-
-
 // ========== ADVANCED FEATURES FUNCTIONS ==========
 
 // Project Modal Functions
@@ -4305,7 +4123,7 @@ const ganttYear = ref(new Date().getFullYear());
 const ganttMonth = ref(new Date().getMonth());
 
 // Gantt Drag and Drop State
-const draggedGanttTaskIndex = ref<number | null>(null);
+const draggedGanttIndex = ref<number | null>(null);
 const isDraggingGanttTask = ref(false);
 
 // Initialize gantt view to project start date when project changes
@@ -4467,8 +4285,8 @@ const getDayClass = (dayNumber: number) => {
 };
 
 // Gantt Drag and Drop Handlers
-const onGanttTaskDragStart = (event: DragEvent, index: number) => {
-  draggedGanttTaskIndex.value = index;
+const onGanttDragStart = (event: DragEvent, index: number) => {
+  draggedGanttIndex.value = index;
   isDraggingGanttTask.value = true;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
@@ -4476,41 +4294,52 @@ const onGanttTaskDragStart = (event: DragEvent, index: number) => {
   (event.target as HTMLElement).style.opacity = '0.5';
 };
 
-const onGanttTaskDragOver = (event: DragEvent, index: number) => {
+const onGanttDragOver = (event: DragEvent, index: number) => {
   event.preventDefault();
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'move';
   }
   
-  if (draggedGanttTaskIndex.value !== null && draggedGanttTaskIndex.value !== index) {
-    // Reorder tasks in the tasks array
-    const ganttTasksList = ganttTasks.value;
-    const draggedTask = ganttTasksList[draggedGanttTaskIndex.value];
-    const targetTask = ganttTasksList[index];
+  if (draggedGanttIndex.value !== null && draggedGanttIndex.value !== index) {
+    // We need to reorder the tasks based on visual position
+    // Since ganttTasks is computed based on sort order (posgantt),
+    // we must update posgantt to reflect the new desired order.
     
-    // Find these tasks in the main tasks array and swap their posgantt values
-    const draggedIndex = tasks.value.findIndex((t: any) => t.cardid === draggedTask.cardid);
-    const targetIndex = tasks.value.findIndex((t: any) => t.cardid === targetTask.cardid);
+    // 1. Create a list of the current visual order
+    const currentOrder = [...ganttTasks.value];
     
-    if (draggedIndex !== -1 && targetIndex !== -1) {
-      // Swap in the array
-      const temp = tasks.value[draggedIndex];
-      tasks.value.splice(draggedIndex, 1);
-      tasks.value.splice(targetIndex, 0, temp);
-      draggedGanttTaskIndex.value = index;
-    }
+    // 2. Move the item in this list
+    const [movedItem] = currentOrder.splice(draggedGanttIndex.value, 1);
+    currentOrder.splice(index, 0, movedItem);
+    
+    // 3. Update posgantt for ALL tasks to match this new order
+    // We must update the underlying tasks array, as ganttTasks is read-only
+    currentOrder.forEach((ganttTask, newIndex) => {
+        const originalTask = tasks.value.find(t => t.cardid === ganttTask.cardid);
+        if (originalTask) {
+            originalTask.posgantt = newIndex;
+        }
+    });
+
+    // 4. Update the dragged index to match new position
+    draggedGanttIndex.value = index;
   }
 };
 
-const onGanttTaskDragEnd = async (event: DragEvent) => {
+const onGanttDrop = (event: DragEvent, index: number) => {
+    event.preventDefault();
+    // Logic handled in DragOver for live sorting
+};
+
+const onGanttDragEnd = async (event: DragEvent) => {
   (event.target as HTMLElement).style.opacity = '1';
   isDraggingGanttTask.value = false;
   
-  if (draggedGanttTaskIndex.value !== null) {
+  if (draggedGanttIndex.value !== null) {
     await saveGanttTaskPositions();
   }
   
-  draggedGanttTaskIndex.value = null;
+  draggedGanttIndex.value = null;
 };
 
 const saveGanttTaskPositions = async () => {
