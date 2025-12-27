@@ -21,7 +21,7 @@
           color="primary" 
           icon="i-heroicons-plus" 
           size="sm"
-          @click="openProjectModal(null)"
+          @click="isTemplateModalOpen = true"
         >
           New Project
         </UButton>
@@ -163,10 +163,22 @@
             >
               PDF
             </UButton>
+            <UButton 
+              icon="i-heroicons-bookmark" 
+              color="primary" 
+              variant="soft" 
+              @click="isSaveTemplateModalOpen = true"
+            >
+              Save as Template
+            </UButton>
           </div>
         </div>
         <p class="">
           {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
+        </p>
+        <p class="">
+          {{ toLocalDatetime(activeProject?.startdate)   || toLocalDatetime(activeProject?.enddate) }} - 
+          {{ toLocalDatetime(activeProject?.enddate) }}
         </p>
       </div>
 
@@ -233,6 +245,7 @@
                   <UBadge color="white" variant="solid" class="bg-white/20 text-white border-0">
                     {{ getColumnCards(column.status).length }}
                   </UBadge>
+                  <UIcon v-if="hasColumnRestrictions(column)" name="i-heroicons-lock-closed" class="w-4 h-4 text-white/70" />
                 </div>
                 <UButton 
                   icon="i-heroicons-plus" 
@@ -245,16 +258,23 @@
               </div>
             </template>
             <!-- Card List with Vertical Scroll -->
-            <div class="overflow-y-auto space-y-3" style="max-height: calc(100vh - 300px);">
+            <div 
+              class="overflow-y-auto space-y-3" 
+              style="max-height: calc(100vh - 300px);"
+              @drop="onDropInColumn($event, column.status)"
+              @dragover.prevent
+              @dragenter.prevent
+            >
               <UCard
-                v-for="card in getColumnCards(column.status)"
+                v-for="(card, cardIndex) in getColumnCards(column.status)"
                 :key="card.id"
                 class="cursor-move hover:shadow-lg transition-shadow"
-                :class="getCardColorClass(card.status, card.duedate)"
+                :class="getCardColorClass(card.status, card.enddate)"
                 :ui="{ body: { padding: 'p-2' } }"
                 draggable="true"
-                @dragstart="onDragStart($event, card)"
+                @dragstart="onDragStart($event, card, cardIndex)"
                 @dragend="onDragEnd"
+                @dragover.stop="onCardDragOver($event, cardIndex, column.status)"
                 @click.stop="openEditModal(card)"
                 style="background: var(--panel-background); border: 1px solid var(--border-color); color: var(--body-color);"
               >
@@ -275,10 +295,10 @@
                     <UIcon name="i-heroicons-user-circle" class="w-4 h-4" />
                     <span>{{ activeProject?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee)?.username || card.assignee }}</span>
                   </div>
-                  <div v-if="card.duedate" class="flex items-center gap-1">
+                  <div v-if="card.enddate" class="flex items-center gap-1">
                     <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
-                    <span :class="{ 'text-red-500 font-medium': isOverdue(card.duedate) }">
-                      {{ formatDate(card.duedate) }}
+                    <span :class="{ 'text-red-500 font-medium': isOverdue(card.enddate) }">
+                      {{ formatDate(card.enddate) }}
                     </span>
                   </div>
                 </div>
@@ -392,10 +412,10 @@
                         
                         <!-- Due Date Column -->
                         <div class="col-span-2 text-sm flex items-center gap-2">
-                            <template v-if="task.duedate">
+                            <template v-if="task.enddate">
                                 <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
-                                <span :class="{ 'text-red-500 font-medium': isOverdue(task.duedate) && task.status !== 'done' }">
-                                    {{ formatDate(task.duedate) }}
+                                <span :class="{ 'text-red-500 font-medium': isOverdue(task.enddate) && task.status !== 'done' }">
+                                    {{ formatDate(task.enddate) }}
                                 </span>
                             </template>
                             <span v-else class=" italic text-xs">-</span>
@@ -493,8 +513,12 @@
                         <div 
                             v-for="day in weekDays" 
                             :key="day.toISOString()" 
-                            class="p-2 text-center border-r last:border-r-0 min-w-[140px]" style="border-color: var(--border-color);"
-                            :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': day.toDateString() === new Date().toDateString() }"
+                            class="p-2 text-center border-r last:border-r-0 min-w-[140px]" 
+                            style="border-color: var(--border-color);"
+                            :class="[
+                                { 'bg-blue-50/50 dark:bg-blue-900/10': day.toDateString() === new Date().toDateString() },
+                                isVacationDate(day) ? 'bg-red-50 dark:bg-red-900/20' : (isWeekend(day) ? 'bg-blue-50 dark:bg-blue-900/10' : '')
+                            ]"
                         >
                             <div class="text-xs uppercase text-gray-500 font-semibold">{{ day.toLocaleDateString('default', { weekday: 'short' }) }}</div>
                             <div class="text-lg font-bold" :class="{ 'text-primary-600': day.toDateString() === new Date().toDateString() }">
@@ -531,6 +555,9 @@
                                 v-for="day in weekDays" 
                                 :key="day.toISOString()" 
                                 class="p-2 border-r border-gray-100 dark:border-gray-700/50 relative group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+                                :class="[
+                                    isVacationDate(day) ? 'bg-red-50/30 dark:bg-red-900/10' : (isWeekend(day) ? 'bg-blue-50/30 dark:bg-blue-900/5' : '')
+                                ]"
                                 @dragover.prevent
                                 @drop="onDropOnCalendar($event, day, row.user)"
                             >
@@ -673,11 +700,15 @@
         <!-- Gantt Header -->
         <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
             <h3 class="text-xl font-bold">
-                {{ new Date(ganttYear, ganttMonth).toLocaleString('default', { month: 'long', year: 'numeric' }) }}
+                <template v-if="activeProject?.startdate && activeProject?.enddate">
+                    {{ formatDate(activeProject.startdate) }} - {{ formatDate(activeProject.enddate) }}
+                </template>
+                <template v-else>
+                    Project Timeline
+                </template>
             </h3>
-            <div class="flex items-center gap-2">
-                <UButton icon="i-heroicons-chevron-left" variant="ghost" color="gray" @click="prevGanttMonth" />
-                <UButton icon="i-heroicons-chevron-right" variant="ghost" color="gray" @click="nextGanttMonth" />
+            <div class="text-sm text-gray-500">
+                {{ ganttTotalDays }} days
             </div>
         </div>
 
@@ -690,10 +721,15 @@
                 </div>
                 <div style="background: var(--panel-background);">
                     <div 
-                        v-for="task in ganttTasks" 
+                        v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
-                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-move transition-opacity"
+                        draggable="true"
+                        @dragstart="onGanttTaskDragStart($event, index)"
+                        @dragover="onGanttTaskDragOver($event, index)"
+                        @dragend="onGanttTaskDragEnd"
                         @click="openEditModal(task)"
+                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
                     >
                         {{ task.title }}
                     </div>
@@ -704,21 +740,31 @@
              <div class="flex-1 overflow-x-auto">
                 <div class="min-w-max">
                     <!-- Days Header -->
-                    <div class="h-10 border-b grid" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
-                        <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-200 dark:border-gray-600/50 text-center text-xs leading-10 text-gray-500">
-                            {{ d }}
+                    <div class="h-10 border-b grid" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
+                        <div 
+                            v-for="(day, index) in ganttDays" 
+                            :key="index" 
+                            class="border-r border-gray-200 dark:border-gray-600/50 text-center text-xs leading-10 text-gray-500"
+                            :class="getDayClassForDate(day.date)"
+                        >
+                            {{ day.label }}
                         </div>
                     </div>
 
                     <!-- Bars -->
                      <div class="relative">
                          <!-- Grid Lines -->
-                        <div class="absolute inset-0 grid pointer-events-none" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
-                            <div v-for="d in ganttDaysInMonth" :key="d" class="border-r border-gray-100 dark:border-gray-800 h-full"></div>
+                        <div class="absolute inset-0 grid pointer-events-none" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px)`">
+                            <div 
+                                v-for="(day, index) in ganttDays" 
+                                :key="index" 
+                                class="border-r border-gray-100 dark:border-gray-800 h-full"
+                                :class="getDayClassForDate(day.date)"
+                            ></div>
                         </div>
 
                         <!-- Rows -->
-                        <div v-for="task in ganttTasks" :key="task.id" class="h-10 border-b border-gray-100 dark:border-gray-800 relative grid items-center" :style="`grid-template-columns: repeat(${ganttDaysInMonth}, 32px)`">
+                        <div v-for="task in ganttTasks" :key="task.id" class="h-10 border-b border-gray-100 dark:border-gray-800 relative grid items-center" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px)`">
                             <div 
                                 class="h-6 rounded text-xs text-white px-2 flex items-center truncate shadow-sm cursor-pointer hover:opacity-90 relative z-10"
                                 :class="getPriorityColor(task.priority) === 'red' ? 'bg-red-500' : (getPriorityColor(task.priority) === 'orange' ? 'bg-orange-500' : (getPriorityColor(task.priority) === 'yellow' ? 'bg-yellow-500' : 'bg-blue-500'))"
@@ -854,21 +900,28 @@
     @click.self="isDeleteModalOpen = false"
   >
     <div class="relative w-full max-w-sm rounded-lg shadow-xl p-6">
-      <div class="text-center">
-        <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 class="text-lg font-semibold mb-2">Delete Project?</h3>
-        <p class=" mb-6">
+<UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Delete Project ?</h3>
+            <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" size="sm" @click="closeColumnManager" />
+          </div>
+        </template>       
+        <div class="space-y-4"> 
+                <p class="mb-6">
           Are you sure you want to delete "{{ projectToDelete?.name }}"? All cards and data will be lost.
         </p>
-        <div class="flex gap-2 justify-center">
+
+        </div>
+        <template #footer>        
           <UButton color="gray" variant="ghost" @click="isDeleteModalOpen = false">
             Cancel
           </UButton>
           <UButton color="red" @click="confirmDeleteProject">
             Delete
           </UButton>
-        </div>
-      </div>
+        </template>
+      </UCard>
     </div>
   </div>
 
@@ -1376,18 +1429,34 @@
                   </div>
                 </div>
 
-                <!-- Due Date -->
+                <!-- Start Date -->
                 <div>
                   <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-calendar" class="w-3 h-3 inline mr-1" />
-                    Due Date
+                    Start Date
                   </label>
-                  <UInput 
-                    v-model="editingCard.duedate" 
-                    type="date" 
-                    size="sm" 
+                  <input
+                    v-model="editingCard.startdate"
+                    type="date"
+                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    style="background: var(--body-background); color: var(--body-text);"
                   />
                 </div>
+
+                <!-- End Date (Due Date) -->
+                <div>
+                  <label class="block text-xs font-medium  mb-1">
+                    <UIcon name="i-heroicons-calendar" class="w-3 h-3 inline mr-1" />
+                    End Date
+                  </label>
+                  <input
+                    v-model="editingCard.enddate"
+                    type="date"
+                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    style="background: var(--body-background); color: var(--body-text);"
+                  />
+                </div>
+
               </div>
             </div>
 
@@ -1534,33 +1603,67 @@
   </div>
 
   <!-- Template Selection Modal -->
+  <TemplateSelector 
+    v-model="isTemplateModalOpen"
+    :templates="projectTemplates"
+    @select="selectTemplate"
+  />
+
+  <!-- Save as Template Modal -->
   <div 
-    v-if="isTemplateModalOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
-    @click.self="() => isTemplateModalOpen = false"
+    v-if="isSaveTemplateModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
+    @click.self="isSaveTemplateModalOpen = false"
   >
-    <div class="relative w-full max-w-3xl rounded-lg shadow-xl">
+    <div class="relative w-full max-w-md rounded-lg shadow-xl">
       <UCard style="background: var(--panel-background); border: 1px solid var(--border-color);">
         <template #header>
-          <h3 class="text-lg font-semibold">Choose a Template</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Save as Template</h3>
+            <UButton
+              icon="i-heroicons-x-mark"
+              color="gray"
+              variant="ghost"
+              size="sm"
+              @click="isSaveTemplateModalOpen = false"
+            />
+          </div>
         </template>
 
-        <div class="grid grid-cols-3 gap-4">
-          <div
-            v-for="template in projectTemplates"
-            :key="template.id"
-            class="p-6 border-2 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
-            style="border-color: var(--border-color);"
-            @click="selectTemplate(template)"
-          >
-            <div class="text-4xl mb-3">{{ template.icon }}</div>
-            <h4 class="font-semibold mb-1">{{ template.name }}</h4>
-            <p class="text-sm ">{{ template.description }}</p>
-            <div class="mt-3 text-xs text-gray-500">
-              {{ template.columns.length }} columns
-            </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Template Name *</label>
+            <UInput v-model="newTemplateName" placeholder="My Custom Template" class="w-full" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <UTextarea v-model="newTemplateDescription" placeholder="Describe this template..." :rows="3" class="w-full" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Icon</label>
+            <UInput v-model="newTemplateIcon" placeholder="📁" class="w-full" maxlength="2" />
+            <p class="text-xs text-gray-500 mt-1">Enter an emoji icon</p>
+          </div>
+
+          <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p class="text-sm text-blue-700 dark:text-blue-300">
+              This will save the current project's <strong>{{ columns.length }} columns</strong> as a reusable template.
+            </p>
           </div>
         </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="isSaveTemplateModalOpen = false">
+              Cancel
+            </UButton>
+            <UButton color="primary" @click="saveAsTemplate">
+              Save Template
+            </UButton>
+          </div>
+        </template>
       </UCard>
     </div>
   </div>
@@ -1587,17 +1690,20 @@
             <div class="flex gap-2">
               <USelectMenu
                 v-model="newMemberEmail"
-                              :items="users.map(c => ({ label: c.username, id: c.useraccessid }))"
+                :items="users.map(c => ({ label: c.username, id: c.useraccessid }))"
                 value-attribute="id"
                 searchable
                 placeholder="Search user"
                 class="flex-1"
               />
-              <select v-model="newMemberRole" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md" style="background: var(--panel-background); color: var(--body-text);">
-                <option value="viewer">Viewer</option>
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-              </select>
+              <USelectMenu
+                v-model="newMemberRole"
+                :items="roleOptions.map(c => ({ label: c.groupname, value: c.groupaccessid }))"
+                value-key="value"
+                placeholder="Group Access"
+                class="w-48"
+                searchable
+              />
               <UButton icon="i-heroicons-plus" color="primary" @click="addMember">Add</UButton>
             </div>
           </div>
@@ -1619,19 +1725,15 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <select 
-                  :value="member.role"
-                  @change="updateMemberRole(member, $event.target.value)"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md"
-                  :disabled="member.role === 'owner'"
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="member">Member</option>
-                  <option value="admin">Admin</option>
-                  <option value="owner">Owner</option>
-                </select>
+                <USelectMenu
+                  v-model="member.role"
+                  @update:model-value="updateMemberRole(member, $event)"
+                :items="roleOptions.map(c => ({ label: c.groupname, value: c.groupaccessid }))"
+                value-key="value"
+                searchable
+                  class="w-40"                  
+                />
                 <UButton 
-                  v-if="member.role !== 'owner'"
                   icon="i-heroicons-trash" 
                   size="sm" 
                   color="red" 
@@ -1648,6 +1750,175 @@
       </UCard>
     </div>
   </div>
+
+  <!-- Column Manager Modal -->
+  <div 
+    v-if="isColumnManagerOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
+    @click.self="closeColumnManager"
+  >
+    <div class="relative w-full max-w-3xl rounded-lg shadow-xl" style="background: var(--panel-background); border: 1px solid var(--border-color);">
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Manage Columns</h3>
+            <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeColumnManager" />
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <!-- Column List -->
+          <div v-for="(column, index) in columns" :key="column.status" class="p-4 rounded-lg border" style="border-color: var(--border-color); background: var(--body-background);">
+            <div class="grid grid-cols-12 gap-4 items-start">
+              <!-- Icon -->
+              <div class="col-span-1">
+                <input 
+                  v-model="column.icon" 
+                  class="w-full text-center text-2xl border rounded p-2" 
+                  style="border-color: var(--border-color);"
+                  placeholder="📝"
+                />
+              </div>
+
+              <!-- Title -->
+              <div class="col-span-3">
+                <label class="block text-xs text-gray-500 mb-1">Title</label>
+                <input 
+                  v-model="column.title" 
+                  class="w-full border rounded px-3 py-2" 
+                  style="border-color: var(--border-color); background: var(--panel-background);"
+                  placeholder="Column Title"
+                />
+              </div>
+
+              <!-- Status -->
+              <div class="col-span-2">
+                <label class="block text-xs text-gray-500 mb-1">Status</label>
+                <input 
+                  v-model="column.status" 
+                  class="w-full border rounded px-3 py-2" 
+                  style="border-color: var(--border-color); background: var(--panel-background);"
+                  placeholder="status"
+                />
+              </div>
+
+              <!-- Color -->
+              <div class="col-span-2">
+                <label class="block text-xs text-gray-500 mb-1">Color</label>
+                <input 
+                  v-model="column.color" 
+                  type="color" 
+                  class="w-full h-10 border rounded cursor-pointer" 
+                  style="border-color: var(--border-color);"
+                />
+              </div>
+
+              <!-- Actions -->
+              <div class="col-span-4 flex items-end gap-2 justify-end">
+                <UButton 
+                  icon="i-heroicons-lock-closed" 
+                  size="sm" 
+                  color="blue"
+                  variant="soft"
+                  @click="toggleColumnPermissions(index)"
+                >
+                  Permissions
+                </UButton>
+                <UButton icon="i-heroicons-arrow-up" size="sm" color="gray" variant="ghost" @click="moveColumn(index, -1)" :disabled="index === 0" />
+                <UButton icon="i-heroicons-arrow-down" size="sm" color="gray" variant="ghost" @click="moveColumn(index, 1)" :disabled="index === columns.length - 1" />
+                <UButton icon="i-heroicons-trash" size="sm" color="red" variant="ghost" @click="removeColumn(index)" />
+              </div>
+            </div>
+
+            <!-- Permissions Section (Collapsible) -->
+            <div v-if="column._showPermissions" class="mt-4 pt-4 border-t grid grid-cols-3 gap-4" style="border-color: var(--border-color);">
+              <div>
+                <label class="block text-sm font-medium mb-2">
+                  <UIcon name="i-heroicons-trash" class="w-4 h-4 inline mr-1" />
+                  Who can delete?
+                </label>
+                <USelectMenu
+                  v-model="column.permissions.canDelete"
+                  :items="roleOptions.map(c => ({ label: c.groupname, value: c.groupaccessid }))"
+                  value-key="value"
+                  multiple
+                  placeholder="Everyone"
+                  searchable
+                  class="w-full"
+                  :ui="{ 
+                    base: 'w-full min-h-[38px]',
+                    input: 'flex-wrap gap-1',
+                    option: { base: 'truncate' }
+                  }"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-2">
+                  <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4 inline mr-1" />
+                  Who can move OUT?
+                </label>
+                <USelectMenu
+                  v-model="column.permissions.canMoveOut"
+                  :items="roleOptions.map(c => ({ label: c.groupname, value: c.groupaccessid }))"
+                  value-key="value"
+                  multiple
+                  placeholder="Everyone"
+                  searchable
+                  class="w-full"
+                  :ui="{ 
+                    base: 'w-full min-h-[38px]',
+                    input: 'flex-wrap gap-1',
+                    option: { base: 'truncate' }
+                  }"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-2">
+                  <UIcon name="i-heroicons-arrow-left-on-rectangle" class="w-4 h-4 inline mr-1" />
+                  Who can move IN?
+                </label>
+                <USelectMenu
+                  v-model="column.permissions.canMoveIn"
+                  :items="roleOptions.map(c => ({ label: c.groupname, value: c.groupaccessid }))"
+                  value-key="value"
+                  multiple
+                  placeholder="Everyone"
+                  searchable
+                  class="w-full"
+                  :ui="{ 
+                    base: 'w-full min-h-[38px]',
+                    input: 'flex-wrap gap-1',
+                    option: { base: 'truncate' }
+                  }"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Column Button -->
+          <UButton 
+            icon="i-heroicons-plus" 
+            color="gray" 
+            variant="soft" 
+            block
+            @click="addColumn"
+          >
+            Add Column
+          </UButton>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="closeColumnManager">Cancel</UButton>
+            <UButton color="primary" @click="saveColumns">Save Columns</UButton>
+          </div>
+        </template>
+      </UCard>
+    </div>
+  </div>
+
 </template>
 
 <script setup lang="ts">
@@ -1663,6 +1934,27 @@ definePageMeta({
 const toast = useToast();
 const api = useApi();
 
+// Date Helper Functions - Convert between ISO and local format
+const toLocalDatetime = (isoString: string | null | undefined): string => {
+  if (!isoString) return '';
+  try {
+    // Remove 'Z' and 'T', replace with space
+    return isoString.replace('T', ' ').replace('Z', '').split('.')[0];
+  } catch (e) {
+    return isoString;
+  }
+};
+
+const toISODatetime = (localString: string | null | undefined): string => {
+  if (!localString) return '';
+  try {
+    // Convert local format back to ISO for API
+    return localString.replace(' ', 'T');
+  } catch (e) {
+    return localString;
+  }
+};
+
 // Project Management
 const projects = ref<any[]>([]);
 const activeProject = ref<any>(null);
@@ -1672,6 +1964,8 @@ const editingProject = ref<any>({});
 const projectToDelete = ref<any>(null);
 const showArchived = ref(false);
 const isSidebarOpen = ref(false);
+const projectTemplates = ref<any[]>([]);
+const isTemplateModalOpen = ref(false);
 
 // View Refs for Export
 const mainContentRef = ref<HTMLElement | null>(null);
@@ -1839,95 +2133,79 @@ const loadCompanies = async () => {
     dataForm.append('search', 'true');
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
-    
-    console.log('=== COMPANY RESPONSE DEBUG ===');
-    console.log('Full response:', JSON.stringify(res, null, 2));
-    console.log('res.data type:', typeof res.data);
-    console.log('res.data:', res.data);
-    
+        
     // Try multiple possible structures
     let companyData = null;
-    
-    // Option 1: res.data.data.data (nested)
-    if (res.data?.data?.data && Array.isArray(res.data.data.data)) {
-      companyData = res.data.data.data;
-      console.log('✅ Found at res.data.data.data');
-    }
-    // Option 2: res.data.data (single nested)
-    else if (res.data?.data && Array.isArray(res.data.data)) {
+    if (res.data?.data && Array.isArray(res.data.data)) {
       companyData = res.data.data;
-      console.log('✅ Found at res.data.data');
-    }
-    // Option 3: res.data (direct)
-    else if (Array.isArray(res.data)) {
-      companyData = res.data;
-      console.log('✅ Found at res.data');
     }
     
     if (companyData && companyData.length > 0) {
       companies.value = companyData;
-      console.log('✅ Companies loaded:', companies.value);
-    } else {
-      console.error('❌ No company data found in any expected location');
-      console.log('Available keys in res:', Object.keys(res));
-      console.log('Available keys in res.data:', res.data ? Object.keys(res.data) : 'N/A');
     }
   } catch (error) {
     console.error('❌ Error loading companies:', error);
   }
 };
 
-// ========== ADVANCED FEATURES ==========
-
-// Project Templates
-const projectTemplates = [
-  {
-    id: 'software-dev',
-    name: 'Software Development',
-    description: 'Agile software development workflow',
-    icon: '💻',
-    columns: [
-      { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
-      { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
-      { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
-      { status: 'codereview', title: 'Code Review', icon: '👀', color: '#8b5cf6' },
-      { status: 'testing', title: 'Testing', icon: '🧪', color: '#ec4899' },
-      { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
-    ]
-  },
-  {
-    id: 'marketing',
-    name: 'Marketing Campaign',
-    description: 'Plan and execute marketing campaigns',
-    icon: '📢',
-    columns: [
-      { status: 'ideas', title: 'Ideas', icon: '💡', color: '#f59e0b' },
-      { status: 'planning', title: 'Planning', icon: '📋', color: '#3b82f6' },
-      { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#8b5cf6' },
-      { status: 'review', title: 'Review', icon: '👀', color: '#ec4899' },
-      { status: 'published', title: 'Published', icon: '✅', color: '#10b981' },
-    ]
-  },
-  {
-    id: 'blank',
-    name: 'Blank Project',
-    description: 'Start from scratch',
-    icon: '📄',
-    columns: [
-      { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
-      { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
-      { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
-      { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6' },
-      { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
-    ]
-  }
-];
-
-const isTemplateModalOpen = ref(false);
-const selectedTemplate = ref<any>(null);
-
 // Statistics Modal
 const isStatisticsModalOpen = ref(false);
+
+// Save Template Modal
+const isSaveTemplateModalOpen = ref(false);
+const newTemplateName = ref('');
+const newTemplateDescription = ref('');
+const newTemplateIcon = ref('📁');
+
+// Save current project as template
+const saveAsTemplate = async () => {
+  if (!activeProject.value || !newTemplateName.value) {
+    toast.add({
+      title: 'Error',
+      description: 'Please enter a template name',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+    return;
+  }
+
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'modifprojecttemplate');
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'false');
+    dataForm.append('name', newTemplateName.value);
+    dataForm.append('description', newTemplateDescription.value);
+    dataForm.append('icon', newTemplateIcon.value);
+    dataForm.append('columns', JSON.stringify(columns.value));
+
+    await api.post('/api/admin/execute-flow', dataForm);
+
+    toast.add({
+      title: 'Template Saved',
+      description: `"${newTemplateName.value}" template created successfully`,
+      color: 'green',
+      icon: 'i-heroicons-check-circle',
+    });
+
+    // Reset and close modal
+    isSaveTemplateModalOpen.value = false;
+    newTemplateName.value = '';
+    newTemplateDescription.value = '';
+    newTemplateIcon.value = '📁';
+
+    // Reload templates
+    await loadProjectTemplates();
+  } catch (error) {
+    console.error('Error saving template:', error);
+    toast.add({
+      title: 'Error',
+      description: 'Failed to save template',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+  }
+};
 
 const projectStats = computed(() => {
   if (!activeProject.value) return null;
@@ -2033,13 +2311,14 @@ const projectStats = computed(() => {
 // Members Management
 const isMembersModalOpen = ref(false);
 const newMemberEmail = ref('');
-const newMemberRole = ref('member');
+const newMemberRole = ref('');
 
 // Load projects on mount
 onMounted(async () => {
   await loadProjects();
   await loadUsers();
   await loadCompanies();
+  await loadRoles();
 });
 
 // Load projects from API
@@ -2078,6 +2357,176 @@ const loadProjects = async () => {
       color: 'red',
       icon: 'i-heroicons-exclamation-triangle',
     });
+  }
+};
+
+// ========== COLUMN PERMISSION SYSTEM ==========
+// Role options for permission configuration
+const roleOptions = ref<any[]>([
+  { label: 'Everyone', value: '*' }
+]);
+
+// Load roles from API
+const loadRoles = async () => {
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'searchcombogroupauth');
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'true');
+    
+    const res = await api.post('/api/admin/execute-flow', dataForm);
+    
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      roleOptions.value = res.data.data
+    }
+  } catch (error) {
+    console.error('Error loading roles:', error);
+  }
+};
+
+// Load project templates from API
+const loadProjectTemplates = async () => {
+  try {
+    const dataForm = new FormData();
+    dataForm.append('flowname', 'searchprojecttemplates');
+    dataForm.append('menu', 'admin');
+    dataForm.append('search', 'true');
+    
+    const res = await api.post('/api/admin/execute-flow', dataForm);
+    
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      projectTemplates.value = res.data.data;
+      console.log('📋 Loaded project templates:', projectTemplates.value);
+    }
+  } catch (error) {
+    console.error('Error loading project templates:', error);
+  }
+};
+
+// Select a template and open project modal with template's columns
+const selectTemplate = (template: any) => {
+  isTemplateModalOpen.value = false;
+  
+  // Parse template columns
+  let templateColumns = [];
+  if (template.columns && typeof template.columns === 'string' && template.columns.trim() !== '') {
+    try {
+      // Fix invalid JSON: replace single quotes with double quotes
+      const jsonString = template.columns
+        .replace(/'/g, '"')
+        .replace(/(\w+):/g, '"$1":');
+      templateColumns = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Error parsing template columns:', e);
+      templateColumns = [];
+    }
+  } else if (Array.isArray(template.columns)) {
+    templateColumns = template.columns;
+  }
+  
+  // Set columns to template columns (or empty for blank template)
+  columns.value = templateColumns.length > 0 ? JSON.parse(JSON.stringify(templateColumns)) : [];
+  
+  console.log('📋 Selected template:', template.name);
+  console.log('📊 Template columns parsed:', templateColumns);
+  console.log('✅ Columns.value set to:', columns.value);
+  console.log('🔢 Column count:', columns.value.length);
+  
+  // Initialize new project with template data
+  editingProject.value = {
+    name: '',
+    description: '',
+    companyid: null,
+    startdate: '',
+    enddate: '',
+    color: projectColors[0],
+    templateid: template.templateid || template.id,
+  };
+  
+  isProjectModalOpen.value = true;
+  console.log('📋 Selected template:', template.name, 'with', columns.value.length, 'columns');
+};
+
+const getCurrentUserRole = () => {
+  return 'developer'; // TODO: Get from auth system
+};
+
+const hasColumnPermission = (column: any, action: 'delete' | 'moveOut' | 'moveIn') => {
+  if (!column || !column.permissions) return true;
+  const userRole = getCurrentUserRole();
+  const permissionKey = `can${action.charAt(0).toUpperCase() + action.slice(1)}`;
+  const allowedRoles = column.permissions[permissionKey];
+  if (!allowedRoles || allowedRoles.length === 0) return true;
+  if (allowedRoles.includes('*')) return true;
+  if (allowedRoles.includes(userRole)) return true;
+  return false;
+};
+
+const getColumnByStatus = (status: string) => {
+  return columns.value.find((c: any) => c.status === status);
+};
+
+const hasColumnRestrictions = (column: any) => {
+  if (!column || !column.permissions) return false;
+  const perms = column.permissions;
+  return (perms.canDelete && !perms.canDelete.includes('*')) ||
+         (perms.canMoveOut && !perms.canMoveOut.includes('*')) ||
+         (perms.canMoveIn && !perms.canMoveIn.includes('*'));
+};
+
+// Column Manager Modal
+const isColumnManagerOpen = ref(false);
+
+const openColumnManager = () => {
+  // Initialize permissions for all columns
+  columns.value.forEach((column: any) => {
+    if (!column.permissions) {
+      column.permissions = {
+        canDelete: [],
+        canMoveOut: [],
+        canMoveIn: []
+      };
+    }
+    column._showPermissions = false; // Collapse by default
+  });
+  isColumnManagerOpen.value = true;
+};
+
+const closeColumnManager = () => {
+  isColumnManagerOpen.value = false;
+};
+
+const toggleColumnPermissions = (index: number) => {
+  columns.value[index]._showPermissions = !columns.value[index]._showPermissions;
+};
+
+const addColumn = () => {
+  columns.value.push({
+    status: `column${columns.value.length + 1}`,
+    title: 'New Column',
+    icon: '📌',
+    color: '#6b7280',
+    permissions: {
+      canDelete: [],
+      canMoveOut: [],
+      canMoveIn: []
+    },
+    _showPermissions: false
+  });
+};
+
+const removeColumn = (index: number) => {
+  if (confirm(`Delete column "${columns.value[index].title}"?`)) {
+    columns.value.splice(index, 1);
+  }
+};
+
+const moveColumn = (index: number, direction: number) => {
+  const newIndex = index + direction;
+  if (newIndex >= 0 && newIndex < columns.value.length) {
+    const temp = columns.value[index];
+    columns.value[index] = columns.value[newIndex];
+    columns.value[newIndex] = temp;
   }
 };
 
@@ -2204,7 +2653,7 @@ const saveProject = async () => {
       description: 'Project name is required',
       color: 'red',
       icon: 'i-heroicons-exclamation-triangle',
-    });
+    });rol
     return;
   }
   if (!editingProject.value.companyid) {
@@ -2259,6 +2708,9 @@ const saveProject = async () => {
     dataForm.append('companyid', editingProject.value.companyid);
     dataForm.append('startdate', editingProject.value.startdate || '');
     dataForm.append('enddate', editingProject.value.enddate || '');
+    dataForm.append('columns', JSON.stringify(columns.value));
+    
+    console.log('💾 Saving project with', columns.value.length, 'columns:', columns.value);
     
     const res = await api.post('/api/admin/execute-flow', dataForm);
     toast.add({
@@ -2417,8 +2869,10 @@ const saveCard = async () => {
   }
   
   // Date Validation
-  if (editingCard.value.duedate) {
-      if (activeProject.value.startdate && editingCard.value.duedate < activeProject.value.startdate) {
+  if (editingCard.value.enddate) {
+    console.log('due ',editingCard.value.enddate)
+    console.log('start ',activeProject.value.startdate)
+      if (activeProject.value.startdate && editingCard.value.enddate.split('T')[0] < activeProject.value.startdate.split('T')[0]) {
           toast.add({
               title: 'Validation Error',
               description: `Due date cannot be earlier than project start date (${activeProject.value.startdate})`,
@@ -2427,7 +2881,7 @@ const saveCard = async () => {
           });
           return;
       }
-      if (activeProject.value.enddate && editingCard.value.duedate > activeProject.value.enddate) {
+      if (activeProject.value.enddate && editingCard.value.enddate.split('T')[0] > activeProject.value.enddate.split('T')[0]) {
           toast.add({
               title: 'Validation Error',
               description: `Due date cannot be later than project end date (${activeProject.value.enddate})`,
@@ -2456,9 +2910,12 @@ const saveCard = async () => {
     if (Array.isArray(assignee)) assignee = assignee[0];
     if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
     dataForm.append('assignee', assignee || '');
-    let duedate = editingCard.value.duedate || '';
-    if (duedate) duedate = duedate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('duedate', duedate);
+    let startdate = editingCard.value.startdate || '';
+    if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('startdate', startdate);
+    let enddate = editingCard.value.enddate || '';
+    if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('enddate', enddate);
     dataForm.append('priority', editingCard.value.priority || 'medium');
     dataForm.append('tags', JSON.stringify(editingCard.value.tags || []));
     
@@ -2515,10 +2972,24 @@ const saveCard = async () => {
 // Delete card
 const deleteCard = async () => {
   if (!editingCard.value.cardid) return;
+  
+  // Check delete permission
+  const column = getColumnByStatus(editingCard.value.status);
+  if (!hasColumnPermission(column, 'delete')) {
+    toast.add({
+      title: 'Permission Denied',
+      description: `You don't have permission to delete cards from "${column?.title || editingCard.value.status}"`,
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+    return;
+  }
+  
   try {
     const dataForm = new FormData();
     dataForm.append('flowname', 'deletecard');
     dataForm.append('menu', 'admin');
+    dataForm.append('search', false);
     dataForm.append('cardid', editingCard.value.cardid.toString());
     
     await api.post('/api/admin/execute-flow', dataForm);
@@ -2790,55 +3261,48 @@ const projectColors = [
 ];
 
 // Column Management
-const columns = ref([
-  { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280' },
-  { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6' },
-  { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b' },
-  { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6' },
-  { status: 'done', title: 'Done', icon: '✅', color: '#10b981' },
-]);
+const defaultColumns = [
+  { status: 'backlog', title: 'Backlog', icon: '📋', color: '#6b7280', permissions: { canDelete: [], canMoveOut: [], canMoveIn: [] } },
+  { status: 'todo', title: 'To Do', icon: '📝', color: '#3b82f6', permissions: { canDelete: [], canMoveOut: [], canMoveIn: [] } },
+  { status: 'inprogress', title: 'In Progress', icon: '⚡', color: '#f59e0b', permissions: { canDelete: [], canMoveOut: [], canMoveIn: [] } },
+  { status: 'review', title: 'Review', icon: '👀', color: '#8b5cf6', permissions: { canDelete: [], canMoveOut: [], canMoveIn: [] } },
+  { status: 'done', title: 'Done', icon: '✅', color: '#10b981', permissions: { canDelete: [], canMoveOut: [], canMoveIn: [] } },
+];
 
-const isColumnManagerOpen = ref(false);
+const columns = ref(JSON.parse(JSON.stringify(defaultColumns)));
 
-const openColumnManager = () => {
-  isColumnManagerOpen.value = true;
-};
-
-const closeColumnManager = () => {
-  isColumnManagerOpen.value = false;
-};
-
-const addColumn = () => {
-  const newColumn = {
-    status: `column_${Date.now()}`,
-    title: 'New Column',
-    icon: '📌',
-    color: '#6b7280',
-  };
-  columns.value.push(newColumn);
-};
-
-const deleteColumn = (index: number) => {
-  if (columns.value.length <= 1) {
-    toast.add({
-      title: 'Cannot Delete',
-      description: 'You must have at least one column',
-      color: 'red',
-      icon: 'i-heroicons-exclamation-triangle',
-    });
-    return;
-  }
-  columns.value.splice(index, 1);
-};
-
-const moveColumn = (index: number, direction: number) => {
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= columns.value.length) return;
+// Watch activeProject and load columns from it
+watch(activeProject, (newProject) => {
+  console.log('🔍 Loading columns for project:', newProject?.name, 'columns:', newProject?.columns);
   
-  const temp = columns.value[index];
-  columns.value[index] = columns.value[newIndex];
-  columns.value[newIndex] = temp;
-};
+  if (newProject && newProject.columns) {
+    try {
+      // Parse columns if it's a string
+      const projectColumns = typeof newProject.columns === 'string' 
+        ? JSON.parse(newProject.columns) 
+        : newProject.columns;
+      
+      console.log('📊 Parsed columns:', projectColumns);
+      
+      if (Array.isArray(projectColumns) && projectColumns.length > 0) {
+        columns.value = projectColumns.map((col: any) => ({
+          ...col,
+          permissions: col.permissions || { canDelete: [], canMoveOut: [], canMoveIn: [] }
+        }));
+        console.log('✅ Columns loaded with permissions:', columns.value);
+      } else {
+        columns.value = JSON.parse(JSON.stringify(defaultColumns));
+        console.log('⚠️ Using default columns (empty array)');
+      }
+    } catch (e) {
+      console.error('❌ Error parsing project columns:', e);
+      columns.value = JSON.parse(JSON.stringify(defaultColumns));
+    }
+  } else {
+    columns.value = JSON.parse(JSON.stringify(defaultColumns));
+    console.log('⚠️ Using default columns (no project.columns)');
+  }
+}, { immediate: true });
 
 // Column Drag and Drop
 
@@ -2962,14 +3426,17 @@ const getProjectActions = (project: any) => {
 // Sample tasks data (filtered by project) - now loaded from API
 const tasks = ref<any[]>([]);
 
-// Drag and drop
-
+// Card Drag and Drop
 const draggedCard = ref<any>(null);
+const draggedCardIndex = ref<number | null>(null);
+const draggedCardColumn = ref<string | null>(null);
 const isDragging = ref(false);
 
-const onDragStart = (event: DragEvent, card: any) => {
+const onDragStart = (event: DragEvent, card: any, cardIndex: number) => {
   isDragging.value = true;
   draggedCard.value = card;
+  draggedCardIndex.value = cardIndex;
+  draggedCardColumn.value = card.status;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
   }
@@ -2979,7 +3446,128 @@ const onDragEnd = () => {
   // Small delay to prevent click event from firing after drag
   setTimeout(() => {
     isDragging.value = false;
+    draggedCard.value = null;
+    draggedCardIndex.value = null;
+    draggedCardColumn.value = null;
   }, 100);
+};
+
+const onCardDragOver = (event: DragEvent, targetIndex: number, columnStatus: string) => {
+  event.preventDefault();
+  if (!draggedCard.value || draggedCardColumn.value !== columnStatus) return;
+  
+  const cards = getColumnCards(columnStatus);
+  const dragIndex = draggedCardIndex.value;
+  
+  if (dragIndex !== null && dragIndex !== targetIndex) {
+    // Reorder cards in the array
+    const allCards = tasks.value;
+    const columnCards = allCards.filter((c: any) => c.status === columnStatus);
+    const draggedItem = columnCards[dragIndex];
+    
+    // Remove from old position
+    columnCards.splice(dragIndex, 1);
+    // Insert at new position
+    columnCards.splice(targetIndex, 0, draggedItem);
+    
+    // Update positions
+    columnCards.forEach((card: any, index: number) => {
+      card.position = index;
+    });
+    
+    // Update the main tasks array
+    const otherCards = allCards.filter((c: any) => c.status !== columnStatus);
+    tasks.value = [...otherCards, ...columnCards];
+    
+    draggedCardIndex.value = targetIndex;
+  }
+};
+
+const onDropInColumn = async (event: DragEvent, columnStatus: string) => {
+  event.preventDefault();
+  if (!draggedCard.value) return;
+  
+  // If dropping in same column, positions are already updated by onCardDragOver
+  if (draggedCardColumn.value === columnStatus) {
+    // Save new positions to backend
+    await saveCardPositions(columnStatus);
+    return;
+  }
+  
+  // Otherwise, handle as column change (existing logic)
+  await onDrop(event, columnStatus);
+};
+
+const saveCardPositions = async (columnStatus: string) => {
+  try {
+    const columnCards = getColumnCards(columnStatus);
+    
+    // Save each card's position to backend
+    for (let index = 0; index < columnCards.length; index++) {
+      const card = columnCards[index];
+      const dataForm = new FormData();
+      dataForm.append('flowname', 'modifcard');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'false');
+      dataForm.append('cardid', card.cardid.toString());
+      dataForm.append('projectid', activeProject.value.projectid.toString());
+      dataForm.append('position', index.toString());
+      
+      // Include other required fields to avoid clearing them
+      dataForm.append('title', card.title || '');
+      dataForm.append('description', card.description || '');
+      dataForm.append('status', card.status || '');
+      dataForm.append('priority', card.priority || 'medium');
+      
+      // Handle assignee
+      let assignee = card.assignee;
+      if (Array.isArray(assignee)) assignee = assignee[0];
+      if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
+      dataForm.append('assignee', assignee || '');
+      
+      // Handle dates
+      let startdate = card.startdate || card.enddate;
+      if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
+      dataForm.append('startdate', startdate);
+      
+      let enddate = card.enddate || '';
+      if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
+      dataForm.append('enddate', enddate);
+      
+      // Handle tags
+      let tags = card.tags || [];
+      if (typeof tags === 'string') {
+        try { tags = JSON.parse(tags); } catch(e) { tags = []; }
+      }
+      dataForm.append('tags', JSON.stringify(tags));
+      
+      await api.post('/api/admin/execute-flow', dataForm);
+    }
+    
+    // Update local tasks with new positions
+    tasks.value = tasks.value.map((task: any) => {
+      const cardIndex = columnCards.findIndex((c: any) => c.cardid === task.cardid);
+      if (cardIndex !== -1) {
+        return { ...task, position: cardIndex };
+      }
+      return task;
+    });
+    
+    toast.add({
+      title: 'Order Saved',
+      description: 'Card order has been updated',
+      color: 'green',
+      icon: 'i-heroicons-check-circle',
+    });
+  } catch (error) {
+    console.error('Error saving card positions:', error);
+    toast.add({
+      title: 'Error',
+      description: 'Failed to save card order',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+  }
 };
 
 const handleCardClick = (card: any) => {
@@ -2997,6 +3585,32 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
   
   const oldStatus = draggedCard.value.status;
   if (oldStatus === newStatus) {
+    draggedCard.value = null;
+    return;
+  }
+
+  // Check move-out permission from source column
+  const sourceColumn = getColumnByStatus(oldStatus);
+  if (!hasColumnPermission(sourceColumn, 'moveOut')) {
+    toast.add({
+      title: 'Permission Denied',
+      description: `You don't have permission to move cards out of "${sourceColumn?.title || oldStatus}"`,
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+    draggedCard.value = null;
+    return;
+  }
+  
+  // Check move-in permission to target column
+  const targetColumn = getColumnByStatus(newStatus);
+  if (!hasColumnPermission(targetColumn, 'moveIn')) {
+    toast.add({
+      title: 'Permission Denied',
+      description: `You don't have permission to move cards into "${targetColumn?.title || newStatus}"`,
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
     draggedCard.value = null;
     return;
   }
@@ -3023,9 +3637,12 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
     if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
     dataForm.append('assignee', assignee || '');
     
-    let duedate = draggedCard.value.duedate || '';
-    if (duedate) duedate = duedate.replace('T', ' ').split('.')[0].replace('Z', '');
-    dataForm.append('duedate', duedate);
+    let startdate = draggedCard.value.startdate || draggedCard.value.enddate;
+    if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('startdate', startdate);
+    let enddate = draggedCard.value.enddate || '';
+    if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
+    dataForm.append('enddate', enddate);
     
     // Ensure tags is array before stringify
     let tags = draggedCard.value.tags || [];
@@ -3067,7 +3684,7 @@ const editingCard = ref<any>({
   description: '',
   status: '',
   assignee: '',
-  duedate: '',
+  enddate: '',
   priority: 'medium',
   tags: [],
   attachments: [],
@@ -3304,7 +3921,7 @@ const openCreateModal = (status: string, initialDate?: Date, initialUser?: any) 
     description: '',
     status,
     assignee: initialUser ? (initialUser.userid === 'unassigned' ? '' : initialUser.userid) : '',
-    duedate: initialDate ? initialDate.toISOString().split('T')[0] : '',
+    enddate: initialDate ? initialDate.toISOString().split('T')[0] : '',
     priority: 'medium',
     tags: [],
     comments: [],
@@ -3320,7 +3937,7 @@ const openEditModal = (card: any) => {
   isEditMode.value = true;
   editingCard.value = { 
     ...card,
-    duedate: formatDateForInput(card.duedate),
+    enddate: formatDateForInput(card.enddate),
     comments: card.comments || [],
     timeEntries: card.timeEntries || [],
     attachments: card.attachments || []
@@ -3339,7 +3956,7 @@ const closeModal = () => {
     description: '',
     status: '',
     assignee: '',
-    duedate: '',
+    enddate: '',
     priority: 'medium',
     tags: [],
     comments: [],
@@ -3370,7 +3987,7 @@ const focusTags = () => {
   });
 };
 
-const focusDueDate = () => {
+const focusenddate = () => {
   toast.add({
     title: 'Due Date',
     description: 'Scroll down to set the due date in Card Details section',
@@ -3408,7 +4025,18 @@ const updateTags = () => {
 // Helper functions
 const getColumnCards = (status: string) => {
   if (!activeProject.value) return [];
-  return tasks.value.filter((card) => card.status === status && card.projectid === activeProject.value.projectid);
+  return tasks.value
+    .filter((card) => card.status === status && card.projectid === activeProject.value.projectid)
+    .sort((a, b) => {
+      // Sort by position first (if available)
+      const posA = a.position ?? Infinity;
+      const posB = b.position ?? Infinity;
+      if (posA !== posB) {
+        return posA - posB;
+      }
+      // Fall back to cardid or creation order
+      return (a.cardid || 0) - (b.cardid || 0);
+    });
 };
 
 const getColumnName = (status: string) => {
@@ -3449,12 +4077,12 @@ const isOverdue = (date: string) => {
   return d < new Date();
 };
 
-const getCardColorClass = (status: string, duedate: string) => {
+const getCardColorClass = (status: string, enddate: string) => {
   if (status === 'done' || status === 'finish') return '!bg-white dark:!bg-gray-800';
-  if (!duedate) return '';
+  if (!enddate) return '';
   
   const now = new Date();
-  const due = new Date(duedate);
+  const due = new Date(enddate);
   if (isNaN(due.getTime())) return '';
   
   const diffTime = due.getTime() - now.getTime();
@@ -3497,31 +4125,6 @@ const closeStatisticsModal = () => {
   isStatisticsModalOpen.value = false;
 };
 
-// Template Functions
-const selectTemplate = (template: any) => {
-  selectedTemplate.value = template;
-  isTemplateModalOpen.value = false;
-  
-  editingProject.value = {
-    projectid: null,
-    name: '',
-    description: '',
-    color: projectColors[0],
-    archived: false,
-    companyid: null,
-    startdate: '',
-    enddate: '',
-    template: template.id
-  };
-  
-  // Set columns from template
-  if (template.columns) {
-    columns.value = [...template.columns];
-  }
-  
-  isProjectModalOpen.value = true;
-};
-
 // Members Management Functions
 const openMembersModal = async () => {
   if (activeProject.value) {
@@ -3536,7 +4139,7 @@ const openMembersModal = async () => {
 const closeMembersModal = () => {
   isMembersModalOpen.value = false;
   newMemberEmail.value = '';
-  newMemberRole.value = 'member';
+  newMemberRole.value = '';
 };
 
 const addMember = async () => {
@@ -3693,13 +4296,302 @@ const waitingListTasks = computed(() => {
         // Task is in waiting list if:
         // 1. No due date
         // 2. OR status is 'backlog' (optional preference)
-        return !t.duedate;
+        return !t.enddate;
     });
 });
 
+// ========== GANTT VIEW STATE ==========
+const ganttYear = ref(new Date().getFullYear());
+const ganttMonth = ref(new Date().getMonth());
+
+// Gantt Drag and Drop State
+const draggedGanttTaskIndex = ref<number | null>(null);
+const isDraggingGanttTask = ref(false);
+
+// Initialize gantt view to project start date when project changes
+watch(activeProject, (newProject) => {
+  if (newProject && newProject.startdate) {
+    const startDate = new Date(newProject.startdate);
+    ganttYear.value = startDate.getFullYear();
+    ganttMonth.value = startDate.getMonth();
+  } else {
+    // Fallback to current month if no start date
+    const now = new Date();
+    ganttYear.value = now.getFullYear();
+    ganttMonth.value = now.getMonth();
+  }
+});
+
+// Calculate total days in project timeline
+const ganttTotalDays = computed(() => {
+  if (!activeProject.value?.startdate || !activeProject.value?.enddate) return 30;
+  
+  const start = new Date(activeProject.value.startdate);
+  const end = new Date(activeProject.value.enddate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+  
+  return diffDays;
+});
+
+// Generate array of days for the entire project
+const ganttDays = computed(() => {
+  if (!activeProject.value?.startdate || !activeProject.value?.enddate) return [];
+  
+  const start = new Date(activeProject.value.startdate);
+  const days = [];
+  
+  for (let i = 0; i < ganttTotalDays.value; i++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(start.getDate() + i);
+    
+    days.push({
+      date: currentDate,
+      label: currentDate.getDate().toString(), // Just show day number
+      fullDate: currentDate.toISOString().split('T')[0]
+    });
+  }
+  
+  return days;
+});
+
+// Gantt navigation (keep for backward compatibility but not used)
+const prevGanttMonth = () => {
+  if (ganttMonth.value === 0) {
+    ganttMonth.value = 11;
+    ganttYear.value--;
+  } else {
+    ganttMonth.value--;
+  }
+};
+
+const nextGanttMonth = () => {
+  if (ganttMonth.value === 11) {
+    ganttMonth.value = 0;
+    ganttYear.value++;
+  } else {
+    ganttMonth.value++;
+  }
+};
+
+// Gantt tasks with calculated positions for full project timeline
+const ganttTasks = computed(() => {
+  if (!tasks.value || !activeProject.value?.startdate) return [];
+  
+  const projectStart = new Date(activeProject.value.startdate);
+  
+  // Filter and map tasks with start and end dates
+  return tasks.value
+    .filter((task: any) => task.enddate) // Tasks with end date
+    .map((task: any) => {
+      // Get end date
+      const endDate = new Date(task.enddate);
+      if (isNaN(endDate.getTime())) return null;
+      
+      // Get start date (prefer startdate, fallback to enddate for single-day tasks)
+      let startDate;
+      if (task.startdate) {
+        startDate = new Date(task.startdate);
+      } else {
+        // No start date, use end date (single day task)
+        startDate = new Date(endDate);
+      }
+      
+      // Validate start date
+      if (isNaN(startDate.getTime())) {
+        startDate = new Date(endDate);
+      }
+      
+      // Calculate position relative to project start (1-based)
+      const daysSinceProjectStart = Math.floor((startDate.getTime() - projectStart.getTime()) / (1000 * 60 * 60 * 24));
+      const ganttStart = Math.max(1, daysSinceProjectStart + 1); // 1-based index
+      
+      // Calculate duration in days
+      const durationMs = endDate.getTime() - startDate.getTime();
+      const duration = Math.max(1, Math.ceil(durationMs / (1000 * 60 * 60 * 24)) + 1);
+      
+      return {
+        ...task,
+        ganttStart: ganttStart,
+        ganttDuration: duration
+      };
+    })
+    .filter((task: any) => task !== null)
+    .sort((a: any, b: any) => {
+      // Sort by posgantt first (if available) - Gantt-specific field
+      const posA = a.posgantt ?? Infinity;
+      const posB = b.posgantt ?? Infinity;
+      if (posA !== posB) {
+        return posA - posB;
+      }
+      // Fall back to gantt start position
+      return a.ganttStart - b.ganttStart;
+    });
+});
+
+// Vacation/Holiday dates (can be loaded from API or configured)
+const vacationDates = ref<string[]>([
+  // Example format: 'YYYY-MM-DD'
+  '2025-01-01', // New Year
+  '2025-12-25', // Christmas
+  // Add more vacation dates as needed
+]);
+
+// Helper function to check if a date is weekend (Saturday or Sunday)
+const isWeekend = (date: Date) => {
+  const day = date.getDay();
+  return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+};
+
+// Helper function to check if a date is a vacation/holiday
+const isVacationDate = (date: Date) => {
+  const dateStr = date.toISOString().split('T')[0];
+  return vacationDates.value.includes(dateStr);
+};
+
+// Helper function to get day background class for Gantt/Calendar (using Date object)
+const getDayClassForDate = (date: Date) => {
+  if (isVacationDate(date)) {
+    return 'bg-red-50 dark:bg-red-900/20'; // Vacation - red tint
+  }
+  if (isWeekend(date)) {
+    return 'bg-blue-50 dark:bg-blue-900/10'; // Weekend - blue tint
+  }
+  return '';
+};
+
+// Helper function to get day background class for Gantt/Calendar (legacy - using day number)
+const getDayClass = (dayNumber: number) => {
+  const date = new Date(ganttYear.value, ganttMonth.value, dayNumber);
+  return getDayClassForDate(date);
+};
+
+// Gantt Drag and Drop Handlers
+const onGanttTaskDragStart = (event: DragEvent, index: number) => {
+  draggedGanttTaskIndex.value = index;
+  isDraggingGanttTask.value = true;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+  }
+  (event.target as HTMLElement).style.opacity = '0.5';
+};
+
+const onGanttTaskDragOver = (event: DragEvent, index: number) => {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+  
+  if (draggedGanttTaskIndex.value !== null && draggedGanttTaskIndex.value !== index) {
+    // Reorder tasks in the tasks array
+    const ganttTasksList = ganttTasks.value;
+    const draggedTask = ganttTasksList[draggedGanttTaskIndex.value];
+    const targetTask = ganttTasksList[index];
+    
+    // Find these tasks in the main tasks array and swap their posgantt values
+    const draggedIndex = tasks.value.findIndex((t: any) => t.cardid === draggedTask.cardid);
+    const targetIndex = tasks.value.findIndex((t: any) => t.cardid === targetTask.cardid);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      // Swap in the array
+      const temp = tasks.value[draggedIndex];
+      tasks.value.splice(draggedIndex, 1);
+      tasks.value.splice(targetIndex, 0, temp);
+      draggedGanttTaskIndex.value = index;
+    }
+  }
+};
+
+const onGanttTaskDragEnd = async (event: DragEvent) => {
+  (event.target as HTMLElement).style.opacity = '1';
+  isDraggingGanttTask.value = false;
+  
+  if (draggedGanttTaskIndex.value !== null) {
+    await saveGanttTaskPositions();
+  }
+  
+  draggedGanttTaskIndex.value = null;
+};
+
+const saveGanttTaskPositions = async () => {
+  try {
+    const ganttTasksList = ganttTasks.value;
+    
+    // Save each task's position to backend
+    for (let index = 0; index < ganttTasksList.length; index++) {
+      const task = ganttTasksList[index];
+      const dataForm = new FormData();
+      dataForm.append('flowname', 'modifcard');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'false');
+      dataForm.append('cardid', task.cardid.toString());
+      dataForm.append('projectid', activeProject.value.projectid.toString());
+      dataForm.append('posgantt', index.toString());
+      
+      // Include other required fields to avoid clearing them
+      dataForm.append('title', task.title || '');
+      dataForm.append('description', task.description || '');
+      dataForm.append('status', task.status || '');
+      dataForm.append('priority', task.priority || 'medium');
+      
+      // Handle assignee
+      let assignee = task.assignee;
+      if (Array.isArray(assignee)) assignee = assignee[0];
+      if (assignee && typeof assignee === 'object') assignee = assignee.id || assignee.userid || assignee.email;
+      dataForm.append('assignee', assignee || '');
+      
+      // Handle dates
+      let startdate = task.startdate || task.enddate;
+      if (startdate) startdate = startdate.replace('T', ' ').split('.')[0].replace('Z', '');
+      dataForm.append('startdate', startdate);
+      
+      let enddate = task.enddate || '';
+      if (enddate) enddate = enddate.replace('T', ' ').split('.')[0].replace('Z', '');
+      dataForm.append('enddate', enddate);
+      
+      // Handle tags
+      let tags = task.tags || [];
+      if (typeof tags === 'string') {
+        try { tags = JSON.parse(tags); } catch(e) { tags = []; }
+      }
+      dataForm.append('tags', JSON.stringify(tags));
+      
+      await api.post('/api/admin/execute-flow', dataForm);
+    }
+    
+    // Update local tasks with new positions
+    tasks.value = tasks.value.map((task: any) => {
+      const taskIndex = ganttTasksList.findIndex((t: any) => t.cardid === task.cardid);
+      if (taskIndex !== -1) {
+        return { ...task, posgantt: taskIndex };
+      }
+      return task;
+    });
+    
+    toast.add({
+      title: 'Order Saved',
+      description: 'Task order has been updated',
+      color: 'green',
+      icon: 'i-heroicons-check-circle',
+    });
+  } catch (error) {
+    console.error('Error saving gantt task positions:', error);
+    toast.add({
+      title: 'Error',
+      description: 'Failed to save task order',
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
+  }
+};
+
+// Helper function to get tasks for a specific resource and date (for calendar view)
 const getTasksForResourceAndDate = (resourceTasks: any[], date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return resourceTasks.filter(t => t.duedate && t.duedate.startsWith(dateStr));
+  const dateStr = date.toISOString().split('T')[0];
+  return resourceTasks.filter(t => {
+    if (!t.enddate) return false;
+    return t.enddate.startsWith(dateStr);
+  });
 };
 
 const goToToday = () => {
@@ -3786,80 +4678,9 @@ const prevMonth = () => {
 const getCardsForDate = (date: Date) => {
   const dateStr = date.toISOString().split('T')[0];
   return tasks.value.filter(card => {
-    if (!card.duedate) return false;
-    return card.duedate.startsWith(dateStr);
+    if (!card.enddate) return false;
+    return card.enddate.startsWith(dateStr);
   });
-};
-
-// Gantt State
-const ganttMonth = ref(new Date().getMonth());
-const ganttYear = ref(new Date().getFullYear());
-
-const ganttDaysInMonth = computed(() => {
-  return new Date(ganttYear.value, ganttMonth.value + 1, 0).getDate();
-});
-
-const ganttTasks = computed(() => {
-  if (!tasks.value) return [];
-  
-  // Current Month Range
-  const startOfMonth = new Date(ganttYear.value, ganttMonth.value, 1);
-  const endOfMonth = new Date(ganttYear.value, ganttMonth.value + 1, 0);
-  
-  // Filter tasks that overlap with current month
-  return tasks.value.map(task => {
-    let startDate = task.created_at ? new Date(task.created_at) : new Date();
-    // Validate startDate
-    if (isNaN(startDate.getTime())) startDate = new Date(); // Fallback to now if invalid
-
-    // Validate endDate
-    let endDate;
-    if (task.duedate) {
-        endDate = new Date(task.duedate);
-        if (isNaN(endDate.getTime())) {
-            endDate = new Date(startDate.getTime() + 86400000); // Fallback 1 day
-        }
-    } else {
-        endDate = new Date(startDate.getTime() + 86400000); // Default 1 day
-    }
-    
-    // Check overlap
-    if (endDate < startOfMonth || startDate > endOfMonth) return null;
-    
-    // Calculate grid position (1-based day)
-    let startDay = startDate.getDate();
-    let endDay = endDate.getDate();
-    
-    // Clamp to month boundaries
-    if (startDate < startOfMonth) startDay = 1;
-    if (endDate > endOfMonth) endDay = ganttDaysInMonth.value;
-    
-    const duration = Math.max(1, endDay - startDay + 1);
-    
-    return {
-      ...task,
-      ganttStart: startDay,
-      ganttDuration: duration
-    };
-  }).filter(t => t !== null).sort((a, b) => a.ganttStart - b.ganttStart);
-});
-
-const nextGanttMonth = () => {
-  if (ganttMonth.value === 11) {
-    ganttMonth.value = 0;
-    ganttYear.value++;
-  } else {
-    ganttMonth.value++;
-  }
-};
-
-const prevGanttMonth = () => {
-  if (ganttMonth.value === 0) {
-    ganttMonth.value = 11;
-    ganttYear.value--;
-  } else {
-    ganttMonth.value--;
-  }
 };
 
 // List View State & Logic
@@ -3938,19 +4759,19 @@ const onDropOnCalendar = async (event: DragEvent, newDate: Date, newUser?: any) 
     
     // Check if anything changed
     // Note: due date might be full ISO in card, so compare date part
-    const currentDueDate = card.duedate ? card.duedate.split('T')[0] : '';
+    const currentenddate = card.enddate ? card.enddate.split('T')[0] : '';
     const currentAssignee = typeof card.assignee === 'object' ? (card.assignee.userid || card.assignee.id) : card.assignee;
     
     const newUserId = newUser ? (newUser.userid === 'unassigned' ? '' : newUser.userid) : currentAssignee;
     
     // If exact same date and user (or user not provided/changed), skip
-    if (currentDueDate === dateStr && currentAssignee == newUserId) {
+    if (currentenddate === dateStr && currentAssignee == newUserId) {
         draggedCard.value = null;
         return;
     }
 
     // Optimistic Update
-    card.duedate = dateStr;
+    card.enddate = dateStr;
     if (newUser) {
         card.assignee = newUserId;
     }
@@ -3966,7 +4787,7 @@ const onDropOnCalendar = async (event: DragEvent, newDate: Date, newUser?: any) 
         dataForm.append('status', card.status);
         dataForm.append('description', card.description || '');
         dataForm.append('priority', card.priority || 'medium');
-        dataForm.append('duedate', dateStr);
+        dataForm.append('enddate', dateStr);
         dataForm.append('assignee', newUserId || '');
         
         // Handle Tags
@@ -4018,10 +4839,10 @@ const updateCardStatus = async (card: any, newStatus: string) => {
         if (typeof assignee === 'object') assignee = assignee.userid || assignee.id;
         dataForm.append('assignee', assignee || '');
         
-        // Preserve duedate
-        let duedate = card.duedate || '';
-        if (duedate && duedate.includes('T')) duedate = duedate.split('T')[0];
-        dataForm.append('duedate', duedate);
+        // Preserve enddate
+        let enddate = card.enddate || '';
+        if (enddate && enddate.includes('T')) enddate = enddate.split('T')[0];
+        dataForm.append('enddate', enddate);
         
         // Handle Tags
         let tags = card.tags || [];
@@ -4052,6 +4873,12 @@ const updateCardStatus = async (card: any, newStatus: string) => {
     }
 };
 
+// Initialize on mount
+onMounted(async () => {
+  await loadProjectTemplates();
+  await loadRoles();
+});
+
 </script>
 
 <style scoped>
@@ -4068,3 +4895,4 @@ const updateCardStatus = async (card: any, newStatus: string) => {
 </style>
 
 
+d
