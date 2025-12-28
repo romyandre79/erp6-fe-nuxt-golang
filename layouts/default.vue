@@ -3,7 +3,7 @@ import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
 import { useUserStore } from '../store/user';
 import { useDevice } from '~/composables/useDevice';
-import { SpeedInsights } from "@vercel/speed-insights/nuxt"
+import { SpeedInsights } from '@vercel/speed-insights/vue';
 import { useAppStore } from '~/store/app';
 
 const config = useRuntimeConfig();
@@ -24,6 +24,7 @@ onMounted(async () => {
 
 <template>
   <ClientOnly>
+    <SpeedInsights />
     <UApp>
       <div class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500">
         
