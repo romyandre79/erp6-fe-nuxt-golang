@@ -328,7 +328,7 @@ export const availableComponents = [
   {
     type: 'separator',
     label: 'Separator',
-    icon: 'heroicons:check-circle',
+    icon: 'heroicons:adjustments-horizontal',
     component: 'USeparator',
     props: {
       key: '',
@@ -386,22 +386,7 @@ export const availableComponents = [
       required: false,
     },
   },
-  {
-    type: 'url',
-    label: 'Url',
-    icon: 'heroicons:link',
-    component: 'input',
-    props: {
-      key: '',
-      text: 'Url',
-      place: 'Enter a url',
-      class: '',
-      primary: false,
-      enabled: true,
-      required: false,
-    },
-  },
-  {
+    {
     type: 'title',
     label: 'Title',
     icon: 'mdi:format-header-1',
@@ -421,6 +406,21 @@ export const availableComponents = [
       class: 'tracking-tight mb-4',
     },
   },
+  {
+    type: 'url',
+    label: 'Url',
+    icon: 'heroicons:link',
+    component: 'input',
+    props: {
+      key: '',
+      text: 'Url',
+      place: 'Enter a url',
+      class: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  }
 ];
 
 export const layoutContainers = [

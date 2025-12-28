@@ -852,6 +852,7 @@ function renderComponent(component: any) {
     case 'time':
     case 'reset':
     case 'week':
+    case 'color':
     case 'month':
     case 'password':
     case 'number': {
