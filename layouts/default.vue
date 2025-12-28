@@ -3,11 +3,12 @@ import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
 import { useUserStore } from '../store/user';
 import { useDevice } from '~/composables/useDevice';
+import { SpeedInsights } from "@vercel/speed-insights/nuxt"
+import { useAppStore } from '~/store/app';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
 const userStore = useUserStore();
-import { useAppStore } from '~/store/app';
 
 const appStore = useAppStore();
 const { isMobile, isTablet, isDesktop, deviceType } = useDevice();

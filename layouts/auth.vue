@@ -8,6 +8,7 @@ import { useNotificationStore } from '~/store/notification';
 import { useAuth } from '~/composables/useAuth';
 import { useDevice } from '~/composables/useDevice';
 import AiAssistant from '~/components/AiAssistant.vue';
+import { SpeedInsights } from "@vercel/speed-insights/nuxt"
 
 const themeStore = useThemeStore();
 const notificationStore = useNotificationStore();
