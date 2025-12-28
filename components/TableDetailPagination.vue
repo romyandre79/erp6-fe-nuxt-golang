@@ -121,7 +121,10 @@
               </td>
 
               <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
-                <span v-html="formatCellValue(col, row[col.key || col])"></span>
+                <div v-if="['bool', 'boolean'].includes(col.type)" class="flex items-center">
+                    <USwitch :model-value="Boolean(row[col.key || col])" disabled />
+                </div>
+                <span v-else v-html="formatCellValue(col, row[col.key || col])"></span>
               </td>
 
               <td v-if="rowActions && rowActions.length" class="px-4 py-3">
@@ -177,7 +180,7 @@
 <script setup lang="ts">
 import { ref, onMounted, h, watch, computed } from 'vue';
 import { useApi } from '#imports';
-import { TablePagination } from '#components';
+import { TablePagination, USwitch } from '#components';
 import { useTableLogic } from '../composables/useTableLogic';
 import { useTablePreferences } from '../composables/useTablePreferences';
 import TableControls from './TableControls.vue';

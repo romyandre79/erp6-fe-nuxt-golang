@@ -282,10 +282,16 @@
 
                 <td v-for="col in visibleColumns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
                   <template v-if="enableInlineEdit && isEditing(item.row)">
-                    <input type="text" class="input input-xs input-bordered w-full" v-model="editForm[col.key || col]" @click.stop />
+                    <div v-if="['bool', 'boolean'].includes(col.type)" class="flex items-center">
+                         <USwitch v-model="editForm[col.key || col]" />
+                    </div>
+                    <input v-else type="text" class="input input-xs input-bordered w-full" v-model="editForm[col.key || col]" @click.stop />
                   </template>
                   <template v-else>
-                    <span v-html="formatCellValue(col, item.row[col.key || col])"></span>
+                    <div v-if="['bool', 'boolean'].includes(col.type)" class="flex items-center">
+                        <USwitch :model-value="Boolean(item.row[col.key || col])" disabled />
+                    </div>
+                    <span v-else v-html="formatCellValue(col, item.row[col.key || col])"></span>
                   </template>
                 </td>
 
@@ -370,7 +376,7 @@
 <script setup lang="ts">
 import { ref, onMounted, h, watch, computed } from 'vue';
 import { useApi } from '#imports';
-import { TableDetailPagination } from '#components';
+import { TableDetailPagination, USwitch } from '#components';
 import { useTableLogic } from '../composables/useTableLogic';
 import { useTablePreferences } from '../composables/useTablePreferences';
 import TableControls from './TableControls.vue';

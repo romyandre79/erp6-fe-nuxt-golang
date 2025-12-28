@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt } from '#components';
+import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -909,20 +909,23 @@ function renderComponent(component: any) {
     case 'boolean': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = false;
       const modelCheckbox = computed({
-        get: () => formData.value[component.props.key],
+        get: () => !!formData.value[component.props.key],
         set: (val) => {
           formData.value[component.props.key] = val;
           validateField(component.props, val);
         },
       });
       return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
-        h('input', {
-          type: 'checkbox',
-          checked: modelCheckbox.value,
-          onChange: (e: any) => (modelCheckbox.value = e.target.checked),
-          class: 'w-4 h-4 rounded focus:ring-blue-500 focus:ring-2',
+        h(USwitch, {
+          modelValue: modelCheckbox.value,
+          'onUpdate:modelValue': (val: boolean) => (modelCheckbox.value = val)
         }),
-        h('label', { class: 'cursor-pointer' }, $t(component.props.text.toUpperCase()) || ''),
+        h('label', { 
+            class: 'cursor-pointer',
+            onClick: () => {
+               modelCheckbox.value = !modelCheckbox.value;
+            }
+        }, $t(component.props.text.toUpperCase()) || ''),
       ]);
     }
 
@@ -984,7 +987,12 @@ function renderComponent(component: any) {
         label: component.props.text,
       });
     
-    
+    case 'separator': {
+      return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
+        h(USeparator, {
+        }),
+      ]);
+    }
     
     case 'action':
       break;

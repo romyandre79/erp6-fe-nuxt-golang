@@ -326,6 +326,22 @@ export const availableComponents = [
     },
   },
   {
+    type: 'separator',
+    label: 'Separator',
+    icon: 'heroicons:check-circle',
+    component: 'USeparator',
+    props: {
+      key: '',
+      label: '',
+      place: '',
+      text: '',
+      class: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
     type: 'tel',
     label: 'Tel',
     icon: 'heroicons:phone',
