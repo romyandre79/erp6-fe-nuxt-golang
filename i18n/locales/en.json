@@ -506,6 +506,8 @@
       "PROJECT": "Project Mgmt"
     },
     "SLOC ACCOUNTING": "Sloc Accounting",
-    "SLOC": "Storage Location"
+    "SLOC": "Storage Location",
+	"PROJECT": "Project",
+	"KANBAN": "Kanban"
   }
 }
