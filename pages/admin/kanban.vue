@@ -2157,25 +2157,24 @@ const companies = ref<any[]>([]);
 
 // Load companies from API
 const loadCompanies = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'searchcompanyauth');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
-        
-    // Try multiple possible structures
-    let companyData = null;
-    if (res.data?.data && Array.isArray(res.data.data)) {
-      companyData = res.data.data;
-    }
-    
+
+  const res = await projectStore.loadCompanies()
+      
+  // Try multiple possible structures
+  let companyData = null;
+  if (res.data?.data && Array.isArray(res.data.data)) {
+    companyData = res.data.data;
     if (companyData && companyData.length > 0) {
       companies.value = companyData;
     }
-  } catch (error) {
-    console.error('❌ Error loading companies:', error);
+  } else {
+      console.error('❌ Error loading companies:', error);
+      toast.add({
+      title: 'Error',
+      description: projectStore.error,
+      color: 'red',
+      icon: 'i-heroicons-exclamation-triangle',
+    });
   }
 };
 
@@ -2200,18 +2199,8 @@ const saveAsTemplate = async () => {
     return;
   }
 
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'modifprojecttemplate');
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'false');
-    dataForm.append('name', newTemplateName.value);
-    dataForm.append('description', newTemplateDescription.value);
-    dataForm.append('icon', newTemplateIcon.value);
-    dataForm.append('columns', JSON.stringify(columns.value));
-
-    await api.post('/api/admin/execute-flow', dataForm);
-
+  const res = await projectStore.saveAsTemplate(newTemplateName.value, newTemplateDescription.value, newTemplateIcon.value, columns.value);
+  if (res.code == 200) {
     toast.add({
       title: 'Template Saved',
       description: `"${newTemplateName.value}" template created successfully`,
@@ -2227,8 +2216,7 @@ const saveAsTemplate = async () => {
 
     // Reload templates
     await loadProjectTemplates();
-  } catch (error) {
-    console.error('Error saving template:', error);
+  } else {
     toast.add({
       title: 'Error',
       description: 'Failed to save template',
@@ -2642,27 +2630,9 @@ const saveProject = async () => {
     });
     return;
   }
-  try {
-    const dataForm = new FormData();
-    
-    dataForm.append('flowname', 'modifproject');
-    if (editingProject.value.projectid) {
-      dataForm.append('projectid', editingProject.value.projectid.toString());
-    }
-    
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'false');
-    dataForm.append('name', editingProject.value.name || '');
-    dataForm.append('description', editingProject.value.description || '');
-    dataForm.append('color', editingProject.value.color || '#3b82f6');
-    dataForm.append('companyid', editingProject.value.companyid);
-    dataForm.append('startdate', editingProject.value.startdate || '');
-    dataForm.append('enddate', editingProject.value.enddate || '');
-    dataForm.append('columns', JSON.stringify(columns.value));
-    
-    console.log('💾 Saving project with', columns.value.length, 'columns:', columns.value);
-    
-    const res = await api.post('/api/admin/execute-flow', dataForm);
+  
+  const res = await projectStore.saveProject(editingProject.value,columns.value);
+  if (res.code == 200) {
     toast.add({
       title: editingProject.value.projectid ? 'Project Updated' : 'Project Created',
       description: editingProject.value.projectid 
@@ -2681,8 +2651,8 @@ const saveProject = async () => {
         await selectProject(newProject);
       }
     }
-  } catch (error) {
-    console.error('Error saving project:', error);
+  } else {
+    console.error('Error saving project:', projectStore.error.value);
     toast.add({
       title: 'Error',
       description: 'Failed to save project',
@@ -2693,13 +2663,8 @@ const saveProject = async () => {
 };
 // Delete project
 const confirmDeleteProject = async () => {
-  try {
-    const dataForm = new FormData();
-    dataForm.append('flowname', 'deleteproject');
-    dataForm.append('menu', 'admin');
-    dataForm.append('projectid', projectToDelete.value.projectid.toString());
-    
-    await api.post('/api/admin/execute-flow', dataForm);
+    const res = await projectStore.confirmDeleteProject(projectToDelete.value);
+	if (res.code == 200) {
     toast.add({
       title: 'Project Deleted',
       description: 'Project has been deleted successfully',
@@ -2720,8 +2685,7 @@ const confirmDeleteProject = async () => {
         activeProject.value = null;
       }
     }
-  } catch (error) {
-    console.error('Error deleting project:', error);
+  } else {
     toast.add({
       title: 'Error',
       description: 'Failed to delete project',
@@ -3507,6 +3471,7 @@ const editingCard = ref<any>({
   description: '',
   status: '',
   assignee: '',
+  startdate: '',
   enddate: '',
   priority: 'medium',
   tags: [],
@@ -3760,6 +3725,7 @@ const openEditModal = (card: any) => {
   isEditMode.value = true;
   editingCard.value = { 
     ...card,
+    startdate: formatDateForInput(card.startdate),
     enddate: formatDateForInput(card.enddate),
     comments: card.comments || [],
     timeEntries: card.timeEntries || [],
@@ -4132,6 +4098,9 @@ watch(activeProject, (newProject) => {
     const startDate = new Date(newProject.startdate);
     ganttYear.value = startDate.getFullYear();
     ganttMonth.value = startDate.getMonth();
+    
+    // Also set current date for calendar view
+    currentDate.value = startDate;
   } else {
     // Fallback to current month if no start date
     const now = new Date();
@@ -4356,6 +4325,7 @@ const saveGanttTaskPositions = async () => {
       dataForm.append('cardid', task.cardid.toString());
       dataForm.append('projectid', activeProject.value.projectid.toString());
       dataForm.append('posgantt', index.toString());
+      if (task.position !== undefined && task.position !== null) dataForm.append('position', task.position.toString());
       
       // Include other required fields to avoid clearing them
       dataForm.append('title', task.title || '');
@@ -4659,6 +4629,8 @@ const updateCardStatus = async (card: any, newStatus: string) => {
         dataForm.append('projectid', activeProject.value.projectid.toString());
         dataForm.append('title', card.title);
         dataForm.append('description', card.description || '');
+        dataForm.append('position', card.position || '');
+        dataForm.append('posgantt', card.posgantt || '');
         dataForm.append('status', newStatus);
         
         // Preserve other fields
@@ -4722,6 +4694,3 @@ onMounted(async () => {
   cursor: grabbing;
 }
 </style>
-
-
-d
