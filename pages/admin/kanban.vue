@@ -709,9 +709,11 @@
 
         <!-- Gantt Chart -->
         <div class="flex-1 overflow-auto flex">
+             <!-- Left Panel (Sticky) -->
+             <div class="sticky left-0 flex z-30" style="background: var(--panel-background);">
              <!-- Task List (Sticky Left) -->
-             <div class="w-64 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+             <div class="w-64 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Task
                 </div>
                 <div style="background: var(--panel-background);">
@@ -732,8 +734,8 @@
                     </div>
                 </div>
              </div>
-			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+             <div class="w-32 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Start Date
                 </div>
                 <div style="background: var(--panel-background);">
@@ -741,14 +743,14 @@
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
                         class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                        :style="{ opacity: draggedGanttIndex === index ? 0.5 : 1 }"
                     >
                         {{ formatDate(task.startdate) }}
                     </div>
                 </div>
              </div>
-			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+			 <div class="w-32 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     End Date
                 </div>
                 <div style="background: var(--panel-background);">
@@ -756,14 +758,14 @@
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
                         class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                        :style="{ opacity: draggedGanttIndex === index ? 0.5 : 1 }"
                     >
                         {{ formatDate(task.enddate) }}
                     </div>
                 </div>
              </div>
 			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Duration
                 </div>
                 <div style="background: var(--panel-background);">
@@ -771,18 +773,19 @@
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
                         class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                        :style="{ opacity: draggedGanttIndex === index ? 0.5 : 1 }"
                     >
                         {{ task.ganttDuration }}
                     </div>
                 </div>
              </div>
+             </div>
 
              <!-- Timeline -->
-             <div class="flex-1 overflow-x-auto">
+             <div class="flex-1">
                 <div class="min-w-max">
                     <!-- Days Header -->
-                    <div class="h-10 border-b grid" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
+                    <div class="h-10 border-b grid sticky top-0 z-20" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
                         <div 
                             v-for="(day, index) in ganttDays" 
                             :key="index" 
