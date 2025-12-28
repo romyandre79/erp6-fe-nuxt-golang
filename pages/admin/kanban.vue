@@ -121,8 +121,35 @@
              <h1 class="text-3xl font-bold ">
                {{ activeProject?.name || 'Select a Project' }}
              </h1>
-          </div>
-          <div v-if="activeProject" class="flex gap-2">
+          </div>          
+        </div>
+        <p class="">
+          {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
+        </p>
+        <p class="">
+          {{ formatDate(activeProject?.startdate)   || formatDate(activeProject?.enddate) }} - 
+          {{ formatDate(activeProject?.enddate) }}
+        </p>
+      </div>
+
+      <!-- Tab Navigation -->
+      <!-- Views Wrapper -->
+      <div v-if="activeProject" class="flex flex-col flex-1 overflow-hidden">
+      <!-- Tab Navigation -->
+      <div class="px-6 py-4 border-b flex items-center justify-between" style="background: var(--panel-background); border-color: var(--border-color);">
+        <div class="flex items-center gap-1 rounded-lg p-1" style="background: var(--button-background); border: 1px solid var(--border-color);">
+           <UButton 
+            v-for="view in ['kanban', 'list', 'calendar', 'gantt']"
+            :key="view"
+            variant="ghost"
+            class="capitalize"
+            :class="currentView === view ? 'btnPrimary' : 'text-[var(--body-color)]'"
+            @click="currentView = view"
+          >
+            {{ view }}
+          </UButton>
+                <UButton icon="i-heroicons-plus" color="primary" @click="openCreateModal('todo')">Add New</UButton>
+                <div v-if="activeProject" class="flex gap-2">
             <UButton 
               icon="i-heroicons-chart-bar" 
               color="blue" 
@@ -173,41 +200,13 @@
             </UButton>
           </div>
         </div>
-        <p class="">
-          {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
-        </p>
-        <p class="">
-          {{ formatDate(activeProject?.startdate)   || formatDate(activeProject?.enddate) }} - 
-          {{ formatDate(activeProject?.enddate) }}
-        </p>
-      </div>
-
-      <!-- Tab Navigation -->
-      <!-- Views Wrapper -->
-      <div v-if="activeProject" class="flex flex-col flex-1 overflow-hidden">
-      <!-- Tab Navigation -->
-      <div class="px-6 py-4 border-b flex items-center justify-between" style="background: var(--panel-background); border-color: var(--border-color);">
-        <div class="flex items-center gap-1 rounded-lg p-1" style="background: var(--button-background); border: 1px solid var(--border-color);">
-           <UButton 
-            v-for="view in ['kanban', 'list', 'calendar', 'gantt']"
-            :key="view"
-            variant="ghost"
-            size="sm"
-            class="capitalize"
-            :class="currentView === view ? 'btnPrimary' : 'text-[var(--body-color)]'"
-            @click="currentView = view"
-          >
-            {{ view }}
-          </UButton>
-                <UButton icon="i-heroicons-plus" color="primary" @click="openCreateModal('todo')">Add New</UButton>
-        </div>
       </div>
 
       <!-- Kanban Board -->
       <div 
         v-if="currentView === 'kanban'"
         ref="kanbanViewRef"
-        class="flex-1 overflow-hidden p-6 kanban-board-container hidden-scrollbar"
+        class="flex-1 overflow-hidden p-2 kanban-board-container hidden-scrollbar"
         :style="{
           '--kanban-board-bg': `linear-gradient(to bottom right, ${activeProject.color || '#3b82f6'}15, transparent)`
         }"
@@ -709,9 +708,11 @@
 
         <!-- Gantt Chart -->
         <div class="flex-1 overflow-auto flex">
+             <!-- Left Panel (Sticky) -->
+             <div class="sticky left-0 flex z-30" style="background: var(--panel-background);">
              <!-- Task List (Sticky Left) -->
-             <div class="w-64 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+             <div class="w-64 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Task
                 </div>
                 <div style="background: var(--panel-background);">
@@ -728,42 +729,12 @@
                         :style="{ opacity: draggedGanttIndex === taskIndex ? 0.5 : 1 }"
                     >
                         <UIcon name="i-heroicons-bars-3" class="w-4 h-4 mr-2 text-gray-400" />
-                        {{ task.title }}
+                        {{ task.title - (formatDate(task.startdate) - formatDate(task.enddate)) }} 
                     </div>
                 </div>
              </div>
 			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
-                    Start Date
-                </div>
-                <div style="background: var(--panel-background);">
-                    <div 
-                        v-for="(task, index) in ganttTasks" 
-                        :key="task.id" 
-                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
-                    >
-                        {{ formatDate(task.startdate) }}
-                    </div>
-                </div>
-             </div>
-			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
-                    End Date
-                </div>
-                <div style="background: var(--panel-background);">
-                    <div 
-                        v-for="(task, index) in ganttTasks" 
-                        :key="task.id" 
-                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
-                    >
-                        {{ formatDate(task.enddate) }}
-                    </div>
-                </div>
-             </div>
-			 <div class="w-32 flex-shrink-0 border-r z-10" style="background: var(--panel-background); border-color: var(--border-color);">
-                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
+                <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Duration
                 </div>
                 <div style="background: var(--panel-background);">
@@ -771,18 +742,19 @@
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
                         class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
-                        :style="{ opacity: draggedGanttTaskIndex === index ? 0.5 : 1 }"
+                        :style="{ opacity: draggedGanttIndex === index ? 0.5 : 1 }"
                     >
                         {{ task.ganttDuration }}
                     </div>
                 </div>
              </div>
+             </div>
 
              <!-- Timeline -->
-             <div class="flex-1 overflow-x-auto">
+             <div class="flex-1">
                 <div class="min-w-max">
                     <!-- Days Header -->
-                    <div class="h-10 border-b grid" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
+                    <div class="h-10 border-b grid sticky top-0 z-20" :style="`grid-template-columns: repeat(${ganttTotalDays}, 32px); background: var(--table-head-background); border-color: var(--border-color);`">
                         <div 
                             v-for="(day, index) in ganttDays" 
                             :key="index" 
@@ -1405,23 +1377,17 @@
                 <div>
                   <label class="block text-xs font-medium  mb-1">
                     <UIcon name="i-heroicons-user" class="w-3 h-3 inline mr-1" />
-                    Assignee
+                    Assignee                   
+
                   </label>
                   <USelectMenu
                     v-model="editingCard.assignee"
-                    :items="memberOptions"
-                    value-attribute="id"
+                    :items="memberOptions.map((m: any) => ({ id: m.id, label: m.label }))"
+                    value-key="id"
                     placeholder="Select assignee"
                     searchable
                     class="w-full"
-                  >
-                    <template #label>
-                      <span v-if="editingCard.assignee">
-                         {{ memberOptions.find(opt => opt.id == (typeof editingCard.assignee === 'object' ? editingCard.assignee?.id : editingCard.assignee))?.label || (typeof editingCard.assignee === 'object' ? editingCard.assignee?.label : editingCard.assignee) }}
-                      </span>
-                      <span v-else class="">Select assignee</span>
-                    </template>
-                  </USelectMenu>
+                  />
                   <!-- Show assignee avatar if assigned -->
                   <div v-if="editingCard.assignee" class="mt-2 flex items-center gap-2 p-2 rounded" style="background: var(--body-background); border: 1px solid var(--border-color);">
                     <!-- Handle object/array returned by component -->
@@ -2142,8 +2108,6 @@ const loadProjectMembers = async () => {
     if (activeProject.value) {
         activeProject.value.members = members;
     }
-    console.log('Project members loaded and set:', activeProject.value?.members);
-
   } else {
     console.error('Error loading project members:', projectStore.error);
     if (activeProject.value) {
@@ -3093,9 +3057,7 @@ const defaultColumns = [
 const columns = ref(JSON.parse(JSON.stringify(defaultColumns)));
 
 // Watch activeProject and load columns from it
-watch(activeProject, (newProject) => {
-  console.log('🔍 Loading columns for project:', newProject?.name, 'columns:', newProject?.columns);
-  
+watch(activeProject, (newProject) => {  
   if (newProject && newProject.columns) {
     try {
       // Parse columns if it's a string
@@ -3103,25 +3065,19 @@ watch(activeProject, (newProject) => {
         ? JSON.parse(newProject.columns) 
         : newProject.columns;
       
-      console.log('📊 Parsed columns:', projectColumns);
-      
       if (Array.isArray(projectColumns) && projectColumns.length > 0) {
         columns.value = projectColumns.map((col: any) => ({
           ...col,
           permissions: col.permissions || { canDelete: [], canMoveOut: [], canMoveIn: [] }
         }));
-        console.log('✅ Columns loaded with permissions:', columns.value);
       } else {
         columns.value = JSON.parse(JSON.stringify(defaultColumns));
-        console.log('⚠️ Using default columns (empty array)');
       }
     } catch (e) {
-      console.error('❌ Error parsing project columns:', e);
       columns.value = JSON.parse(JSON.stringify(defaultColumns));
     }
   } else {
     columns.value = JSON.parse(JSON.stringify(defaultColumns));
-    console.log('⚠️ Using default columns (no project.columns)');
   }
 }, { immediate: true });
 
