@@ -396,7 +396,7 @@ const SOURCE_CODE_MULTIPLIER = 100
 const USER_WEIGHTS = {
   admin: 1.0,
   operational: 0.5,
-  viewer: 0.1
+  viewer: 0.05
 }
 
 // PAYG Rates

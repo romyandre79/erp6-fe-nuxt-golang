@@ -26,33 +26,13 @@
         </div>
       </div>
     </div>
-
-    <!-- Pricing Calculator -->
-    <div class="mt-12 bg-white p-8 rounded-xl border border-gray-100">
-        <h2 class="text-xl font-bold mb-6 text-gray-900">Upgrade Plan</h2>
-        <PricingCalculator 
-            :available-apps="apps"
-            theme="light"
-            module-name="E-Procurement"
-            :initial-selected-apps="['vendor_mgmt', 'tender_mgmt']"
-            />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import PricingCalculator from '~/components/PricingCalculator.vue'
-
 definePageMeta({
   layout: 'e-procurement'
 })
-
-const apps = [
-  { id: 'vendor_mgmt', name: 'Vendor Management', price: 50000, icon: '🤝' },
-  { id: 'tender_mgmt', name: 'Tender Management', price: 100000, icon: '📑' },
-  { id: 'contract_mgmt', name: 'Contract Management', price: 75000, icon: '✍️' },
-  { id: 'spend_analysis', name: 'Spend Analysis', price: 80000, icon: '📊' },
-]
 
 const activeTenders = [
   {

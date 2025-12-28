@@ -13,29 +13,13 @@
                 Learn More
             </button>
         </div>
-
-        <!-- Pricing Section -->
-        <PricingCalculator 
-            :available-apps="omsApps"
-            theme="light"
-            module-name="Order"
-            :initial-selected-apps="['order_processing', 'inventory']"
-        />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import PricingCalculator from '~/components/PricingCalculator.vue'
-
 definePageMeta({
   layout: false
 })
 
-const omsApps = [
-  { id: 'order_processing', name: 'Order Processing', price: 50000, icon: '📦' },
-  { id: 'inventory', name: 'Inventory Sync', price: 40000, icon: '🔄' },
-  { id: 'warehouse', name: 'Multi-Warehouse', price: 60000, icon: '🏭' },
-  { id: 'shipping', name: 'Shipping Integration', price: 30000, icon: '🚚' },
-]
 </script>

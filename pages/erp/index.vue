@@ -95,14 +95,6 @@
         </div>
       </div>
     </section>
-    <!-- Pricing & Demo Replaced by Component -->
-    <PricingCalculator 
-      :available-apps="baseAppPrices"
-      :available-workflows="availableWorkflows"
-      :initial-selected-apps="['accounting', 'warehouse']"
-      module-name="ERP"
-    />
-
   </div>
 </template>
 
@@ -117,67 +109,6 @@ definePageMeta({
   layout: 'erp'
 })
 
-// Pricing Configuration
-const baseAppPrices = [
-  { id: 'accounting', i18nKey: 'ERP.APPS.ACCOUNTING', price: 250000, icon: '💰' },
-  { id: 'warehouse', i18nKey: 'ERP.APPS.WAREHOUSE', price: 150000, icon: '🏭' },
-  { id: 'production', i18nKey: 'ERP.APPS.PRODUCTION', price: 200000, icon: '⚙️' },
-  { id: 'order', i18nKey: 'ERP.APPS.ORDER', price: 80000, icon: '🛒' },
-  { id: 'procurement', i18nKey: 'ERP.APPS.PROCUREMENT', price: 80000, icon: '🛍️' },
-  { id: 'eprocurement', i18nKey: 'ERP.APPS.EPROCUREMENT', price: 80000, icon: '🌐' },
-  { id: 'hr', i18nKey: 'ERP.APPS.HR', price: 0, icon: '👥' },
-  { id: 'project', i18nKey: 'ERP.APPS.PROJECT', price: 0, icon: '📉' }
-]
-
-const availableWorkflows = [
-  // AI & Analytics (Cat 5, 6)
-  { id: 'ai_assistant', name: 'AI Assistant', price: 150000, category: 'AI & Data', icon: '✨' },
-  { id: 'openai', name: 'ChatGPT (OpenAI)', price: 100000, category: 'AI & Data', icon: '🧠' },
-  { id: 'data_analytic', name: 'Data Analytics', price: 120000, category: 'AI & Data', icon: '📊' },
-  { id: 'ocr_extractor', name: 'OCR Extractor', price: 80000, category: 'AI & Data', icon: '📄' },
-
-  // Communication (Cat 7)
-  { id: 'whatsapp', name: 'WhatsApp Cloud API', price: 100000, category: 'Communication', icon: '💬' },
-  { id: 'telegram', name: 'Telegram Bot', price: 50000, category: 'Communication', icon: '✈️' },
-  { id: 'slack', name: 'Slack Integration', price: 50000, category: 'Communication', icon: '🗨️' },
-  { id: 'gmail', name: 'Gmail Integration', price: 50000, category: 'Communication', icon: '📧' },
-  { id: 'smtp', name: 'STMP Email', price: 20000, category: 'Communication', icon: '📨' },
-
-  // E-Commerce & Marketing (Cat 12, 13)
-  { id: 'shopee', name: 'Shopee Integration', price: 150000, category: 'E-Commerce', icon: '🛍️' },
-  { id: 'tokopedia', name: 'Tokopedia Integration', price: 150000, category: 'E-Commerce', icon: '🏪' },
-  { id: 'tiktok_shop', name: 'TikTok Shop', price: 150000, category: 'E-Commerce', icon: '🎵' },
-  { id: 'lazada', name: 'Lazada Integration', price: 150000, category: 'E-Commerce', icon: '📦' },
-  { id: 'facebook', name: 'Facebook Ads', price: 80000, category: 'Marketing', icon: '👍' },
-  { id: 'instagram', name: 'Instagram', price: 80000, category: 'Marketing', icon: '📸' },
-
-  // Finance (Cat 11)
-  { id: 'bca', name: 'BCA Banking', price: 200000, category: 'Finance', icon: '🏦' },
-  { id: 'bri', name: 'Bank BRI', price: 200000, category: 'Finance', icon: '🏦' },
-  { id: 'xendit', name: 'Xendit Payment', price: 150000, category: 'Finance', icon: '💳' },
-  { id: 'midtrans', name: 'Midtrans Payment', price: 150000, category: 'Finance', icon: '💳' },
-  { id: 'paypal', name: 'PayPal', price: 100000, category: 'Finance', icon: '🅿️' },
-  { id: 'jurnal', name: 'Jurnal.id', price: 100000, category: 'Finance', icon: '📒' },
-
-  // Database & Storage (Cat 3)
-  { id: 'mysql', name: 'MySQL Database', price: 50000, category: 'Database', icon: '🗄️' },
-  { id: 'postgres', name: 'PostgreSQL', price: 50000, category: 'Database', icon: '🐘' },
-  { id: 'sqlserver', name: 'SQL Server', price: 100000, category: 'Database', icon: '💾' },
-  { id: 'oracle', name: 'Oracle Database', price: 150000, category: 'Database', icon: '🔴' },
-  { id: 'gdrive', name: 'Google Drive', price: 40000, category: 'Storage', icon: '📁' },
-  { id: 's3', name: 'S3 / MinIO', price: 40000, category: 'Storage', icon: '☁️' },
-
-  // Developer Tools (Cat 9, 10, etc.)
-  { id: 'github', name: 'GitHub', price: 30000, category: 'DevTools', icon: '🐙' },
-  { id: 'gitlab', name: 'GitLab', price: 30000, category: 'DevTools', icon: '🦊' },
-  { id: 'webhook', name: 'Webhook', price: 20000, category: 'DevTools', icon: '🔗' },
-  { id: 'api', name: 'API Call', price: 20000, category: 'DevTools', icon: '🔌' },
-]
-</script>
-
-<script>
-// Inline components for simplicity within this single file structure, 
-// or normally would be separate components. We define them here for immediate usage.
 import { h } from 'vue'
 
 const FeatureCard = (props) => {

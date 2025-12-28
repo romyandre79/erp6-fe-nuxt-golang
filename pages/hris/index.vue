@@ -47,12 +47,6 @@
 
     <!-- Pricing Section -->
     <div class="mt-0 w-full">
-       <PricingCalculator 
-        :available-apps="availableSubModules"
-        theme="dark"
-        module-name="HRIS"
-        :initial-selected-apps="['org_mgmt', 'time_mgmt', 'ess', 'payroll']"
-      />
     </div>
 
   </div>
@@ -60,7 +54,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import PricingCalculator from '~/components/PricingCalculator.vue'
 
 definePageMeta({
   layout: 'hris'
@@ -99,13 +92,6 @@ const features = [
   }
 ]
 
-// Pricing Logic
-const availableSubModules = [
-  { id: 'org_mgmt', name: 'Organization Mgmt', price: 50000, icon: '🏢' },
-  { id: 'time_mgmt', name: 'Time Management', price: 50000, icon: '⏳' },
-  { id: 'ess', name: 'Employee Self Service', price: 30000, icon: '📱' },
-  { id: 'payroll', name: 'Payroll', price: 75000, icon: '💸' },
-]
 </script>
 
 <style scoped>

@@ -4,7 +4,7 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
-  { id: 'engine', name: 'Capella', price: 2500000, icon: '📊' },
+  { id: 'engine', name: 'Capella', price: 2000000, icon: '📊' },
   { id: 'accounting', name: 'Accounting', price: 250000, icon: '📊' },
   { id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📊' },
   { id: 'erp_prod', name: 'ERP Production', price: 250000, icon: '📊' },
@@ -99,7 +99,7 @@ useHead({
         "logo": "https://capellaerp.com/logo.png",
         "contactPoint": {
           "@type": "ContactPoint",
-          "telephone": "+62-xxx-xxxx-xxxx",
+          "telephone": "+62-819-3270-1147",
           "contactType": "Customer Service",
           "areaServed": "ID",
           "availableLanguage": ["Indonesian", "English"]
@@ -990,7 +990,7 @@ useHead({
               :available-apps="allApps"
               theme="dark"
               module-name="Enterprise Bundle"
-              :initial-selected-apps="['erp_core', 'hris_ess']"
+              :initial-selected-apps="['erp_core']"
             />
         </div>
     </section>
