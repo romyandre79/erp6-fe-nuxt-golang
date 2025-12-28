@@ -45,12 +45,6 @@
 
     <!-- Pricing Section -->
     <div class="w-full max-w-7xl mx-auto mt-24">
-       <PricingCalculator 
-        :available-apps="essApps"
-        theme="light"
-        module-name="ESS"
-        :initial-selected-apps="['attendance', 'leave']"
-      />
     </div>
   </div>
 </template>
@@ -64,13 +58,6 @@ import '@/assets/css/landing.css'
 definePageMeta({
   layout: false
 })
-
-const essApps = [
-  { id: 'attendance', name: 'Mobile Attendance', price: 20000, icon: '📍' },
-  { id: 'leave', name: 'Leave Management', price: 15000, icon: '📅' },
-  { id: 'payslip', name: 'Digital Payslip', price: 15000, icon: '💸' },
-  { id: 'claims', name: 'Expense Claims', price: 20000, icon: '🧾' },
-]
 
 const router = useRouter()
 const email = ref('')

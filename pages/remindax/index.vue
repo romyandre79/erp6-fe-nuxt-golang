@@ -96,45 +96,17 @@
         </div>
       </div>
     </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-24 bg-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl font-bold text-slate-900 mb-4">Transparent Pricing</h2>
-          <p class="text-slate-500">Pay only for what you need.</p>
-        </div>
-
-        <PricingCalculator 
-            :available-apps="remindaxApps"
-            theme="light"
-            module-name="Remindax"
-            :initial-selected-apps="['whatsapp', 'email']"
-        />
-      </div>
-    </section>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import PricingCalculator from '~/components/PricingCalculator.vue'
+import { h } from 'vue'
 
 definePageMeta({
   layout: 'remindax'
 })
 
-const remindaxApps = [
-  { id: 'whatsapp', name: 'WhatsApp', price: 150000, icon: '💬' },
-  { id: 'email', name: 'Email', price: 50000, icon: '📧' },
-  { id: 'telegram', name: 'Telegram', price: 50000, icon: '✈️' },
-  { id: 'slack', name: 'Slack', price: 100000, icon: '🗨️' },
-  { id: 'calendar', name: 'Google Calendar', price: 50000, icon: '🗓️' },
-]
-</script>
-
-<script>
-import { h } from 'vue'
 
 const FeatureCard = (props) => {
   return h('div', { class: 'group p-8 rounded-2xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1' }, [
