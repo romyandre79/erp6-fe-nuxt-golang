@@ -19,10 +19,7 @@
     </div>
 
     <!-- Side Panel -->
-    <div
-      v-show="isPanelOpen"
-      class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out"
-    >
+    <div v-show="isPanelOpen" class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out">
       <div class="p-3 border-b bg-gray-100 flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">

@@ -31,7 +31,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   async function loadWorkflow(id: string) {
     if (workflow.value?.wfname !== id) {
-        resetWorkflow();
+      resetWorkflow();
     }
     loading.value = true;
     try {
@@ -100,9 +100,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
 
       workflow.value = wfObj;
-
     } catch (error) {
-        console.error("Error loading workflow:", error);
+      console.error('Error loading workflow:', error);
     } finally {
       loading.value = false;
     }
@@ -144,8 +143,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
       const resdetail = await api.post('/api/admin/execute-flow', dataDetailForm);
       componentDetails.value = resdetail.data?.data ?? [];
-
-
     } catch (error) {
     } finally {
       loading.value = false;
@@ -273,12 +270,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   async function purgeFlowParameter(id: any) {
-      const df = new FormData();
-      df.append('flowname', 'purgewfparameter');
-      df.append('menu', 'admin');
-      df.append('search', 'false');
-      df.append('wfparameterid', id);
-      await api.post('/api/admin/execute-flow', df);
+    const df = new FormData();
+    df.append('flowname', 'purgewfparameter');
+    df.append('menu', 'admin');
+    df.append('search', 'false');
+    df.append('wfparameterid', id);
+    await api.post('/api/admin/execute-flow', df);
   }
 
   async function saveFlow(flow: any) {
@@ -317,18 +314,16 @@ export const useWorkflowStore = defineStore('workflow', () => {
     //saveFlow(editor.export());
   }
 
-
-
   function updateNodeData(nodeId: string | number, data: any) {
     const editor = (window as any).editor;
     if (!editor) return;
     const home = editor.drawflow?.drawflow?.Home?.data;
     if (!home) return;
-    
+
     // Find key by nodeId (usually "node-N" or just N)
     const nodeKey = Object.keys(home).find((k) => Number(home[k].id) === Number(nodeId));
     if (!nodeKey) return;
-    
+
     home[nodeKey].data = { ...(home[nodeKey].data || {}), ...data };
     editor.drawflow.drawflow.Home.data = home;
   }
@@ -347,10 +342,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
 
       const fd = new FormData();
-      fd.append('flowname', 'table'); 
+      fd.append('flowname', 'table');
       fd.append('menu', 'admin');
       fd.append('search', 'false');
-      
+
       // Generic table params
       fd.append('method', 'purge');
       fd.append('table', 'workflowdetail');
@@ -368,7 +363,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     // 3. Remove from local state
     componentDetails.value = componentDetails.value.filter((x) => Number(x.nodeid) !== Number(nodeId));
-    
+
     // Also clear from merged properties if current node
     if (selectedNode.value && Number(selectedNode.value.id) === Number(nodeId)) {
       componentProperties.value = [];

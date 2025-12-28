@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
-    <button 
-      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+    <button
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer"
       @click="handleUndo"
       :disabled="!canUndo"
       :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
@@ -9,8 +9,8 @@
     >
       ↶ Undo
     </button>
-    <button 
-      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+    <button
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer"
       @click="handleRedo"
       :disabled="!canRedo"
       :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
@@ -102,13 +102,25 @@
       </div>
     </aside>
     <!-- Global Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait"
+    >
       <div class="flex flex-col items-center">
-           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+        <svg
+          class="animate-spin h-12 w-12 text-blue-600 mb-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
       </div>
     </div>
   </div>
@@ -127,7 +139,7 @@ const PropertyEditor = defineAsyncComponent(() => import('~/components/PropertyE
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
+  layout: 'auth',
 });
 
 const route = useRoute();
@@ -154,7 +166,7 @@ const Api = useApi();
 // Undo/Redo functionality
 const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<NodeSchema[]>([], {
   historyLimit: 50,
-  enableKeyboardShortcuts: false // We'll handle this manually to sync with canvasComponents
+  enableKeyboardShortcuts: false, // We'll handle this manually to sync with canvasComponents
 });
 
 function getDefaultProps(type: string) {
@@ -324,7 +336,7 @@ const hydrateNodeProps = (nodes: NodeSchema[]) => {
     const defaults = getDefaultProps(node.type);
     // Merge defaults with existing props, preserving existing values but adding missing keys
     node.props = { ...defaults, ...node.props };
-    
+
     // Explicitly ensure key exists if it's in defaults, even if it was lost
     if ('key' in defaults && !('key' in node.props)) {
       node.props.key = defaults.key;
@@ -343,9 +355,9 @@ const acquireLock = async (menuId: number) => {
     const res = await Api.post('api/admin/lock-record', {
       tablename: 'sys_menu',
       recordid: Number(menuId),
-      locktype: 'design'
+      locktype: 'design',
     });
-    
+
     if (res.code === 200) {
       toast.add({ title: 'Design Mode', description: 'Schema locked for editing', color: 'success' });
     } else {
@@ -361,7 +373,7 @@ const releaseLock = async () => {
   try {
     await Api.post('api/admin/unlock-record', {
       tablename: 'sys_menu',
-      recordid: Number(dataMenu.menuAccessId)
+      recordid: Number(dataMenu.menuAccessId),
     });
   } catch (err) {
     console.error('Unlock error:', err);
@@ -385,7 +397,7 @@ const loadSchema = async () => {
       dataMenu.menuVersion = res?.data.data.menuversion;
       dataMenu.menuType = res?.data.data.menutype;
       dataMenu.recordStatus = res?.data.data.recordstatus;
-      
+
       // Acquire Lock
       await acquireLock(dataMenu.menuAccessId as number);
 
@@ -395,12 +407,12 @@ const loadSchema = async () => {
         canvasComponents.value = hydrateNodeProps(parsed);
       }
     } else if (res?.code == 423 || res?.message === 'SCHEMA_LOCKED') {
-       toast.add({ 
-          title: 'Schema Locked', 
-          description: res.message || 'This form is being designed by another user', 
-          color: 'error', 
-          timeout: 0 
-       });
+      toast.add({
+        title: 'Schema Locked',
+        description: res.message || 'This form is being designed by another user',
+        color: 'error',
+        timeout: 0,
+      });
     } else {
       console.error('Invalid response from ', res);
     }
@@ -425,10 +437,7 @@ const copySchema = async () => {
           const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
           // replace ignore case + global
-          const text = raw.replace(
-            new RegExp(escapedName, 'gi'),
-            route.params.slug
-          );
+          const text = raw.replace(new RegExp(escapedName, 'gi'), route.params.slug);
 
           formSchema.value = text;
 
@@ -456,11 +465,9 @@ const copySchema = async () => {
 
 const heartbeatInterval = ref<NodeJS.Timer | null>(null);
 
-
-
 onMounted(async () => {
   await loadSchema();
-  
+
   // Start Heartbeat to refresh lock every 60s
   if (dataMenu.menuAccessId) {
     heartbeatInterval.value = setInterval(() => {
@@ -475,10 +482,10 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   // Remove keyboard listener
   window.removeEventListener('keydown', handleKeyDown);
-  
+
   // Clear heartbeat interval
   if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
-  
+
   // Release lock
   releaseLock();
 });
@@ -515,6 +522,6 @@ watch(
       reset(JSON.parse(JSON.stringify(canvasComponents.value)));
     }
   },
-  { immediate: false }
+  { immediate: false },
 );
 </script>

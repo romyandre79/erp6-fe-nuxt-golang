@@ -13,20 +13,23 @@ export const useThemeStore = defineStore('theme', () => {
   const userStore = useUserStore();
 
   // Assistant Character Settings
-  const assistantCharacterCookie = useCookie<string>('assistant_character', { default: () => 'clippy', maxAge: 60*60*24*365 });
+  const assistantCharacterCookie = useCookie<string>('assistant_character', {
+    default: () => 'clippy',
+    maxAge: 60 * 60 * 24 * 365,
+  });
   const assistantCustomImageCookie = useCookie<string>('assistant_custom_image', { default: () => '' });
-  
+
   const assistantCharacter = ref(assistantCharacterCookie.value || 'clippy');
   const assistantCustomImage = ref(assistantCustomImageCookie.value || '');
-  
+
   const setAssistantCharacter = (char: string) => {
-      assistantCharacter.value = char;
-      assistantCharacterCookie.value = char;
+    assistantCharacter.value = char;
+    assistantCharacterCookie.value = char;
   };
 
   const setAssistantCustomImage = (url: string) => {
-      assistantCustomImage.value = url;
-      assistantCustomImageCookie.value = url;
+    assistantCustomImage.value = url;
+    assistantCustomImageCookie.value = url;
   };
 
   async function loadThemes() {
@@ -128,6 +131,6 @@ export const useThemeStore = defineStore('theme', () => {
     assistantCharacter,
     assistantCustomImage,
     setAssistantCharacter,
-    setAssistantCustomImage
+    setAssistantCustomImage,
   };
 });

@@ -19,10 +19,7 @@
     </div>
 
     <!-- Side Panel -->
-    <div
-      v-show="isPanelOpen"
-      class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out"
-    >
+    <div v-show="isPanelOpen" class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out">
       <div class="p-3 border-b bg-gray-100 flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">
@@ -34,12 +31,12 @@
         <!-- Elements Content -->
         <div v-if="activeActivity === 'elements'">
           <div class="mb-4">
-             <input
-               v-model="searchQuery"
-               type="text"
-               placeholder="Search components..."
-               class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-             />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search components..."
+              class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
           </div>
 
           <div v-if="filteredComponents.length > 0">
@@ -73,9 +70,12 @@
               </div>
             </div>
           </div>
-          
-          <div v-if="filteredComponents.length === 0 && filteredContainers.length === 0" class="text-center text-gray-500 mt-4 text-sm">
-             No components found.
+
+          <div
+            v-if="filteredComponents.length === 0 && filteredContainers.length === 0"
+            class="text-center text-gray-500 mt-4 text-sm"
+          >
+            No components found.
           </div>
         </div>
 
@@ -110,13 +110,13 @@ const activeLabel = computed(() => {
 const filteredComponents = computed(() => {
   if (!searchQuery.value) return availableComponents;
   const lowerQuery = searchQuery.value.toLowerCase();
-  return availableComponents.filter(c => c.label.toLowerCase().includes(lowerQuery));
+  return availableComponents.filter((c) => c.label.toLowerCase().includes(lowerQuery));
 });
 
 const filteredContainers = computed(() => {
   if (!searchQuery.value) return layoutContainers;
   const lowerQuery = searchQuery.value.toLowerCase();
-  return layoutContainers.filter(c => c.label.toLowerCase().includes(lowerQuery));
+  return layoutContainers.filter((c) => c.label.toLowerCase().includes(lowerQuery));
 });
 
 function toggleActivity(id: string) {

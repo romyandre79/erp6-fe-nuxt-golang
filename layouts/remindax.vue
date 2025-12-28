@@ -10,27 +10,33 @@
               REMINDAX
             </span>
           </div>
-          
+
           <!-- Navigation Links -->
           <div class="hidden md:flex space-x-8 items-center">
-            <a href="#features" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium">Features</a>
-            <a href="#modules" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium">Modules</a>
-            <a href="#pricing" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium">Pricing</a>
-            
+            <a href="#features" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium"
+              >Features</a
+            >
+            <a href="#modules" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium"
+              >Modules</a
+            >
+            <a href="#pricing" class="text-slate-600 hover:text-orange-600 transition-colors duration-200 font-medium"
+              >Pricing</a
+            >
+
             <!-- Link to login as requested -->
-            <NuxtLink 
-              to="/login" 
+            <NuxtLink
+              to="/login"
               class="px-5 py-2 rounded-full bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all duration-200 shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 active:transform active:scale-95"
             >
               Login
             </NuxtLink>
-            
+
             <LanguageWatcher class="ml-2" />
           </div>
 
           <!-- Mobile Menu Button (Simple implementation) -->
           <div class="md:hidden flex items-center">
-             <NuxtLink to="/login" class="text-sm font-medium text-orange-600">Login</NuxtLink>
+            <NuxtLink to="/login" class="text-sm font-medium text-orange-600">Login</NuxtLink>
           </div>
         </div>
       </div>
@@ -52,6 +58,10 @@
 
 <style scoped>
 .remindax-layout {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 </style>

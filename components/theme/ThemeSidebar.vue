@@ -19,10 +19,7 @@
     </div>
 
     <!-- Side Panel -->
-    <div
-      v-show="isPanelOpen"
-      class="w-96 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out"
-    >
+    <div v-show="isPanelOpen" class="w-96 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out">
       <div class="p-3 border-b bg-gray-100 flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">
@@ -35,10 +32,16 @@
         <div v-if="activeActivity === 'design'" class="space-y-6">
           <!-- Actions -->
           <div class="flex gap-2">
-            <button class="flex-1 py-2 px-3 rounded transition hover:bg-gray-100 border bg-white" @click="$emit('save')">
+            <button
+              class="flex-1 py-2 px-3 rounded transition hover:bg-gray-100 border bg-white"
+              @click="$emit('save')"
+            >
               Save
             </button>
-            <button class="flex-1 px-3 py-2 rounded transition hover:bg-gray-100 border bg-white" @click="$emit('reset')">
+            <button
+              class="flex-1 px-3 py-2 rounded transition hover:bg-gray-100 border bg-white"
+              @click="$emit('reset')"
+            >
               Reset
             </button>
           </div>
@@ -52,11 +55,7 @@
                   <div class="text-sm text-gray-500 italic mb-2" v-if="!item.props || item.props.length === 0">
                     No properties available.
                   </div>
-                  <div
-                    v-for="prop in item.props"
-                    :key="prop.key"
-                    class="border rounded p-3 bg-white shadow-sm"
-                  >
+                  <div v-for="prop in item.props" :key="prop.key" class="border rounded p-3 bg-white shadow-sm">
                     <div class="mb-2">
                       <div class="font-medium text-sm text-gray-800">{{ prop.label }}</div>
                       <div class="text-xs text-gray-400 font-mono">{{ prop.key }}</div>
@@ -118,11 +117,19 @@
         <div v-if="activeActivity === 'code'" class="space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1 text-gray-700">CSS Output</label>
-            <textarea readonly class="w-full h-60 font-mono text-xs p-2 border rounded bg-gray-50 text-gray-600" :value="cssText"></textarea>
+            <textarea
+              readonly
+              class="w-full h-60 font-mono text-xs p-2 border rounded bg-gray-50 text-gray-600"
+              :value="cssText"
+            ></textarea>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1 text-gray-700">JSON</label>
-            <textarea readonly class="w-full h-60 font-mono text-xs p-2 border rounded bg-gray-50 text-gray-600" :value="jsonText"></textarea>
+            <textarea
+              readonly
+              class="w-full h-60 font-mono text-xs p-2 border rounded bg-gray-50 text-gray-600"
+              :value="jsonText"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -441,7 +448,7 @@ const accordionItems = computed(() => {
     defaultOpen: false,
     props: cat.props,
     key: cat.key,
-    slot: 'properties'
+    slot: 'properties',
   }));
 });
 </script>

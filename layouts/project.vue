@@ -12,10 +12,9 @@ const { isMobile } = useDevice();
   <ClientOnly>
     <UApp>
       <div class="project-layout min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-
         <!-- Main Content -->
         <main class="h-[calc(100vh-64px)] overflow-hidden">
-           <slot />
+          <slot />
         </main>
       </div>
     </UApp>

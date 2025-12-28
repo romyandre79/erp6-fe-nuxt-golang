@@ -40,7 +40,7 @@ export function useTableLogic(props: any, emit: any) {
   };
 
   // Check if column is visible (and not grouped)
-  const isColumnVisible = (columnKey: string) => 
+  const isColumnVisible = (columnKey: string) =>
     !hiddenColumns.value.has(columnKey) && !groupByColumns.value.includes(columnKey);
 
   // Set column width
@@ -90,7 +90,7 @@ export function useTableLogic(props: any, emit: any) {
 
   // Remove group
   const removeGroup = (columnKey: string) => {
-    groupByColumns.value = groupByColumns.value.filter(k => k !== columnKey);
+    groupByColumns.value = groupByColumns.value.filter((k) => k !== columnKey);
     expandedGroups.value = new Set();
   };
 
@@ -110,41 +110,43 @@ export function useTableLogic(props: any, emit: any) {
   // Computed Flattened Rows for Display
   const flattenedRows = computed(() => {
     if (groupByColumns.value.length === 0) {
-      return rowsData.value.map(row => ({ type: 'data', row, level: 0 }));
+      return rowsData.value.map((row) => ({ type: 'data', row, level: 0 }));
     }
 
     const processLevel = (data: any[], depth: number, parentKey: string): any[] => {
       if (depth >= groupByColumns.value.length) {
-        return data.map(row => ({ type: 'data', row, level: depth }));
+        return data.map((row) => ({ type: 'data', row, level: depth }));
       }
 
       const column = groupByColumns.value[depth];
       const grouped: Record<string, any[]> = {};
-      data.forEach(row => {
+      data.forEach((row) => {
         const val = String(row[column] ?? 'N/A');
         if (!grouped[val]) grouped[val] = [];
         grouped[val].push(row);
       });
 
       let result: any[] = [];
-      Object.keys(grouped).sort().forEach(val => {
-        const groupKey = parentKey ? `${parentKey}|${val}` : val;
-        const isExp = expandedGroups.value.has(groupKey);
-        result.push({
-          type: 'group',
-          key: val,
-          columnKey: column,
-          level: depth,
-          expanded: isExp,
-          count: grouped[val].length,
-          groupKey: groupKey,
-          value: val // Add explicit value
-        });
+      Object.keys(grouped)
+        .sort()
+        .forEach((val) => {
+          const groupKey = parentKey ? `${parentKey}|${val}` : val;
+          const isExp = expandedGroups.value.has(groupKey);
+          result.push({
+            type: 'group',
+            key: val,
+            columnKey: column,
+            level: depth,
+            expanded: isExp,
+            count: grouped[val].length,
+            groupKey: groupKey,
+            value: val, // Add explicit value
+          });
 
-        if (isExp) {
-          result = result.concat(processLevel(grouped[val], depth + 1, groupKey));
-        }
-      });
+          if (isExp) {
+            result = result.concat(processLevel(grouped[val], depth + 1, groupKey));
+          }
+        });
       return result;
     };
 
@@ -166,13 +168,13 @@ export function useTableLogic(props: any, emit: any) {
 
   const calculateMin = (columnKey: string): number => {
     if (rowsData.value.length === 0) return 0;
-    const values = rowsData.value.map(row => parseFloat(row[columnKey]) || 0);
+    const values = rowsData.value.map((row) => parseFloat(row[columnKey]) || 0);
     return Math.min(...values);
   };
 
   const calculateMax = (columnKey: string): number => {
     if (rowsData.value.length === 0) return 0;
-    const values = rowsData.value.map(row => parseFloat(row[columnKey]) || 0);
+    const values = rowsData.value.map((row) => parseFloat(row[columnKey]) || 0);
     return Math.max(...values);
   };
 
@@ -181,16 +183,20 @@ export function useTableLogic(props: any, emit: any) {
   // Get summary value based on aggregation type
   const getSummaryValue = (columnKey: string, aggregationType: 'sum' | 'avg' | 'min' | 'max' | 'count'): number => {
     switch (aggregationType) {
-      case 'sum': return calculateSum(columnKey);
-      case 'avg': return calculateAvg(columnKey);
-      case 'min': return calculateMin(columnKey);
-      case 'max': return calculateMax(columnKey);
-      case 'count': return calculateCount();
-      default: return 0;
+      case 'sum':
+        return calculateSum(columnKey);
+      case 'avg':
+        return calculateAvg(columnKey);
+      case 'min':
+        return calculateMin(columnKey);
+      case 'max':
+        return calculateMax(columnKey);
+      case 'count':
+        return calculateCount();
+      default:
+        return 0;
     }
   };
-
-
 
   // Inline Editing
   const editingKey = ref<string | null>(null);
@@ -227,22 +233,24 @@ export function useTableLogic(props: any, emit: any) {
   // Export data to CSV
   const exportToCSV = (columns: any[], filename: string = 'export.csv') => {
     if (rowsData.value.length === 0) return;
-    
-    const visibleCols = columns.filter(col => !hiddenColumns.value.has(col.key || col));
-    const headers = visibleCols.map(col => col.text || col.label || col.key || col);
-    
+
+    const visibleCols = columns.filter((col) => !hiddenColumns.value.has(col.key || col));
+    const headers = visibleCols.map((col) => col.text || col.label || col.key || col);
+
     const csvRows = [
       headers.join(','),
-      ...rowsData.value.map(row => 
-        visibleCols.map(col => {
-          const value = row[col.key || col];
-          // Escape quotes and wrap in quotes if contains comma
-          const strVal = String(value ?? '').replace(/"/g, '""');
-          return strVal.includes(',') || strVal.includes('"') ? `"${strVal}"` : strVal;
-        }).join(',')
-      )
+      ...rowsData.value.map((row) =>
+        visibleCols
+          .map((col) => {
+            const value = row[col.key || col];
+            // Escape quotes and wrap in quotes if contains comma
+            const strVal = String(value ?? '').replace(/"/g, '""');
+            return strVal.includes(',') || strVal.includes('"') ? `"${strVal}"` : strVal;
+          })
+          .join(','),
+      ),
     ];
-    
+
     const csvContent = csvRows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -338,28 +346,30 @@ export function useTableLogic(props: any, emit: any) {
       return value
         ? '<input type="checkbox" checked disabled class="checkbox checkbox-sm"/>'
         : '<input type="checkbox" disabled class="checkbox checkbox-sm"/>';
-    
+
     if (['date', 'datetime', 'datetime-local'].includes(col.type) && value) {
-       const date = new Date(value);
-       if (!isNaN(date.getTime())) {
-          if (col.type === 'date') {
-             return new Intl.DateTimeFormat(locale.value).format(date);
-          }
-          return new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }).format(date);
-       }
-    }
-    
-    if (col.type === 'time' && value) {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) {
-            return new Intl.DateTimeFormat(locale.value, { timeStyle: 'short' }).format(date);
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        if (col.type === 'date') {
+          return new Intl.DateTimeFormat(locale.value).format(date);
         }
+        return new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }).format(date);
+      }
+    }
+
+    if (col.type === 'time' && value) {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return new Intl.DateTimeFormat(locale.value, { timeStyle: 'short' }).format(date);
+      }
     }
 
     if (col.type === 'currency')
-      return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(
-        value || 0,
-      );
+      return new Intl.NumberFormat(locale.value, {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 2,
+      }).format(value || 0);
     if (col.type === 'number') return new Intl.NumberFormat(locale.value).format(value || 0);
     return value ?? '';
   };
@@ -468,4 +478,3 @@ export function useTableLogic(props: any, emit: any) {
     lastPage,
   };
 }
-

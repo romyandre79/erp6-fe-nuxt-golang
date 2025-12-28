@@ -1,15 +1,23 @@
 <template>
   <div class="relative" :style="{ padding: '40px' }">
     <!-- Rulers -->
-    <div v-if="reportStore.showRulers && !previewMode" class="absolute top-0 left-0 right-0 h-10 bg-gray-200 border-b flex items-end">
+    <div
+      v-if="reportStore.showRulers && !previewMode"
+      class="absolute top-0 left-0 right-0 h-10 bg-gray-200 border-b flex items-end"
+    >
       <div v-for="i in Math.ceil(canvasWidth / 50)" :key="`h-${i}`" class="relative" :style="{ width: '50px' }">
         <span class="absolute bottom-0 left-0 text-xs text-gray-600">{{ i * 50 }}</span>
         <div class="absolute bottom-0 left-0 w-px h-2 bg-gray-400"></div>
       </div>
     </div>
-    <div v-if="reportStore.showRulers && !previewMode" class="absolute top-0 left-0 bottom-0 w-10 bg-gray-200 border-r flex flex-col justify-end">
+    <div
+      v-if="reportStore.showRulers && !previewMode"
+      class="absolute top-0 left-0 bottom-0 w-10 bg-gray-200 border-r flex flex-col justify-end"
+    >
       <div v-for="i in Math.ceil(canvasHeight / 50)" :key="`v-${i}`" class="relative" :style="{ height: '50px' }">
-        <span class="absolute top-0 left-0 text-xs text-gray-600 transform -rotate-90 origin-top-left">{{ i * 50 }}</span>
+        <span class="absolute top-0 left-0 text-xs text-gray-600 transform -rotate-90 origin-top-left">{{
+          i * 50
+        }}</span>
         <div class="absolute top-0 left-0 h-px w-2 bg-gray-400"></div>
       </div>
     </div>
@@ -34,12 +42,7 @@
         :height="canvasHeight"
       >
         <defs>
-          <pattern
-            id="grid"
-            :width="reportStore.gridSize"
-            :height="reportStore.gridSize"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id="grid" :width="reportStore.gridSize" :height="reportStore.gridSize" patternUnits="userSpaceOnUse">
             <path
               :d="`M ${reportStore.gridSize} 0 L 0 0 0 ${reportStore.gridSize}`"
               fill="none"
@@ -58,7 +61,7 @@
         class="relative group"
         :class="{
           'border-b border-dashed border-gray-300': !previewMode,
-          'bg-gray-50': !previewMode && band.visible === false
+          'bg-gray-50': !previewMode && band.visible === false,
         }"
         :style="{ height: `${band.height}px` }"
         v-show="!previewMode || band.visible !== false"
@@ -66,28 +69,31 @@
         @drop="onDrop($event, band)"
       >
         <!-- Band Label -->
-        <div 
-          v-if="!previewMode" 
+        <div
+          v-if="!previewMode"
           class="absolute -left-0 top-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-br border-b border-r border-blue-200 z-10 opacity-70 group-hover:opacity-100 transition-opacity select-none flex items-center gap-1"
         >
           <span>{{ band.type.toUpperCase() }}</span>
-          <UIcon 
-             :name="band.visible !== false ? 'i-heroicons-eye' : 'i-heroicons-eye-slash'" 
-             class="w-3 h-3 cursor-pointer hover:text-blue-900"
-             @click.stop="reportStore.toggleBandVisibility(band.type)"
+          <UIcon
+            :name="band.visible !== false ? 'i-heroicons-eye' : 'i-heroicons-eye-slash'"
+            class="w-3 h-3 cursor-pointer hover:text-blue-900"
+            @click.stop="reportStore.toggleBandVisibility(band.type)"
           />
         </div>
 
         <!-- Drop Zone Indicator (Visual only) -->
-        <div v-if="!previewMode" class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity"></div>
+        <div
+          v-if="!previewMode"
+          class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity"
+        ></div>
 
         <!-- Band Resize Handle -->
-        <div 
-          v-if="!previewMode" 
+        <div
+          v-if="!previewMode"
           class="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize z-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
           @mousedown.stop="startResizeBand($event, band)"
         >
-             <div class="w-full h-px bg-blue-400"></div>
+          <div class="w-full h-px bg-blue-400"></div>
         </div>
 
         <!-- Elements in Band -->
@@ -110,10 +116,10 @@
           @mousedown="startDrag($event, element)"
         >
           <!-- Element Content -->
-          <div class="w-full h-full p-1" :class="{'pointer-events-none': previewMode}">
-             <!-- Dynamic Component Rendering could be better here, but switch case for now -->
+          <div class="w-full h-full p-1" :class="{ 'pointer-events-none': previewMode }">
+            <!-- Dynamic Component Rendering could be better here, but switch case for now -->
             <template v-if="element.type === 'staticText'">
-              <div 
+              <div
                 class="w-full h-full whitespace-pre-wrap"
                 :style="{
                   fontFamily: element.properties.fontFamily,
@@ -130,36 +136,37 @@
             </template>
             <template v-else-if="element.type === 'textField'">
               <div class="w-full h-full flex items-center bg-blue-50/50 text-blue-600 text-xs px-1" v-if="!previewMode">
-                 {{ element.properties.expression || '$F{field}' }}
+                {{ element.properties.expression || '$F{field}' }}
               </div>
-              <div v-else class="w-full h-full text-gray-500 italic">
-                 {{ element.properties.expression }} (Data)
-              </div>
+              <div v-else class="w-full h-full text-gray-500 italic">{{ element.properties.expression }} (Data)</div>
             </template>
             <template v-else-if="element.type === 'image'">
-               <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                 <img v-if="element.properties.source && !element.properties.source.startsWith('$')" :src="element.properties.source" class="max-w-full max-h-full" />
-                 <UIcon v-else name="i-heroicons-photo" class="text-gray-400 w-8 h-8" />
-               </div>
+              <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                <img
+                  v-if="element.properties.source && !element.properties.source.startsWith('$')"
+                  :src="element.properties.source"
+                  class="max-w-full max-h-full"
+                />
+                <UIcon v-else name="i-heroicons-photo" class="text-gray-400 w-8 h-8" />
+              </div>
             </template>
             <template v-else-if="element.type === 'line'">
-              <div 
-                class="w-full h-full flex items-center justify-center"
-              >
-                 <div 
-                    :style="{
-                        width: element.properties.direction === 'vertical' ? `${element.properties.lineWidth}px` : '100%',
-                        height: element.properties.direction === 'horizontal' ? `${element.properties.lineWidth}px` : '100%',
-                        backgroundColor: element.properties.color
-                    }"
-                 ></div>
+              <div class="w-full h-full flex items-center justify-center">
+                <div
+                  :style="{
+                    width: element.properties.direction === 'vertical' ? `${element.properties.lineWidth}px` : '100%',
+                    height:
+                      element.properties.direction === 'horizontal' ? `${element.properties.lineWidth}px` : '100%',
+                    backgroundColor: element.properties.color,
+                  }"
+                ></div>
               </div>
             </template>
             <template v-else-if="element.type === 'rectangle'">
-               <div class="w-full h-full border border-black"></div>
+              <div class="w-full h-full border border-black"></div>
             </template>
             <template v-else>
-               <span class="text-xs text-gray-400">{{ element.type }}</span>
+              <span class="text-xs text-gray-400">{{ element.type }}</span>
             </template>
           </div>
 
@@ -187,8 +194,8 @@ import type { ReportElement } from '~/store/report';
 const props = defineProps({
   previewMode: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const reportStore = useReportStore();
@@ -219,14 +226,14 @@ function onCanvasDrop(event: DragEvent) {
 
   // If dropping a Band (structure)
   if (component.category === 'structure') {
-     reportStore.addBand(component.props.bandType, component.props.height);
-     return;
+    reportStore.addBand(component.props.bandType, component.props.height);
+    return;
   }
 }
 
 function onDragOver(event: DragEvent, band: any) {
   if (props.previewMode) return;
-  if (band.visible === false) return; 
+  if (band.visible === false) return;
   event.preventDefault();
 }
 
@@ -359,8 +366,8 @@ function onMouseMove(event: MouseEvent) {
 
     reportStore.updateElement(dragState.element.id, updates);
   } else if (dragState.type === 'resizeBand') {
-     const newHeight = Math.max(10, dragState.elementStartHeight + deltaY);
-     reportStore.updateBand(dragState.band.type, { height: newHeight });
+    const newHeight = Math.max(10, dragState.elementStartHeight + deltaY);
+    reportStore.updateBand(dragState.band.type, { height: newHeight });
   }
 }
 
@@ -374,7 +381,7 @@ function onMouseUp() {
 onMounted(() => {
   const handleKeyDown = (event: KeyboardEvent) => {
     if (props.previewMode) return;
-    
+
     // Delete
     if (event.key === 'Delete' && reportStore.selectedElement) {
       reportStore.deleteElement(reportStore.selectedElement.id);
@@ -394,12 +401,12 @@ onMounted(() => {
       event.preventDefault();
       const step = event.shiftKey ? 10 : 1;
       const updates: any = {};
-      
+
       if (event.key === 'ArrowUp') updates.y = reportStore.selectedElement.y - step;
       if (event.key === 'ArrowDown') updates.y = reportStore.selectedElement.y + step;
       if (event.key === 'ArrowLeft') updates.x = reportStore.selectedElement.x - step;
       if (event.key === 'ArrowRight') updates.x = reportStore.selectedElement.x + step;
-      
+
       reportStore.updateElement(reportStore.selectedElement.id, updates);
     }
   };

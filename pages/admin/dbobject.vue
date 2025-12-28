@@ -4,35 +4,29 @@
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-semibold">Database Designer</h1>
         <!-- Restore File Input (Hidden) -->
-        <input
-          type="file"
-          ref="restoreInput"
-          class="hidden"
-          accept=".sql,.db"
-          @change="onFileSelected"
-        />
-        
+        <input type="file" ref="restoreInput" class="hidden" accept=".sql,.db" @change="onFileSelected" />
+
         <div class="flex items-center gap-2 ml-4">
-          <button 
-            @click="handleUndo" 
+          <button
+            @click="handleUndo"
             :disabled="!canUndo"
             :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
-            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50" 
+            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
             title="Undo (Ctrl+Z)"
           >
             ↶ Undo
           </button>
-          <button 
-            @click="handleRedo" 
+          <button
+            @click="handleRedo"
             :disabled="!canRedo"
             :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
-            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50" 
+            class="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
             title="Redo (Ctrl+Y)"
           >
             ↷ Redo
           </button>
           <div class="w-px h-6 bg-gray-300"></div>
-             <button
+          <button
             @click="backupDatabase"
             :disabled="backupLoading"
             class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
@@ -40,18 +34,18 @@
             <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
             Backup
           </button>
-          
+
           <button
             @click="triggerRestore"
             :disabled="backupLoading"
             class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
           >
-             <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
+            <span v-if="backupLoading && progress > 0" class="loading loading-spinner loading-xs"></span>
             Restore
           </button>
         </div>
       </div>
-      
+
       <!-- Progress Bar (Overlay or inline) -->
       <div v-if="backupLoading" class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
         <div class="h-full bg-blue-600 transition-all duration-300" :style="{ width: `${progress}%` }"></div>
@@ -159,42 +153,73 @@
           <!-- add table button pinned bottom-left -->
           <div class="absolute left-4 bottom-4"></div>
         </div>
-        
+
         <!-- Zoom Controls -->
         <div class="fixed top-24 right-6 flex flex-col gap-2 z-50">
           <button @click="zoomIn" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom In">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
           </button>
-          <button @click="resetZoom" class="btn btn-xs rounded shadow-lg bg-white text-gray-700 font-medium" title="Reset Zoom">
+          <button
+            @click="resetZoom"
+            class="btn btn-xs rounded shadow-lg bg-white text-gray-700 font-medium"
+            title="Reset Zoom"
+          >
             {{ Math.round(zoom * 100) }}%
           </button>
           <button @click="zoomOut" class="btn btn-sm btn-circle btn-primary shadow-lg" title="Zoom Out">
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+            </svg>
           </button>
         </div>
       </div>
     </div>
-    
+
     <!-- Data Viewer Modal -->
     <div v-if="showDataModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white rounded-lg shadow-xl overflow-hidden relative max-w-[90vw] max-h-[90vh]">
-        <DbObjectDataViewer 
-          :table="dataViewerTable" 
-          @close="showDataModal = false" 
-        />
+        <DbObjectDataViewer :table="dataViewerTable" @close="showDataModal = false" />
       </div>
     </div>
 
     <!-- Global Loading Overlay -->
     <!-- Global Loading Overlay -->
     <!-- Global Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait"
+    >
       <div class="flex flex-col items-center">
-           <svg class="animate-spin h-12 w-12 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+        <svg
+          class="animate-spin h-12 w-12 text-primary mb-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
       </div>
     </div>
   </div>
@@ -217,7 +242,7 @@ const DbObjectDataViewer = defineAsyncComponent(() => import('~/components/dbobj
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
+  layout: 'auth',
 });
 
 let idSeq = 1;
@@ -230,13 +255,13 @@ const canvasRef = ref(null);
 const restoreInput = ref(null);
 const api = useApi();
 
-const { 
-  backupDatabase, 
-  restoreDatabase, 
-  loading: backupLoading, 
-  progress, 
-  error: backupError, 
-  success: backupSuccess 
+const {
+  backupDatabase,
+  restoreDatabase,
+  loading: backupLoading,
+  progress,
+  error: backupError,
+  success: backupSuccess,
 } = useBackupRestore();
 
 // Watch for success/error to show toasts
@@ -259,16 +284,15 @@ const { isDirty, markDirty, markClean } = useUnsavedChanges();
 function onFileSelected(event: any) {
   const file = event.target.files[0];
   if (file) {
-    if(!confirm(`Are you sure you want to restore ${file.name}? This will overwrite existing data.`)) {
-        event.target.value = ''; // reset
-        return;
+    if (!confirm(`Are you sure you want to restore ${file.name}? This will overwrite existing data.`)) {
+      event.target.value = ''; // reset
+      return;
     }
     restoreDatabase(file);
     markClean(); // Clean state after restore
     event.target.value = ''; // reset after selection
   }
 }
-
 
 const {
   tables,
@@ -300,8 +324,8 @@ const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<DbObjectStat
   { tables: [], relations: [], areas: [] },
   {
     historyLimit: 50,
-    enableKeyboardShortcuts: false // We'll handle this manually
-  }
+    enableKeyboardShortcuts: false, // We'll handle this manually
+  },
 );
 
 const selectedId = ref(null);
@@ -329,23 +353,30 @@ function selectTable(id: any) {
   }
 }
 
-watch(selectedTable, (newVal) => {
-  jsonPreview.value = newVal ? JSON.stringify(newVal, null, 2) : '';
-}, { deep: true });
+watch(
+  selectedTable,
+  (newVal) => {
+    jsonPreview.value = newVal ? JSON.stringify(newVal, null, 2) : '';
+  },
+  { deep: true },
+);
 
-
-watch([tables, relations, areas], () => {
-  markDirty();
-  // Record state for undo/redo
-  recordCanvasState();
-}, { deep: true });
+watch(
+  [tables, relations, areas],
+  () => {
+    markDirty();
+    // Record state for undo/redo
+    recordCanvasState();
+  },
+  { deep: true },
+);
 
 // Helper function to record canvas state
 function recordCanvasState() {
   const state: DbObjectState = {
     tables: JSON.parse(JSON.stringify(toRaw(tables))),
     relations: JSON.parse(JSON.stringify(toRaw(relations))),
-    areas: JSON.parse(JSON.stringify(toRaw(areas)))
+    areas: JSON.parse(JSON.stringify(toRaw(areas))),
   };
   record(state);
 }
@@ -370,18 +401,18 @@ function restoreCanvasState(state: DbObjectState) {
   tables.splice(0, tables.length, ...state.tables);
   relations.splice(0, relations.length, ...state.relations);
   areas.splice(0, areas.length, ...state.areas);
-  
+
   // Update sequences
   if (tables.length > 0) {
-    idSeq = Math.max(...tables.map(t => t.id)) + 1;
+    idSeq = Math.max(...tables.map((t) => t.id)) + 1;
   }
   if (relations.length > 0) {
-    relSeq = Math.max(...relations.map(r => r.id)) + 1;
+    relSeq = Math.max(...relations.map((r) => r.id)) + 1;
   }
   if (areas.length > 0) {
-    areaSeq = Math.max(...areas.map(a => a.id)) + 1;
+    areaSeq = Math.max(...areas.map((a) => a.id)) + 1;
   }
-  
+
   // Recompute paths
   computeRelationsPaths();
 }
@@ -403,7 +434,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
     handleRedo();
   }
 };
-
 
 function addTableAt() {
   let x = 40;
@@ -525,7 +555,7 @@ function onAreaMouseMove(ev: any) {
     const canvas = canvasRef.value.getBoundingClientRect();
     const mouseX = (ev.clientX - canvas.left) / zoom.value;
     const mouseY = (ev.clientY - canvas.top) / zoom.value;
-    
+
     const newX = mouseX - areaOffset.value.x;
     const newY = mouseY - areaOffset.value.y;
     const dx = newX - area.x;
@@ -544,7 +574,7 @@ function onAreaMouseMove(ev: any) {
     const canvas = canvasRef.value.getBoundingClientRect();
     const mouseX = (ev.clientX - canvas.left) / zoom.value;
     const mouseY = (ev.clientY - canvas.top) / zoom.value;
-    
+
     area.width = Math.max(100, mouseX - area.x);
     area.height = Math.max(100, mouseY - area.y);
   }
@@ -704,17 +734,16 @@ async function resetDesign() {
 
 // AI & Export (Placeholders or copied logic)
 function aiSuggestRelations() {
-  const existingRelations = new Set(
-    relations.map(r => `${r.from.table}_${r.from.col}-${r.to.table}_${r.to.col}`)
-  );
+  const existingRelations = new Set(relations.map((r) => `${r.from.table}_${r.from.col}-${r.to.table}_${r.to.col}`));
 
-  const primaryKeys = tables.reduce((acc, t) => {
-    const pkCols = t.columns
-      .map((c, idx) => (c.type === 'auto' ? idx : null))
-      .filter(x => x !== null);
-    acc[t.id] = pkCols; 
-    return acc;
-  }, {} as Record<number, number[]>);
+  const primaryKeys = tables.reduce(
+    (acc, t) => {
+      const pkCols = t.columns.map((c, idx) => (c.type === 'auto' ? idx : null)).filter((x) => x !== null);
+      acc[t.id] = pkCols;
+      return acc;
+    },
+    {} as Record<number, number[]>,
+  );
 
   for (let i = 0; i < tables.length; i++) {
     const t1 = tables[i];
@@ -757,7 +786,7 @@ function aiGenerateTableFromDescription(description: string) {
   const tableName = words[0] || 'table_' + idSeq;
 
   // cek duplikat
-  if (tables.some(t => t.name.toLowerCase() === tableName.toLowerCase())) {
+  if (tables.some((t) => t.name.toLowerCase() === tableName.toLowerCase())) {
     toast.add({
       title: 'Duplicate Table',
       description: `Table with name "${tableName}" already exists!`,
@@ -769,7 +798,10 @@ function aiGenerateTableFromDescription(description: string) {
   // cari kolom: kata setelah 'with'
   let columnsPart = description.toLowerCase().split('with')[1] || '';
   columnsPart = columnsPart.replace(/and/g, ','); // normalize
-  const colNames = columnsPart.split(',').map(c => c.trim()).filter(c => c);
+  const colNames = columnsPart
+    .split(',')
+    .map((c) => c.trim())
+    .filter((c) => c);
 
   // buat tabel object
   const newTable = {
@@ -779,11 +811,11 @@ function aiGenerateTableFromDescription(description: string) {
     x: 40 + (tables.length % 4) * 340,
     y: 40 + Math.floor(tables.length / 4) * 200,
     width: 240,
-    columns: colNames.map(name => {
+    columns: colNames.map((name) => {
       let type = 'text';
 
       // logika AI: if 'id' + kata sama/mirip table → auto
-      if (name.includes('id') && name.replace(/_/g,'').includes(tableName.toLowerCase())) {
+      if (name.includes('id') && name.replace(/_/g, '').includes(tableName.toLowerCase())) {
         type = 'auto';
       } else if (name.includes('id')) {
         type = 'int';
@@ -805,7 +837,7 @@ function aiGenerateTableFromDescription(description: string) {
   selectTable(newTable.id);
   computeRelationsPaths();
 
-    aiSuggestRelations();
+  aiSuggestRelations();
 
   toast.add({
     title: 'AI Table Generated',
@@ -817,7 +849,10 @@ function aiGenerateTableFromDescription(description: string) {
 function aiParseNatural(prompt: string) {
   if (!prompt) return;
 
-  const instructions = prompt.split(/[\.\n]/).map(p => p.trim()).filter(Boolean);
+  const instructions = prompt
+    .split(/[\.\n]/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   for (const instr of instructions) {
     const lower = instr.toLowerCase();
@@ -831,43 +866,43 @@ function aiParseNatural(prompt: string) {
 
     // ADD COLUMN
     if (lower.includes('add column')) {
-  // match: add column <name> (above|below <refCol>) to|in <tableName>
-  const colMatch = /add column (\w+)(?: (above|below) (\w+))?(?: (?:to|in) (\w+))?/i.exec(instr);
-  if (colMatch) {
-    const [, newCol, position, refCol, tableName] = colMatch;
+      // match: add column <name> (above|below <refCol>) to|in <tableName>
+      const colMatch = /add column (\w+)(?: (above|below) (\w+))?(?: (?:to|in) (\w+))?/i.exec(instr);
+      if (colMatch) {
+        const [, newCol, position, refCol, tableName] = colMatch;
 
-    // tentukan target table
-    let tbl = null;
-    if (tableName) {
-      tbl = tables.find(t => t.name.toLowerCase() === tableName.toLowerCase());
-      if (!tbl) {
-        toast.add({ title: 'Table Not Found', description: `Table "${tableName}" not found`, color: 'warning' });
-        continue;
+        // tentukan target table
+        let tbl = null;
+        if (tableName) {
+          tbl = tables.find((t) => t.name.toLowerCase() === tableName.toLowerCase());
+          if (!tbl) {
+            toast.add({ title: 'Table Not Found', description: `Table "${tableName}" not found`, color: 'warning' });
+            continue;
+          }
+        } else {
+          tbl = selectedTable.value || tables[tables.length - 1];
+          if (!tbl) {
+            toast.add({ title: 'No Table Selected', description: `Cannot add column "${newCol}"`, color: 'warning' });
+            continue;
+          }
+        }
+
+        const refIndex = refCol ? tbl.columns.findIndex((c) => c.name.toLowerCase() === refCol.toLowerCase()) : -1;
+
+        // Tentukan tipe otomatis
+        let type = 'text';
+        if (newCol.includes('id') && newCol.replace(/_/g, '').includes(tbl.name.toLowerCase())) type = 'auto';
+        else if (newCol.includes('id')) type = 'int';
+        else if (newCol.includes('date') || newCol.endsWith('at')) type = 'timestamp';
+        else if (newCol.startsWith('is') || newCol.startsWith('has') || newCol.startsWith('recordstatus'))
+          type = 'boolean';
+        else if (newCol.includes('amount') || newCol.includes('price') || newCol.includes('total')) type = 'number';
+
+        const insertIndex = refIndex >= 0 ? (position === 'above' ? refIndex : refIndex + 1) : tbl.columns.length;
+        tbl.columns.splice(insertIndex, 0, { name: newCol, type });
       }
-    } else {
-      tbl = selectedTable.value || tables[tables.length - 1];
-      if (!tbl) {
-        toast.add({ title: 'No Table Selected', description: `Cannot add column "${newCol}"`, color: 'warning' });
-        continue;
-      }
+      continue;
     }
-
-    const refIndex = refCol ? tbl.columns.findIndex(c => c.name.toLowerCase() === refCol.toLowerCase()) : -1;
-
-    // Tentukan tipe otomatis
-    let type = 'text';
-    if (newCol.includes('id') && newCol.replace(/_/g,'').includes(tbl.name.toLowerCase())) type = 'auto';
-    else if (newCol.includes('id')) type = 'int';
-    else if (newCol.includes('date') || newCol.endsWith('at')) type = 'timestamp';
-    else if (newCol.startsWith('is') || newCol.startsWith('has') || newCol.startsWith('recordstatus')) type = 'boolean';
-    else if (newCol.includes('amount') || newCol.includes('price') || newCol.includes('total')) type = 'number';
-
-    const insertIndex = refIndex >= 0 ? (position === 'above' ? refIndex : refIndex + 1) : tbl.columns.length;
-    tbl.columns.splice(insertIndex, 0, { name: newCol, type });
-  }
-  continue;
-}
-
 
     // REMOVE COLUMN
     if (lower.includes('remove column') || lower.includes('delete column')) {
@@ -879,7 +914,7 @@ function aiParseNatural(prompt: string) {
           toast.add({ title: 'No Table Selected', description: `Cannot remove column "${colName}"`, color: 'warning' });
           continue;
         }
-        const idx = tbl.columns.findIndex(c => c.name.toLowerCase() === colName.toLowerCase());
+        const idx = tbl.columns.findIndex((c) => c.name.toLowerCase() === colName.toLowerCase());
         if (idx >= 0) tbl.columns.splice(idx, 1);
       }
       continue;
@@ -890,10 +925,10 @@ function aiParseNatural(prompt: string) {
       const tblMatch = /delete table (\w+)?/i.exec(instr);
       const tableName = tblMatch?.[1];
       if (tableName) {
-        const idx = tables.findIndex(t => t.name.toLowerCase() === tableName.toLowerCase());
+        const idx = tables.findIndex((t) => t.name.toLowerCase() === tableName.toLowerCase());
         if (idx >= 0) tables.splice(idx, 1);
       } else if (selectedTable.value) {
-        const idx = tables.findIndex(t => t.id === selectedTable.value.id);
+        const idx = tables.findIndex((t) => t.id === selectedTable.value.id);
         if (idx >= 0) tables.splice(idx, 1);
       } else {
         toast.add({ title: 'No Table Selected', description: 'Cannot delete table', color: 'warning' });
@@ -906,10 +941,10 @@ function aiParseNatural(prompt: string) {
       const areaMatch = /delete area (\w+)?/i.exec(instr);
       const areaName = areaMatch?.[1];
       if (areaName) {
-        const idx = areas.findIndex(a => a.name.toLowerCase() === areaName.toLowerCase());
+        const idx = areas.findIndex((a) => a.name.toLowerCase() === areaName.toLowerCase());
         if (idx >= 0) areas.splice(idx, 1);
       } else if (activeArea.value) {
-        const idx = areas.findIndex(a => a.id === activeArea.value.id);
+        const idx = areas.findIndex((a) => a.id === activeArea.value.id);
         if (idx >= 0) areas.splice(idx, 1);
       } else {
         toast.add({ title: 'No Area Selected', description: 'Cannot delete area', color: 'warning' });
@@ -928,8 +963,7 @@ function aiParseNatural(prompt: string) {
   });
 }
 
-function aiSuggestColumns(table: any) {
-}
+function aiSuggestColumns(table: any) {}
 
 function exportCanvas() {
   if (canvasRef.value === null) return;
@@ -1006,9 +1040,9 @@ async function saveToBackend() {
     // 1. Save Tables
     for (const table of toRaw(tables)) {
       const payloadObj = {
-          table: {
-              ...(toRaw(table)),
-          }
+        table: {
+          ...toRaw(table),
+        },
       };
 
       const dbobj: any = {
@@ -1033,21 +1067,21 @@ async function saveToBackend() {
     // 2. Save Relations
     // 2. Save Relations
     // Filter relations that have valid table DBIDs
-    const relationsToSave = relations.filter(r => {
-        const fromTbl = tables.find(t => t.id === r.from.table);
-        const toTbl = tables.find(t => t.id === r.to.table);
-        return fromTbl?.dbid && toTbl?.dbid;
+    const relationsToSave = relations.filter((r) => {
+      const fromTbl = tables.find((t) => t.id === r.from.table);
+      const toTbl = tables.find((t) => t.id === r.to.table);
+      return fromTbl?.dbid && toTbl?.dbid;
     });
 
-    const relationsPayload = relationsToSave.map(r => ({
-        id: r.dbid ? parseInt(r.dbid) : 0, 
-        from_table_id: parseInt(tables.find(t => t.id === r.from.table)?.dbid),
-        from_col_index: r.from.col,
-        from_col_name: r.from.colName,
-        to_table_id: parseInt(tables.find(t => t.id === r.to.table)?.dbid),
-        to_col_index: r.to.col,
-        to_col_name: r.to.colName,
-        path: r.path
+    const relationsPayload = relationsToSave.map((r) => ({
+      id: r.dbid ? parseInt(r.dbid) : 0,
+      from_table_id: parseInt(tables.find((t) => t.id === r.from.table)?.dbid),
+      from_col_index: r.from.col,
+      from_col_name: r.from.colName,
+      to_table_id: parseInt(tables.find((t) => t.id === r.to.table)?.dbid),
+      to_col_index: r.to.col,
+      to_col_name: r.to.colName,
+      path: r.path,
     }));
 
     const resRel = await store.saveRelations(relationsPayload);
@@ -1055,35 +1089,41 @@ async function saveToBackend() {
     // Update local IDs from response to avoid duplicates on next save
     // content of resRel?.data is { success: true, data: [...] }
     if (resRel?.data?.data && Array.isArray(resRel.data.data)) {
-        const savedRelations = resRel.data.data;
-        if (savedRelations.length === relationsToSave.length) {
-            relationsToSave.forEach((localRel, index) => {
-                const saved = savedRelations[index];
-                if (saved.id) {
-                    localRel.dbid = String(saved.id);
-                }
-            });
-        }
+      const savedRelations = resRel.data.data;
+      if (savedRelations.length === relationsToSave.length) {
+        relationsToSave.forEach((localRel, index) => {
+          const saved = savedRelations[index];
+          if (saved.id) {
+            localRel.dbid = String(saved.id);
+          }
+        });
+      }
     }
 
     // 3. Save Areas
-    const areasPayload = areas.map(a => ({
-        id: a.dbid ? parseInt(a.dbid) : 0, // Use stored DB ID if available
-        name: a.name,
-        x: Math.round(a.x),
-        y: Math.round(a.y),
-        width: Math.round(a.width),
-        height: Math.round(a.height),
-        color: a.color,
-        tables: JSON.stringify(activeAreaTables.value.filter(t => 
-             t.x >= a.x && t.x <= a.x + a.width && t.y >= a.y && t.y <= a.y + a.height
-        ).map(t => t.dbid))
+    const areasPayload = areas.map((a) => ({
+      id: a.dbid ? parseInt(a.dbid) : 0, // Use stored DB ID if available
+      name: a.name,
+      x: Math.round(a.x),
+      y: Math.round(a.y),
+      width: Math.round(a.width),
+      height: Math.round(a.height),
+      color: a.color,
+      tables: JSON.stringify(
+        activeAreaTables.value
+          .filter((t) => t.x >= a.x && t.x <= a.x + a.width && t.y >= a.y && t.y <= a.y + a.height)
+          .map((t) => t.dbid),
+      ),
     }));
     await store.saveAreas(areasPayload);
 
-    toast.add({ title: 'Success', description: 'Design saved successfully (Tables, Relations, Areas)', color: 'success' });
-    
-    // Ideally reload to get new IDs, but that resets UI. 
+    toast.add({
+      title: 'Success',
+      description: 'Design saved successfully (Tables, Relations, Areas)',
+      color: 'success',
+    });
+
+    // Ideally reload to get new IDs, but that resets UI.
     // For now, next load will pick them up.
     markClean();
   } catch (err: any) {
@@ -1129,65 +1169,64 @@ async function loadDesign() {
 
   // 2. Fetch Relations
   try {
-      const rels = await store.fetchRelations();
-      
-      const debugMap = [];
-      rels.forEach((r: any) => {
-          // Debugging lookup:
-          const fromSearch = String(r.from_table_id);
-          const toSearch = String(r.to_table_id);
-          
-          const fromTbl = tables.find(t => String(t.dbid) == fromSearch); 
-          const toTbl = tables.find(t => String(t.dbid) == toSearch);
+    const rels = await store.fetchRelations();
 
-          debugMap.push({
-             rid: r.id,
-             wantFrom: fromSearch,
-             wantTo: toSearch,
-             foundFrom: fromTbl ? fromTbl.id : 'MISSING',
-             foundTo: toTbl ? toTbl.id : 'MISSING'
-          });
+    const debugMap = [];
+    rels.forEach((r: any) => {
+      // Debugging lookup:
+      const fromSearch = String(r.from_table_id);
+      const toSearch = String(r.to_table_id);
 
-          if (fromTbl && toTbl) {
-              relations.push({
-                  id: relSeq++, // local ID for canvas
-                  dbid: r.id,   // Store DB ID
-                  from: {
-                      table: fromTbl.id,
-                      col: r.from_col_index,
-                      colName: r.from_col_name
-                  },
-                  to: {
-                      table: toTbl.id,
-                      col: r.to_col_index,
-                      colName: r.to_col_name
-                  },
-                  path: r.path || ''
-              });
-          }
+      const fromTbl = tables.find((t) => String(t.dbid) == fromSearch);
+      const toTbl = tables.find((t) => String(t.dbid) == toSearch);
+
+      debugMap.push({
+        rid: r.id,
+        wantFrom: fromSearch,
+        wantTo: toSearch,
+        foundFrom: fromTbl ? fromTbl.id : 'MISSING',
+        foundTo: toTbl ? toTbl.id : 'MISSING',
       });
 
+      if (fromTbl && toTbl) {
+        relations.push({
+          id: relSeq++, // local ID for canvas
+          dbid: r.id, // Store DB ID
+          from: {
+            table: fromTbl.id,
+            col: r.from_col_index,
+            colName: r.from_col_name,
+          },
+          to: {
+            table: toTbl.id,
+            col: r.to_col_index,
+            colName: r.to_col_name,
+          },
+          path: r.path || '',
+        });
+      }
+    });
   } catch (e) {
-      console.warn('Failed to load relations', e);
+    console.warn('Failed to load relations', e);
   }
 
   // 3. Fetch Areas
   try {
-      const loadedAreas = await store.fetchAreas();
-      loadedAreas.forEach((a: any) => {
-          areas.push({
-              id: areaSeq++, // local ID for canvas
-              dbid: a.id,    // Store DB ID
-              name: a.name,
-              x: a.x,
-              y: a.y,
-              width: a.width,
-              height: a.height,
-              color: a.color
-          });
+    const loadedAreas = await store.fetchAreas();
+    loadedAreas.forEach((a: any) => {
+      areas.push({
+        id: areaSeq++, // local ID for canvas
+        dbid: a.id, // Store DB ID
+        name: a.name,
+        x: a.x,
+        y: a.y,
+        width: a.width,
+        height: a.height,
+        color: a.color,
       });
+    });
   } catch (e) {
-      console.warn('Failed to load areas', e);
+    console.warn('Failed to load areas', e);
   }
 
   computeRelationsPaths();
@@ -1203,9 +1242,9 @@ function createTableFromDBObject(obj: any, index: number) {
   if (obj.objectcontent) {
     try {
       content = JSON.parse(obj.objectcontent);
-      
+
       // Handle nested structure from previous save format if it exists
-      const tableData = content.table || content; 
+      const tableData = content.table || content;
 
       if (tableData.columns && Array.isArray(tableData.columns)) {
         columns = tableData.columns.map((c: any) => ({
@@ -1218,7 +1257,6 @@ function createTableFromDBObject(obj: any, index: number) {
       posX = tableData.x ?? 40 + (index % 4) * 340;
       posY = tableData.y ?? 40 + Math.floor(index / 4) * 200;
       width = tableData.width ?? 240;
-
     } catch (e) {
       console.warn(`Invalid objectcontent JSON for ${obj.objectname}`, e);
     }
@@ -1248,44 +1286,48 @@ function openExecuteModal() {
 }
 
 async function reverseEngineerDatabase() {
-  if (!confirm('This will import all tables from the current database into the designer. Existing tables with the same name will be updated. Continue?')) {
+  if (
+    !confirm(
+      'This will import all tables from the current database into the designer. Existing tables with the same name will be updated. Continue?',
+    )
+  ) {
     return;
   }
 
   try {
     isLoading.value = true;
-    toast.add({ 
-      title: 'Reverse Engineering', 
-      description: 'Extracting database schema...', 
-      color: 'info' 
+    toast.add({
+      title: 'Reverse Engineering',
+      description: 'Extracting database schema...',
+      color: 'info',
     });
 
     const response = await api.post('/api/admin/db/reverse-engineer', {
-      auto_layout: true
+      auto_layout: true,
     });
 
     if (response.success) {
-      toast.add({ 
-        title: 'Success', 
-        description: response.message, 
-        color: 'success' 
+      toast.add({
+        title: 'Success',
+        description: response.message,
+        color: 'success',
       });
-      
+
       // Reload the design to show imported tables
       await loadDesign();
     } else {
-      toast.add({ 
-        title: 'Error', 
-        description: response.error || 'Failed to reverse engineer database', 
-        color: 'error' 
+      toast.add({
+        title: 'Error',
+        description: response.error || 'Failed to reverse engineer database',
+        color: 'error',
       });
     }
   } catch (err) {
     console.error('Reverse engineering error:', err);
-    toast.add({ 
-      title: 'Error', 
-      description: String(err), 
-      color: 'error' 
+    toast.add({
+      title: 'Error',
+      description: String(err),
+      color: 'error',
     });
   } finally {
     isLoading.value = false;
@@ -1299,7 +1341,7 @@ function onExecuteSuccess() {
 
 onMounted(async () => {
   await loadDesign();
-  
+
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
 });

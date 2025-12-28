@@ -9,7 +9,7 @@
     <div class="flex items-center gap-3 overflow-visible">
       <!-- Notification Bell -->
       <NotificationBell />
-      
+
       <!-- Theme Toggle -->
       <ThemeToggle />
 
@@ -22,26 +22,29 @@
         <button
           @click.stop="toggleDropdown"
           class="profile-trigger flex items-center gap-3 cursor-pointer px-3 py-2 transition-all duration-200 group"
-          style="border-radius: var(--navbar-item-radius);"
+          style="border-radius: var(--navbar-item-radius)"
         >
           <!-- Avatar -->
-          <div class="w-9 h-9 flex items-center justify-center" style="color: var(--sidebar-profile-icon-color, #6366f1);">
+          <div
+            class="w-9 h-9 flex items-center justify-center"
+            style="color: var(--sidebar-profile-icon-color, #6366f1)"
+          >
             <i class="fa-solid fa-user-circle text-2xl"></i>
           </div>
-          
+
           <!-- Name & Email -->
           <div class="hidden sm:block text-left">
-            <p class="text-sm font-semibold leading-tight" style="color: var(--navbar-admin-color, #1f2937);">
+            <p class="text-sm font-semibold leading-tight" style="color: var(--navbar-admin-color, #1f2937)">
               {{ userName }}
             </p>
-            <p class="text-xs" style="color: var(--sidebar-profile-email-color, #6b7280);">{{ userEmail }}</p>
+            <p class="text-xs" style="color: var(--sidebar-profile-email-color, #6b7280)">{{ userEmail }}</p>
           </div>
-          
+
           <!-- Chevron -->
           <i
             class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200 ml-1"
             :class="{ 'rotate-180': isOpen }"
-            style="color: var(--navbar-icon-color, #9ca3af);"
+            style="color: var(--navbar-icon-color, #9ca3af)"
           ></i>
         </button>
 
@@ -50,7 +53,7 @@
           <div
             v-if="isOpen"
             class="absolute right-0 mt-3 w-90 bg-white dark:bg-gray-900 shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden border border-slate-200/80 dark:border-gray-800"
-            style="border-radius: var(--navbar-dropdown-radius); z-index: 9999 !important;"
+            style="border-radius: var(--navbar-dropdown-radius); z-index: 9999 !important"
           >
             <!-- User Info Header -->
             <div class="px-4 py-4 border-b border-slate-200 dark:border-gray-800">
@@ -75,22 +78,34 @@
                 @click.prevent="handleProfile"
                 class="flex items-center gap-3 w-full px-4 py-2.5 text-left transition-all duration-200 hover:bg-slate-50 dark:hover:bg-gray-800 group"
               >
-                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 flex items-center justify-center transition-colors">
+                <div
+                  class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 flex items-center justify-center transition-colors"
+                >
                   <i class="fa-regular fa-user text-gray-500 group-hover:text-indigo-500 text-sm transition-colors"></i>
                 </div>
-                <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">{{ $t('PROFILE') }}</span>
+                <span
+                  class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white"
+                  >{{ $t('PROFILE') }}</span
+                >
               </button>
-              
+
               <div class="mx-3 my-1 h-px bg-slate-100 dark:bg-gray-800"></div>
-              
+
               <button
                 @click.prevent="handleLogout"
                 class="flex items-center gap-3 w-full px-4 py-2.5 text-left transition-all duration-200 hover:bg-rose-50 dark:hover:bg-rose-900/20 group"
               >
-                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/40 flex items-center justify-center transition-colors">
-                  <i class="fa-solid fa-right-from-bracket text-gray-500 group-hover:text-rose-500 text-sm transition-colors"></i>
+                <div
+                  class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/40 flex items-center justify-center transition-colors"
+                >
+                  <i
+                    class="fa-solid fa-right-from-bracket text-gray-500 group-hover:text-rose-500 text-sm transition-colors"
+                  ></i>
                 </div>
-                <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-rose-600 dark:group-hover:text-rose-400">{{ $t('LOGOUT') }}</span>
+                <span
+                  class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-rose-600 dark:group-hover:text-rose-400"
+                  >{{ $t('LOGOUT') }}</span
+                >
               </button>
             </div>
           </div>

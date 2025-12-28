@@ -8,16 +8,12 @@
     <!-- Upload Module Section -->
     <div class="upload-section bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 class="text-xl font-semibold mb-4">Install New Module</h2>
-      
-      <div class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".zip"
-          class="hidden"
-          @change="handleFileSelect"
-        />
-        
+
+      <div
+        class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors"
+      >
+        <input ref="fileInput" type="file" accept=".zip" class="hidden" @change="handleFileSelect" />
+
         <div v-if="!selectedFile" @click="$refs.fileInput.click()" class="cursor-pointer">
           <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4"></i>
           <p class="text-lg font-medium text-gray-700">Click to upload module package</p>
@@ -32,7 +28,7 @@
               <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
             </div>
           </div>
-          
+
           <div class="flex space-x-3 justify-center">
             <button
               @click="uploadModule"
@@ -53,7 +49,10 @@
 
           <!-- Upload Progress -->
           <div v-if="uploading" class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
+            <div
+              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: uploadProgress + '%' }"
+            ></div>
           </div>
         </div>
       </div>
@@ -133,7 +132,11 @@
     </div>
 
     <!-- Module Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeDetailsModal">
+    <div
+      v-if="showDetailsModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="closeDetailsModal"
+    >
       <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         <div class="p-6 border-b flex justify-between items-center">
           <h2 class="text-2xl font-bold">Module Details</h2>
@@ -151,7 +154,10 @@
               <div><span class="font-medium">Version:</span> {{ moduleDetails.module.moduleversion }}</div>
               <div><span class="font-medium">Created by:</span> {{ moduleDetails.module.createdby }}</div>
               <div><span class="font-medium">Installed:</span> {{ formatDate(moduleDetails.module.installdate) }}</div>
-              <div><span class="font-medium">Status:</span> {{ moduleDetails.module.recordstatus === 1 ? 'Active' : 'Inactive' }}</div>
+              <div>
+                <span class="font-medium">Status:</span>
+                {{ moduleDetails.module.recordstatus === 1 ? 'Active' : 'Inactive' }}
+              </div>
             </div>
           </div>
 
@@ -161,7 +167,7 @@
               <i class="fas fa-project-diagram mr-2 text-blue-600"></i>
               Dependencies
             </h4>
-            
+
             <div v-if="moduleDependencies.depends_on.length > 0" class="mb-3">
               <p class="text-sm font-medium text-gray-700 mb-2">Depends on:</p>
               <div class="flex flex-wrap gap-2">
@@ -221,11 +227,7 @@
               Widgets ({{ moduleDetails.widgets.length }})
             </h4>
             <div class="space-y-2">
-              <div
-                v-for="widget in moduleDetails.widgets"
-                :key="widget.widgetid"
-                class="p-3 bg-gray-50 rounded"
-              >
+              <div v-for="widget in moduleDetails.widgets" :key="widget.widgetid" class="p-3 bg-gray-50 rounded">
                 <p class="font-medium">{{ widget.widgettitle }}</p>
                 <p class="text-sm text-gray-600">{{ widget.description }}</p>
               </div>
@@ -270,7 +272,11 @@
     </div>
 
     <!-- Uninstall Confirmation Modal -->
-    <div v-if="showUninstallModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeUninstallModal">
+    <div
+      v-if="showUninstallModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="closeUninstallModal"
+    >
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
           <div class="flex items-center mb-4">
@@ -281,11 +287,15 @@
           </div>
 
           <p class="text-gray-700 mb-4">
-            Are you sure you want to uninstall <strong>{{ moduleToUninstall?.modulename }}</strong>?
+            Are you sure you want to uninstall <strong>{{ moduleToUninstall?.modulename }}</strong
+            >?
           </p>
 
           <!-- Dependency Warning -->
-          <div v-if="uninstallDependencies && uninstallDependencies.dependents.length > 0" class="bg-orange-50 border border-orange-200 rounded p-4 mb-4">
+          <div
+            v-if="uninstallDependencies && uninstallDependencies.dependents.length > 0"
+            class="bg-orange-50 border border-orange-200 rounded p-4 mb-4"
+          >
             <p class="text-orange-800 font-medium mb-2">
               <i class="fas fa-exclamation-circle mr-2"></i>
               Cannot uninstall - Dependencies exist
@@ -307,9 +317,7 @@
                 type="checkbox"
                 class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
               />
-              <span class="text-sm text-gray-700">
-                Drop database tables (⚠️ This will delete all data)
-              </span>
+              <span class="text-sm text-gray-700"> Drop database tables (⚠️ This will delete all data) </span>
             </label>
           </div>
 
@@ -341,7 +349,7 @@
         :class="{
           'bg-green-500': toast.type === 'success',
           'bg-red-500': toast.type === 'error',
-          'bg-blue-500': toast.type === 'info'
+          'bg-blue-500': toast.type === 'info',
         }"
         class="text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3"
       >
@@ -349,7 +357,7 @@
           :class="{
             'fa-check-circle': toast.type === 'success',
             'fa-exclamation-circle': toast.type === 'error',
-            'fa-info-circle': toast.type === 'info'
+            'fa-info-circle': toast.type === 'info',
           }"
           class="fas text-xl"
         ></i>
@@ -360,102 +368,102 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue';
 
-const fileInput = ref(null)
-const selectedFile = ref(null)
-const uploading = ref(false)
-const uploadProgress = ref(0)
-const loading = ref(false)
-const modules = ref([])
-const showDetailsModal = ref(false)
-const moduleDetails = ref(null)
-const moduleDependencies = ref(null)
-const showUninstallModal = ref(false)
-const moduleToUninstall = ref(null)
-const uninstallDependencies = ref(null)
-const dropTables = ref(false)
-const uninstalling = ref(false)
-const toast = ref({ show: false, message: '', type: 'info' })
+const fileInput = ref(null);
+const selectedFile = ref(null);
+const uploading = ref(false);
+const uploadProgress = ref(0);
+const loading = ref(false);
+const modules = ref([]);
+const showDetailsModal = ref(false);
+const moduleDetails = ref(null);
+const moduleDependencies = ref(null);
+const showUninstallModal = ref(false);
+const moduleToUninstall = ref(null);
+const uninstallDependencies = ref(null);
+const dropTables = ref(false);
+const uninstalling = ref(false);
+const toast = ref({ show: false, message: '', type: 'info' });
 
-const config = useRuntimeConfig()
-const api = useApi()  
+const config = useRuntimeConfig();
+const api = useApi();
 
 definePageMeta({
   layout: 'auth',
 });
 
 onMounted(() => {
-  loadModules()
-})
+  loadModules();
+});
 
 function handleFileSelect(event) {
-  const file = event.target.files[0]
+  const file = event.target.files[0];
   if (file && file.name.endsWith('.zip')) {
-    selectedFile.value = file
+    selectedFile.value = file;
   } else {
-    showToast('Please select a valid ZIP file', 'error')
+    showToast('Please select a valid ZIP file', 'error');
   }
 }
 
 function clearFile() {
-  selectedFile.value = null
+  selectedFile.value = null;
   if (fileInput.value) {
-    fileInput.value.value = ''
+    fileInput.value.value = '';
   }
 }
 
 async function uploadModule() {
-  if (!selectedFile.value) return
+  if (!selectedFile.value) return;
 
-  uploading.value = true
-  uploadProgress.value = 0
+  uploading.value = true;
+  uploadProgress.value = 0;
 
-  const formData = new FormData()
-  formData.append('module', selectedFile.value)
-  formData.append('menu', 'modules')
+  const formData = new FormData();
+  formData.append('module', selectedFile.value);
+  formData.append('menu', 'modules');
 
   try {
     const response = await api.post(`/api/admin/module/upload`, {
-      body: formData
-    })
+      body: formData,
+    });
 
-    uploadProgress.value = 100
+    uploadProgress.value = 100;
 
-    const data = await response.json()
+    const data = await response.json();
 
     if (response.ok) {
-      showToast('Module installed successfully!', 'success')
-      clearFile()
-      await loadModules()
+      showToast('Module installed successfully!', 'success');
+      clearFile();
+      await loadModules();
     } else {
-      showToast(data.message || 'Failed to install module', 'error')
+      showToast(data.message || 'Failed to install module', 'error');
     }
   } catch (error) {
-    console.error('Upload error:', error)
-    showToast('Failed to upload module', 'error')
+    console.error('Upload error:', error);
+    showToast('Failed to upload module', 'error');
   } finally {
-    uploading.value = false
-    uploadProgress.value = 0
+    uploading.value = false;
+    uploadProgress.value = 0;
   }
 }
 
 async function loadModules() {
-  loading.value = true
+  loading.value = true;
   try {
     const dataForm = new FormData();
     dataForm.append('flowname', 'searchmodules');
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
-    const res = await api.post('api/admin/execute-flow', dataForm);   
+    const res = await api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200 && res.data?.data) {
-      modules.value = res.data.data
+      modules.value = res.data.data;
     }
   } catch (error) {
-    console.error('Load modules error:', error)
-    showToast('Failed to load modules', 'error')
+    console.error('Load modules error:', error);
+    showToast('Failed to load modules', 'error');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -466,121 +474,116 @@ async function viewModuleDetails(moduleid) {
     dataForm.append('menu', 'admin');
     dataForm.append('search', 'true');
     dataForm.append('moduleid', moduleid);
-    let res = await api.post('api/admin/execute-flow', dataForm);   
+    let res = await api.post('api/admin/execute-flow', dataForm);
     if (res.code == 200 && res.data?.data) {
-      moduleDetails.value = res.data.data
+      moduleDetails.value = res.data.data;
 
       dataForm = new FormData();
       dataForm.append('flowname', 'getmodule');
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
       dataForm.append('moduleid', moduleid);
-      res = await api.post('api/admin/execute-flow', dataForm);   
+      res = await api.post('api/admin/execute-flow', dataForm);
       if (res.code == 200 && res.data?.data) {
-        moduleDependencies.value = res.data.data
-        showDetailsModal.value = true
+        moduleDependencies.value = res.data.data;
+        showDetailsModal.value = true;
       }
     }
   } catch (error) {
-    console.error('Load details error:', error)
-    showToast('Failed to load module details', 'error')
+    console.error('Load details error:', error);
+    showToast('Failed to load module details', 'error');
   }
 }
 
 function closeDetailsModal() {
-  showDetailsModal.value = false
-  moduleDetails.value = null
-  moduleDependencies.value = null
+  showDetailsModal.value = false;
+  moduleDetails.value = null;
+  moduleDependencies.value = null;
 }
 
 async function confirmUninstall(module) {
-  moduleToUninstall.value = module
-  dropTables.value = false
+  moduleToUninstall.value = module;
+  dropTables.value = false;
 
   // Check dependencies
   try {
-    const res = await api.get(`/api/admin/module/dependencies/${module.moduleid}?menu=modules`)
+    const res = await api.get(`/api/admin/module/dependencies/${module.moduleid}?menu=modules`);
 
     if (res && res.code === 200) {
-      uninstallDependencies.value = res.data
-      showUninstallModal.value = true
+      uninstallDependencies.value = res.data;
+      showUninstallModal.value = true;
     }
   } catch (error) {
-    console.error('Check dependencies error:', error)
-    showToast('Failed to check dependencies', 'error')
+    console.error('Check dependencies error:', error);
+    showToast('Failed to check dependencies', 'error');
   }
 }
 
 async function uninstallModule() {
-  if (!moduleToUninstall.value) return
+  if (!moduleToUninstall.value) return;
 
-  uninstalling.value = true
+  uninstalling.value = true;
 
   try {
     const res = await api.post(
       `/api/admin/module/uninstall/${moduleToUninstall.value.moduleid}?drop_tables=${dropTables.value}`,
-      { menu: 'modules' }
-    )
+      { menu: 'modules' },
+    );
 
     if (res && (res.code === 200 || res.success)) {
-      showToast('Module uninstalled successfully!', 'success')
-      closeUninstallModal()
-      await loadModules()
+      showToast('Module uninstalled successfully!', 'success');
+      closeUninstallModal();
+      await loadModules();
     } else {
-      showToast(res.message || 'Failed to uninstall module', 'error')
+      showToast(res.message || 'Failed to uninstall module', 'error');
     }
   } catch (error) {
-    console.error('Uninstall error:', error)
-    showToast('Failed to uninstall module', 'error')
+    console.error('Uninstall error:', error);
+    showToast('Failed to uninstall module', 'error');
   } finally {
-    uninstalling.value = false
+    uninstalling.value = false;
   }
 }
 
 function closeUninstallModal() {
-  showUninstallModal.value = false
-  moduleToUninstall.value = null
-  uninstallDependencies.value = null
-  dropTables.value = false
+  showUninstallModal.value = false;
+  moduleToUninstall.value = null;
+  uninstallDependencies.value = null;
+  dropTables.value = false;
 }
 
 async function exportModule(moduleid, modulename) {
   try {
-    const filename = `${modulename.toLowerCase().replace(/ /g, '-')}.zip`
-    await api.donlotFile(
-      `/api/admin/module/export/${moduleid}?menu=modules`,
-      null, 
-      filename,
-      'GET'
-    )
-    showToast('Module exported successfully!', 'success')
+    const filename = `${modulename.toLowerCase().replace(/ /g, '-')}.zip`;
+    await api.donlotFile(`/api/admin/module/export/${moduleid}?menu=modules`, null, filename, 'GET');
+    showToast('Module exported successfully!', 'success');
   } catch (error) {
-    console.error('Export error:', error)
-    showToast('Failed to export module', 'error')
+    console.error('Export error:', error);
+    showToast('Failed to export module', 'error');
   }
 }
 
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
-  })
+    day: 'numeric',
+  });
 }
 
 function showToast(message, type = 'info') {
-  toast.value = { show: true, message, type }
+  toast.value = { show: true, message, type };
   setTimeout(() => {
-    toast.value.show = false
-  }, 3000)
+    toast.value.show = false;
+  }, 3000);
 }
 </script>
 

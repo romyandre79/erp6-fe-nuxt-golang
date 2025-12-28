@@ -4,8 +4,13 @@
     <section class="relative pt-32 pb-20 overflow-hidden">
       <!-- Background Elements -->
       <div class="absolute inset-0 z-0">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl shadow-2xl animate-pulse-slow"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl shadow-2xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+        <div
+          class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl shadow-2xl animate-pulse-slow"
+        ></div>
+        <div
+          class="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl shadow-2xl animate-pulse-slow"
+          style="animation-delay: 2s"
+        ></div>
       </div>
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -14,13 +19,18 @@
           <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Management</span>
         </h1>
         <p class="max-w-2xl mx-auto text-xl text-slate-400 mb-10 leading-relaxed">
-          Simplify your HR processes. From recruitment to payroll, manage your entire employee lifecycle in one unified platform.
+          Simplify your HR processes. From recruitment to payroll, manage your entire employee lifecycle in one unified
+          platform.
         </p>
         <div class="flex justify-center gap-4">
-          <button class="px-8 py-4 rounded-full bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 hover:shadow-emerald-600/40 transition-all transform hover:-translate-y-1">
+          <button
+            class="px-8 py-4 rounded-full bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 hover:shadow-emerald-600/40 transition-all transform hover:-translate-y-1"
+          >
             Get Started
           </button>
-          <button class="px-8 py-4 rounded-full bg-slate-800 text-white font-semibold border border-slate-700 shadow-sm hover:bg-slate-700 transition-all">
+          <button
+            class="px-8 py-4 rounded-full bg-slate-800 text-white font-semibold border border-slate-700 shadow-sm hover:bg-slate-700 transition-all"
+          >
             Live Demo
           </button>
         </div>
@@ -36,10 +46,14 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div v-for="feature in features" :key="feature.title" class="p-8 rounded-2xl bg-slate-800 border border-slate-700 hover:border-emerald-500/30 hover:bg-slate-700/50 transition-all duration-300">
-             <div class="text-4xl mb-4">{{ feature.icon }}</div>
-             <h3 class="text-xl font-bold text-white mb-2">{{ feature.title }}</h3>
-             <p class="text-slate-400 leading-relaxed">{{ feature.description }}</p>
+          <div
+            v-for="feature in features"
+            :key="feature.title"
+            class="p-8 rounded-2xl bg-slate-800 border border-slate-700 hover:border-emerald-500/30 hover:bg-slate-700/50 transition-all duration-300"
+          >
+            <div class="text-4xl mb-4">{{ feature.icon }}</div>
+            <h3 class="text-xl font-bold text-white mb-2">{{ feature.title }}</h3>
+            <p class="text-slate-400 leading-relaxed">{{ feature.description }}</p>
           </div>
         </div>
       </div>
@@ -47,57 +61,56 @@
 
     <!-- Pricing Section -->
     <div class="mt-0 w-full">
-       <PricingCalculator 
+      <PricingCalculator
         :available-apps="availableSubModules"
         theme="dark"
         module-name="HRIS"
         :initial-selected-apps="['org_mgmt', 'time_mgmt', 'ess', 'payroll']"
       />
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import PricingCalculator from '~/components/PricingCalculator.vue'
+import { ref } from 'vue';
+import PricingCalculator from '~/components/PricingCalculator.vue';
 
 definePageMeta({
-  layout: 'hris'
-})
+  layout: 'hris',
+});
 
 const features = [
   {
     title: 'Smart Payroll',
     description: 'Automated tax calculations, salary disbursement, and payslip generation in one click.',
-    icon: '💰'
+    icon: '💰',
   },
   {
     title: 'Attendance Tracking',
     description: 'Real-time attendance monitoring with geofencing and biometric integration.',
-    icon: '⏰'
+    icon: '⏰',
   },
   {
     title: 'Talent Acquisition',
     description: 'Streamline your recruitment process from job posting to onboarding.',
-    icon: '🤝'
+    icon: '🤝',
   },
   {
     title: 'Performance Management',
     description: 'Set goals, track progress, and conduct 360-degree appraisals seamlessly.',
-    icon: '📈'
+    icon: '📈',
   },
   {
     title: 'Employee Self-Service',
     description: 'Empower employees to manage their profiles, leaves, and claims.',
-    icon: '📱'
+    icon: '📱',
   },
   {
     title: 'Analytics & Reports',
     description: 'Data-driven insights to help you make better HR decisions.',
-    icon: '📊'
-  }
-]
+    icon: '📊',
+  },
+];
 
 // Pricing Logic
 const availableSubModules = [
@@ -105,7 +118,7 @@ const availableSubModules = [
   { id: 'time_mgmt', name: 'Time Management', price: 50000, icon: '⏳' },
   { id: 'ess', name: 'Employee Self Service', price: 30000, icon: '📱' },
   { id: 'payroll', name: 'Payroll', price: 75000, icon: '💸' },
-]
+];
 </script>
 
 <style scoped>
@@ -114,7 +127,8 @@ const availableSubModules = [
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.2;
     transform: scale(1);
   }

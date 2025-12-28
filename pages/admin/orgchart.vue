@@ -13,8 +13,8 @@ const schema = ref({
       type: 'title',
       props: {
         text: 'Company Structure',
-        class: 'text-2xl font-bold mb-4'
-      }
+        class: 'text-2xl font-bold mb-4',
+      },
     },
     {
       type: 'orgchart',
@@ -30,10 +30,10 @@ const schema = ref({
           parentKey: 'parent_id',
           labelKey: 'name',
           titleKey: 'position',
-          imageKey: 'avatar'
+          imageKey: 'avatar',
         },
-        class: 'h-[800px] shadow-lg rounded-xl'
-      }
+        class: 'h-[800px] shadow-lg rounded-xl',
+      },
     },
     // --- Modal for Adding/Editing Nodes ---
     {
@@ -41,16 +41,16 @@ const schema = ref({
       props: {
         key: 'modal_node_detail', // Matches modalKey in orgchart
         text: 'Position Details',
-        class: 'max-w-2xl'
+        class: 'max-w-2xl',
       },
       children: [
         {
-           type: 'hidden',
-           props: { key: 'id' }
+          type: 'hidden',
+          props: { key: 'id' },
         },
         {
-           type: 'hidden',
-           props: { key: 'parent_id' }
+          type: 'hidden',
+          props: { key: 'parent_id' },
         },
         {
           type: 'row',
@@ -65,8 +65,8 @@ const schema = ref({
                     key: 'name',
                     label: 'Name',
                     place: 'e.g. John Doe',
-                    required: true
-                  }
+                    required: true,
+                  },
                 },
                 {
                   type: 'text',
@@ -74,10 +74,10 @@ const schema = ref({
                     key: 'position',
                     label: 'Position Title',
                     place: 'e.g. CEO',
-                    required: true
-                  }
-                }
-              ]
+                    required: true,
+                  },
+                },
+              ],
             },
             {
               type: 'col',
@@ -89,31 +89,31 @@ const schema = ref({
                     key: 'status',
                     label: 'Status',
                     source: 'get_status_options', // Example: Active, Vacant
-                    required: true
-                  }
+                    required: true,
+                  },
                 },
                 {
-                   type: 'image',
-                   props: {
-                       key: 'avatar',
-                       label: 'Avatar',
-                       isinput: true
-                   }
-                }
-              ]
-            }
-          ]
+                  type: 'image',
+                  props: {
+                    key: 'avatar',
+                    label: 'Avatar',
+                    isinput: true,
+                  },
+                },
+              ],
+            },
+          ],
         },
         // --- Employee List (Detail Table) ---
         {
-            type: 'title',
-            props: { text: 'Assigned Employees', class: 'text-lg font-semibold mt-4 mb-2' }
+          type: 'title',
+          props: { text: 'Assigned Employees', class: 'text-lg font-semibold mt-4 mb-2' },
         },
         {
           type: 'detailtable',
           props: {
             key: 'members', // Data key in the node object
-            class: 'mb-4'
+            class: 'mb-4',
           },
           children: [
             {
@@ -121,10 +121,10 @@ const schema = ref({
               children: [
                 { type: 'text', props: { key: 'employee_id', label: 'ID' } },
                 { type: 'text', props: { key: 'name', label: 'Name' } },
-                { type: 'text', props: { key: 'role', label: 'Role' } }
-              ]
-            }
-          ]
+                { type: 'text', props: { key: 'role', label: 'Role' } },
+              ],
+            },
+          ],
         },
         // --- Action Buttons ---
         {
@@ -136,21 +136,21 @@ const schema = ref({
               props: {
                 text: 'Cancel',
                 onClick: 'F7', // Close modal
-                class: 'bg-white border hover:bg-gray-50'
-              }
+                class: 'bg-white border hover:bg-gray-50',
+              },
             },
             {
               type: 'button',
               props: {
                 text: 'Save',
                 onClick: 'F6', // Save data
-                class: 'bg-primary-600 text-white hover:bg-primary-700'
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                class: 'bg-primary-600 text-white hover:bg-primary-700',
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
 });
 </script>

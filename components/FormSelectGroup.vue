@@ -31,14 +31,14 @@ const loading = ref(false);
 
 onMounted(async () => {
   loading.value = true;
-  
+
   const labelField = component.label || 'label';
   // Use valueField if provided, otherwise fallback to key, then 'value', then 'id'
   const valueField = component.key || 'value';
 
   // 1. Fetch Options
   const dataSource = component.sourceAll || component.source;
-  
+
   if (dataSource) {
     try {
       let arr = dataSource.split(',');
@@ -49,7 +49,7 @@ onMounted(async () => {
         dataForm.append('menu', 'admin');
         dataForm.append('search', 'true');
 
-        const res = await Api.post('api/admin/execute-flow', dataForm) as any;
+        const res = (await Api.post('api/admin/execute-flow', dataForm)) as any;
 
         if (res.code === 200 && Array.isArray(res?.data?.data)) {
           options.value = res.data.data.map((item: Record<string, any>) => ({
@@ -82,21 +82,21 @@ onMounted(async () => {
         dataForm.append('menu', 'admin');
         dataForm.append('search', 'true');
 
-        const res = await Api.post('api/admin/execute-flow', dataForm) as any;
+        const res = (await Api.post('api/admin/execute-flow', dataForm)) as any;
 
         if (res.code === 200 && Array.isArray(res?.data?.data)) {
-           const selectedValues = res.data.data.map((item: Record<string, any>) => item[valueField] ?? item['id']);
-           formData.value[component.key] = selectedValues;
-           console.log(formData)
+          const selectedValues = res.data.data.map((item: Record<string, any>) => item[valueField] ?? item['id']);
+          formData.value[component.key] = selectedValues;
+          console.log(formData);
         }
       } else {
-         formData.value[component.key] = arr;
+        formData.value[component.key] = arr;
       }
     } catch (err) {
       console.error('Error fetching selection:', err);
     }
   }
-  
+
   loading.value = false;
 });
 

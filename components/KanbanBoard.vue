@@ -19,13 +19,7 @@
               <span v-if="column.limit > 0">/ {{ column.limit }}</span>
             </span>
           </div>
-          <UButton
-            icon="i-heroicons-plus"
-            size="xs"
-            color="gray"
-            variant="ghost"
-            @click="addCard(column.status)"
-          />
+          <UButton icon="i-heroicons-plus" size="xs" color="gray" variant="ghost" @click="addCard(column.status)" />
         </div>
 
         <!-- Cards Container -->
@@ -45,10 +39,7 @@
           >
             <!-- Priority Badge -->
             <div v-if="card[priorityField]" class="flex items-center gap-2 mb-2">
-              <span
-                class="text-xs px-2 py-1 rounded-full font-medium"
-                :class="getPriorityClass(card[priorityField])"
-              >
+              <span class="text-xs px-2 py-1 rounded-full font-medium" :class="getPriorityClass(card[priorityField])">
                 {{ card[priorityField] }}
               </span>
             </div>
@@ -59,10 +50,7 @@
             </h4>
 
             <!-- Card Description -->
-            <p
-              v-if="card[descriptionField]"
-              class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2"
-            >
+            <p v-if="card[descriptionField]" class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
               {{ card[descriptionField] }}
             </p>
 
@@ -150,7 +138,7 @@ const columns = computed(() => {
         limit: child.props.limit || 0,
       }));
   }
-  
+
   // Default columns
   return [
     { key: 'col_todo', title: 'To Do', status: 'todo', color: 'gray', limit: 0 },
@@ -212,9 +200,9 @@ const onDragStart = (event: DragEvent, card: any) => {
 
 const onDrop = async (event: DragEvent, newStatus: string) => {
   event.preventDefault();
-  
+
   if (!draggedCard.value) return;
-  
+
   const oldStatus = draggedCard.value[statusField.value];
   if (oldStatus === newStatus) {
     draggedCard.value = null;
@@ -238,7 +226,7 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
 
   // Update card status
   draggedCard.value[statusField.value] = newStatus;
-  
+
   // Emit status change event
   emit('statusChange', {
     card: draggedCard.value,
@@ -267,7 +255,7 @@ const addCard = (status: string) => {
     [priorityField.value]: 'medium',
     [tagsField.value]: [],
   };
-  
+
   cards.value.push(newCard);
   emit('update', newCard);
 };
@@ -285,9 +273,7 @@ const loadCards = async () => {
       // For now, we'll use formData
       const key = props.container.props.key;
       if (props.formData[key]) {
-        cards.value = Array.isArray(props.formData[key]) 
-          ? props.formData[key] 
-          : [];
+        cards.value = Array.isArray(props.formData[key]) ? props.formData[key] : [];
       }
     } catch (error) {
       console.error('Failed to load kanban data:', error);
@@ -301,9 +287,7 @@ const loadCards = async () => {
     // Use formData directly
     const key = props.container.props.key;
     if (props.formData[key]) {
-      cards.value = Array.isArray(props.formData[key]) 
-        ? props.formData[key] 
-        : [];
+      cards.value = Array.isArray(props.formData[key]) ? props.formData[key] : [];
     }
   }
 };
@@ -329,7 +313,9 @@ defineExpose({
 }
 
 .kanban-card {
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .kanban-card:hover {

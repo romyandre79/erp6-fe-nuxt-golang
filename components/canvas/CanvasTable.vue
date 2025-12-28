@@ -26,19 +26,17 @@
     </div>
 
     <div class="p-2 text-xs">
-      <div 
-        v-for="(col, i) in table.columns" 
-        :key="i" 
-        class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded" 
+      <div
+        v-for="(col, i) in table.columns"
+        :key="i"
+        class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded"
         :data-col-index="i"
         @dragover.prevent
         @drop="onColDrop(i, $event)"
       >
-        <span 
-          class="cursor-move text-gray-400 px-1"
-          draggable="true"
-          @dragstart.stop="onColDragStart(i, $event)"
-        >⋮⋮</span>
+        <span class="cursor-move text-gray-400 px-1" draggable="true" @dragstart.stop="onColDragStart(i, $event)"
+          >⋮⋮</span
+        >
         <span class="w-6 text-gray-600">{{ i + 1 }}</span>
         <span class="flex-1 truncate">{{ col.name }}</span>
         <span class="text-gray-500 text-[11px]">{{ col.type || '' }}</span>
@@ -76,10 +74,10 @@ function onColDragStart(idx: number, event: DragEvent) {
 
 function onColDrop(targetIdx: number, event?: DragEvent) {
   if (dragColIndex.value === null) return;
-  
+
   if (dragColIndex.value !== null) {
-      // Only stop propagation if we are indeed reordering columns
-      event?.stopPropagation();
+    // Only stop propagation if we are indeed reordering columns
+    event?.stopPropagation();
   }
 
   if (dragColIndex.value === targetIdx) return;

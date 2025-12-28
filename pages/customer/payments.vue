@@ -1,13 +1,13 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'customer'
-})
+  layout: 'customer',
+});
 
 const payments = [
   { id: 'PAY-9982', date: '2024-12-12', method: 'Credit Card (**** 4242)', amount: '$4,500.00', status: 'Completed' },
   { id: 'PAY-9981', date: '2024-12-10', method: 'Bank Transfer', amount: '$850.00', status: 'Completed' },
   { id: 'PAY-9980', date: '2024-11-28', method: 'PayPal', amount: '$3,200.00', status: 'Completed' },
-]
+];
 </script>
 
 <template>
@@ -21,28 +21,28 @@ const payments = [
 
     <!-- Active Payment Methods -->
     <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Saved Payment Methods</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-6 bg-blue-600 rounded"></div>
-                    <div>
-                        <div class="font-medium text-gray-900">Visa ending in 4242</div>
-                        <div class="text-sm text-gray-500">Expires 12/28</div>
-                    </div>
-                </div>
-                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Default</span>
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Saved Payment Methods</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-6 bg-blue-600 rounded"></div>
+            <div>
+              <div class="font-medium text-gray-900">Visa ending in 4242</div>
+              <div class="text-sm text-gray-500">Expires 12/28</div>
             </div>
-             <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-6 bg-blue-800 rounded"></div>
-                    <div>
-                        <div class="font-medium text-gray-900">Mastercard ending in 8888</div>
-                        <div class="text-sm text-gray-500">Expires 10/26</div>
-                    </div>
-                </div>
-            </div>
+          </div>
+          <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Default</span>
         </div>
+        <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-6 bg-blue-800 rounded"></div>
+            <div>
+              <div class="font-medium text-gray-900">Mastercard ending in 8888</div>
+              <div class="text-sm text-gray-500">Expires 10/26</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Payment History -->

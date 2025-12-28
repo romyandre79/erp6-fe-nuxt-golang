@@ -1,10 +1,13 @@
 <template>
   <div class="p-8">
     <h1 class="text-2xl font-bold mb-4">Notification Test Page</h1>
-    
+
     <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900 rounded">
       <h2 class="font-semibold mb-2">WebSocket Status</h2>
-      <p>Connected: <span :class="store.connected ? 'text-green-600' : 'text-red-600'">{{ store.connected ? 'Yes' : 'No' }}</span></p>
+      <p>
+        Connected:
+        <span :class="store.connected ? 'text-green-600' : 'text-red-600'">{{ store.connected ? 'Yes' : 'No' }}</span>
+      </p>
       <p>Unread Count: {{ store.unreadCount }}</p>
       <button @click="store.connect()" class="btn btn-sm btn-primary mt-2">Reconnect WS</button>
     </div>
@@ -27,17 +30,17 @@
 </template>
 
 <script setup lang="ts">
-import { useNotificationStore } from '~/store/notification'
-import SendMessage from '~/components/SendMessage.vue'
+import { useNotificationStore } from '~/store/notification';
+import SendMessage from '~/components/SendMessage.vue';
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
-})
+  layout: 'auth',
+});
 
-const store = useNotificationStore()
+const store = useNotificationStore();
 
 const fetchNotifications = async () => {
-  await store.fetchUnread()
-}
+  await store.fetchUnread();
+};
 </script>

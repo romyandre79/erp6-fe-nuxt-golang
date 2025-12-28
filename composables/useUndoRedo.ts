@@ -11,14 +11,8 @@ export interface UndoRedoOptions {
  * @param options - Configuration options
  * @returns Undo/redo methods and state
  */
-export function useUndoRedo<T>(
-  initialState: T,
-  options: UndoRedoOptions = {}
-) {
-  const {
-    historyLimit = 50,
-    enableKeyboardShortcuts = true
-  } = options;
+export function useUndoRedo<T>(initialState: T, options: UndoRedoOptions = {}) {
+  const { historyLimit = 50, enableKeyboardShortcuts = true } = options;
 
   // History stacks
   const past = ref<T[]>([]);
@@ -36,7 +30,7 @@ export function useUndoRedo<T>(
     // Don't record if state hasn't changed
     const currentStateStr = JSON.stringify(present.value);
     const newStateStr = JSON.stringify(newState);
-    
+
     if (currentStateStr === newStateStr) {
       return;
     }
@@ -127,10 +121,7 @@ export function useUndoRedo<T>(
     }
 
     // Redo: Ctrl+Y or Ctrl+Shift+Z (or Cmd+Shift+Z on Mac)
-    if (
-      (ctrlKey && event.key === 'y') ||
-      (ctrlKey && event.shiftKey && event.key === 'z')
-    ) {
+    if ((ctrlKey && event.key === 'y') || (ctrlKey && event.shiftKey && event.key === 'z')) {
       event.preventDefault();
       const newState = redo();
       if (newState) {
@@ -156,16 +147,16 @@ export function useUndoRedo<T>(
     present,
     canUndo,
     canRedo,
-    
+
     // Methods
     record,
     undo,
     redo,
     clear,
     reset,
-    
+
     // History info
     historySize: computed(() => past.value.length),
-    futureSize: computed(() => future.value.length)
+    futureSize: computed(() => future.value.length),
   };
 }

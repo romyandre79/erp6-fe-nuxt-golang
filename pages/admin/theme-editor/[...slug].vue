@@ -98,7 +98,7 @@ const Sidebar = defineAsyncComponent(() => import('~/components/theme/ThemeSideb
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
+  layout: 'auth',
 });
 
 // integrate with Pinia theme store
@@ -983,7 +983,6 @@ function resetToDefault() {
   // reload original themedata from store or defaults
   loadThemeToState(selectedThemeKey.value);
 }
-
 
 const cssText = computed(() => {
   let out = `:root {

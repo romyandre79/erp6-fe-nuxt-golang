@@ -87,7 +87,7 @@ export default [
         event: 'readonly',
         $t: 'readonly',
         Blob: 'readonly',
-        URL: 'readonly'
+        URL: 'readonly',
       },
     },
     plugins: { vue },

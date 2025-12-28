@@ -1,8 +1,8 @@
 <template>
   <div class="relative w-10 h-10 flex items-center justify-center cursor-pointer group navbar-icon-wrapper">
     <!-- Hidden select (interactive) -->
-    <select 
-      v-model="localTheme" 
+    <select
+      v-model="localTheme"
       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
       :title="selectedThemeName"
     >
@@ -10,7 +10,7 @@
         {{ t.description || t.themename }}
       </option>
     </select>
-    
+
     <!-- Visible icon -->
     <i class="fa-solid fa-palette text-lg transition-colors"></i>
   </div>

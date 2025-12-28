@@ -1,4 +1,3 @@
-
 export const usePusatGadaiContent = () => {
   const branding = {
     name: 'Pusat Gadai Indonesia',
@@ -25,8 +24,8 @@ export const usePusatGadaiContent = () => {
     stats: [
       { value: '500+', label: 'Cabang' },
       { value: '100rb+', label: 'Nasabah' },
-      { value: '15m+', label: 'Pencairan Cepat' }
-    ]
+      { value: '15m+', label: 'Pencairan Cepat' },
+    ],
   };
 
   const services = [
@@ -35,49 +34,50 @@ export const usePusatGadaiContent = () => {
       title: 'Gadai Elektronik',
       description: 'Terima laptop, HP, kamera, TV, dan elektronik lainnya dengan taksiran tinggi.',
       icon: 'i-heroicons-device-phone-mobile',
-      color: 'bg-blue-50 text-blue-600'
+      color: 'bg-blue-50 text-blue-600',
     },
     {
       id: 2,
       title: 'Gadai Emas',
       description: 'Solusi dana cepat dengan jaminan emas perhiasan atau logam mulia. Aman dan berasuransi.',
       icon: 'i-heroicons-sparkles',
-      color: 'bg-yellow-50 text-yellow-600'
+      color: 'bg-yellow-50 text-yellow-600',
     },
     {
       id: 3,
       title: 'Gadai BPKB',
       description: 'Pinjaman dana tunai dengan jaminan BPKB motor atau mobil. Bunga ringan.',
       icon: 'i-heroicons-truck',
-      color: 'bg-green-50 text-green-600'
-    }
+      color: 'bg-green-50 text-green-600',
+    },
   ];
 
   const benefits = [
     {
-        title: 'Diawasi OJK',
-        desc: 'Tenang, transaksi Anda aman dan legal.',
-        icon: 'i-heroicons-shield-check'
+      title: 'Diawasi OJK',
+      desc: 'Tenang, transaksi Anda aman dan legal.',
+      icon: 'i-heroicons-shield-check',
     },
     {
-        title: 'Pencairan Cepat',
-        desc: 'Dana cair dalam hitungan menit.',
-        icon: 'i-heroicons-bolt'
+      title: 'Pencairan Cepat',
+      desc: 'Dana cair dalam hitungan menit.',
+      icon: 'i-heroicons-bolt',
     },
     {
-        title: 'Taksiran Tinggi',
-        desc: 'Kami menghargai barang Anda dengan harga terbaik.',
-        icon: 'i-heroicons-currency-dollar'
+      title: 'Taksiran Tinggi',
+      desc: 'Kami menghargai barang Anda dengan harga terbaik.',
+      icon: 'i-heroicons-currency-dollar',
     },
     {
-        title: 'Tanpa Biaya Tersembunyi',
-        desc: 'Transparan sejak awal.',
-        icon: 'i-heroicons-document-magnifying-glass'
-    }
+      title: 'Tanpa Biaya Tersembunyi',
+      desc: 'Transparan sejak awal.',
+      icon: 'i-heroicons-document-magnifying-glass',
+    },
   ];
 
   const footer = {
-    address: 'Jl. Arteri Klapa Dua No. 90, RT.1/RW.4, Klp. Dua, Kec. Kb. Jeruk, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11550',
+    address:
+      'Jl. Arteri Klapa Dua No. 90, RT.1/RW.4, Klp. Dua, Kec. Kb. Jeruk, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11550',
     phones: ['(021) 22530123', '(021) 33456789'],
     socials: [
       { icon: 'i-simple-icons-instagram', link: '#' },
@@ -86,10 +86,10 @@ export const usePusatGadaiContent = () => {
       { icon: 'i-simple-icons-tiktok', link: '#' },
     ],
     links: [
-        { label: 'Kebijakan Privasi', url: '#' },
-        { label: 'Syarat & Ketentuan', url: '#' },
-        { label: 'FAQ', url: '#' },
-    ]
+      { label: 'Kebijakan Privasi', url: '#' },
+      { label: 'Syarat & Ketentuan', url: '#' },
+      { label: 'FAQ', url: '#' },
+    ],
   };
 
   return {
@@ -98,6 +98,6 @@ export const usePusatGadaiContent = () => {
     hero,
     services,
     benefits,
-    footer
+    footer,
   };
 };

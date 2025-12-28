@@ -1,5 +1,19 @@
 <script setup lang="ts">
-import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt } from '#components';
+import {
+  UModal,
+  UButton,
+  USwitch,
+  USeparator,
+  TablePagination,
+  FormSelect,
+  FormSelectGroup,
+  FormWizard,
+  DetailTableInline,
+  KanbanBoard,
+  FormOrgChart,
+  FormCalendar,
+  FormGantt,
+} from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -134,20 +148,20 @@ function open(key: string) {
     modalRefs[key].value = true;
     modalTitle.value = 'New Data';
     modalDescription.value = '';
-    
+
     const modal = modals.value.find((m: any) => m.props.key === key);
     if (modal) {
-       const modalFields = getModalFields(modal.children || []);
-       modalFields.forEach(fieldKey => {
-         if (formData.value[fieldKey] !== undefined) {
-           formData.value[fieldKey] = null; // or default value if needed
-           // Special handling for array/detail tables if necessary, though null works for most
-           // If it's a detail table inline, maybe empty array
-           if (Array.isArray(formData.value[fieldKey])) {
-             formData.value[fieldKey] = [];
-           }
-         }
-       });
+      const modalFields = getModalFields(modal.children || []);
+      modalFields.forEach((fieldKey) => {
+        if (formData.value[fieldKey] !== undefined) {
+          formData.value[fieldKey] = null; // or default value if needed
+          // Special handling for array/detail tables if necessary, though null works for most
+          // If it's a detail table inline, maybe empty array
+          if (Array.isArray(formData.value[fieldKey])) {
+            formData.value[fieldKey] = [];
+          }
+        }
+      });
     }
 
     const primary = getPrimary();
@@ -158,29 +172,33 @@ function open(key: string) {
 }
 
 async function copy() {
-  const onCopy = getAction('copy') 
-  if (onCopy == '') return 
+  const onCopy = getAction('copy');
+  if (onCopy == '') return;
   try {
-  const dataForm = new FormData();
-  dataForm.append('flowname', onCopy);
-  dataForm.append('menu', route.params.slug);
-  dataForm.append('search', 'true');
-  const selectedRow = selectedRows.value[0];
-  for (const rowKey in selectedRow) {
-    if (selectedRow[rowKey] !== null && selectedRow[rowKey] !== undefined && typeof selectedRow[rowKey] !== 'object') {
-      dataForm.append('id', selectedRow[rowKey]);
+    const dataForm = new FormData();
+    dataForm.append('flowname', onCopy);
+    dataForm.append('menu', route.params.slug);
+    dataForm.append('search', 'true');
+    const selectedRow = selectedRows.value[0];
+    for (const rowKey in selectedRow) {
+      if (
+        selectedRow[rowKey] !== null &&
+        selectedRow[rowKey] !== undefined &&
+        typeof selectedRow[rowKey] !== 'object'
+      ) {
+        dataForm.append('id', selectedRow[rowKey]);
+      }
     }
-  }
-  const res = await Api.post('api/admin/execute-flow', dataForm);
-  if (res.code == 200) {
-    toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
-  } else {
-    toast.add({
-      title: $t('TITLE ERROR'),
-      description: res.details,
-      color: 'error',
-    });
-  }
+    const res = await Api.post('api/admin/execute-flow', dataForm);
+    if (res.code == 200) {
+      toast.add({ title: 'Success', description: 'Data copied successfully', color: 'success' });
+    } else {
+      toast.add({
+        title: $t('TITLE ERROR'),
+        description: res.details,
+        color: 'error',
+      });
+    }
   } catch (err) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
   }
@@ -244,16 +262,16 @@ async function refreshMasterData(recId: any) {
 async function edit(key: string) {
   // Check if this is a detail modal by looking for the modal in the schema
   const modal = modals.value.find((m: any) => m.props.key === key);
-  
+
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-    
+
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
     // Find which table's selected row we should use
     const detailTableKey = key.replace('modal', 'table').replace('form', ''); // e.g., modaldetailform -> table
-    
+
     // Get onGetDetail flows
     let actionNode: any;
     parsedSchema.value.forEach((element: any) => {
@@ -262,31 +280,35 @@ async function edit(key: string) {
       }
     });
     const detailFlows = actionNode?.props?.onGetDetail || []; // Fixed: use onGetDetail instead of ongetdetail
-    
+
     // Find the index of this detail modal to get the correct flow
     // Filter modals that are actually detail modals (contain 'detail' in key)
     const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
     const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
     const flow = detailFlows[modalIndex];
-    
+
     if (flow && selectedRows.value.length > 0) {
       modalTitle.value = 'Edit Data';
       modalDescription.value = '';
       modalRefs[key].value = true;
-      
+
       const dataForm = new FormData();
       dataForm.append('flowname', flow);
       dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
-      
+
       // Append all selected row data as search parameters
       const selectedRow = selectedRows.value[0];
       for (const rowKey in selectedRow) {
-        if (selectedRow[rowKey] !== null && selectedRow[rowKey] !== undefined && typeof selectedRow[rowKey] !== 'object') {
+        if (
+          selectedRow[rowKey] !== null &&
+          selectedRow[rowKey] !== undefined &&
+          typeof selectedRow[rowKey] !== 'object'
+        ) {
           dataForm.append(rowKey, selectedRow[rowKey]);
         }
       }
-      
+
       try {
         const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res.code == 200) {
@@ -316,28 +338,28 @@ async function edit(key: string) {
 
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
-      
+
       // 🔒 Try to lock record if locking is enabled
       if (lockEnabled) {
         try {
-            const lockRes = await Api.post('api/admin/lock-record', {
-                tablename: props.menuName,
-                recordid: Number(selectedRows.value[0][primary]),
-                locktype: 'edit'
-            });
+          const lockRes = await Api.post('api/admin/lock-record', {
+            tablename: props.menuName,
+            recordid: Number(selectedRows.value[0][primary]),
+            locktype: 'edit',
+          });
 
-            if (lockRes?.code !== 200) {
-                 throw new Error(lockRes?.message || 'Lock failed');
-            }
+          if (lockRes?.code !== 200) {
+            throw new Error(lockRes?.message || 'Lock failed');
+          }
         } catch (err: any) {
-             const msg = err?.response?._data?.message || err?.message || 'This record is being edited by another user';
-             toast.add({
-                title: 'Record Locked',
-                description: msg,
-                color: 'error',
-                timeout: 5000
-            });
-            return; // ⛔ ABORT OPENING FORM
+          const msg = err?.response?._data?.message || err?.message || 'This record is being edited by another user';
+          toast.add({
+            title: 'Record Locked',
+            description: msg,
+            color: 'error',
+            timeout: 5000,
+          });
+          return; // ⛔ ABORT OPENING FORM
         }
       }
 
@@ -384,16 +406,16 @@ async function runFlow(flow: string) {
 function close(key: string) {
   try {
     const primary = getPrimary();
-    
+
     // 🔓 Unlock record if locking is enabled
     // We need to check if master has lock: true
     const master = getMaster();
     if (master?.props?.lock === true && selectedRows.value && selectedRows.value.length > 0) {
-        // Unlock
-        Api.post('api/admin/unlock-record', {
-            tablename: props.menuName,
-            recordid: Number(selectedRows.value[0][primary])
-        }).catch(err => console.error('Unlock failed', err));
+      // Unlock
+      Api.post('api/admin/unlock-record', {
+        tablename: props.menuName,
+        recordid: Number(selectedRows.value[0][primary]),
+      }).catch((err) => console.error('Unlock failed', err));
     }
 
     if (selectedRows.value && selectedRows.value.length > 0 && selectedRows.value[0][primary]) {
@@ -420,35 +442,35 @@ async function deleteData(table: any) {
   // Master table is usually the first table, or specific type 'master' (but here we deal with 'table' type nodes).
   // Let's assume tables[0] is master if explicitly not defined otherwise.
   // Or better, check against 'table0' or the key of the main table.
-  
+
   // Find the master table key
   // Usually the list of tables[0] is the main one?
   // Let's look at `tables` computed again. It finds all nodes of type 'table'.
-  // Often master table is separate? 
+  // Often master table is separate?
   // If 'TablePagination' is used as master, it's a 'table' node.
-  
+
   const allTables = tables.value;
   let masterTable = allTables.find((t: any) => t.props.key === 'table0');
   if (!masterTable && allTables.length > 0) masterTable = allTables[0];
-  
+
   const masterKey = masterTable?.props?.key || 'table0';
-  
+
   // Is it detail?
   // If the passed table key is NOT the master key, it's a detail table.
   // Also check if the table actually exists in our list.
   const targetTableObj = allTables.find((t: any) => t.props.key.toLowerCase() === table.toLowerCase());
-  
+
   const isDetailTable = targetTableObj && targetTableObj.props.key !== masterKey;
-  
+
   if (isDetailTable) {
     // Handle detail table deletion
     // 1. Identify which detail table it is (index among detail tables)
     // Filter out the master table to get list of detail tables
     const detailTables = allTables.filter((t: any) => t.props.key !== masterKey);
-    
+
     // Find index (case-insensitive find)
     const tableIndex = detailTables.findIndex((t: any) => t.props.key.toLowerCase() === table.toLowerCase());
-    
+
     // Get flow
     let actionNode: any;
     parsedSchema.value.forEach((element: any) => {
@@ -459,12 +481,11 @@ async function deleteData(table: any) {
 
     const purgeFlows = actionNode?.props?.onPurgeDetail || [];
     flow = purgeFlows[tableIndex];
-    
+
     itemsToDelete = selectedRows.value;
 
-    // For detail table, primary key might be different. 
+    // For detail table, primary key might be different.
     primaryKey = targetTableObj?.props?.primary || 'id';
-
   } else {
     // Master table deletion
     flow = getAction('purge');
@@ -478,28 +499,26 @@ async function deleteData(table: any) {
       dataForm.append('flowname', flow);
       dataForm.append('menu', route.params.slug);
       dataForm.append('search', 'true');
-      
+
       const idVal = itemsToDelete[index][primaryKey];
       if (idVal) {
-          dataForm.append(primaryKey, idVal);
+        dataForm.append(primaryKey, idVal);
       }
-      
+
       try {
         const res = await Api.post('api/admin/execute-flow', dataForm);
         if (res?.code == 200) {
-           
-           if (isDetailTable) {
-               // Refresh detail table
-               // We need to re-fetch master data to update the detail list in formData
-               const masterPrimary = getPrimary();
-               const masterId = formData.value[masterPrimary];
-               if (masterId) {
-                   await refreshMasterData(masterId);
-               }
-           } else {
-               tableRef.value.refreshTable();
-           }
-           
+          if (isDetailTable) {
+            // Refresh detail table
+            // We need to re-fetch master data to update the detail list in formData
+            const masterPrimary = getPrimary();
+            const masterId = formData.value[masterPrimary];
+            if (masterId) {
+              await refreshMasterData(masterId);
+            }
+          } else {
+            tableRef.value.refreshTable();
+          }
         } else if (res?.code == 401 && res?.error == 'INVALID_TOKEN') {
           navigateTo('/login');
         } else {
@@ -511,16 +530,16 @@ async function deleteData(table: any) {
         }
       } catch (err) {
         toast.add({
-            title: $t('TITLE ERROR'),
-            description: err,
-            color: 'error',
-          });
+          title: $t('TITLE ERROR'),
+          description: err,
+          color: 'error',
+        });
         console.error('Gagal hapus data:', err);
       }
     }
   } else {
-      if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
-      if (itemsToDelete.length === 0) toast.add({ title: 'Warning', description: 'No rows selected', color: 'warning' });
+    if (!flow) toast.add({ title: 'Error', description: 'Invalid Flow ' + flow, color: 'error' });
+    if (itemsToDelete.length === 0) toast.add({ title: 'Warning', description: 'No rows selected', color: 'warning' });
   }
 }
 
@@ -561,16 +580,15 @@ async function downReport(reportId: any, format: string = 'pdf') {
 
   const primary = getPrimary();
   if (selectedRows.value.length > 0) {
-      for (let index = 0; index < selectedRows.value.length; index++) {
-        if(selectedRows.value[index][primary]) {
-            dataForm.append(primary + '[' + index + ']', selectedRows.value[index][primary]);
-        }
+    for (let index = 0; index < selectedRows.value.length; index++) {
+      if (selectedRows.value[index][primary]) {
+        dataForm.append(primary + '[' + index + ']', selectedRows.value[index][primary]);
       }
+    }
   }
 
   await Api.donlotFile('/api/admin/execute-flow', dataForm, 'Report_' + reportId + '.' + format);
 }
-
 
 function navigate(key: any) {
   if (key.includes('form-designer') && selectedRows.value.length === 0) {
@@ -693,19 +711,19 @@ function formatDate(value: any, type: string) {
   if (!value) return '';
   // Check if it looks like an ISO string or contains date parts
   if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof value === 'string') {
-      // If valid date
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
+    // If valid date
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
 
-          if (type === 'date') return `${year}-${month}-${day}`;
-          if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
-          if (type === 'time') return `${hours}:${minutes}`; 
-      }
+      if (type === 'date') return `${year}-${month}-${day}`;
+      if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
+      if (type === 'time') return `${hours}:${minutes}`;
+    }
   }
   return value;
 }
@@ -902,9 +920,8 @@ function renderComponent(component: any) {
         validateField,
       });
 
-
     case 'selectgroup':
-      return renderSelectGroup(component)
+      return renderSelectGroup(component);
 
     case 'bool':
     case 'boolean': {
@@ -919,14 +936,18 @@ function renderComponent(component: any) {
       return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
         h(USwitch, {
           modelValue: modelCheckbox.value,
-          'onUpdate:modelValue': (val: boolean) => (modelCheckbox.value = val)
+          'onUpdate:modelValue': (val: boolean) => (modelCheckbox.value = val),
         }),
-        h('label', { 
+        h(
+          'label',
+          {
             class: 'cursor-pointer',
             onClick: () => {
-               modelCheckbox.value = !modelCheckbox.value;
-            }
-        }, $t(component.props.text.toUpperCase()) || ''),
+              modelCheckbox.value = !modelCheckbox.value;
+            },
+          },
+          $t(component.props.text.toUpperCase()) || '',
+        ),
       ]);
     }
 
@@ -934,8 +955,16 @@ function renderComponent(component: any) {
       // 🔒 Permission Check
       const p = props.permissions;
       const evt = (component.props.onClick || '').toLowerCase();
-      
-      if ((evt === 'oncreate' || evt === 'onupdate' || evt.startsWith('open:') || evt.startsWith('edit:') || evt.startsWith('copy')) && Number(p?.iswrite) === 0) return null;
+
+      if (
+        (evt === 'oncreate' ||
+          evt === 'onupdate' ||
+          evt.startsWith('open:') ||
+          evt.startsWith('edit:') ||
+          evt.startsWith('copy')) &&
+        Number(p?.iswrite) === 0
+      )
+        return null;
       if ((evt === 'ondelete' || evt.startsWith('deletedata')) && Number(p?.ispurge) === 0) return null;
       if (evt.startsWith('upload') && Number(p?.isupload) === 0) return null;
       if ((evt === 'downtemplate' || evt.startsWith('downform')) && Number(p?.isdownload) === 0) return null;
@@ -987,14 +1016,11 @@ function renderComponent(component: any) {
         },
         label: component.props.text,
       });
-    
+
     case 'separator': {
-      return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
-        h(USeparator, {
-        }),
-      ]);
+      return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [h(USeparator, {})]);
     }
-    
+
     case 'action':
       break;
   }
@@ -1042,7 +1068,7 @@ function renderCallOther(component) {
 
   if (type === 'table') {
     const tableObj = tables.value.find((t) => t.props.key === key);
-    
+
     if (!tableObj) {
       return h('div', `Table ${key} not found`);
     }
@@ -1054,7 +1080,7 @@ function renderCallOther(component) {
         ...tableObj.props,
         isdetail: false,
         isexpand: false,
-      }
+      },
     };
 
     tableUsed.value.push(key);
@@ -1070,25 +1096,42 @@ function validateContainer(container: any): boolean {
 
   // List of input types that need validation
   const inputTypes = [
-    'text', 'password', 'number', 'email', 'tel', 'url', 
-    'date', 'time', 'datetime', 'month', 'week', 
-    'select', 'selectgroup', 'textarea', 'longtext', 
-    'checkbox', 'radio', 'bool', 'boolean', 'file', 'image'
+    'text',
+    'password',
+    'number',
+    'email',
+    'tel',
+    'url',
+    'date',
+    'time',
+    'datetime',
+    'month',
+    'week',
+    'select',
+    'selectgroup',
+    'textarea',
+    'longtext',
+    'checkbox',
+    'radio',
+    'bool',
+    'boolean',
+    'file',
+    'image',
   ];
 
   // If the container itself is an input
   if (inputTypes.includes((container.type || '').toLowerCase())) {
-     const val = formData.value[container.props?.key];
-     
-     // validateField expects the component object
-     const result = validateField(container, val);
-     
-     if (result !== true) {
-       isValid = false;
-       if (container.props?.key) {
-         validationErrors[container.props.key] = result as string;
-       }
-     }
+    const val = formData.value[container.props?.key];
+
+    // validateField expects the component object
+    const result = validateField(container, val);
+
+    if (result !== true) {
+      isValid = false;
+      if (container.props?.key) {
+        validationErrors[container.props.key] = result as string;
+      }
+    }
   }
 
   // Recurse children
@@ -1109,7 +1152,7 @@ function renderWizard(container: any) {
   // Prepare steps for the wizard component
   const steps = container.children.map((child: any) => ({
     title: child.props?.title || child.props?.label || 'Step',
-    ...child
+    ...child,
   }));
 
   return h(
@@ -1119,22 +1162,22 @@ function renderWizard(container: any) {
       class: container.props?.class || '',
       // Pass validation function
       validateStep: async (index: number) => {
-         const stepComponent = container.children[index];
-         return validateContainer(stepComponent);
+        const stepComponent = container.children[index];
+        return validateContainer(stepComponent);
       },
       onFinish: () => {
-         // Create/Update logic
-         // We can reuse the button logic?
-         // Usually wizard finish means "Submit"
-         // We should check if there is an 'onCreate' or 'onUpdate' action defined, or expose an event.
-         // For now, let's assume it triggers the same as a primary button would.
-         
-         if (modalTitle.value === 'New Data') {
-             CreateHandler();
-         } else {
-             UpdateHandler();
-         }
-      }
+        // Create/Update logic
+        // We can reuse the button logic?
+        // Usually wizard finish means "Submit"
+        // We should check if there is an 'onCreate' or 'onUpdate' action defined, or expose an event.
+        // For now, let's assume it triggers the same as a primary button would.
+
+        if (modalTitle.value === 'New Data') {
+          CreateHandler();
+        } else {
+          UpdateHandler();
+        }
+      },
     },
     {
       default: ({ step }: { step: number }) => {
@@ -1142,7 +1185,7 @@ function renderWizard(container: any) {
         if (!stepComponent) return null;
         return renderContainer(stepComponent);
       },
-    }
+    },
   );
 }
 
@@ -1160,36 +1203,36 @@ function renderOrgChart(container: any) {
   if (!container) return null;
   const FormOrgChart = resolveComponent('FormOrgChart');
   return h(FormOrgChart, {
-      source: container.props.source,
-      config: container.props.config,
-      onCreate: container.props.onCreate,
-      onUpdate: container.props.onUpdate,
-      onDelete: container.props.onDelete,
-      modalKey: container.props.modalKey,
-      class: container.props.class,
-      'onOpen:modal': (key: string, data: any, isNew: boolean) => {
-          // Open modal logic
-          if(modalRefs[key]) {
-             modalRefs[key].value = true;
-             modalTitle.value = isNew ? 'Add Child Node' : 'Edit Node';
-             
-             // Populate form data
-             formData.value = { ...data };
-             
-             // If isNew, we might want to clear other fields but keep parent_id
-             if(isNew) {
-                 const parentKey = container.props.config?.parentKey || 'parent_id';
-                 const pid = data[parentKey];
-                 formData.value = {};
-                 formData.value[parentKey] = pid;
-             }
-          } else {
-              console.warn(`Modal ${key} not found`);
-          }
-      },
-      'onEdit:node': (node: any) => {
-          // Additional logic if needed, but open:modal handles it usually
+    source: container.props.source,
+    config: container.props.config,
+    onCreate: container.props.onCreate,
+    onUpdate: container.props.onUpdate,
+    onDelete: container.props.onDelete,
+    modalKey: container.props.modalKey,
+    class: container.props.class,
+    'onOpen:modal': (key: string, data: any, isNew: boolean) => {
+      // Open modal logic
+      if (modalRefs[key]) {
+        modalRefs[key].value = true;
+        modalTitle.value = isNew ? 'Add Child Node' : 'Edit Node';
+
+        // Populate form data
+        formData.value = { ...data };
+
+        // If isNew, we might want to clear other fields but keep parent_id
+        if (isNew) {
+          const parentKey = container.props.config?.parentKey || 'parent_id';
+          const pid = data[parentKey];
+          formData.value = {};
+          formData.value[parentKey] = pid;
+        }
+      } else {
+        console.warn(`Modal ${key} not found`);
       }
+    },
+    'onEdit:node': (node: any) => {
+      // Additional logic if needed, but open:modal handles it usually
+    },
   });
 }
 
@@ -1197,27 +1240,27 @@ function renderCalendar(container: any) {
   if (!container) return null;
   const FormCalendar = resolveComponent('FormCalendar');
   return h(FormCalendar, {
-      source: container.props.source,
-      config: container.props.config,
-      height: container.props.height,
-      class: container.props.class,
-      menuName: String(route.params.slug),
-      'onItem-click': (item: any) => {
-          const modalKey = container.props.key?.replace('calendar', 'modal') || 'modalcalendar';
-          // or finding a modal with matching name pattern?
-          // Fallback to convention or prop
-          const targetModalKey = container.props.modalKey || container.props.key + '_modal';
-          
-          if(modalRefs[targetModalKey]) {
-             formData.value = { ...item };
-             modalRefs[targetModalKey].value = true;
-             modalTitle.value = 'Edit Item';
-          } else {
-             // Try to find a modal that might be relevant? 
-             // For now just warn
-             console.warn(`Modal ${targetModalKey} not found for Calendar item click`);
-          }
+    source: container.props.source,
+    config: container.props.config,
+    height: container.props.height,
+    class: container.props.class,
+    menuName: String(route.params.slug),
+    'onItem-click': (item: any) => {
+      const modalKey = container.props.key?.replace('calendar', 'modal') || 'modalcalendar';
+      // or finding a modal with matching name pattern?
+      // Fallback to convention or prop
+      const targetModalKey = container.props.modalKey || container.props.key + '_modal';
+
+      if (modalRefs[targetModalKey]) {
+        formData.value = { ...item };
+        modalRefs[targetModalKey].value = true;
+        modalTitle.value = 'Edit Item';
+      } else {
+        // Try to find a modal that might be relevant?
+        // For now just warn
+        console.warn(`Modal ${targetModalKey} not found for Calendar item click`);
       }
+    },
   });
 }
 
@@ -1225,28 +1268,28 @@ function renderGantt(container: any) {
   if (!container) return null;
   const FormGantt = resolveComponent('FormGantt');
   return h(FormGantt, {
-      source: container.props.source,
-      config: container.props.config,
-      height: container.props.height,
-      class: container.props.class,
-      menuName: String(route.params.slug),
-      'onItem-click': (item: any) => {
-        const targetModalKey = container.props.modalKey || container.props.key + '_modal';
-          if(modalRefs[targetModalKey]) {
-             formData.value = { ...item };
-             modalRefs[targetModalKey].value = true;
-             modalTitle.value = 'Edit Item';
-          }
+    source: container.props.source,
+    config: container.props.config,
+    height: container.props.height,
+    class: container.props.class,
+    menuName: String(route.params.slug),
+    'onItem-click': (item: any) => {
+      const targetModalKey = container.props.modalKey || container.props.key + '_modal';
+      if (modalRefs[targetModalKey]) {
+        formData.value = { ...item };
+        modalRefs[targetModalKey].value = true;
+        modalTitle.value = 'Edit Item';
       }
+    },
   });
 }
 
 function renderKanbanBoard(container: any) {
   if (!container) return null;
-  
+
   // Import KanbanBoard component dynamically
   const KanbanBoard = resolveComponent('KanbanBoard');
-  
+
   return h(KanbanBoard, {
     // Data sources
     projectsSource: container.props?.projectsSource || '',
@@ -1282,67 +1325,67 @@ function renderKanbanBoard(container: any) {
 
 function renderDetailTable(container: any) {
   const tableKey = container.props.key;
-    
-    if (!(tableKey in formData.value)) {
-      formData.value[tableKey] = [];
-    }
 
-    // Extract columns from component children
-    let columns: any[] = [];
-    if (container.children) {
-      container.children.forEach((child: any) => {
-        if (child.type === 'columns' && child.children) {
-          columns = child.children.map((col: any) => ({
-            ...col.props,
-            type: col.type,
-            text: col.props?.text,
-            label: col.props?.label,
-            key: col.props?.key,
-          }));
-        }
-      });
-    }
+  if (!(tableKey in formData.value)) {
+    formData.value[tableKey] = [];
+  }
 
-    return h(DetailTableInline, {
-      columns,
-      tableKey,
-      formData: formData.value,
-      modelValue: formData.value[tableKey] || [],
-      'onUpdate:modelValue': (val: any) => {
-        formData.value[tableKey] = val;
-      },
-      class: container.props.class || 'mb-4',
+  // Extract columns from component children
+  let columns: any[] = [];
+  if (container.children) {
+    container.children.forEach((child: any) => {
+      if (child.type === 'columns' && child.children) {
+        columns = child.children.map((col: any) => ({
+          ...col.props,
+          type: col.type,
+          text: col.props?.text,
+          label: col.props?.label,
+          key: col.props?.key,
+        }));
+      }
     });
+  }
+
+  return h(DetailTableInline, {
+    columns,
+    tableKey,
+    formData: formData.value,
+    modelValue: formData.value[tableKey] || [],
+    'onUpdate:modelValue': (val: any) => {
+      formData.value[tableKey] = val;
+    },
+    class: container.props.class || 'mb-4',
+  });
 }
 
 function renderSelectGroup(component: any) {
   if (!(component.props.key in formData.value)) formData.value[component.props.key] = [];
-      return h(FormSelectGroup, {
-        class: component.props.class,
-        component: component.props,
-        formData,
-        validationErrors,
-        validateField,
-      });
+  return h(FormSelectGroup, {
+    class: component.props.class,
+    component: component.props,
+    formData,
+    validationErrors,
+    validateField,
+  });
 }
 
 function renderKanban(container: any) {
   if (!container) return null;
-  
+
   const kanbanKey = container.props.key || 'kanban_1';
-  
+
   // Initialize kanban data in formData if not exists
   if (!(kanbanKey in formData.value)) {
     formData.value[kanbanKey] = [];
   }
-  
+
   return h(KanbanBoard, {
     container,
     formData: formData.value,
     onUpdate: (card: any) => {
       // Handle card update
       const index = formData.value[kanbanKey].findIndex(
-        (c: any) => c[container.props.primary || 'id'] === card[container.props.primary || 'id']
+        (c: any) => c[container.props.primary || 'id'] === card[container.props.primary || 'id'],
       );
       if (index >= 0) {
         formData.value[kanbanKey][index] = card;
@@ -1359,7 +1402,7 @@ function renderKanban(container: any) {
           dataForm.append('flowname', flow);
           dataForm.append('menu', route.params.slug);
           dataForm.append('search', 'true');
-          
+
           // Append card data
           for (const key in card) {
             if (card[key] !== null && card[key] !== undefined) {
@@ -1370,7 +1413,7 @@ function renderKanban(container: any) {
               }
             }
           }
-          
+
           const res = await Api.post('api/admin/execute-flow', dataForm);
           if (res.code === 200) {
             toast.add({
@@ -1405,16 +1448,14 @@ function renderKanban(container: any) {
   });
 }
 
-
 function renderContainer(container: any) {
   if (!container) return null;
   // 🔥 Special handling for detailtable - render it as a component, not a container
   // 🔥 Special handling for detailtable - render it as a component, not a container
   if ((container.type || '').toLowerCase() === 'detailtable') {
-    return renderDetailTable(container)
-  } else 
-  if ((container.type || '').toLowerCase() === 'selectgroup') {
-    return renderSelectGroup(container)
+    return renderDetailTable(container);
+  } else if ((container.type || '').toLowerCase() === 'selectgroup') {
+    return renderSelectGroup(container);
   }
 
   let children = Array.isArray(container) ? container : container.children || [];
@@ -1441,10 +1482,10 @@ function renderContainer(container: any) {
 
         case 'kanbanboard':
           return renderKanbanBoard(component);
-        
+
         case 'orgchart':
           return renderOrgChart(component);
-        
+
         case 'calendar':
           return renderCalendar(component);
 
@@ -1452,40 +1493,40 @@ function renderContainer(container: any) {
           return renderGantt(component);
 
         case 'detailtable': {
-      // Initialize formData for this table if not exists
-      const tableKey = component.props.key;
-      
-      if (!(tableKey in formData.value)) {
-        formData.value[tableKey] = [];
-      }
+          // Initialize formData for this table if not exists
+          const tableKey = component.props.key;
 
-      // Extract columns from component children
-      let columns: any[] = [];
-      if (component.children) {
-        component.children.forEach((child: any) => {
-          if (child.type === 'columns' && child.children) {
-            columns = child.children.map((col: any) => ({
-              ...col.props,
-              type: col.type,
-              text: col.props?.text,
-              label: col.props?.label,
-              key: col.props?.key,
-            }));
+          if (!(tableKey in formData.value)) {
+            formData.value[tableKey] = [];
           }
-        });
-      }
 
-      return h(DetailTableInline, {
-        columns,
-        tableKey,
-        formData: formData.value,
-        modelValue: formData.value[tableKey],
-        'onUpdate:modelValue': (val: any) => {
-          formData.value[tableKey] = val;
-        },
-        class: component.props.class || 'mb-4',
-      });
-    }
+          // Extract columns from component children
+          let columns: any[] = [];
+          if (component.children) {
+            component.children.forEach((child: any) => {
+              if (child.type === 'columns' && child.children) {
+                columns = child.children.map((col: any) => ({
+                  ...col.props,
+                  type: col.type,
+                  text: col.props?.text,
+                  label: col.props?.label,
+                  key: col.props?.key,
+                }));
+              }
+            });
+          }
+
+          return h(DetailTableInline, {
+            columns,
+            tableKey,
+            formData: formData.value,
+            modelValue: formData.value[tableKey],
+            'onUpdate:modelValue': (val: any) => {
+              formData.value[tableKey] = val;
+            },
+            class: component.props.class || 'mb-4',
+          });
+        }
 
         case 'master':
         case 'buttons':
@@ -1731,8 +1772,8 @@ const DeleteHandler = async () => {
         }
       }
       toast.add({
-         title: $t('TITLE DELETE'),
-         description: $t('Data deleted successfully'),
+        title: $t('TITLE DELETE'),
+        description: $t('Data deleted successfully'),
       });
     } catch (err) {
       console.error('Gagal hapus data:', err);
@@ -1747,7 +1788,6 @@ const DeleteHandler = async () => {
 onMounted(() => {
   ReadHandler();
 });
-
 
 // Helper to find all input keys in a modal
 function getModalFields(nodes: any[]): string[] {
@@ -1786,7 +1826,7 @@ async function saveData(key: any) {
       // Filter modals that are actually detail modals (contain 'detail' in key)
       const detailModals = modals.value.filter((m: any) => m.props.key.toLowerCase().includes('detail'));
       const modalIndex = detailModals.findIndex((m: any) => m.props.key === key);
-      
+
       if (modalTitle.value == 'New Data') {
         const createFlows = actionNode?.props?.onCreateDetail || [];
         flow = createFlows[modalIndex];
@@ -1804,24 +1844,24 @@ async function saveData(key: any) {
     }
 
     // Helper to find all input keys in a modal (Moved to global scope below)
-    
+
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
-    
+
     const payload = { ...toRaw(formData.value) };
-    
+
     // If detail modal, filter payload to only include modal fields + master ID
     if (isDetailModal && modal) {
       const modalFields = getModalFields(modal.children || []);
       const primary = getPrimary(); // Master ID key
-      
+
       // Add Master ID if it exists
       if (primary && payload[primary]) {
         dataForm.append(primary, payload[primary]);
       }
-      
+
       // Add only fields present in the modal
       for (const key of modalFields) {
         const val = payload[key];
@@ -1858,7 +1898,7 @@ async function saveData(key: any) {
         description: $t(res.message.replaceAll('_', ' ')),
       });
       // tableRef.value.refreshTable(); // ❌ Don't refresh main table immediately to avoid clearing selection
-      
+
       const primary = getPrimary();
       let masterId = null;
       if (primary && formData.value[primary]) {
@@ -1868,18 +1908,18 @@ async function saveData(key: any) {
       // If Detail Modal, refresh master data to update detail table
       if (isDetailModal && masterId) {
         await refreshMasterData(masterId);
-      } 
-      
+      }
+
       // Refresh global table (optional, might clear selection)
       if (tableRef.value) {
-          tableRef.value.refreshTable();
+        tableRef.value.refreshTable();
       }
-      
+
       modalRefs[key].value = false;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
     } else {
-       toast.add({
+      toast.add({
         title: $t('TITLE ERROR'),
         description: res.details,
         color: 'error',
@@ -1887,10 +1927,10 @@ async function saveData(key: any) {
     }
   } catch (err) {
     toast.add({
-        title: $t('TITLE ERROR'),
-        description: err,
-        color: 'error',
-      });
+      title: $t('TITLE ERROR'),
+      description: err,
+      color: 'error',
+    });
     console.error('Gagal simpan data:', err);
   } finally {
     isLoading.value = false;
@@ -1903,7 +1943,7 @@ const appStore = useAppStore();
 
 function handleGlobalKeydown(e: KeyboardEvent) {
   // Ignore if input/textarea is focused (except F-keys and specific combinations usually allowed)
-  // Actually, ERP shortcuts usually override input focus for F-keys. 
+  // Actually, ERP shortcuts usually override input focus for F-keys.
   // Standard text input keys (arrows, letters) should be ignored if in input.
   const target = e.target as HTMLElement;
   const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
@@ -1920,44 +1960,44 @@ function handleGlobalKeydown(e: KeyboardEvent) {
         // New Master
         const masterKey = getAction('create'); // or find master modal
         if (masterKey) {
-             // Logic to find 'New' action or open primary modal
-             // Assuming primary modal key usually matches generic pattern or we search for openable modal
-             // For now, let's try to trigger a generic "Create" if flow exists, or open the "New Data" modal
-             // If we have a modal for new data, it usually has a key.
-             // We need a reliable way to get the "Create Modal" key. 
-             // Often it's passed or we can find it in schemas.
-             // Workaround: Find modal with title 'New Data' or similar if feasible, 
-             // but better: Trigger 'create' action if it's a flow, OR open the modal if we know the key.
-             // Let's assume standard "New Data" modal is available via a button we can simulate or just find the modal.
-             // Simplified: Trigger the button that has 'onCreate' event?
-             const createBtn = parsedSchema.value.find((c: any) => c.props?.onClick?.toLowerCase() === 'oncreate');
-             if(createBtn) {
-                 // Creating data via modal usually involves setting modal open.
-                 // We need the key of the modal to open.
-                 // Often the schemas have buttons that toggle modals.
-                 // Let's try to find a modal that is NOT detail.
-                 const mainModal = modals.value.find((m:any) => !m.props.key.toLowerCase().includes('detail'));
-                 if(mainModal) {
-                     modalTitle.value = 'New Data';
-                     formData.value = {};
-                     modalRefs[mainModal.props.key].value = true;
-                 }
-             }
+          // Logic to find 'New' action or open primary modal
+          // Assuming primary modal key usually matches generic pattern or we search for openable modal
+          // For now, let's try to trigger a generic "Create" if flow exists, or open the "New Data" modal
+          // If we have a modal for new data, it usually has a key.
+          // We need a reliable way to get the "Create Modal" key.
+          // Often it's passed or we can find it in schemas.
+          // Workaround: Find modal with title 'New Data' or similar if feasible,
+          // but better: Trigger 'create' action if it's a flow, OR open the modal if we know the key.
+          // Let's assume standard "New Data" modal is available via a button we can simulate or just find the modal.
+          // Simplified: Trigger the button that has 'onCreate' event?
+          const createBtn = parsedSchema.value.find((c: any) => c.props?.onClick?.toLowerCase() === 'oncreate');
+          if (createBtn) {
+            // Creating data via modal usually involves setting modal open.
+            // We need the key of the modal to open.
+            // Often the schemas have buttons that toggle modals.
+            // Let's try to find a modal that is NOT detail.
+            const mainModal = modals.value.find((m: any) => !m.props.key.toLowerCase().includes('detail'));
+            if (mainModal) {
+              modalTitle.value = 'New Data';
+              formData.value = {};
+              modalRefs[mainModal.props.key].value = true;
+            }
+          }
         }
         break;
       case 'F3':
         e.preventDefault();
         // Edit Master - usually requires selection
         if (selectedRows.value.length === 1) {
-             const row = selectedRows.value[0];
-             const mainModal = modals.value.find((m:any) => !m.props.key.toLowerCase().includes('detail'));
-             if(mainModal) {
-                 modalTitle.value = 'Edit Data';
-                 formData.value = { ...row }; // Copy row to form
-                 modalRefs[mainModal.props.key].value = true;
-             }
+          const row = selectedRows.value[0];
+          const mainModal = modals.value.find((m: any) => !m.props.key.toLowerCase().includes('detail'));
+          if (mainModal) {
+            modalTitle.value = 'Edit Data';
+            formData.value = { ...row }; // Copy row to form
+            modalRefs[mainModal.props.key].value = true;
+          }
         } else {
-             toast.add({ title: 'Info', description: 'Please select one row to edit', color: 'yellow' });
+          toast.add({ title: 'Info', description: 'Please select one row to edit', color: 'yellow' });
         }
         break;
       case 'F4':
@@ -1974,15 +2014,15 @@ function handleGlobalKeydown(e: KeyboardEvent) {
         // Save Master
         // Only if modal is open?
         // Find open modal
-        const openModalKey = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
+        const openModalKey = Object.keys(modalRefs).find((k) => modalRefs[k].value === true);
         if (openModalKey && !openModalKey.toLowerCase().includes('detail')) {
-            saveData(openModalKey);
+          saveData(openModalKey);
         }
         break;
       case 'F7':
         e.preventDefault();
         // Cancel (Close Modal)
-        const activeModal = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
+        const activeModal = Object.keys(modalRefs).find((k) => modalRefs[k].value === true);
         if (activeModal) close(activeModal);
         break;
       case 'F8':
@@ -2016,8 +2056,8 @@ function handleGlobalKeydown(e: KeyboardEvent) {
         // Close Modal or Help
         if (showHelpModal.value) showHelpModal.value = false;
         else {
-             const m = Object.keys(modalRefs).find(k => modalRefs[k].value === true);
-             if (m) close(m);
+          const m = Object.keys(modalRefs).find((k) => modalRefs[k].value === true);
+          if (m) close(m);
         }
         break;
     }
@@ -2025,80 +2065,86 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 
   // --- ALT COMBINATIONS (Detail Operations) ---
   if (e.altKey && !e.ctrlKey && !e.shiftKey) {
-     switch (e.key) {
-        case 'w':
-        case 'W':
-            e.preventDefault();
-            // Close Mini Tab (Detail Modal?)
-            const detailModal = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
-            if(detailModal) close(detailModal);
-            break;
-        case 'F1':
-            e.preventDefault();
-            // Upload
-            triggerFileSelect();
-            break;
-        case 'F2':
-            e.preventDefault();
-            // New Detail
-            // Find detail modal
-            // We need context of WHICH detail table. 
-            // If strictly just "open the first detail modal found":
-            const dModal = modals.value.find((m:any) => m.props.key.toLowerCase().includes('detail'));
-            if(dModal) {
-                 modalTitle.value = 'New Data'; // Detail title
-                 formData.value = {}; // Reset? Watch out for master ID binding
-                 // Ideally we need to know the parent ID or context
-                 modalRefs[dModal.props.key].value = true;
-            }
-            break;
-        // ... Add F3 (Edit Detail), F6 (Save Detail), F8 (Purge Detail) same pattern ...
-        case 'F6':
-             e.preventDefault();
-             // Save Detail
-             const openDetail = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
-             if(openDetail) saveData(openDetail);
-             break;
-        case 'F7':
-             e.preventDefault();
-             // Cancel Detail
-             const actDetail = Object.keys(modalRefs).find(k => modalRefs[k].value === true && k.toLowerCase().includes('detail'));
-             if(actDetail) close(actDetail);
-             break;
-         case 'F11':
-            e.preventDefault();
-            // PDF (Opera) -> PDF
-            downTemplate('pdf');
-            break;
-     }
+    switch (e.key) {
+      case 'w':
+      case 'W':
+        e.preventDefault();
+        // Close Mini Tab (Detail Modal?)
+        const detailModal = Object.keys(modalRefs).find(
+          (k) => modalRefs[k].value === true && k.toLowerCase().includes('detail'),
+        );
+        if (detailModal) close(detailModal);
+        break;
+      case 'F1':
+        e.preventDefault();
+        // Upload
+        triggerFileSelect();
+        break;
+      case 'F2':
+        e.preventDefault();
+        // New Detail
+        // Find detail modal
+        // We need context of WHICH detail table.
+        // If strictly just "open the first detail modal found":
+        const dModal = modals.value.find((m: any) => m.props.key.toLowerCase().includes('detail'));
+        if (dModal) {
+          modalTitle.value = 'New Data'; // Detail title
+          formData.value = {}; // Reset? Watch out for master ID binding
+          // Ideally we need to know the parent ID or context
+          modalRefs[dModal.props.key].value = true;
+        }
+        break;
+      // ... Add F3 (Edit Detail), F6 (Save Detail), F8 (Purge Detail) same pattern ...
+      case 'F6':
+        e.preventDefault();
+        // Save Detail
+        const openDetail = Object.keys(modalRefs).find(
+          (k) => modalRefs[k].value === true && k.toLowerCase().includes('detail'),
+        );
+        if (openDetail) saveData(openDetail);
+        break;
+      case 'F7':
+        e.preventDefault();
+        // Cancel Detail
+        const actDetail = Object.keys(modalRefs).find(
+          (k) => modalRefs[k].value === true && k.toLowerCase().includes('detail'),
+        );
+        if (actDetail) close(actDetail);
+        break;
+      case 'F11':
+        e.preventDefault();
+        // PDF (Opera) -> PDF
+        downTemplate('pdf');
+        break;
+    }
   }
 
   // --- CTRL COMBINATIONS (Global) ---
   if (e.ctrlKey) {
-     switch (e.key) {
-         case 'F1':
-             e.preventDefault();
-             triggerFileSelect();
-             break;
-         case 'F2':
-             e.preventDefault();
-             appStore.toggleNotification();
-             break;
-         case 'F3':
-             e.preventDefault();
-             appStore.toggleChat();
-             break;
-         case '<':
-         case ',': // < is Shift+, but Ctrl+< might register as , depending on layout, check both or event.code
-             // Prev Data (Pagination)
-             if (tableRef.value) tableRef.value.prevPage?.(); // Ensure exposed
-             break;
-         case '>':
-         case '.':
-             // Next Data
-             if (tableRef.value) tableRef.value.nextPage?.();
-             break;
-     }
+    switch (e.key) {
+      case 'F1':
+        e.preventDefault();
+        triggerFileSelect();
+        break;
+      case 'F2':
+        e.preventDefault();
+        appStore.toggleNotification();
+        break;
+      case 'F3':
+        e.preventDefault();
+        appStore.toggleChat();
+        break;
+      case '<':
+      case ',': // < is Shift+, but Ctrl+< might register as , depending on layout, check both or event.code
+        // Prev Data (Pagination)
+        if (tableRef.value) tableRef.value.prevPage?.(); // Ensure exposed
+        break;
+      case '>':
+      case '.':
+        // Next Data
+        if (tableRef.value) tableRef.value.nextPage?.();
+        break;
+    }
   }
 }
 
@@ -2124,7 +2170,6 @@ function initModalRefs(schema: any) {
     if (node.children?.length) initModalRefs(node.children);
   });
 }
-
 </script>
 
 <template>
@@ -2136,12 +2181,12 @@ function initModalRefs(schema: any) {
 
   <div v-for="(value, index) in modals" :key="value.props.key">
     <UModal
-    :ui="{
-    wrapper: 'items-center',
-    content: 'sm:max-w-none lg:max-w-none',
-    // Optionally remove padding if needed
-    // base: 'relative text-left rtl:text-right overflow-hidden shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6', 
-  }"
+      :ui="{
+        wrapper: 'items-center',
+        content: 'sm:max-w-none lg:max-w-none',
+        // Optionally remove padding if needed
+        // base: 'relative text-left rtl:text-right overflow-hidden shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6',
+      }"
       v-if="modalRefs?.[value.props.key]"
       v-model:open="modalRefs[value.props.key]"
       :title="modalTitle"
@@ -2162,26 +2207,42 @@ function initModalRefs(schema: any) {
   </div>
 
   <!-- Global Loading Overlay -->
-  <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+  <div
+    v-if="isLoading"
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait"
+  >
     <div class="flex flex-col items-center">
-         <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span class="text-gray-600 font-medium text-lg">Processing...</span>
+      <svg
+        class="animate-spin h-12 w-12 text-blue-600 mb-4"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
+      </svg>
+      <span class="text-gray-600 font-medium text-lg">Processing...</span>
     </div>
   </div>
 
   <!-- 🔹 Hidden file input -->
   <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept=".xls,.xlsx" />
 
-  <UModal v-if="showHelpModal" v-model:open="showHelpModal" :ui="{  wrapper: 'items-center', content: 'sm:max-w-none lg:max-w-none' }">
+  <UModal
+    v-if="showHelpModal"
+    v-model:open="showHelpModal"
+    :ui="{ wrapper: 'items-center', content: 'sm:max-w-none lg:max-w-none' }"
+  >
     <template #body>
       <div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
         <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-3">
           <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-keyboard text-indigo-500"></i>
-              Keyboard Shortcuts
+            <i class="fa-solid fa-keyboard text-indigo-500"></i>
+            Keyboard Shortcuts
           </h3>
           <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="showHelpModal = false" />
         </div>
@@ -2189,68 +2250,247 @@ function initModalRefs(schema: any) {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <!-- Standard Keys -->
           <div>
-            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+            <h4
+              class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider"
+            >
               Standard Function Keys
             </h4>
             <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Esc</span> <span>Close Modal</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F1</span> <span>About / Help</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F2</span> <span>New Data</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F3</span> <span>Edit Data</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F4</span> <span>Designers (If avail)</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F5</span> <span>Refresh Page</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F6</span> <span>Save Data</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F7</span> <span>Cancel / Close</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F8</span> <span>Purge / Delete</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F9</span> <span>Approve</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F10</span> <span>Reject</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F11</span> <span>Download PDF</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">F12</span> <span>Download XLS</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Tab</span> <span>Next Focus</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Shift+Tab</span> <span>Prev Focus</span></li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Esc</span
+                >
+                <span>Close Modal</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F1</span
+                >
+                <span>About / Help</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F2</span
+                >
+                <span>New Data</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F3</span
+                >
+                <span>Edit Data</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F4</span
+                >
+                <span>Designers (If avail)</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F5</span
+                >
+                <span>Refresh Page</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F6</span
+                >
+                <span>Save Data</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F7</span
+                >
+                <span>Cancel / Close</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F8</span
+                >
+                <span>Purge / Delete</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F9</span
+                >
+                <span>Approve</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F10</span
+                >
+                <span>Reject</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F11</span
+                >
+                <span>Download PDF</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >F12</span
+                >
+                <span>Download XLS</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Tab</span
+                >
+                <span>Next Focus</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Shift+Tab</span
+                >
+                <span>Prev Focus</span>
+              </li>
             </ul>
           </div>
 
           <!-- Alt Combinations -->
           <div>
-            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+            <h4
+              class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider"
+            >
               Alt + Key (Detail)
             </h4>
             <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + W</span> <span>Close Mini Tab</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F1</span> <span>Upload File</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F2</span> <span>New Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F3</span> <span>Edit Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F6</span> <span>Save Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F7</span> <span>Cancel Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F8</span> <span>Purge Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F9</span> <span>Copy Detail</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Alt + F11</span> <span>PDF (Opera)</span></li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + W</span
+                >
+                <span>Close Mini Tab</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F1</span
+                >
+                <span>Upload File</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F2</span
+                >
+                <span>New Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F3</span
+                >
+                <span>Edit Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F6</span
+                >
+                <span>Save Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F7</span
+                >
+                <span>Cancel Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F8</span
+                >
+                <span>Purge Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F9</span
+                >
+                <span>Copy Detail</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Alt + F11</span
+                >
+                <span>PDF (Opera)</span>
+              </li>
             </ul>
           </div>
 
           <!-- Ctrl Combinations -->
           <div>
-            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider">
+            <h4
+              class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-indigo-100 dark:border-indigo-900/50 mb-3 pb-1 uppercase text-xs tracking-wider"
+            >
               Ctrl + Key (Global)
             </h4>
             <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F1</span> <span>Choose File</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F2</span> <span>Notifications</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + F3</span> <span>Open Chat</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + <</span> <span>Data Before</span></li>
-              <li class="flex justify-between"><span class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5">Ctrl + ></span> <span>Next Data</span></li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Ctrl + F1</span
+                >
+                <span>Choose File</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Ctrl + F2</span
+                >
+                <span>Notifications</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Ctrl + F3</span
+                >
+                <span>Open Chat</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Ctrl + <</span
+                >
+                <span>Data Before</span>
+              </li>
+              <li class="flex justify-between">
+                <span
+                  class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded border border-gray-200 dark:border-gray-600 text-xs py-0.5"
+                  >Ctrl + ></span
+                >
+                <span>Next Data</span>
+              </li>
             </ul>
           </div>
         </div>
-        
+
         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500">
           Press <b>Esc</b> to close this window.
         </div>
       </div>
     </template>
   </UModal>
-
 </template>
 
 <style></style>

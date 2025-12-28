@@ -91,9 +91,9 @@ export const useAuth = () => {
       const distinctSlug = Array.isArray(slug) ? slug[0] : slug;
       // Call endpoint directly to leverage Locking Logic
       const res: any = await get(`api/admin/getmenu?menuname=${distinctSlug}&design=${isDesign}`);
-      
+
       if (res.code == 200) {
-        // Adapt response structure if needed. 
+        // Adapt response structure if needed.
         // Backend returns: { code: 200, data: { menuaccessid: ..., menuform: ... } }
         // The previous workflow result might have been wrapped differently?
         // Wait, workflow result: res.data.data.menuaccessid.
@@ -106,14 +106,14 @@ export const useAuth = () => {
         // useApi "get" returns the JSON?
         // If useApi returns the parsed JSON, then res.data is the menu object.
         // The workflow result was likely: res.data = { data: { menuaccessid: ... } } because workflow output node.
-        
+
         // Let's create a compatible response
         return {
           code: 200,
           data: {
-             data: res.data // Nest it to match old workflow structure: res.data.data
+            data: res.data, // Nest it to match old workflow structure: res.data.data
           },
-          message: res.message
+          message: res.message,
         };
       } else {
         // Pass through error
@@ -122,7 +122,7 @@ export const useAuth = () => {
     } catch (err: any) {
       // Handle locked schema error (423) gracefully
       if (err.response && (err.response.status === 423 || err.response._data?.code === 423)) {
-         return err.response._data;
+        return err.response._data;
       }
       console.error(err);
       throw new Error($t('INVALID CREDENTIAL'));

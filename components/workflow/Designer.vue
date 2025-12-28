@@ -52,21 +52,21 @@
         </div>
       </div>
     </div>
-<div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
-      <button 
-        @click="handleUndo" 
+    <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
+      <button
+        @click="handleUndo"
         :disabled="!canUndo"
         :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
-        class="p-2 rounded shadow bg-white text-black" 
+        class="p-2 rounded shadow bg-white text-black"
         title="Undo (Ctrl+Z)"
       >
         ↶ Undo
       </button>
-      <button 
-        @click="handleRedo" 
+      <button
+        @click="handleRedo"
         :disabled="!canRedo"
         :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
-        class="p-2 rounded shadow bg-white text-black" 
+        class="p-2 rounded shadow bg-white text-black"
         title="Redo (Ctrl+Y)"
       >
         ↷ Redo
@@ -95,25 +95,37 @@
         Upload Plugin
       </button>
       <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
-                      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
+      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
       <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
-      <button @click="testFlow" :disabled="isTestingFlow" class="p-2 rounded shadow bg-white text-black disabled:opacity-50 disabled:cursor-not-allowed">
+      <button
+        @click="testFlow"
+        :disabled="isTestingFlow"
+        class="p-2 rounded shadow bg-white text-black disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <span v-if="isTestingFlow" class="inline-flex items-center gap-2">
           <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
           Testing...
         </span>
         <span v-else>Test Flow</span>
       </button>
-      <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
-
+      <button
+        v-if="hasTestResults"
+        @click="clearTestResults"
+        class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200"
+      >
+        Clear Results
+      </button>
     </div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
 
     <!-- Zoom Control -->
-    
   </div>
 </template>
 
@@ -154,7 +166,7 @@ let workflowSocket: WebSocket | null = null;
 // Undo/Redo functionality for workflow
 const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<any>(null, {
   historyLimit: 50,
-  enableKeyboardShortcuts: false // We'll handle this manually
+  enableKeyboardShortcuts: false, // We'll handle this manually
 });
 
 /* ======================================================
@@ -198,11 +210,11 @@ function initEditor(container: HTMLElement) {
       await store.loadComponentProperties(node.name, cleanId.toString());
       store.setSelectedNode(node);
     }
-    
+
     // Hide all result panels first
     const allPanels = document.querySelectorAll('.node-result-panel') as NodeListOf<HTMLElement>;
-    allPanels.forEach(p => p.style.display = 'none');
-    
+    allPanels.forEach((p) => (p.style.display = 'none'));
+
     // Show only the result panel for this node (if it exists)
     const panel = document.querySelector(`.node-result-panel[data-node-result="${cleanId}"]`) as HTMLElement;
     if (panel) {
@@ -290,7 +302,13 @@ const handleRedo = () => {
 const handleKeyDown = (event: KeyboardEvent) => {
   // Ignore shortcuts if user is focusing on an input field
   const target = event.target as HTMLElement;
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      target.isContentEditable)
+  ) {
     return;
   }
 
@@ -328,107 +346,113 @@ const lastPastedText = ref('');
 const pasteCount = ref(0);
 
 async function handleCopy() {
-    const node = store.selectedNode;
-    if (!node) return;
-    
-    // Deep clone to avoid reference issues
+  const node = store.selectedNode;
+  if (!node) return;
+
+  // Deep clone to avoid reference issues
+  try {
+    const nodeStr = JSON.stringify(node);
+    clipboard.value = JSON.parse(nodeStr); // Keep internal clipboard as backup
+
+    // Try writing to system clipboard
     try {
-        const nodeStr = JSON.stringify(node);
-        clipboard.value = JSON.parse(nodeStr); // Keep internal clipboard as backup
-        
-        // Try writing to system clipboard
-        try {
-          await navigator.clipboard.writeText(nodeStr);
-          toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
-        } catch (sysErr) {
-          console.warn('System clipboard write failed', sysErr);
-          toast.add({ title: 'Copied', description: 'Node copied to internal clipboard only' });
-        }
-    } catch (e) {
-        console.error('Failed to copy node', e);
-        toast.add({ title: 'Error', description: 'Failed to copy node', color: 'red' });
+      await navigator.clipboard.writeText(nodeStr);
+      toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
+    } catch (sysErr) {
+      console.warn('System clipboard write failed', sysErr);
+      toast.add({ title: 'Copied', description: 'Node copied to internal clipboard only' });
     }
+  } catch (e) {
+    console.error('Failed to copy node', e);
+    toast.add({ title: 'Error', description: 'Failed to copy node', color: 'red' });
+  }
 }
 
 async function handlePaste() {
-    if (!editor) return;
+  if (!editor) return;
+
+  try {
+    let text = '';
+    let fromSystem = false;
+
+    // Try reading from system clipboard first
+    try {
+      text = await navigator.clipboard.readText();
+      fromSystem = true;
+    } catch (e) {
+      console.warn('System clipboard read failed', e);
+    }
+
+    // Fallback to internal clipboard if system empty or failed
+    if (!text && clipboard.value) {
+      text = JSON.stringify(clipboard.value);
+      fromSystem = false;
+    }
+
+    if (!text) return;
+
+    let cmp: any = null;
+    let isOrdinaryText = false;
 
     try {
-        let text = '';
-        let fromSystem = false;
-        
-        // Try reading from system clipboard first
-        try {
-            text = await navigator.clipboard.readText();
-            fromSystem = true;
-        } catch (e) {
-            console.warn('System clipboard read failed', e);
-        }
+      cmp = JSON.parse(text);
+    } catch (e) {
+      isOrdinaryText = true;
+    }
 
-        // Fallback to internal clipboard if system empty or failed
-        if (!text && clipboard.value) {
-            text = JSON.stringify(clipboard.value);
-            fromSystem = false;
-        }
+    // "Check again, is object or ordinary text" logic
+    if (isOrdinaryText || !cmp || typeof cmp !== 'object') {
+      toast.add({
+        title: 'Paste Info',
+        description: 'Clipboard contains ordinary text, not a workflow node.',
+        color: 'orange',
+      });
+      return;
+    }
 
-        if (!text) return;
+    // Validate it looks like a node
+    // A exported node usually has: id, name, data, class, html, typenode, inputs, outputs, pos_x, pos_y
+    if (!cmp.name && !cmp.componentname) {
+      toast.add({ title: 'Paste Error', description: 'Invalid node structure in clipboard.', color: 'red' });
+      return;
+    }
 
-        let cmp: any = null;
-        let isOrdinaryText = false;
+    // Handle Offset Logic for smart pasting
+    if (text === lastPastedText.value) {
+      pasteCount.value++;
+    } else {
+      lastPastedText.value = text;
+      pasteCount.value = 1;
+    }
 
-        try {
-            cmp = JSON.parse(text);
-        } catch (e) {
-            isOrdinaryText = true;
-        }
+    // Add offset so nodes don't stack exactly on top of each other
+    const offset = 30 * pasteCount.value;
 
-        // "Check again, is object or ordinary text" logic
-        if (isOrdinaryText || !cmp || typeof cmp !== 'object') {
-             toast.add({ title: 'Paste Info', description: 'Clipboard contains ordinary text, not a workflow node.', color: 'orange' });
-             return; 
-        }
+    const x = (cmp.pos_x || 100) + offset;
+    const y = (cmp.pos_y || 100) + offset;
 
-        // Validate it looks like a node
-        // A exported node usually has: id, name, data, class, html, typenode, inputs, outputs, pos_x, pos_y
-        if (!cmp.name && !cmp.componentname) {
-             toast.add({ title: 'Paste Error', description: 'Invalid node structure in clipboard.', color: 'red' });
-             return;
-        }
+    // Node Properties
+    const componentName = cmp.name || cmp.componentname;
 
-        // Handle Offset Logic for smart pasting
-        if (text === lastPastedText.value) {
-            pasteCount.value++;
-        } else {
-            lastPastedText.value = text;
-            pasteCount.value = 1;
-        }
+    // Handle inputs/outputs count safely
+    let inputs = 1;
+    if (typeof cmp.inputs === 'number') inputs = cmp.inputs;
+    else if (typeof cmp.inputs === 'object') inputs = Object.keys(cmp.inputs).length;
 
-        // Add offset so nodes don't stack exactly on top of each other
-        const offset = 30 * pasteCount.value;
-        
-        const x = (cmp.pos_x || 100) + offset;
-        const y = (cmp.pos_y || 100) + offset;
+    let outputs = 1;
+    if (typeof cmp.outputs === 'number') outputs = cmp.outputs;
+    else if (typeof cmp.outputs === 'object') outputs = Object.keys(cmp.outputs).length;
 
-        // Node Properties
-        const componentName = cmp.name || cmp.componentname;
-        
-        // Handle inputs/outputs count safely
-        let inputs = 1;
-        if (typeof cmp.inputs === 'number') inputs = cmp.inputs;
-        else if (typeof cmp.inputs === 'object') inputs = Object.keys(cmp.inputs).length;
-        
-        let outputs = 1;
-        if (typeof cmp.outputs === 'number') outputs = cmp.outputs;
-        else if (typeof cmp.outputs === 'object') outputs = Object.keys(cmp.outputs).length;
+    const data = cmp.data || {};
 
-        const data = cmp.data || {}; 
+    // HTML Construction
+    const storeCmp = store.components.find(
+      (c: any) => (c.componentname || c.name)?.toLowerCase() === componentName?.toLowerCase(),
+    );
+    const iconClass = storeCmp?.componentclass || storeCmp?.icon || 'fa-solid fa-cube';
+    const title = data.description || data.label || data.name || componentName;
 
-        // HTML Construction
-        const storeCmp = store.components.find((c: any) => (c.componentname || c.name)?.toLowerCase() === componentName?.toLowerCase());
-        const iconClass = storeCmp?.componentclass || storeCmp?.icon || 'fa-solid fa-cube';
-        const title = data.description || data.label || data.name || componentName;
-
-        const nodeHtml = `
+    const nodeHtml = `
             <div class="node-icon-wrapper">
                 <div class="node-icon">
                 <i class="${iconClass}"></i>
@@ -437,27 +461,26 @@ async function handlePaste() {
             </div>
         `;
 
-        const newId = editor.addNode(
-            componentName,
-            inputs,
-            outputs,
-            x,
-            y,
-            componentName, // Class name/Component type
-            data,
-            nodeHtml,
-            false 
-        );
-        
-        toast.add({ title: 'Pasted', description: 'Node pasted successfully' });
-        
-        // Record state check
-        recordEditorState();
+    const newId = editor.addNode(
+      componentName,
+      inputs,
+      outputs,
+      x,
+      y,
+      componentName, // Class name/Component type
+      data,
+      nodeHtml,
+      false,
+    );
 
-    } catch (e) {
-        console.error('Failed to paste node', e);
-        toast.add({ title: 'Error', description: 'Failed to paste node: ' + e, color: 'red' });
-    }
+    toast.add({ title: 'Pasted', description: 'Node pasted successfully' });
+
+    // Record state check
+    recordEditorState();
+  } catch (e) {
+    console.error('Failed to paste node', e);
+    toast.add({ title: 'Error', description: 'Failed to paste node: ' + e, color: 'red' });
+  }
 }
 
 /* ======================================================
@@ -561,11 +584,15 @@ async function uploadPlugin() {
    ======================================================*/
 function initWorkflowWebSocket() {
   // Prevent multiple connections
-  if (workflowSocket && (workflowSocket.readyState === WebSocket.OPEN || workflowSocket.readyState === WebSocket.CONNECTING)) return;
+  if (
+    workflowSocket &&
+    (workflowSocket.readyState === WebSocket.OPEN || workflowSocket.readyState === WebSocket.CONNECTING)
+  )
+    return;
 
   const config = useRuntimeConfig();
   const token = useCookie('token');
-  
+
   if (!token.value) {
     console.error('No token for workflow WS');
     return;
@@ -576,54 +603,51 @@ function initWorkflowWebSocket() {
 
   let wsBase = config.public.apiBase.replace('http', 'ws');
   const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
-  
+
   workflowSocket = new WebSocket(wsUrl);
-  
-  workflowSocket.onopen = () => {
-  };
+
+  workflowSocket.onopen = () => {};
 
   workflowSocket.onmessage = (event) => {
     try {
       const payload = JSON.parse(event.data);
       handleWorkflowEvent(payload);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   workflowSocket.onclose = (e) => {
     workflowSocket = null;
   };
 
-  workflowSocket.onerror = (e) => {
-  };
+  workflowSocket.onerror = (e) => {};
 }
 
 function handleWorkflowEvent(payload: any) {
   // Only handle workflow_test events
   if (payload.type !== 'workflow_test') return;
-    
+
   const nodeId = payload.nodeId;
   if (!nodeId) return;
-  
+
   const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement;
   if (!nodeEl) return;
-  
+
   // Remove all state classes
   nodeEl.classList.remove('node-running', 'node-success', 'node-error');
-  
+
   switch (payload.event) {
     case 'node_start':
       nodeEl.classList.add('node-running');
       nodeStates.value.set(nodeId, 'running');
       console.log(`Node ${nodeId} (${payload.componentName}) started`);
       break;
-      
+
     case 'node_complete':
       nodeEl.classList.add('node-success');
       nodeStates.value.set(nodeId, 'success');
       console.log(`Node ${nodeId} (${payload.componentName}) completed in ${payload.executionTime}ms`);
       break;
-      
+
     case 'node_error':
       nodeEl.classList.add('node-error');
       nodeStates.value.set(nodeId, 'error');
@@ -663,10 +687,10 @@ onMounted(async () => {
       console.error('❌ ERROR IMPORT DRAWFLOW', e);
     }
   }
-  
+
   // Initialize WebSocket for real-time updates
   initWorkflowWebSocket();
-  
+
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -696,30 +720,30 @@ watch(
    ======================================================*/
 function convertOldNodesToIcons() {
   if (!editor) return;
-  
+
   // Find all nodes (not just old title-box ones, to ensure all labels are up to date)
   // But strictly, let's target .drawflow-node to iterate them all
   const allNodes = document.querySelectorAll('.drawflow-node');
-  
+
   allNodes.forEach((nodeEl: any) => {
     // Get node ID
     const nodeId = nodeEl.id?.replace('node-', '');
     if (!nodeId) return;
-    
+
     // Get node data from editor
     const nodeData = editor.drawflow.drawflow?.Home?.data?.[nodeId];
     if (!nodeData) return;
-    
+
     // Get the title text - PRIORITIZE User Data (description -> label -> name)
     const data = nodeData.data || {};
     const title = data.description || data.label || data.name || nodeData.name || 'Unknown';
-    
+
     // Find component to get icon
     const component = store.components.find(
-      (c: any) => (c.componentname || c.name)?.toLowerCase() === nodeData.name?.toLowerCase()
+      (c: any) => (c.componentname || c.name)?.toLowerCase() === nodeData.name?.toLowerCase(),
     );
     const iconClass = component?.componentclass || component?.icon || 'fa-solid fa-cube';
-    
+
     // Create new icon-based HTML
     const newHtml = `
       <div class="node-icon-wrapper">
@@ -729,14 +753,14 @@ function convertOldNodesToIcons() {
         <div class="node-label">${title}</div>
       </div>
     `;
-    
+
     // Find the drawflow_content_node and replace its innerHTML
     const contentNode = nodeEl.querySelector('.drawflow_content_node');
     if (contentNode) {
       contentNode.innerHTML = newHtml;
     }
   });
-  
+
   // Update all connection paths after DOM changes
   updateAllConnections();
 }
@@ -749,10 +773,10 @@ watch(
   (newData, oldData) => {
     const node = store.selectedNode;
     if (!node || !newData) return;
-    
+
     const nodeEl = document.getElementById(`node-${node.id}`);
     if (!nodeEl) return;
-    
+
     const labelEl = nodeEl.querySelector('.node-label');
     if (labelEl) {
       // Prioritize description -> label -> name -> component name
@@ -761,11 +785,11 @@ watch(
         labelEl.textContent = title;
       }
     } else {
-        // If label element doesn't exist yet (old style node?), force conversion
-        convertOldNodesToIcons();
+      // If label element doesn't exist yet (old style node?), force conversion
+      convertOldNodesToIcons();
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 /* ======================================================
@@ -773,11 +797,11 @@ watch(
    ======================================================*/
 function updateAllConnections() {
   if (!editor) return;
-  
+
   // Get all node IDs from the editor data
   const nodes = editor.drawflow.drawflow?.Home?.data;
   if (!nodes) return;
-  
+
   // Update connections for each node
   Object.keys(nodes).forEach((nodeId) => {
     try {
@@ -786,7 +810,6 @@ function updateAllConnections() {
       // Ignore errors for nodes without connections
     }
   });
-  
 }
 
 /* ======================================================
@@ -795,9 +818,8 @@ function updateAllConnections() {
 onBeforeUnmount(() => {
   try {
     editor?.destroy();
-  } catch (e) {
-  }
-  
+  } catch (e) {}
+
   // Remove keyboard listener
   window.removeEventListener('keydown', handleKeyDown);
 });
@@ -835,7 +857,7 @@ function drop(ev: DragEvent) {
   // Get icon class - use componentclass as icon, or fallback to common icon
   const iconClass = cmp.componentclass || cmp.icon || 'fa-solid fa-cube';
   const title = cmp.componenttitle ?? cmp.label ?? cmp.name;
-  
+
   // Create icon-based node template
   const nodeHtml = `
     <div class="node-icon-wrapper">
@@ -856,7 +878,6 @@ function drop(ev: DragEvent) {
     {},
     nodeHtml,
   );
-
 }
 
 function fixColors(container: HTMLElement) {
@@ -890,11 +911,10 @@ async function exportImage() {
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
-  console.log(name)
+  console.log(name);
   if (name) {
     try {
       await store.copyFlow(name);
-      
     } catch (err) {
       console.error('Error loading :', err);
     }
@@ -920,25 +940,25 @@ function formDataToObject(fd: FormData) {
 function injectNodeResults(results: any[]) {
   // Clear any existing result panels first
   clearNodeResultPanels();
-  
+
   // Get the drawflow parent container
   const drawflowContainer = document.getElementById('drawflow');
   if (!drawflowContainer) return;
-  
+
   // Get the parent element that holds the nodes (drawflow_content)
   const drawflowContent = drawflowContainer.querySelector('.drawflow') as HTMLElement;
   if (!drawflowContent) return;
-  
+
   // Filter duplicate results for same node (keep latest)
   const uniqueResults = new Map();
-  results.forEach(step => {
-      uniqueResults.set(step.nodeId, step);
+  results.forEach((step) => {
+    uniqueResults.set(step.nodeId, step);
   });
 
   uniqueResults.forEach((step) => {
     const nodeEl = document.getElementById(`node-${step.nodeId}`) as HTMLElement;
     if (!nodeEl) return;
-    
+
     // Apply visual state to node
     nodeEl.classList.remove('node-success', 'node-error');
     if (step.success) {
@@ -947,31 +967,31 @@ function injectNodeResults(results: any[]) {
       nodeEl.classList.add('node-error');
       nodeErrors.value.set(step.nodeId, step.error || 'Unknown error');
     }
-    
+
     // Get node position and dimensions
     const nodeRect = nodeEl.getBoundingClientRect();
     const containerRect = drawflowContent.getBoundingClientRect();
-    
+
     // Calculate position relative to drawflow content
     const nodeLeft = nodeEl.offsetLeft;
     const nodeTop = nodeEl.offsetTop;
     const nodeWidth = nodeEl.offsetWidth;
     const nodeHeight = nodeEl.offsetHeight;
-    
+
     // Create result panel element
     const panel = document.createElement('div');
     panel.className = 'node-result-panel';
     panel.setAttribute('data-node-result', step.nodeId);
-    
+
     // Determine status color
     const bgColor = step.success ? '#dcfce7' : '#fee2e2';
     const borderColor = step.success ? '#22c55e' : '#ef4444';
     const icon = step.success ? '✓' : '✗';
     const iconColor = step.success ? '#16a34a' : '#dc2626';
-    
+
     // Use a minimum width of 200px for better readability
     const panelWidth = Math.max(nodeWidth, 80);
-    
+
     // Position panel below the node using fixed coordinates
     // Hidden by default - will show when node is clicked
     panel.style.cssText = `
@@ -992,7 +1012,7 @@ function injectNodeResults(results: any[]) {
       overflow: auto;
       display: none;
     `;
-    
+
     // Create collapsed view
     const summary = document.createElement('div');
     summary.className = 'result-summary';
@@ -1002,12 +1022,13 @@ function injectNodeResults(results: any[]) {
       <span style="margin-left: 8px; flex: 1; color: #374151; font-size: 12px;">${step.executionTime}ms</span>
       <span style="color: #6b7280; font-size: 12px;">▼</span>
     `;
-    
+
     // Create expanded details
     const details = document.createElement('div');
     details.className = 'result-details';
-    details.style.cssText = 'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px; height: calc(100% - 40px); overflow: hidden; display: flex; flex-direction: column;';
-    
+    details.style.cssText =
+      'display: none; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px; height: calc(100% - 40px); overflow: hidden; display: flex; flex-direction: column;';
+
     let detailsHtml = '';
     if (step.input && Object.keys(step.input).length > 0) {
       detailsHtml += `<div style="margin-bottom: 8px; flex-shrink: 0;"><strong style="font-size: 12px;">Input:</strong><pre style="background: white; padding: 8px; border-radius: 4px; margin: 4px 0; overflow: auto; max-height: 150px; font-size: 11px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(step.input, null, 2)}</pre></div>`;
@@ -1017,19 +1038,19 @@ function injectNodeResults(results: any[]) {
       detailsHtml += `<div style="color: #dc2626; margin-top: 6px; font-size: 12px; flex-shrink: 0;"><strong>Error:</strong> ${step.error}</div>`;
     }
     details.innerHTML = detailsHtml;
-    
+
     // Toggle expand/collapse
     panel.addEventListener('click', (e) => {
       e.stopPropagation();
       const isExpanded = details.style.display === 'none' || details.style.display === '';
-      
+
       if (isExpanded) {
         // Expanding - make panel larger to show more content
         details.style.display = 'flex';
         summary.querySelector('span:last-child')!.textContent = '▲';
-        panel.style.minWidth = '600px';  // Increased from 400px
+        panel.style.minWidth = '600px'; // Increased from 400px
         panel.style.minHeight = '400px'; // Increased from 300px
-        panel.style.maxWidth = '800px';  // Add max width
+        panel.style.maxWidth = '800px'; // Add max width
         panel.style.maxHeight = '600px'; // Add max height
       } else {
         // Collapsing
@@ -1041,10 +1062,10 @@ function injectNodeResults(results: any[]) {
         panel.style.maxHeight = 'none';
       }
     });
-    
+
     panel.appendChild(summary);
     panel.appendChild(details);
-    
+
     // Append to the drawflow content container (not inside node)
     drawflowContent.appendChild(panel);
   });
@@ -1052,16 +1073,16 @@ function injectNodeResults(results: any[]) {
 
 function clearNodeResultPanels() {
   const panels = document.querySelectorAll('.node-result-panel');
-  panels.forEach(panel => panel.remove());
+  panels.forEach((panel) => panel.remove());
 }
 
 function collapseNodeResultPanel(nodeId: string) {
   const panel = document.querySelector(`.node-result-panel[data-node-result="${nodeId}"]`) as HTMLElement;
   if (!panel) return;
-  
+
   const details = panel.querySelector('.result-details') as HTMLElement;
   const summary = panel.querySelector('.result-summary') as HTMLElement;
-  
+
   if (details && details.style.display !== 'none') {
     // Collapse the panel
     details.style.display = 'none';
@@ -1085,12 +1106,12 @@ async function testFlow() {
   try {
     // Set loading state
     isTestingFlow.value = true;
-    
+
     // Clear previous results and node states
     clearTestResults();
     nodeStates.value.clear();
     nodeErrors.value.clear();
-    
+
     const dataForm = new FormData();
     dataForm.append('flowname', route.params.slug);
     dataForm.append('menu', 'admin');
@@ -1110,7 +1131,7 @@ async function testFlow() {
         stepResults.value = res.data.stepResults;
         // Inject result panels below each node
         injectNodeResults(res.data.stepResults);
-        
+
         toast.add({
           title: 'Test Complete',
           description: `${res.data.stepResults.length} steps executed`,

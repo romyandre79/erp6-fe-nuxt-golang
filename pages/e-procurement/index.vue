@@ -5,21 +5,23 @@
         <h1 class="text-2xl font-bold text-gray-900">E-Procurement</h1>
         <p class="text-sm text-gray-500">Manage vendors, tenders, and contracts efficiently.</p>
       </div>
-      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-        Create Tender
-      </button>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Create Tender</button>
     </div>
 
     <!-- Active Tenders Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="tender in activeTenders" :key="tender.id" class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+      <div
+        v-for="tender in activeTenders"
+        :key="tender.id"
+        class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition"
+      >
         <div class="flex justify-between items-start mb-4">
           <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">{{ tender.category }}</span>
           <span class="text-xs text-gray-400">{{ tender.deadline }}</span>
         </div>
         <h3 class="font-bold text-gray-900 mb-1">{{ tender.title }}</h3>
         <p class="text-sm text-gray-500 mb-4">{{ tender.company }}</p>
-        
+
         <div class="flex items-center justify-between pt-4 border-t border-gray-50">
           <div class="text-sm font-semibold text-gray-900">{{ tender.budget }}</div>
           <button class="text-blue-600 text-sm font-medium hover:underline">View Details</button>
@@ -29,30 +31,30 @@
 
     <!-- Pricing Calculator -->
     <div class="mt-12 bg-white p-8 rounded-xl border border-gray-100">
-        <h2 class="text-xl font-bold mb-6 text-gray-900">Upgrade Plan</h2>
-        <PricingCalculator 
-            :available-apps="apps"
-            theme="light"
-            module-name="E-Procurement"
-            :initial-selected-apps="['vendor_mgmt', 'tender_mgmt']"
-            />
+      <h2 class="text-xl font-bold mb-6 text-gray-900">Upgrade Plan</h2>
+      <PricingCalculator
+        :available-apps="apps"
+        theme="light"
+        module-name="E-Procurement"
+        :initial-selected-apps="['vendor_mgmt', 'tender_mgmt']"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import PricingCalculator from '~/components/PricingCalculator.vue'
+import PricingCalculator from '~/components/PricingCalculator.vue';
 
 definePageMeta({
-  layout: 'e-procurement'
-})
+  layout: 'e-procurement',
+});
 
 const apps = [
   { id: 'vendor_mgmt', name: 'Vendor Management', price: 50000, icon: '🤝' },
   { id: 'tender_mgmt', name: 'Tender Management', price: 100000, icon: '📑' },
   { id: 'contract_mgmt', name: 'Contract Management', price: 75000, icon: '✍️' },
   { id: 'spend_analysis', name: 'Spend Analysis', price: 80000, icon: '📊' },
-]
+];
 
 const activeTenders = [
   {
@@ -62,7 +64,7 @@ const activeTenders = [
     category: 'Technology',
     budget: '$500k - $1M',
     deadline: '2 days left',
-    status: 'Open'
+    status: 'Open',
   },
   {
     id: 2,
@@ -71,7 +73,7 @@ const activeTenders = [
     category: 'Services',
     budget: '$200k',
     deadline: '5 days left',
-    status: 'Open'
+    status: 'Open',
   },
   {
     id: 3,
@@ -80,7 +82,7 @@ const activeTenders = [
     category: 'Goods',
     budget: '$50k',
     deadline: 'Closing Soon',
-    status: 'Urgent'
-  }
-]
+    status: 'Urgent',
+  },
+];
 </script>

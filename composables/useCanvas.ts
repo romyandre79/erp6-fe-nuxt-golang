@@ -13,12 +13,18 @@ export function useCanvas() {
   const dragging = ref<any>(null);
   const offset = ref({ x: 0, y: 0 });
   const activeArea = ref<any>(null);
-  const areaMode = ref<string|null>(null);
+  const areaMode = ref<string | null>(null);
   const areaOffset = ref({ x: 0, y: 0 });
   const activeAreaTables = ref<any[]>([]);
 
   // Linking state
-  const linkPreview = reactive<{active: boolean, from: any, sx: number, sy: number, path: string}>({ active: false, from: null, sx: 0, sy: 0, path: '' });
+  const linkPreview = reactive<{ active: boolean; from: any; sx: number; sy: number; path: string }>({
+    active: false,
+    from: null,
+    sx: 0,
+    sy: 0,
+    path: '',
+  });
 
   // Zoom controls
   function zoomIn() {

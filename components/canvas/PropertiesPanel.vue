@@ -1,6 +1,5 @@
 <template>
   <div class="h-full flex flex-col bg-white p-4 overflow-auto">
-  
     <div v-if="selectedTable" class="space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">Properties — {{ selectedTable.name || 'Untitled' }}</h2>
@@ -21,16 +20,16 @@
       </div>
 
       <div>
-        <label class="text-sm text-gray-600">View Flow <NuxtLink to="/admin/workflow" target="_blank">
-    (to Workflow)
-  </NuxtLink></label>
+        <label class="text-sm text-gray-600"
+          >View Flow <NuxtLink to="/admin/workflow" target="_blank"> (to Workflow) </NuxtLink></label
+        >
         <input v-model="selectedTable.flow" class="w-full mt-1 p-2 border rounded" />
       </div>
 
       <div>
-        <label class="text-sm text-gray-600">Modification Flow <NuxtLink to="/admin/workflow" target="_blank">
-    (to Workflow)
-  </NuxtLink></label>
+        <label class="text-sm text-gray-600"
+          >Modification Flow <NuxtLink to="/admin/workflow" target="_blank"> (to Workflow) </NuxtLink></label
+        >
         <input v-model="selectedTable.modifflow" class="w-full mt-1 p-2 border rounded" />
       </div>
 
@@ -144,7 +143,6 @@ const emit = defineEmits([
   'update:jsonPreview',
   'view-data',
 ]);
-
 
 const jsonPreviewModel = computed({
   get: () => props.jsonPreview,

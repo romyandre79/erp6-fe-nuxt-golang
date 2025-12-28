@@ -36,7 +36,7 @@ export const useApi = () => {
     } catch (error) {
       handleError(error);
     } finally {
-        appStore.isLoading = false;
+      appStore.isLoading = false;
     }
   };
 
@@ -49,12 +49,12 @@ export const useApi = () => {
         baseURL: config.public.apiBase,
         headers: getHeaders(body),
         body: body instanceof FormData ? body : JSON.stringify(body),
-        ...options // pass extra options like responseType
+        ...options, // pass extra options like responseType
       });
     } catch (error) {
       handleError(error);
     } finally {
-        appStore.isLoading = false;
+      appStore.isLoading = false;
     }
   };
 
@@ -93,14 +93,14 @@ export const useApi = () => {
     } catch (err) {
       console.error('Error saat download file:', err);
       // For fetch API, we need to inspect the error object differently or just treat catch as error
-       const appStore = useAppStore();
-       // Fetch throws TypeError on network failure
-       if (err instanceof TypeError) {
-          appStore.setConnectionError(true, 'Network error occurred during download');
-       }
+      const appStore = useAppStore();
+      // Fetch throws TypeError on network failure
+      if (err instanceof TypeError) {
+        appStore.setConnectionError(true, 'Network error occurred during download');
+      }
     } finally {
-        const appStore = useAppStore();
-        appStore.isLoading = false;
+      const appStore = useAppStore();
+      appStore.isLoading = false;
     }
   };
 
@@ -117,7 +117,7 @@ export const useApi = () => {
     } catch (error) {
       handleError(error);
     } finally {
-        appStore.isLoading = false;
+      appStore.isLoading = false;
     }
   };
 
@@ -129,7 +129,7 @@ export const useApi = () => {
     } catch (error) {
       handleError(error);
     } finally {
-        appStore.isLoading = false;
+      appStore.isLoading = false;
     }
   };
 

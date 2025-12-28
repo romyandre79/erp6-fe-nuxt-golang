@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
-    <button 
-      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+    <button
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer"
       @click="handleUndo"
       :disabled="!canUndo"
       :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
@@ -9,8 +9,8 @@
     >
       ↶ Undo
     </button>
-    <button 
-      class="text-black dark:text-white w-full py-1 rounded cursor-pointer" 
+    <button
+      class="text-black dark:text-white w-full py-1 rounded cursor-pointer"
       @click="handleRedo"
       :disabled="!canRedo"
       :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
@@ -102,13 +102,25 @@
       </div>
     </aside>
     <!-- Global Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait">
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-100 bg-opacity-75 cursor-wait"
+    >
       <div class="flex flex-col items-center">
-           <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span class="text-gray-600 font-medium text-lg">Processing...</span>
+        <svg
+          class="animate-spin h-12 w-12 text-blue-600 mb-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-lg">Processing...</span>
       </div>
     </div>
   </div>
@@ -125,7 +137,7 @@ import { availableComponents, layoutContainers } from '~/types/components';
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
+  layout: 'auth',
 });
 
 const route = useRoute();
@@ -152,7 +164,7 @@ const Api = useApi();
 // Undo/Redo functionality
 const { canUndo, canRedo, record, undo, redo, reset } = useUndoRedo<NodeSchema[]>([], {
   historyLimit: 50,
-  enableKeyboardShortcuts: false // We'll handle this manually to sync with canvasComponents
+  enableKeyboardShortcuts: false, // We'll handle this manually to sync with canvasComponents
 });
 
 const onDragStart = (comp: any) => {
@@ -315,7 +327,7 @@ const hydrateNodeProps = (nodes: NodeSchema[]) => {
   nodes.forEach((node) => {
     const defaults = getDefaultProps(node.type);
     node.props = { ...defaults, ...node.props };
-        
+
     // Explicitly ensure key exists if it's in defaults
     if ('key' in defaults && !('key' in node.props)) {
       node.props.key = defaults.key;
@@ -385,7 +397,7 @@ const copySchema = async () => {
 
 onMounted(async () => {
   loadSchema();
-  
+
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -428,7 +440,6 @@ watch(
       reset(JSON.parse(JSON.stringify(canvasComponents.value)));
     }
   },
-  { immediate: false }
+  { immediate: false },
 );
-
 </script>

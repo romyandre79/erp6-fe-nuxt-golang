@@ -12,7 +12,7 @@
           Add Row
         </button>
 
-         <button
+        <button
           @click="saveChanges"
           class="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 text-sm"
           :disabled="!canSave || saving"
@@ -56,97 +56,93 @@
         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold sticky top-0 z-10 shadow-sm">
           <tr>
             <th class="p-3 border-b border-r w-10 text-center text-gray-400">#</th>
-            <th
-              v-for="col in columns"
-              :key="col"
-              class="p-3 border-b border-r min-w-[150px] whitespace-nowrap"
-            >
+            <th v-for="col in columns" :key="col" class="p-3 border-b border-r min-w-[150px] whitespace-nowrap">
               {{ col }}
             </th>
           </tr>
           <!-- Filter Row -->
-           <tr class="bg-gray-50">
-               <th class="p-2 border-b border-r"></th>
-               <th v-for="col in columns" :key="'filter-'+col" class="p-2 border-b border-r">
-                   <input 
-                    type="text" 
-                    v-model="columnFilters[col]"
-                    @keydown.enter="refreshData"
-                    placeholder="Filter..."
-                    class="w-full px-2 py-1 text-xs border rounded focus:border-blue-500 outline-none"
-                   />
-               </th>
-           </tr>
+          <tr class="bg-gray-50">
+            <th class="p-2 border-b border-r"></th>
+            <th v-for="col in columns" :key="'filter-' + col" class="p-2 border-b border-r">
+              <input
+                type="text"
+                v-model="columnFilters[col]"
+                @keydown.enter="refreshData"
+                placeholder="Filter..."
+                class="w-full px-2 py-1 text-xs border rounded focus:border-blue-500 outline-none"
+              />
+            </th>
+          </tr>
         </thead>
         <tbody>
-          <tr 
-            v-for="(row, idx) in localRows" 
-            :key="idx" 
+          <tr
+            v-for="(row, idx) in localRows"
+            :key="idx"
             class="hover:bg-gray-50 group"
             :class="{
-                'bg-yellow-50': modifiedRowIndices.has(idx),
-                'bg-green-50': newRowIndices.has(idx)
+              'bg-yellow-50': modifiedRowIndices.has(idx),
+              'bg-green-50': newRowIndices.has(idx),
             }"
           >
             <td class="p-2 border-b border-r text-center text-gray-400 select-none group-hover:bg-gray-100 relative">
               {{ idx + 1 + (page - 1) * pageSize }}
-               <div v-if="modifiedRowIndices.has(idx)" class="absolute left-0 top-0 bottom-0 w-1 bg-yellow-400"></div>
-               <div v-if="newRowIndices.has(idx)" class="absolute left-0 top-0 bottom-0 w-1 bg-green-400"></div>
+              <div v-if="modifiedRowIndices.has(idx)" class="absolute left-0 top-0 bottom-0 w-1 bg-yellow-400"></div>
+              <div v-if="newRowIndices.has(idx)" class="absolute left-0 top-0 bottom-0 w-1 bg-green-400"></div>
             </td>
-            <td 
-                v-for="col in columns" 
-                :key="col" 
-                class="p-0 border-b border-r align-top font-mono text-gray-800 relative min-w-[100px]"
-                @click="startEdit(idx, col)"
+            <td
+              v-for="col in columns"
+              :key="col"
+              class="p-0 border-b border-r align-top font-mono text-gray-800 relative min-w-[100px]"
+              @click="startEdit(idx, col)"
             >
-               <!-- View Mode -->
-               <div 
-                v-if="!editingCell || editingCell.rowIdx !== idx || editingCell.col !== col" 
+              <!-- View Mode -->
+              <div
+                v-if="!editingCell || editingCell.rowIdx !== idx || editingCell.col !== col"
                 class="p-2 w-full h-full min-h-[40px] cursor-text whitespace-pre-wrap break-words"
                 :title="String(row[col])"
-               >
-                 {{ formatValue(row[col]) }}
-               </div>
+              >
+                {{ formatValue(row[col]) }}
+              </div>
 
-               <!-- Edit Mode -->
-               <div v-else class="absolute inset-0 z-20">
-                   <textarea
-                    :id="`edit-${idx}-${col}`"
-                    :value="row[col]"
-                    @input="(e: any) => updateCell(idx, col, e.target.value)"
-                    @blur="stopEdit"
-                    @keydown.enter.prevent="stopEdit"
-                     class="w-full h-full p-2 outline-none border-2 border-blue-500 bg-white resize-none shadow-lg text-sm font-mono"
-                   ></textarea>
-               </div>
+              <!-- Edit Mode -->
+              <div v-else class="absolute inset-0 z-20">
+                <textarea
+                  :id="`edit-${idx}-${col}`"
+                  :value="row[col]"
+                  @input="(e: any) => updateCell(idx, col, e.target.value)"
+                  @blur="stopEdit"
+                  @keydown.enter.prevent="stopEdit"
+                  class="w-full h-full p-2 outline-none border-2 border-blue-500 bg-white resize-none shadow-lg text-sm font-mono"
+                ></textarea>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    
+
     <!-- Footer -->
     <div class="p-2 border-t text-xs text-gray-500 flex justify-between items-center bg-gray-50">
       <div class="flex gap-4">
-          <span>Total: {{ totalRecords }} rows</span>
-          <span>Page {{ page }} of {{ totalPages }}</span>
+        <span>Total: {{ totalRecords }} rows</span>
+        <span>Page {{ page }} of {{ totalPages }}</span>
       </div>
-      
+
       <div class="flex gap-2">
-           <button 
-            @click="changePage(page - 1)" 
-            class="px-2 py-1 border rounded hover:bg-white disabled:opacity-50"
-            :disabled="page <= 1 || loading"
-           >
-             Previous
-           </button>
-           <button 
-            @click="changePage(page + 1)" 
-            class="px-2 py-1 border rounded hover:bg-white disabled:opacity-50"
-            :disabled="page >= totalPages || loading"
-           >
-             Next
-           </button>
+        <button
+          @click="changePage(page - 1)"
+          class="px-2 py-1 border rounded hover:bg-white disabled:opacity-50"
+          :disabled="page <= 1 || loading"
+        >
+          Previous
+        </button>
+        <button
+          @click="changePage(page + 1)"
+          class="px-2 py-1 border rounded hover:bg-white disabled:opacity-50"
+          :disabled="page >= totalPages || loading"
+        >
+          Next
+        </button>
       </div>
     </div>
   </div>
@@ -212,100 +208,99 @@ function stopEdit() {
 }
 
 function updateCell(rowIdx: number, col: string, value: any) {
-    if (localRows.value[rowIdx][col] !== value) {
-        localRows.value[rowIdx][col] = value;
-        if (!newRowIndices.value.has(rowIdx)) {
-            modifiedRowIndices.value.add(rowIdx);
-        }
+  if (localRows.value[rowIdx][col] !== value) {
+    localRows.value[rowIdx][col] = value;
+    if (!newRowIndices.value.has(rowIdx)) {
+      modifiedRowIndices.value.add(rowIdx);
     }
+  }
 }
 
 function addRow() {
-    const newRow: any = {};
-    columns.value.forEach(col => {
-        newRow[col] = null; // Initialize with null or defaults
-    });
-    
-    // Add to local rows
-    localRows.value.unshift(newRow); // Add to top
-    
-    // Shift existing indices up by 1
-    const newModified = new Set<number>();
-    modifiedRowIndices.value.forEach(idx => newModified.add(idx + 1));
-    modifiedRowIndices.value = newModified;
-    
-    const newNew = new Set<number>();
-    newRowIndices.value.forEach(idx => newNew.add(idx + 1));
-    newRowIndices.value = newNew;
+  const newRow: any = {};
+  columns.value.forEach((col) => {
+    newRow[col] = null; // Initialize with null or defaults
+  });
 
-    // Add 0 as new
-    newRowIndices.value.add(0);
-    
-    // Start editing first cell
-    if (columns.value.length > 0) {
-        startEdit(0, columns.value[0]);
-    }
+  // Add to local rows
+  localRows.value.unshift(newRow); // Add to top
+
+  // Shift existing indices up by 1
+  const newModified = new Set<number>();
+  modifiedRowIndices.value.forEach((idx) => newModified.add(idx + 1));
+  modifiedRowIndices.value = newModified;
+
+  const newNew = new Set<number>();
+  newRowIndices.value.forEach((idx) => newNew.add(idx + 1));
+  newRowIndices.value = newNew;
+
+  // Add 0 as new
+  newRowIndices.value.add(0);
+
+  // Start editing first cell
+  if (columns.value.length > 0) {
+    startEdit(0, columns.value[0]);
+  }
 }
 
 async function saveChanges() {
-    if (!props.table.modifflow) {
-        alert('No Modification Flow defined for this table. Please set "modifflow" in properties.');
-        return;
-    }
+  if (!props.table.modifflow) {
+    alert('No Modification Flow defined for this table. Please set "modifflow" in properties.');
+    return;
+  }
 
-    saving.value = true;
-    error.value = '';
-    
-    const promises: Promise<any>[] = [];
+  saving.value = true;
+  error.value = '';
 
-    // Process New Rows
-    newRowIndices.value.forEach(idx => {
-        const row = localRows.value[idx];
-        promises.push(saveRow(row));
-    });
+  const promises: Promise<any>[] = [];
 
-    // Process Modified Rows
-    modifiedRowIndices.value.forEach(idx => {
-        const row = localRows.value[idx];
-        promises.push(saveRow(row));
-    });
+  // Process New Rows
+  newRowIndices.value.forEach((idx) => {
+    const row = localRows.value[idx];
+    promises.push(saveRow(row));
+  });
 
-    try {
-        await Promise.all(promises);
-        toast.add({ title: 'Success', description: 'Changes saved successfully', color: 'success' });
-        
-        // Refresh data to get clean state
-        await refreshData();
-    } catch (err: any) {
-        console.error('Save error:', err);
-        error.value = err.message || 'Failed to save some changes';
-    } finally {
-        saving.value = false;
-    }
+  // Process Modified Rows
+  modifiedRowIndices.value.forEach((idx) => {
+    const row = localRows.value[idx];
+    promises.push(saveRow(row));
+  });
+
+  try {
+    await Promise.all(promises);
+    toast.add({ title: 'Success', description: 'Changes saved successfully', color: 'success' });
+
+    // Refresh data to get clean state
+    await refreshData();
+  } catch (err: any) {
+    console.error('Save error:', err);
+    error.value = err.message || 'Failed to save some changes';
+  } finally {
+    saving.value = false;
+  }
 }
 
 async function saveRow(row: any) {
-     const dataForm = new FormData();
-    dataForm.append('flowname', props.table.modifflow);
-    dataForm.append('menu', 'admin');
-    dataForm.append('search', 'true');
-    
-    // Append row data
-    Object.keys(row).forEach(key => {
-        // Handle nulls
-        const val = row[key];
-        if (val !== null && val !== undefined) {
-             dataForm.append(key, typeof val === 'object' ? JSON.stringify(val) : val);
-        }
-    });
+  const dataForm = new FormData();
+  dataForm.append('flowname', props.table.modifflow);
+  dataForm.append('menu', 'admin');
+  dataForm.append('search', 'true');
 
-    return api.post('/api/admin/execute-flow', dataForm);
+  // Append row data
+  Object.keys(row).forEach((key) => {
+    // Handle nulls
+    const val = row[key];
+    if (val !== null && val !== undefined) {
+      dataForm.append(key, typeof val === 'object' ? JSON.stringify(val) : val);
+    }
+  });
+
+  return api.post('/api/admin/execute-flow', dataForm);
 }
-
 
 async function refreshData() {
   if (!props.table) return;
-  
+
   loading.value = true;
   error.value = '';
   // Clear edit state on refresh
@@ -318,39 +313,39 @@ async function refreshData() {
     let res;
     // Prepare payload
     const payload: any = {
-        table: props.table.name,
-        limit: pageSize.value,
-        rows: pageSize.value, // for flow
-        page: page.value,
+      table: props.table.name,
+      limit: pageSize.value,
+      rows: pageSize.value, // for flow
+      page: page.value,
     };
 
     // Add filters
-    Object.keys(columnFilters.value).forEach(key => {
-        if (columnFilters.value[key]) {
-            payload[key] = columnFilters.value[key];
-        }
+    Object.keys(columnFilters.value).forEach((key) => {
+      if (columnFilters.value[key]) {
+        payload[key] = columnFilters.value[key];
+      }
     });
 
     if (props.table.flow) {
-        // Use custom flow
-        const dataForm = new FormData();
-        dataForm.append('flowname', props.table.flow);
-        dataForm.append('menu', 'admin');
-        dataForm.append('search', 'true');
-        
-        // Add pagination and filters to FormData
-        Object.keys(payload).forEach(key => {
-             dataForm.append(key, payload[key]);
-        });
+      // Use custom flow
+      const dataForm = new FormData();
+      dataForm.append('flowname', props.table.flow);
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
 
-        res = await api.post('/api/admin/execute-flow', dataForm);
+      // Add pagination and filters to FormData
+      Object.keys(payload).forEach((key) => {
+        dataForm.append(key, payload[key]);
+      });
+
+      res = await api.post('/api/admin/execute-flow', dataForm);
     } else {
-        // Default SELECT behavior
-         // Construct payload for default select if needed, or stick to standard params
-         // Assuming default select also accepts these via POST
-        res = await api.post('/api/admin/db/select', payload);
+      // Default SELECT behavior
+      // Construct payload for default select if needed, or stick to standard params
+      // Assuming default select also accepts these via POST
+      res = await api.post('/api/admin/db/select', payload);
     }
-    
+
     const data = res?.data?.data || res?.data || [];
     const meta = res?.data?.meta || res?.data?.pagination || {};
 
@@ -361,22 +356,21 @@ async function refreshData() {
       rows.value = JSON.parse(JSON.stringify(data.rows));
       totalRecords.value = Number(data.total) || Number(meta.total) || rows.value.length;
     } else {
-       // Support direct array return
-        if (Array.isArray(data)) {
-             rows.value = JSON.parse(JSON.stringify(data));
-        } else {
-             console.warn('Unexpected data format:', data);
-             rows.value = [];
-        }
+      // Support direct array return
+      if (Array.isArray(data)) {
+        rows.value = JSON.parse(JSON.stringify(data));
+      } else {
+        console.warn('Unexpected data format:', data);
+        rows.value = [];
+      }
     }
-    
+
     // Update pagination info if available
     if (meta.totalPages) totalPages.value = meta.totalPages;
     else totalPages.value = Math.ceil(totalRecords.value / pageSize.value) || 1;
 
     // Init local rows
     localRows.value = JSON.parse(JSON.stringify(rows.value));
-
   } catch (err: any) {
     console.error('Fetch data error:', err);
     error.value = err.response?.data?.message || err.message || 'Failed to fetch data';
@@ -386,25 +380,29 @@ async function refreshData() {
 }
 
 function changePage(newPage: number) {
-    if (newPage < 1 || newPage > totalPages.value) return;
-    page.value = newPage;
-    refreshData();
+  if (newPage < 1 || newPage > totalPages.value) return;
+  page.value = newPage;
+  refreshData();
 }
 
 onMounted(() => {
   refreshData();
 });
 
-watch(() => props.table, () => {
+watch(
+  () => props.table,
+  () => {
     // Reset filters and page on table change
     page.value = 1;
     columnFilters.value = {};
     refreshData();
-});
+  },
+);
 </script>
 
 <style scoped>
-th, td {
-    border-color: #e5e7eb;
+th,
+td {
+  border-color: #e5e7eb;
 }
 </style>

@@ -53,7 +53,7 @@ export interface ReportTemplate {
   parameters: ReportParameter[];
   variables: ReportVariable[];
   dataSource: string;
-  
+
   // Advanced Properties
   language?: string;
   imports?: string;
@@ -148,12 +148,12 @@ export const useReportStore = defineStore('report', {
     addBand(type: string, height: number = 50) {
       if (!this.currentTemplate) return;
       // Check if band already exists
-      if (this.currentTemplate.bands.find(b => b.type === type)) return;
-      
+      if (this.currentTemplate.bands.find((b) => b.type === type)) return;
+
       this.currentTemplate.bands.push({
         type,
         height,
-        elements: []
+        elements: [],
       });
       this.sortBands();
       this.saveState();
@@ -161,7 +161,7 @@ export const useReportStore = defineStore('report', {
 
     updateBand(type: string, updates: any) {
       if (!this.currentTemplate) return;
-      const band = this.currentTemplate.bands.find(b => b.type === type);
+      const band = this.currentTemplate.bands.find((b) => b.type === type);
       if (band) {
         Object.assign(band, updates);
         this.saveState();
@@ -178,46 +178,46 @@ export const useReportStore = defineStore('report', {
 
     // Parameters
     addParameter(param: ReportParameter) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.parameters.push(param);
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.parameters.push(param);
+      this.saveState();
     },
     updateParameter(index: number, param: ReportParameter) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.parameters[index] = param;
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.parameters[index] = param;
+      this.saveState();
     },
     deleteParameter(index: number) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.parameters.splice(index, 1);
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.parameters.splice(index, 1);
+      this.saveState();
     },
 
     // Variables
     addVariable(variable: ReportVariable) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.variables.push(variable);
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.variables.push(variable);
+      this.saveState();
     },
     updateVariable(index: number, variable: ReportVariable) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.variables[index] = variable;
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.variables[index] = variable;
+      this.saveState();
     },
     deleteVariable(index: number) {
-        if (!this.currentTemplate) return;
-        this.currentTemplate.variables.splice(index, 1);
-        this.saveState();
+      if (!this.currentTemplate) return;
+      this.currentTemplate.variables.splice(index, 1);
+      this.saveState();
     },
 
     // Band Visibility
     toggleBandVisibility(bandType: string) {
-        if (!this.currentTemplate) return;
-        const band = this.currentTemplate.bands.find(b => b.type === bandType);
-        if (band) {
-            band.visible = band.visible === undefined ? false : !band.visible;
-            this.saveState();
-        }
+      if (!this.currentTemplate) return;
+      const band = this.currentTemplate.bands.find((b) => b.type === bandType);
+      if (band) {
+        band.visible = band.visible === undefined ? false : !band.visible;
+        this.saveState();
+      }
     },
 
     setZoom(zoom: number) {
@@ -286,10 +286,10 @@ export const useReportStore = defineStore('report', {
         dataForm.append('reportid', id.toString());
 
         const response = await api.post('/api/admin/execute-flow', dataForm);
-        
+
         if (response.code === 200 && response.data) {
           const data = response.data.data; // Check structure
-          
+
           let template: ReportTemplate;
           // The flow likely returns the record fields directly
           if (data.templatejson) {
@@ -309,7 +309,11 @@ export const useReportStore = defineStore('report', {
               variables: data.variables ? JSON.parse(data.variables) : [],
               dataSource: data.datasource || '',
               columnCount: parsed.columnCount || 1,
-              columnWidth: parsed.columnWidth || (parsed.pageWidth ? parsed.pageWidth - (parsed.margins?.left || 20) - (parsed.margins?.right || 20) : 555),
+              columnWidth:
+                parsed.columnWidth ||
+                (parsed.pageWidth
+                  ? parsed.pageWidth - (parsed.margins?.left || 20) - (parsed.margins?.right || 20)
+                  : 555),
               columnSpacing: parsed.columnSpacing || 0,
               language: parsed.language || 'java',
               imports: parsed.imports || '',
@@ -326,9 +330,9 @@ export const useReportStore = defineStore('report', {
               defaultDataAdapter: parsed.defaultDataAdapter || '',
             };
           } else {
-             // Fallback if no JSON (legacy or empty)
-             // Use initialize logic or basic structure
-             template = {
+            // Fallback if no JSON (legacy or empty)
+            // Use initialize logic or basic structure
+            template = {
               reportTemplateID: data.id || data.reporttemplateid,
               reportName: data.reportname,
               reportDesc: data.reportdesc,
@@ -362,7 +366,7 @@ export const useReportStore = defineStore('report', {
           this.undoStack = [];
           this.redoStack = [];
         } else {
-             throw new Error(response.message || 'Failed to load report');
+          throw new Error(response.message || 'Failed to load report');
         }
       } catch (error) {
         console.error('Failed to load template:', error);
@@ -397,17 +401,17 @@ export const useReportStore = defineStore('report', {
         createBookmarks: this.currentTemplate.createBookmarks,
         scriptletClass: this.currentTemplate.scriptletClass,
         resourceBundle: this.currentTemplate.resourceBundle,
-        defaultDataAdapter: this.currentTemplate.defaultDataAdapter
+        defaultDataAdapter: this.currentTemplate.defaultDataAdapter,
       });
 
       const dataForm = new FormData();
       dataForm.append('flowname', 'modifreport');
-        dataForm.append('menu', 'admin');
-        dataForm.append('search', 'true');
+      dataForm.append('menu', 'admin');
+      dataForm.append('search', 'true');
       console.log(this.currentTemplate);
-      
+
       if (this.currentTemplate.reportTemplateID) {
-          dataForm.append('reportid', this.currentTemplate.reportTemplateID.toString());
+        dataForm.append('reportid', this.currentTemplate.reportTemplateID.toString());
       }
 
       dataForm.append('reportname', this.currentTemplate.reportName);
@@ -424,18 +428,17 @@ export const useReportStore = defineStore('report', {
 
       try {
         const response = await api.post('/api/admin/execute-flow', dataForm);
-        
-        if (response.code === 200) {
-           // Success
-           // If new, update ID from response
-           const data = response.data || response;
-           if(data && (data.id || data.reporttemplateid) && !this.currentTemplate.reportTemplateID) {
-               this.currentTemplate.reportTemplateID = data.id || data.reporttemplateid;
-           }
-        } else {
-            throw new Error(response.message || 'Failed to save');
-        }
 
+        if (response.code === 200) {
+          // Success
+          // If new, update ID from response
+          const data = response.data || response;
+          if (data && (data.id || data.reporttemplateid) && !this.currentTemplate.reportTemplateID) {
+            this.currentTemplate.reportTemplateID = data.id || data.reporttemplateid;
+          }
+        } else {
+          throw new Error(response.message || 'Failed to save');
+        }
       } catch (error) {
         console.error('Failed to save template:', error);
         throw error;
@@ -476,14 +479,19 @@ export const useReportStore = defineStore('report', {
         summaryWithPageHeaderAndFooter: false,
         floatColumnFooter: false,
         ignorePagination: false,
-        createBookmarks: false
+        createBookmarks: false,
       };
       this.setCurrentTemplate(template);
       this.undoStack = [];
       this.redoStack = [];
     },
 
-    async printReport(id: number, format: 'pdf' | 'xls' = 'pdf', flowName: string = 'printreport', additionalParams: Record<string, any> = {}) {
+    async printReport(
+      id: number,
+      format: 'pdf' | 'xls' = 'pdf',
+      flowName: string = 'printreport',
+      additionalParams: Record<string, any> = {},
+    ) {
       this.loading = true;
       try {
         const api = useApi();
@@ -491,26 +499,26 @@ export const useReportStore = defineStore('report', {
         dataForm.append('flowname', flowName);
         dataForm.append('reportid', id.toString());
         dataForm.append('format', format);
-        
-        for(const key in additionalParams) {
+
+        for (const key in additionalParams) {
           dataForm.append(key, additionalParams[key]);
         }
 
         // Check if donlotFile exists on api (it might be extended)
         if (typeof (api as any).donlotFile === 'function') {
-           await (api as any).donlotFile('/api/admin/execute-flow', dataForm, `Report_${id}.${format}`);
+          await (api as any).donlotFile('/api/admin/execute-flow', dataForm, `Report_${id}.${format}`);
         } else {
-           // Fallback blob download
-           const response = await api.post('/api/admin/execute-flow', dataForm, { responseType: 'blob' });
-           const blob = new Blob([response]);
-           const link = document.createElement('a');
-           link.href = window.URL.createObjectURL(blob);
-           link.download = `Report_${id}.${format}`;
-           link.click();
+          // Fallback blob download
+          const response = await api.post('/api/admin/execute-flow', dataForm, { responseType: 'blob' });
+          const blob = new Blob([response]);
+          const link = document.createElement('a');
+          link.href = window.URL.createObjectURL(blob);
+          link.download = `Report_${id}.${format}`;
+          link.click();
         }
       } finally {
         this.loading = false;
       }
     },
-  }
-})
+  },
+});

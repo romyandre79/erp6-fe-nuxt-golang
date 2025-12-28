@@ -19,11 +19,8 @@
     </div>
 
     <!-- Side Panel -->
-    <div
-      v-show="isPanelOpen"
-      class="w-80 flex flex-col border-r transition-all duration-300 ease-in-out"
-    >
-      <div class="p-3 border-b  flex justify-between items-center">
+    <div v-show="isPanelOpen" class="w-80 flex flex-col border-r transition-all duration-300 ease-in-out">
+      <div class="p-3 border-b flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">
           <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -36,47 +33,69 @@
           <div>
             <h3 class="font-semibold text-sm text-gray-700 mb-2 uppercase tracking-wider">Actions</h3>
             <div class="grid grid-cols-1 gap-2">
-              <button @click="$emit('add-table')" class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm">
+              <button
+                @click="$emit('add-table')"
+                class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm"
+              >
                 <UIcon name="heroicons:table-cells" class="w-5 h-5 text-green-600" />
                 <span>Add Table</span>
               </button>
-              <button @click="$emit('add-area', $event)" class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm">
+              <button
+                @click="$emit('add-area', $event)"
+                class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm"
+              >
                 <UIcon name="heroicons:square-3-stack-3d" class="w-5 h-5 text-purple-600" />
                 <span>Add Area</span>
               </button>
-              <button @click="$emit('ai-suggest')" class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm">
+              <button
+                @click="$emit('ai-suggest')"
+                class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm"
+              >
                 <UIcon name="heroicons:building-library" class="w-5 h-5 text-purple-500" />
                 <span>AI Suggest Relations</span>
               </button>
-              <button @click="$emit('reverse-engineer')" class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm">
+              <button
+                @click="$emit('reverse-engineer')"
+                class="flex items-center gap-2 px-3 py-2 bg-white border rounded hover:bg-gray-50 text-sm"
+              >
                 <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-orange-600" />
                 <span>Reverse Engineer DB</span>
               </button>
             </div>
-<div class="mt-4">
-      <label class="text-sm font-semibold">AI Prompt</label>
-      <div class="flex gap-2 mt-1">
-        <textarea
-          v-model="aiDescriptionModel"
-          placeholder="e.g. Customer table with id, name, email"
-          class="flex-1 p-2 border rounded"
-        />
-        </div>
+            <div class="mt-4">
+              <label class="text-sm font-semibold">AI Prompt</label>
               <div class="flex gap-2 mt-1">
-        <button @click="$emit('ai-parse', aiDescriptionModel)" class="px-3 py-1 bg-yellow-500 text-white rounded">
-          Generate
-        </button>
-      </div>
-    </div>          </div>
+                <textarea
+                  v-model="aiDescriptionModel"
+                  placeholder="e.g. Customer table with id, name, email"
+                  class="flex-1 p-2 border rounded"
+                />
+              </div>
+              <div class="flex gap-2 mt-1">
+                <button
+                  @click="$emit('ai-parse', aiDescriptionModel)"
+                  class="px-3 py-1 bg-yellow-500 text-white rounded"
+                >
+                  Generate
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div>
             <h3 class="font-semibold text-sm text-gray-700 mb-2 uppercase tracking-wider">Project</h3>
             <div class="grid grid-cols-2 gap-2">
-              <button @click="$emit('save')" class="flex flex-col border  items-center justify-center p-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+              <button
+                @click="$emit('save')"
+                class="flex flex-col border items-center justify-center p-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
+              >
                 <UIcon name="heroicons:bookmark-square" class="w-5 h-5 mb-1" />
                 Save
               </button>
-              <button @click="$emit('reset')" class="flex flex-col border items-center justify-center p-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
+              <button
+                @click="$emit('reset')"
+                class="flex flex-col border items-center justify-center p-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+              >
                 <UIcon name="heroicons:arrows-right-left" class="w-5 h-5 mb-1" />
                 Reset
               </button>
@@ -86,16 +105,28 @@
           <div>
             <h3 class="font-semibold text-sm text-gray-700 mb-2 uppercase tracking-wider">View</h3>
             <div class="grid grid-cols-2 gap-2">
-              <button @click="$emit('zoom-in')" class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center">
+              <button
+                @click="$emit('zoom-in')"
+                class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center"
+              >
                 <UIcon name="heroicons:magnifying-glass-plus" class="w-4 h-4 mb-1" /> Zoom In
               </button>
-              <button @click="$emit('zoom-out')" class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center">
+              <button
+                @click="$emit('zoom-out')"
+                class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center"
+              >
                 <UIcon name="heroicons:magnifying-glass-minus" class="w-4 h-4 mb-1" /> Zoom Out
               </button>
-              <button @click="$emit('reset-zoom')" class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center col-span-2">
+              <button
+                @click="$emit('reset-zoom')"
+                class="p-2 bg-white border rounded hover:bg-gray-50 text-xs flex flex-col items-center col-span-2"
+              >
                 <UIcon name="heroicons:arrows-right-left" class="w-4 h-4 mb-1" /> Reset Zoom
               </button>
-              <button @click="$emit('export-png')" class="p-2 bg-indigo-500 border text-white rounded hover:bg-indigo-600 text-xs flex flex-col items-center col-span-2">
+              <button
+                @click="$emit('export-png')"
+                class="p-2 bg-indigo-500 border text-white rounded hover:bg-indigo-600 text-xs flex flex-col items-center col-span-2"
+              >
                 <UIcon name="heroicons:bars-4" class="w-4 h-4 mb-1" /> Export PNG
               </button>
             </div>
@@ -150,9 +181,7 @@
             @remove-relation="$emit('remove-relation', $event)"
             @view-data="$emit('view-data', selectedTable)"
           />
-          <div v-else class="text-gray-500 text-sm italic text-center mt-10">
-            Select a table to view properties.
-          </div>
+          <div v-else class="text-gray-500 text-sm italic text-center mt-10">Select a table to view properties.</div>
         </div>
       </div>
     </div>
@@ -219,13 +248,14 @@ function toggleActivity(id: string) {
 }
 
 // Auto-switch to properties when a table is selected
-watch(() => props.selectedTable, (newVal) => {
-  if (newVal) {
-    openProperties();
-  }
-});
-
-
+watch(
+  () => props.selectedTable,
+  (newVal) => {
+    if (newVal) {
+      openProperties();
+    }
+  },
+);
 
 function openProperties() {
   activeActivity.value = 'properties';
@@ -240,5 +270,4 @@ const aiDescriptionModel = computed({
   get: () => props.aiDescription,
   set: (val) => emit('update:aiDescription', val),
 });
-
 </script>

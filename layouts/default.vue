@@ -3,6 +3,7 @@ import { useRuntimeConfig } from '#app';
 import { useThemeStore } from '../store/theme';
 import { useUserStore } from '../store/user';
 import { useDevice } from '~/composables/useDevice';
+import { SpeedInsights } from '@vercel/speed-insights/vue';
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
@@ -24,10 +25,14 @@ onMounted(async () => {
 <template>
   <ClientOnly>
     <UApp>
-      <div class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500">
-        
+      <SpeedInsights />
+      <div
+        class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500"
+      >
         <!-- Modern Glassmorphism Navbar -->
-        <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-800/50 shadow-sm transition-all duration-300">
+        <header
+          class="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-800/50 shadow-sm transition-all duration-300"
+        >
           <div class="container mx-auto" :class="isMobile ? 'px-4' : 'px-6'">
             <Navbar class="nav" />
           </div>
@@ -43,15 +48,18 @@ onMounted(async () => {
         <footer class="relative mt-auto">
           <!-- Top accent line -->
           <div class="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-          
+
           <div class="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md" :class="isMobile ? 'py-4 px-3' : 'py-6 px-4'">
-            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between" :class="isMobile ? 'gap-2' : 'gap-4'">
+            <div
+              class="container mx-auto flex flex-col md:flex-row items-center justify-between"
+              :class="isMobile ? 'gap-2' : 'gap-4'"
+            >
               <!-- Copyright -->
               <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 &copy; {{ new Date().getFullYear() }} Prisma Data Abadi
                 <span class="text-indigo-500 ml-1">{{ config.public.title }}</span>
               </p>
-              
+
               <!-- Optional social/links area -->
               <div class="flex items-center gap-4 text-gray-400 dark:text-gray-500">
                 <span class="text-xs tracking-wide uppercase opacity-60">Made with ❤️</span>
@@ -62,19 +70,21 @@ onMounted(async () => {
       </div>
       <AiAssistant v-if="userStore.token" />
 
-      
       <!-- Connection Error Overlay -->
-      <div v-if="appStore.connectionError" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-gray-100 dark:border-gray-700">
+      <div
+        v-if="appStore.connectionError"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 backdrop-blur-sm"
+      >
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-gray-100 dark:border-gray-700"
+        >
           <div class="flex flex-col items-center justify-center gap-4 text-center">
             <div class="p-3 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
               <UIcon name="i-heroicons-exclamation-triangle-20-solid" class="w-8 h-8" />
             </div>
-            
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Connection Error
-            </h3>
-            
+
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Connection Error</h3>
+
             <p class="text-sm text-gray-500 dark:text-gray-400">
               {{ appStore.errorMessage }}. Please check your internet connection or try again later.
             </p>

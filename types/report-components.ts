@@ -248,8 +248,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 50,
-      bandType: 'title'
-    }
+      bandType: 'title',
+    },
   },
   {
     type: 'band_pageHeader',
@@ -258,8 +258,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 30,
-      bandType: 'pageHeader'
-    }
+      bandType: 'pageHeader',
+    },
   },
   {
     type: 'band_columnHeader',
@@ -268,8 +268,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 30,
-      bandType: 'columnHeader'
-    }
+      bandType: 'columnHeader',
+    },
   },
   {
     type: 'band_detail',
@@ -278,8 +278,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 100,
-      bandType: 'detail'
-    }
+      bandType: 'detail',
+    },
   },
   {
     type: 'band_columnFooter',
@@ -288,8 +288,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 30,
-      bandType: 'columnFooter'
-    }
+      bandType: 'columnFooter',
+    },
   },
   {
     type: 'band_pageFooter',
@@ -298,8 +298,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 30,
-      bandType: 'pageFooter'
-    }
+      bandType: 'pageFooter',
+    },
   },
   {
     type: 'band_summary',
@@ -308,8 +308,8 @@ export const reportComponents: ReportComponent[] = [
     category: 'structure',
     props: {
       height: 50,
-      bandType: 'summary'
-    }
+      bandType: 'summary',
+    },
   },
 ];
 

@@ -7,13 +7,25 @@
 
     <!-- Designer takes remaining space -->
     <div class="flex-1 relative bg-gray-100 relative">
-      <div v-if="store.loading" class="absolute inset-0 z-50 flex items-center justify-center bg-gray-100 bg-opacity-75">
+      <div
+        v-if="store.loading"
+        class="absolute inset-0 z-50 flex items-center justify-center bg-gray-100 bg-opacity-75"
+      >
         <div class="flex flex-col items-center">
-             <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span class="text-gray-600 font-medium">Loading Layout...</span>
+          <svg
+            class="animate-spin h-10 w-10 text-blue-500 mb-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span class="text-gray-600 font-medium">Loading Layout...</span>
         </div>
       </div>
       <Designer v-else @saved="markClean" />
@@ -32,7 +44,7 @@ const Sidebar = defineAsyncComponent(() => import('~/components/workflow/Workflo
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'auth'
+  layout: 'auth',
 });
 
 const route = useRoute();
@@ -49,7 +61,7 @@ function getWorkflowId(): string | null {
 
 onMounted(async () => {
   await router.isReady(); // Critical: Wait for router to be ready
-  
+
   const id = getWorkflowId();
   if (!id) {
     console.warn('No ID found in route');
@@ -69,25 +81,31 @@ watch(
     if (!id) return;
     await store.loadWorkflow(id);
   },
-  { deep: true }
+  { deep: true },
 );
 import { useUnsavedChanges } from '~/composables/useUnsavedChanges';
 
 const { isDirty, markDirty, markClean } = useUnsavedChanges();
 
 // Watch for changes in store.workflow
-watch(() => store.workflow, () => {
-  if (store.workflow) markDirty();
-}, { deep: true });
+watch(
+  () => store.workflow,
+  () => {
+    if (store.workflow) markDirty();
+  },
+  { deep: true },
+);
 
 // Mark clean when workflow is loaded initially
-watch(() => store.workflow?.id, () => {
-   markClean();
-});
+watch(
+  () => store.workflow?.id,
+  () => {
+    markClean();
+  },
+);
 
 // Also need to handle save event to markClean.
 // The save logic is likely in Sidebar or Designer.
 // `Sidebar` emits `save`.
 // I should listen to save event if possible, or watch store loading state.
-
 </script>

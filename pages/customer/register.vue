@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'customer'
-})
+  layout: 'customer',
+});
 </script>
 
 <template>
@@ -9,43 +9,76 @@ definePageMeta({
     <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
       <div class="text-center">
         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Create Account</h2>
-        <p class="mt-2 text-sm text-gray-600">
-          Join our customer portal
-        </p>
+        <p class="mt-2 text-sm text-gray-600">Join our customer portal</p>
       </div>
       <form class="mt-8 space-y-6" action="#" method="POST" @submit.prevent="">
-        <input type="hidden" name="remember" value="true">
+        <input type="hidden" name="remember" value="true" />
         <div class="rounded-md shadow-sm -space-y-px">
           <div>
             <label for="name" class="sr-only">Full Name</label>
-            <input id="name" name="name" type="text" autocomplete="name" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Full Name">
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Full Name"
+            />
           </div>
           <div>
             <label for="company" class="sr-only">Company Name</label>
-            <input id="company" name="company" type="text" autocomplete="organization" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Company Name">
+            <input
+              id="company"
+              name="company"
+              type="text"
+              autocomplete="organization"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Company Name"
+            />
           </div>
           <div>
             <label for="email-address" class="sr-only">Email address</label>
-            <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address">
+            <input
+              id="email-address"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Email address"
+            />
           </div>
           <div>
             <label for="password" class="sr-only">Password</label>
-            <input id="password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Password"
+            />
           </div>
         </div>
 
         <div>
-           <nuxt-link to="/customer" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <nuxt-link
+            to="/customer"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
             Register
           </nuxt-link>
         </div>
       </form>
-       <div class="text-center">
+      <div class="text-center">
         <p class="text-sm text-gray-600">
-            Already have an account? 
-            <nuxt-link to="/customer/login" class="font-medium text-indigo-600 hover:text-indigo-500">
-                Sign in here
-            </nuxt-link>
+          Already have an account?
+          <nuxt-link to="/customer/login" class="font-medium text-indigo-600 hover:text-indigo-500">
+            Sign in here
+          </nuxt-link>
         </p>
       </div>
     </div>

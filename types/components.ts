@@ -15,7 +15,7 @@ export const availableComponents = [
       onUpdateDetail: [],
       onUpload: '',
       onPurge: '',
-      onPurgeDetail:[],
+      onPurgeDetail: [],
       onPdf: '',
       onXls: '',
       onLockFlow: '',
@@ -386,7 +386,7 @@ export const availableComponents = [
       required: false,
     },
   },
-    {
+  {
     type: 'title',
     label: 'Title',
     icon: 'mdi:format-header-1',
@@ -420,7 +420,7 @@ export const availableComponents = [
       enabled: true,
       required: false,
     },
-  }
+  },
 ];
 
 export const layoutContainers = [
@@ -666,8 +666,8 @@ export const layoutContainers = [
     icon: 'heroicons:bars-3',
     component: 'div',
     props: {
-        key: 'row_1',
-        class: 'flex flex-row flex-wrap w-full gap-2',
+      key: 'row_1',
+      class: 'flex flex-row flex-wrap w-full gap-2',
     },
     children: [],
   },
@@ -677,8 +677,8 @@ export const layoutContainers = [
     icon: 'heroicons:view-columns',
     component: 'div',
     props: {
-        key: 'col_1',
-        class: 'flex flex-col w-full md:w-1/2 p-2',
+      key: 'col_1',
+      class: 'flex flex-col w-full md:w-1/2 p-2',
     },
     children: [],
   },
@@ -798,7 +798,7 @@ export const layoutContainers = [
         parentKey: 'parent_id',
         labelKey: 'name',
         titleKey: 'title',
-        imageKey: 'avatar'
+        imageKey: 'avatar',
       },
       class: 'w-full h-[600px]',
     },
@@ -817,7 +817,7 @@ export const layoutContainers = [
         titleField: 'title',
         descriptionField: 'description',
         colorField: 'priority',
-        idField: 'id'
+        idField: 'id',
       },
       height: '600px',
       class: 'w-full',
@@ -830,19 +830,19 @@ export const layoutContainers = [
     icon: 'heroicons:chart-bar',
     component: 'FormGantt',
     props: {
-        key: 'gantt_1',
-        source: '',
-        config: {
-            idField: 'id',
-            titleField: 'title',
-            startField: 'created_at',
-            endField: 'duedate',
-            colorField: 'priority',
-            progressField: 'progress'
-        },
-        height: '600px',
-        class: 'w-full',
+      key: 'gantt_1',
+      source: '',
+      config: {
+        idField: 'id',
+        titleField: 'title',
+        startField: 'created_at',
+        endField: 'duedate',
+        colorField: 'priority',
+        progressField: 'progress',
+      },
+      height: '600px',
+      class: 'w-full',
     },
     children: [],
-  }
+  },
 ];

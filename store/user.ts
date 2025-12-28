@@ -35,7 +35,7 @@ export const useUserStore = defineStore('user', {
       tokenCookie.value = token;
       userCookie.value = JSON.stringify(user);
     },
-	
+
     async loadAuth() {
       const tokenCookie = useCookie<string | null>('token');
       const userCookie = useCookie<string | null>('user');

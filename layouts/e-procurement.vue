@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import '@/assets/css/landing.css'
+import '@/assets/css/landing.css';
 
 useHead({
   bodyAttrs: {
-    class: 'bg-slate-900 text-slate-100 antialiased'
-  }
-})
+    class: 'bg-slate-900 text-slate-100 antialiased',
+  },
+});
 </script>
 
 <template>
@@ -16,12 +16,18 @@ useHead({
         <div class="flex justify-between items-center h-16">
           <!-- Logo -->
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center p-0.5">
-               <div class="w-full h-full bg-slate-900 rounded-[5px] flex items-center justify-center">
-                 <span class="font-bold bg-gradient-to-br from-emerald-400 to-cyan-500 bg-clip-text text-transparent">E</span>
-               </div>
+            <div
+              class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center p-0.5"
+            >
+              <div class="w-full h-full bg-slate-900 rounded-[5px] flex items-center justify-center">
+                <span class="font-bold bg-gradient-to-br from-emerald-400 to-cyan-500 bg-clip-text text-transparent"
+                  >E</span
+                >
+              </div>
             </div>
-            <span class="font-bold text-lg tracking-tight">Capella<span class="text-slate-400 font-normal">Procure</span></span>
+            <span class="font-bold text-lg tracking-tight"
+              >Capella<span class="text-slate-400 font-normal">Procure</span></span
+            >
           </div>
 
           <!-- Nav Links -->
@@ -33,8 +39,13 @@ useHead({
 
           <!-- Auth Actions -->
           <div class="flex items-center gap-4">
-            <NuxtLink to="/login" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Vendor Login</NuxtLink>
-            <NuxtLink to="/e-procurement/register" class="px-4 py-2 text-sm font-semibold text-slate-900 bg-emerald-400 rounded-lg hover:bg-emerald-300 transition-colors shadow-[0_0_20px_-5px_rgba(52,211,153,0.4)]">
+            <NuxtLink to="/login" class="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              >Vendor Login</NuxtLink
+            >
+            <NuxtLink
+              to="/e-procurement/register"
+              class="px-4 py-2 text-sm font-semibold text-slate-900 bg-emerald-400 rounded-lg hover:bg-emerald-300 transition-colors shadow-[0_0_20px_-5px_rgba(52,211,153,0.4)]"
+            >
               Register
             </NuxtLink>
           </div>
@@ -49,9 +60,9 @@ useHead({
 
     <!-- Footer -->
     <footer class="border-t border-white/5 bg-slate-950 py-12">
-        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
-            &copy; {{ new Date().getFullYear() }} Capella ERP. All rights reserved.
-        </div>
+      <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+        &copy; {{ new Date().getFullYear() }} Capella ERP. All rights reserved.
+      </div>
     </footer>
   </div>
 </template>

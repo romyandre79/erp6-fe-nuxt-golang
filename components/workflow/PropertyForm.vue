@@ -16,12 +16,16 @@
       <p class="text-xs text-gray-400">Custom name to display on the workflow canvas</p>
     </div>
 
-    <div v-if="fields.length === 0" class="text-sm text-gray-500">No specific properties available for this component.</div>
+    <div v-if="fields.length === 0" class="text-sm text-gray-500">
+      No specific properties available for this component.
+    </div>
 
     <form v-else class="space-y-3 pb-4" @submit.prevent>
       <template v-for="field in fields" :key="field.componentdetailid">
         <div class="space-y-1">
-          <label class="block text-sm font-medium text-gray-700">{{ (field.inputdesc + '('+ field.inputname +')') }}</label>
+          <label class="block text-sm font-medium text-gray-700">{{
+            field.inputdesc + '(' + field.inputname + ')'
+          }}</label>
 
           <!-- TEXTBOX -->
           <input
@@ -88,8 +92,6 @@ const nodeDescription = ref('');
 // fields array (normalized from store.componentProperties or from store.loadComponentProperties result)
 const fields = ref<any[]>([]);
 
-
-
 // Helper: decide types
 function isTextbox(f: any) {
   return (f.inputtype ?? '').toLowerCase() === 'textbox';
@@ -155,7 +157,7 @@ function initFormFromFields() {
     if (f.workflowdetailid && f.workflowdetailid !== 0) {
       // Data from DB exists
       val = f.componentvalue ?? '';
-      
+
       // Check consistency with drawflow JSON
       // If DB value differs from drawflow value, we stick to DB and update Drawflow
       if (nodeData && nodeData[key] !== val) {
@@ -180,8 +182,8 @@ function initFormFromFields() {
 }
 
 function updateNodeDescription() {
-    if (!props.nodeId) return;
-    store.updateNodeData(props.nodeId, { description: nodeDescription.value });
+  if (!props.nodeId) return;
+  store.updateNodeData(props.nodeId, { description: nodeDescription.value });
 }
 
 // UPDATE specific node data (immediate)
@@ -193,7 +195,7 @@ function updateNodeData() {
   fields.value.forEach((f: any) => {
     payload[f.inputname] = form[f.inputname];
   });
-  
+
   // update store using the CURRENT props.nodeId (closure safe?)
   // Actually, safely use props.nodeId passed to this component
   store.updateNodeData(props.nodeId, payload);
@@ -224,10 +226,10 @@ watch(
 
     // gunakan hasil merge langsung
     fields.value = merged;
-    
+
     // Clear existing form data to prevent stale values
-    Object.keys(form).forEach(key => delete form[key]);
-    
+    Object.keys(form).forEach((key) => delete form[key]);
+
     initFormFromFields();
   },
   { immediate: true },

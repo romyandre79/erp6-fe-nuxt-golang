@@ -63,7 +63,7 @@
               v-for="col in columns"
               :key="col.key || col"
               class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors"
-              :class="{'text-right': ['number','currency'].includes(col.type)}"
+              :class="{ 'text-right': ['number', 'currency'].includes(col.type) }"
               @click="toggleSort(col.key || col, fetchData)"
             >
               <div class="flex items-center gap-1">
@@ -120,7 +120,12 @@
                 </button>
               </td>
 
-              <td v-for="col in columns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
+              <td
+                v-for="col in columns"
+                :key="col.key || col"
+                class="px-4 py-3 text-sm cursor-pointer"
+                :class="{ 'text-right': ['number', 'currency'].includes(col.type) }"
+              >
                 <span v-html="formatCellValue(col, row[col.key || col])"></span>
               </td>
 
@@ -213,7 +218,6 @@ const emit = defineEmits(['action', 'row-action', 'fetch-params', 'selection-cha
 const Api = useApi();
 const route = useRoute();
 
-
 // Table preferences persistence
 const tableId = computed(() => props.endPoint || 'default_detail_table');
 const { loadPreferences, savePreferences } = useTablePreferences(tableId.value);
@@ -261,9 +265,7 @@ const {
 } = useTableLogic(props, emit);
 
 // Computed visible columns
-const visibleColumns = computed(() => 
-  (props.columns as any[]).filter(col => isColumnVisible(col.key || col))
-);
+const visibleColumns = computed(() => (props.columns as any[]).filter((col) => isColumnVisible(col.key || col)));
 
 // Fetch data
 async function fetchData() {
@@ -380,7 +382,7 @@ onMounted(() => {
   if (prefs.sortDir) sortDir.value = prefs.sortDir;
   if (prefs.pageSize) pageSize.value = prefs.pageSize;
   if (prefs.columnFilters) columnFilters.value = prefs.columnFilters;
-  
+
   fetchData();
 });
 
@@ -393,10 +395,13 @@ watch(pageSize, () => {
   savePreferences({ pageSize: pageSize.value });
 });
 
-watch(columnFilters, () => {
-  savePreferences({ columnFilters: columnFilters.value });
-}, { deep: true });
+watch(
+  columnFilters,
+  () => {
+    savePreferences({ columnFilters: columnFilters.value });
+  },
+  { deep: true },
+);
 
 defineExpose({ refreshTable: fetchData });
 </script>
-

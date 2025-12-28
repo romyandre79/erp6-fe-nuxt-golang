@@ -13,25 +13,38 @@
           @click="exportToCSV(columns, (title || 'export') + '.csv')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
           Export
         </button>
 
         <div v-if="enableColumnChooser" class="relative">
-          <button
-            class="btn btn-sm btn-ghost gap-1"
-            @click="showColumnChooser = !showColumnChooser"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          <button class="btn btn-sm btn-ghost gap-1" @click="showColumnChooser = !showColumnChooser">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+              />
             </svg>
             Columns
           </button>
           <div
             v-if="showColumnChooser"
             class="absolute right-0 top-full mt-1 bg-base-100 border rounded-lg shadow-xl z-[9999] min-w-56 p-2"
-            style="background: white;"
+            style="background: white"
           >
             <div class="text-xs font-semibold text-base-content/60 mb-2 px-2">Show/Hide & Freeze Columns</div>
             <div class="max-h-64 overflow-y-auto">
@@ -54,14 +67,31 @@
                   @click="toggleFreezeColumn(col.key || col)"
                   :title="isColumnFrozen(col.key || col) ? 'Unfreeze' : 'Freeze'"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                    />
                   </svg>
                 </button>
               </div>
             </div>
             <div class="border-t mt-2 pt-2 flex gap-1">
-              <button class="btn btn-xs btn-ghost flex-1" @click="showAllColumns(); showColumnChooser = false">
+              <button
+                class="btn btn-xs btn-ghost flex-1"
+                @click="
+                  showAllColumns();
+                  showColumnChooser = false;
+                "
+              >
                 Show All
               </button>
               <button v-if="enableFrozenColumns" class="btn btn-xs btn-ghost flex-1" @click="unfreezeAllColumns()">
@@ -76,43 +106,41 @@
     <!-- Search -->
     <!-- Filter Container -->
     <div v-if="enableSearch" class="mb-4">
-        <!-- SIMPLE SEARCH -->
-        <div v-if="simpleSearch" class="flex items-center gap-2">
+      <!-- SIMPLE SEARCH -->
+      <div v-if="simpleSearch" class="flex items-center gap-2">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search..."
+          class="border rounded px-3 py-2 text-sm w-full"
+          @keyup.enter="fetchData"
+        />
+
+        <button class="px-3 py-2 bg-blue-600 text-white rounded" @click="fetchData">Cari</button>
+      </div>
+
+      <!-- COMPLEX SEARCH -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div v-for="(col, index) in searchColumn" :key="index">
           <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search..."
+            v-if="['text', 'number', 'email'].includes(col.type)"
+            v-model="searchComplexQuery[col.key]"
+            :type="col.type"
+            :placeholder="`${$t(col.place.toUpperCase())}...`"
             class="border rounded px-3 py-2 text-sm w-full"
             @keyup.enter="fetchData"
           />
-
-          <button class="px-3 py-2 bg-blue-600 text-white rounded" @click="fetchData">Cari</button>
-        </div>
-
-        <!-- COMPLEX SEARCH -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <div v-for="(col, index) in searchColumn" :key="index">
-            <input
-              v-if="['text', 'number', 'email'].includes(col.type)"
-              v-model="searchComplexQuery[col.key]"
-              :type="col.type"
-              :placeholder="`${$t(col.place.toUpperCase())}...`"
-              class="border rounded px-3 py-2 text-sm w-full"
-              @keyup.enter="fetchData"
-            />
-          </div>
-        </div>
-
-        <!-- Toolbar Actions -->
-        <div v-if="actions && actions.length">
-          <button v-for="(action, index) in actions" :key="index" @click="$emit('action', action)">
-            <i v-if="action.icon" :class="['mr-1', action.icon]"></i>
-            {{ action.label }}
-          </button>
         </div>
       </div>
 
-
+      <!-- Toolbar Actions -->
+      <div v-if="actions && actions.length">
+        <button v-for="(action, index) in actions" :key="index" @click="$emit('action', action)">
+          <i v-if="action.icon" :class="['mr-1', action.icon]"></i>
+          {{ action.label }}
+        </button>
+      </div>
+    </div>
 
     <!-- Grouping Panel -->
     <div
@@ -123,11 +151,14 @@
       @dragleave="isDraggingOver = false"
       @drop="handleDropOnPanel"
     >
-      <div v-if="groupByColumns.length === 0" class="text-base-content/50 text-sm italic w-full text-center pointer-events-none select-none">
+      <div
+        v-if="groupByColumns.length === 0"
+        class="text-base-content/50 text-sm italic w-full text-center pointer-events-none select-none"
+      >
         Drag a column header here to group
       </div>
-      <div 
-        v-for="colKey in groupByColumns" 
+      <div
+        v-for="colKey in groupByColumns"
         :key="colKey"
         class="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 cursor-move hover:bg-primary/20 transition-colors"
         draggable="true"
@@ -144,7 +175,7 @@
 
     <!-- Table -->
     <div class="w-full rounded-xl overflow-x-auto">
-          <TableControls
+      <TableControls
         v-model:pageSize="pageSize"
         :currentPage="currentPage"
         :totalPages="totalPages"
@@ -179,8 +210,12 @@
               v-for="col in visibleColumns"
               :key="col.key || col"
               class="thead px-4 py-3 text-left tracking-wide cursor-pointer select-none hover:bg-base-200 transition-colors relative group"
-              :class="{'text-right': ['number','currency'].includes(col.type)}"
-              :style="columnWidths[col.key || col] ? { width: columnWidths[col.key || col] + 'px', minWidth: columnWidths[col.key || col] + 'px' } : {}"
+              :class="{ 'text-right': ['number', 'currency'].includes(col.type) }"
+              :style="
+                columnWidths[col.key || col]
+                  ? { width: columnWidths[col.key || col] + 'px', minWidth: columnWidths[col.key || col] + 'px' }
+                  : {}
+              "
               @click="toggleSort(col.key || col, fetchData)"
               :draggable="enableGrouping"
               @dragstart="handleDragStart($event, col.key || col)"
@@ -199,7 +234,9 @@
                 @mousedown.stop="startResize($event, col.key || col)"
               ></div>
             </th>
-            <th v-if="(rowActions && rowActions.length) || enableInlineEdit" class="thead px-4 py-3 text-left">Actions</th>
+            <th v-if="(rowActions && rowActions.length) || enableInlineEdit" class="thead px-4 py-3 text-left">
+              Actions
+            </th>
           </tr>
           <!-- Filter Row -->
           <tr v-if="enableColumnFilter" class="bg-base-200/50">
@@ -229,16 +266,18 @@
           </tr>
 
           <template v-if="!loading">
-            <template v-for="(item, index) in flattenedRows" :key="item.type === 'group' ? item.groupKey : (item.row[props.rowKey] || index)">
-              
+            <template
+              v-for="(item, index) in flattenedRows"
+              :key="item.type === 'group' ? item.groupKey : item.row[props.rowKey] || index"
+            >
               <!-- GROUP HEADER ROW -->
-              <tr 
-                v-if="item.type === 'group'" 
+              <tr
+                v-if="item.type === 'group'"
                 class="bg-base-200 cursor-pointer hover:bg-base-300 transition-colors font-medium border-l-4 border-l-primary"
                 @click="toggleGroupExpand(item.groupKey)"
               >
                 <td :colspan="visibleColumns.length + (rowActions?.length ? 1 : 0) + 2" class="px-4 py-2">
-                  <div class="flex items-center gap-2" :style="{ paddingLeft: (item.level * 20) + 'px' }">
+                  <div class="flex items-center gap-2" :style="{ paddingLeft: item.level * 20 + 'px' }">
                     <button class="btn btn-xs btn-square btn-ghost">
                       {{ item.expanded ? '▼' : '▶' }}
                     </button>
@@ -250,19 +289,19 @@
               </tr>
 
               <!-- DATA ROW -->
-              <tr 
+              <tr
                 v-else
-                class="transition-colors duration-200" 
-                @click.stop="toggleRowSelection(item.row)" 
+                class="transition-colors duration-200"
+                @click.stop="toggleRowSelection(item.row)"
                 :checked="isSelected(item.row)"
                 :draggable="enableRowReorder"
                 @dragstart="onRowDragStart($event, index)"
                 @drop="onRowDrop($event, index)"
                 @dragover.prevent
-                :class="{'opacity-50': draggedRowIndex === index}"
+                :class="{ 'opacity-50': draggedRowIndex === index }"
               >
                 <td v-if="enableRowReorder" class="px-2 py-3 cursor-move text-base-content/50 text-center" @click.stop>
-                   <span class="text-xl leading-none">☰</span>
+                  <span class="text-xl leading-none">☰</span>
                 </td>
                 <td class="px-4 py-3" v-if="props.enableCheck">
                   <input
@@ -280,9 +319,19 @@
                   </button>
                 </td>
 
-                <td v-for="col in visibleColumns" :key="col.key || col" class="px-4 py-3 text-sm cursor-pointer" :class="{'text-right': ['number','currency'].includes(col.type)}">
+                <td
+                  v-for="col in visibleColumns"
+                  :key="col.key || col"
+                  class="px-4 py-3 text-sm cursor-pointer"
+                  :class="{ 'text-right': ['number', 'currency'].includes(col.type) }"
+                >
                   <template v-if="enableInlineEdit && isEditing(item.row)">
-                    <input type="text" class="input input-xs input-bordered w-full" v-model="editForm[col.key || col]" @click.stop />
+                    <input
+                      type="text"
+                      class="input input-xs input-bordered w-full"
+                      v-model="editForm[col.key || col]"
+                      @click.stop
+                    />
                   </template>
                   <template v-else>
                     <span v-html="formatCellValue(col, item.row[col.key || col])"></span>
@@ -295,7 +344,14 @@
                     <button class="btn btn-xs btn-error btn-square" @click.stop="cancelEdit()" title="Cancel">✗</button>
                   </div>
                   <div class="flex items-center gap-1" v-else>
-                    <button v-if="enableInlineEdit" class="btn btn-xs btn-ghost btn-square" @click.stop="startEdit(item.row)" title="Edit">✎</button>
+                    <button
+                      v-if="enableInlineEdit"
+                      class="btn btn-xs btn-ghost btn-square"
+                      @click.stop="startEdit(item.row)"
+                      title="Edit"
+                    >
+                      ✎
+                    </button>
                     <button
                       v-for="(action, i) in rowActions"
                       :key="i"
@@ -308,7 +364,7 @@
                   </div>
                 </td>
               </tr>
-              
+
               <!-- CHILD ROW (For Expand View) -->
               <tr v-if="item.type === 'data' && isExpanded(item.row) && isExpand == true">
                 <td :colspan="visibleColumns.length + 2">
@@ -317,7 +373,6 @@
                   </div>
                 </td>
               </tr>
-
             </template>
           </template>
 
@@ -337,7 +392,11 @@
             <td v-for="col in visibleColumns" :key="'summary-' + (col.key || col)" class="px-4 py-2">
               <template v-if="col.summary">
                 <span class="text-primary">
-                  {{ col.summary === 'count' ? calculateCount() : getSummaryValue(col.key || col, col.summary).toLocaleString() }}
+                  {{
+                    col.summary === 'count'
+                      ? calculateCount()
+                      : getSummaryValue(col.key || col, col.summary).toLocaleString()
+                  }}
                 </span>
                 <span class="text-xs text-base-content/60 ml-1">{{ col.summary }}</span>
               </template>
@@ -356,7 +415,7 @@
         :enablePaging="enablePaging"
         :enablePageSize="enablePageSize"
         :pageSizeOptions="pageSizeOptions"
-                :totalRecords="totalRecords"
+        :totalRecords="totalRecords"
         @page-size-change="handlePageSizeChange(fetchData)"
         @first-page="firstPage(fetchData)"
         @prev-page="prevPage(fetchData)"
@@ -512,16 +571,16 @@ const handleDropOnPanel = (event: DragEvent) => {
 };
 
 const handleDropOnHeader = (event: DragEvent) => {
-   const columnKey = event.dataTransfer?.getData('text/plain');
-   const source = event.dataTransfer?.getData('source');
-   if (columnKey && source === 'panel') {
-     removeGroup(columnKey);
-   }
+  const columnKey = event.dataTransfer?.getData('text/plain');
+  const source = event.dataTransfer?.getData('source');
+  if (columnKey && source === 'panel') {
+    removeGroup(columnKey);
+  }
 };
 
 const resolveColumnLabel = (key: string) => {
-  const col = (props.columns as any[]).find(c => (c.key || c) === key);
-  return col ? (col.text || col.label || col.key || col) : key;
+  const col = (props.columns as any[]).find((c) => (c.key || c) === key);
+  return col ? col.text || col.label || col.key || col : key;
 };
 
 // Row Reordering State
@@ -529,16 +588,16 @@ const draggedRowIndex = ref<number | null>(null);
 
 const onRowDragStart = (event: DragEvent, index: number) => {
   if (props.enableRowReorder) {
-     draggedRowIndex.value = index;
-     event.dataTransfer!.effectAllowed = 'move';
-     // Optional: set drag image
+    draggedRowIndex.value = index;
+    event.dataTransfer!.effectAllowed = 'move';
+    // Optional: set drag image
   }
 };
 
 const onRowDrop = (event: DragEvent, dropIndex: number) => {
   if (props.enableRowReorder && draggedRowIndex.value !== null && draggedRowIndex.value !== dropIndex) {
-     reorderRows(draggedRowIndex.value, dropIndex);
-     draggedRowIndex.value = null;
+    reorderRows(draggedRowIndex.value, dropIndex);
+    draggedRowIndex.value = null;
   }
 };
 
@@ -546,12 +605,9 @@ const onRowDrop = (event: DragEvent, dropIndex: number) => {
 const showColumnChooser = ref(false);
 
 // Computed visible columns
-const visibleColumns = computed(() => 
-  (props.columns as any[]).filter(col => isColumnVisible(col.key || col))
-);
+const visibleColumns = computed(() => (props.columns as any[]).filter((col) => isColumnVisible(col.key || col)));
 
 // Grouped Data
-
 
 // Column resize state
 let resizingColumn = '';
@@ -563,7 +619,7 @@ function startResize(event: MouseEvent, columnKey: string) {
   startX = event.pageX;
   const th = (event.target as HTMLElement).parentElement;
   startWidth = th?.offsetWidth || 100;
-  
+
   document.addEventListener('mousemove', doResize);
   document.addEventListener('mouseup', stopResize);
 }
@@ -717,7 +773,7 @@ onMounted(() => {
   if (prefs.frozenColumns) frozenColumns.value = new Set(prefs.frozenColumns);
   if (prefs.groupByColumns) groupByColumns.value = prefs.groupByColumns;
   if (prefs.expandedGroups) expandedGroups.value = new Set(prefs.expandedGroups);
-  
+
   fetchData();
 });
 
@@ -730,25 +786,45 @@ watch(pageSize, () => {
   savePreferences({ pageSize: pageSize.value });
 });
 
-watch(columnFilters, () => {
-  savePreferences({ columnFilters: columnFilters.value });
-}, { deep: true });
+watch(
+  columnFilters,
+  () => {
+    savePreferences({ columnFilters: columnFilters.value });
+  },
+  { deep: true },
+);
 
-watch(hiddenColumns, () => {
-  savePreferences({ hiddenColumns: Array.from(hiddenColumns.value) });
-}, { deep: true });
+watch(
+  hiddenColumns,
+  () => {
+    savePreferences({ hiddenColumns: Array.from(hiddenColumns.value) });
+  },
+  { deep: true },
+);
 
-watch(frozenColumns, (val) => {
-  savePreferences({ frozenColumns: Array.from(val) });
-}, { deep: true });
+watch(
+  frozenColumns,
+  (val) => {
+    savePreferences({ frozenColumns: Array.from(val) });
+  },
+  { deep: true },
+);
 
-watch(groupByColumns, (val) => {
-  savePreferences({ groupByColumns: val });
-}, { deep: true });
+watch(
+  groupByColumns,
+  (val) => {
+    savePreferences({ groupByColumns: val });
+  },
+  { deep: true },
+);
 
-watch(expandedGroups, (val) => {
-  savePreferences({ expandedGroups: Array.from(val) });
-}, { deep: true });
+watch(
+  expandedGroups,
+  (val) => {
+    savePreferences({ expandedGroups: Array.from(val) });
+  },
+  { deep: true },
+);
 
 defineExpose({
   refreshTable: fetchData,

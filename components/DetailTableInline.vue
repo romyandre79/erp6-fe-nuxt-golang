@@ -2,12 +2,7 @@
   <div class="w-full">
     <!-- Toolbar -->
     <div class="flex gap-2 mb-3">
-      <UButton
-        icon="i-heroicons-plus"
-        :label="$t('ADD ROW')"
-        class="btnPrimary"
-        @click="addRow"
-      />
+      <UButton icon="i-heroicons-plus" :label="$t('ADD ROW')" class="btnPrimary" @click="addRow" />
       <UButton
         icon="i-heroicons-trash"
         :label="$t('DELETE SELECTED')"
@@ -23,18 +18,9 @@
         <thead class="text-sm uppercase font-semibold bg-gray-50 dark:bg-gray-800">
           <tr>
             <th class="px-4 py-3 w-12">
-              <input
-                type="checkbox"
-                @change="toggleSelectAll"
-                :checked="isAllSelected"
-                class="w-4 h-4 rounded"
-              />
+              <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected" class="w-4 h-4 rounded" />
             </th>
-            <th
-              v-for="(col, index) in columns"
-              :key="index"
-              class="px-4 py-3 text-left"
-            >
+            <th v-for="(col, index) in columns" :key="index" class="px-4 py-3 text-left">
               {{ $t(col.text?.toUpperCase() || col.label?.toUpperCase() || '') }}
               <span v-if="col.required" class="text-red-500">*</span>
             </th>
@@ -47,21 +33,10 @@
             class="border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <td class="px-4 py-3">
-              <input
-                type="checkbox"
-                v-model="selectedRowIndices"
-                :value="rowIndex"
-                class="w-4 h-4 rounded"
-              />
+              <input type="checkbox" v-model="selectedRowIndices" :value="rowIndex" class="w-4 h-4 rounded" />
             </td>
-            <td
-              v-for="(col, colIndex) in columns"
-              :key="colIndex"
-              class="px-4 py-3"
-            >
-              <component
-                :is="renderCell(row, col, rowIndex)"
-              />
+            <td v-for="(col, colIndex) in columns" :key="colIndex" class="px-4 py-3">
+              <component :is="renderCell(row, col, rowIndex)" />
             </td>
           </tr>
           <tr v-if="rows.length === 0">
@@ -94,20 +69,28 @@ const rows = ref(props.modelValue.length > 0 ? [...props.modelValue] : [createEm
 const selectedRowIndices = ref<number[]>([]);
 
 // Watch for external changes to modelValue
-watch(() => props.modelValue, (newVal) => {
-  if (newVal && newVal.length > 0) {
-    rows.value = [...newVal];
-  }
-}, { deep: true });
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    if (newVal && newVal.length > 0) {
+      rows.value = [...newVal];
+    }
+  },
+  { deep: true },
+);
 
 // Watch rows and emit changes
-watch(rows, (newRows) => {
-  emit('update:modelValue', newRows);
-  // Also update formData with the table key
-  if (props.formData) {
-    props.formData[props.tableKey] = newRows;
-  }
-}, { deep: true });
+watch(
+  rows,
+  (newRows) => {
+    emit('update:modelValue', newRows);
+    // Also update formData with the table key
+    if (props.formData) {
+      props.formData[props.tableKey] = newRows;
+    }
+  },
+  { deep: true },
+);
 
 function createEmptyRow() {
   const row: any = {};
@@ -140,16 +123,16 @@ function addRow() {
 
 function deleteSelected() {
   if (selectedRowIndices.value.length === 0) return;
-  
+
   // Sort indices in descending order to avoid index shifting issues
   const sortedIndices = [...selectedRowIndices.value].sort((a, b) => b - a);
-  
-  sortedIndices.forEach(index => {
+
+  sortedIndices.forEach((index) => {
     rows.value.splice(index, 1);
   });
-  
+
   selectedRowIndices.value = [];
-  
+
   // Ensure at least one row remains
   if (rows.value.length === 0) {
     rows.value.push(createEmptyRow());
@@ -176,22 +159,22 @@ function renderCell(row: any, col: any, rowIndex: number) {
 
   // Helper date formatter
   const formatDate = (val: any, type: string) => {
-      if (!val) return '';
-      if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof val === 'string') {
-          const date = new Date(val);
-          if (!isNaN(date.getTime())) {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              const hours = String(date.getHours()).padStart(2, '0');
-              const minutes = String(date.getMinutes()).padStart(2, '0');
+    if (!val) return '';
+    if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof val === 'string') {
+      const date = new Date(val);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
 
-              if (type === 'date') return `${year}-${month}-${day}`;
-              if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
-              if (type === 'time') return `${hours}:${minutes}`;
-          }
+        if (type === 'date') return `${year}-${month}-${day}`;
+        if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
+        if (type === 'time') return `${hours}:${minutes}`;
       }
-      return val;
+    }
+    return val;
   };
 
   // Create a computed model for two-way binding
@@ -199,12 +182,12 @@ function renderCell(row: any, col: any, rowIndex: number) {
     get: () => formatDate(row[key], type),
     set: (val) => {
       row[key] = val;
-      
+
       // Handle computed fields (e.g., total = quantity * price)
       if (colProps.computed) {
         handleComputedField(row, colProps.computed);
       }
-    }
+    },
   });
 
   switch (type) {
@@ -219,27 +202,33 @@ function renderCell(row: any, col: any, rowIndex: number) {
         onInput: (e: any) => {
           const value = e.target.value;
           modelValue.value = value === '' ? 0 : parseFloat(value);
-        }
+        },
       });
 
     case 'select':
       // For select, we need to use the FormSelect component
       const selectFormData = ref({ [key]: modelValue.value });
-      
-      watch(() => selectFormData.value[key], (newVal) => {
-        modelValue.value = newVal;
-      });
-      
-      watch(() => modelValue.value, (newVal) => {
-        selectFormData.value[key] = newVal;
-      });
+
+      watch(
+        () => selectFormData.value[key],
+        (newVal) => {
+          modelValue.value = newVal;
+        },
+      );
+
+      watch(
+        () => modelValue.value,
+        (newVal) => {
+          selectFormData.value[key] = newVal;
+        },
+      );
 
       return h(FormSelect, {
         component: colProps,
         formData: selectFormData,
         validationErrors: {},
         validateField: () => {},
-        class: 'w-full'
+        class: 'w-full',
       });
 
     case 'date':
@@ -247,7 +236,7 @@ function renderCell(row: any, col: any, rowIndex: number) {
         type: 'date',
         class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
         value: modelValue.value,
-        onInput: (e: any) => modelValue.value = e.target.value
+        onInput: (e: any) => (modelValue.value = e.target.value),
       });
 
     case 'datetime':
@@ -256,7 +245,7 @@ function renderCell(row: any, col: any, rowIndex: number) {
         type: 'datetime-local',
         class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
         value: modelValue.value,
-        onInput: (e: any) => modelValue.value = e.target.value
+        onInput: (e: any) => (modelValue.value = e.target.value),
       });
 
     case 'time':
@@ -264,7 +253,7 @@ function renderCell(row: any, col: any, rowIndex: number) {
         type: 'time',
         class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
         value: modelValue.value,
-        onInput: (e: any) => modelValue.value = e.target.value
+        onInput: (e: any) => (modelValue.value = e.target.value),
       });
 
     case 'bool':
@@ -273,7 +262,7 @@ function renderCell(row: any, col: any, rowIndex: number) {
         type: 'checkbox',
         class: 'w-4 h-4 rounded',
         checked: modelValue.value,
-        onChange: (e: any) => modelValue.value = e.target.checked
+        onChange: (e: any) => (modelValue.value = e.target.checked),
       });
 
     case 'text':
@@ -284,7 +273,7 @@ function renderCell(row: any, col: any, rowIndex: number) {
         value: modelValue.value,
         placeholder: colProps.place || '',
         maxlength: colProps.length,
-        onInput: (e: any) => modelValue.value = e.target.value
+        onInput: (e: any) => (modelValue.value = e.target.value),
       });
   }
 }
@@ -306,15 +295,15 @@ function handleComputedField(row: any, computedConfig: any) {
 function evaluateFormula(formula: string, row: any): number {
   // Replace variable names with their values
   let expression = formula;
-  
+
   // Find all variables in the formula (alphanumeric + underscore)
   const variables = formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
-  
-  variables.forEach(varName => {
+
+  variables.forEach((varName) => {
     const value = row[varName] || 0;
     expression = expression.replace(new RegExp(varName, 'g'), String(value));
   });
-  
+
   // Evaluate the expression safely
   try {
     // Use Function constructor for safe evaluation

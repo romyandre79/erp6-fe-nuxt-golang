@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-14 flex flex-col items-center py-2  border-r border-gray-700 z-20">
+    <div class="panel w-14 flex flex-col items-center py-2 border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"
@@ -15,10 +15,7 @@
     </div>
 
     <!-- Side Panel -->
-    <div
-      v-show="isPanelOpen"
-      class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out"
-    >
+    <div v-show="isPanelOpen" class="w-80 flex flex-col bg-gray-50 border-r transition-all duration-300 ease-in-out">
       <div class="p-3 border-b bg-gray-100 flex justify-between items-center">
         <span class="font-semibold text-sm uppercase text-gray-600">{{ activeLabel }}</span>
         <button @click="isPanelOpen = false" class="text-gray-500 hover:text-gray-700">
@@ -120,7 +117,7 @@ watch(
       activeActivity.value = 'property';
       isPanelOpen.value = true;
     }
-  }
+  },
 );
 
 function compsByCategory(cat: any) {

@@ -15,7 +15,7 @@ export default defineNuxtConfig({
         if (warning.code === 'UNRESOLVED_IMPORT' && warning.exporter?.includes('cache-driver')) {
           return; // Ignore cache-driver warning
         }
-        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules'))) {
+        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some((id) => id.includes('node_modules'))) {
           return; // Ignore circular dependencies in node_modules
         }
         warn(warning);
@@ -23,18 +23,14 @@ export default defineNuxtConfig({
     },
   },
   compatibilityDate: '2025-07-15',
-  css: [
-    '@fortawesome/fontawesome-free/css/all.min.css',
-    'drawflow/dist/drawflow.min.css',
-    'assets/css/drawflow.css',
-  ],
+  css: ['@fortawesome/fontawesome-free/css/all.min.css', 'drawflow/dist/drawflow.min.css', 'assets/css/drawflow.css'],
   vite: {
     build: {
       sourcemap: false,
       chunkSizeWarningLimit: 2000, // Increase limit - chunks are already optimized with code splitting
       rollupOptions: {
         output: {
-      manualChunks: (id: string) => {
+          manualChunks: (id: string) => {
             // Separate node_modules into vendor chunks
             if (id.includes('node_modules')) {
               // Drawflow library
