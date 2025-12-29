@@ -247,10 +247,104 @@ const handleRedo = () => {
   }
 };
 
-// Keyboard shortcuts for undo/redo
+// Copy/Paste handlers
+const handleCopyComponent = () => {
+  if (!selected.value) return;
+  
+  // Deep clone the selected component
+  copiedComponent.value = JSON.parse(JSON.stringify(selected.value));
+  
+  toast.add({ 
+    title: 'Component Copied', 
+    description: `"${selected.value.label}" copied to clipboard`, 
+    color: 'success',
+    timeout: 2000
+  });
+};
+
+const generateNewId = (): string => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
+const cloneComponentWithNewIds = (component: NodeSchema): NodeSchema => {
+  const cloned: NodeSchema = {
+    ...component,
+    id: generateNewId(),
+    props: { ...component.props }
+  };
+  
+  if (component.children && component.children.length > 0) {
+    cloned.children = component.children.map(child => cloneComponentWithNewIds(child));
+  }
+  
+  return cloned;
+};
+
+const handlePasteComponent = () => {
+  if (!copiedComponent.value) return;
+  
+  // Clone with new IDs to avoid conflicts
+  const newComponent = cloneComponentWithNewIds(copiedComponent.value);
+  
+  // If a component is selected, try to paste as sibling
+  if (selected.value) {
+    const findParentAndInsert = (nodes: NodeSchema[], targetId: string, parent: NodeSchema[] | null = null): boolean => {
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === targetId) {
+          // Found the selected component, insert after it
+          if (parent) {
+            // Insert as sibling in parent's children
+            const index = parent.findIndex(n => n.id === targetId);
+            parent.splice(index + 1, 0, newComponent);
+          } else {
+            // Insert as sibling at root level
+            nodes.splice(i + 1, 0, newComponent);
+          }
+          return true;
+        }
+        
+        if (nodes[i].children && nodes[i].children!.length > 0) {
+          if (findParentAndInsert(nodes[i].children!, targetId, nodes[i].children!)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    
+    const inserted = findParentAndInsert(canvasComponents.value, selected.value.id);
+    
+    if (!inserted) {
+      // Fallback: add to root if parent not found
+      canvasComponents.value.push(newComponent);
+    }
+  } else {
+    // No selection, paste at root level
+    canvasComponents.value.push(newComponent);
+  }
+  
+  toast.add({ 
+    title: 'Component Pasted', 
+    description: `"${newComponent.label}" pasted successfully`, 
+    color: 'success',
+    timeout: 2000
+  });
+  
+  // Select the newly pasted component
+  selected.value = newComponent;
+};
+
+// Clipboard for component copy/paste
+const copiedComponent = ref<NodeSchema | null>(null);
+
+// Keyboard shortcuts for undo/redo and copy/paste
 const handleKeyDown = (event: KeyboardEvent) => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+
+  // Check if user is typing in an input/textarea
+  const target = event.target as HTMLElement;
+  const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
   // Undo: Ctrl+Z
   if (ctrlKey && event.key === 'z' && !event.shiftKey) {
@@ -262,6 +356,18 @@ const handleKeyDown = (event: KeyboardEvent) => {
   if ((ctrlKey && event.key === 'y') || (ctrlKey && event.shiftKey && event.key === 'z')) {
     event.preventDefault();
     handleRedo();
+  }
+
+  // Copy: Ctrl+C (only if a component is selected and not typing)
+  if (ctrlKey && event.key === 'c' && !isTyping && selected.value) {
+    event.preventDefault();
+    handleCopyComponent();
+  }
+
+  // Paste: Ctrl+V (only if component is copied and not typing)
+  if (ctrlKey && event.key === 'v' && !isTyping && copiedComponent.value) {
+    event.preventDefault();
+    handlePasteComponent();
   }
 };
 
