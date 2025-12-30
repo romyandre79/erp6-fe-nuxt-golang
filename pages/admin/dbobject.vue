@@ -110,7 +110,7 @@
           }"
         >
           <!-- SVG relations -->
-          <CanvasArea
+          <DbObjectArea
             v-for="area in areas"
             :key="area.id"
             :area="area"
@@ -211,7 +211,7 @@ import { useBackupRestore } from '~/composables/useBackupRestore';
 // Lazy load heavy components for code splitting
 const Sidebar = defineAsyncComponent(() => import('~/components/dbobject/DbObjectSidebar.vue'));
 const CanvasTable = defineAsyncComponent(() => import('~/components/canvas/CanvasTable.vue'));
-const CanvasArea = defineAsyncComponent(() => import('~/components/canvas/CanvasArea.vue'));
+const DbObjectArea = defineAsyncComponent(() => import('~/components/canvas/DbObjectArea.vue'));
 const PropertiesPanel = defineAsyncComponent(() => import('~/components/canvas/PropertiesPanel.vue'));
 const DbObjectDataViewer = defineAsyncComponent(() => import('~/components/dbobject/DbObjectDataViewer.vue'));
 

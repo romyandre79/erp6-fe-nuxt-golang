@@ -12,6 +12,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const componentProperties = ref<Record<string, any>>([]);
   const selectedNode = ref<any>(null);
   const parameters = ref<any[]>([]);
+  const areas = ref<any[]>([]); // NEW: Store workflow areas
   const loading = ref(false);
 
   // assume you have a global api helper exposed e.g. useApi() or $api in NuxtApp
@@ -26,6 +27,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     componentProperties.value = {};
     selectedNode.value = null;
     parameters.value = [];
+    areas.value = []; // NEW: Reset areas
     loading.value = false;
   }
 
@@ -100,6 +102,19 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
 
       workflow.value = wfObj;
+
+      // NEW: Parse flowarea if it exists
+      const flowareaString = wfObj?.flowarea;
+      if (flowareaString && typeof flowareaString === 'string') {
+        try {
+          areas.value = JSON.parse(flowareaString);
+        } catch (e) {
+          console.error('Failed parsing flowarea string', e);
+          areas.value = [];
+        }
+      } else {
+        areas.value = [];
+      }
 
     } catch (error) {
         console.error("Error loading workflow:", error);
@@ -290,6 +305,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       df.append('search', 'false');
       df.append('workflowid', workflow.value?.workflowid ?? '');
       df.append('flow', JSON.stringify(flow));
+      df.append('flowarea', JSON.stringify(areas.value)); // NEW: Save areas as JSON
       const res = await api.post('/api/admin/execute-flow', df);
       await saveFlowDetails(flow);
       await saveFlowParameter();
@@ -376,6 +392,39 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+  // NEW: Area management functions
+  function addArea(area: any) {
+    const newArea = {
+      id: area.id || `area_${Date.now()}`,
+      name: area.name || 'New Area',
+      color: area.color || '#3b82f6',
+      x: area.x || 100,
+      y: area.y || 100,
+      width: area.width || 400,
+      height: area.height || 300,
+    };
+    areas.value.push(newArea);
+    return newArea;
+  }
+
+  function updateArea(areaId: string, updates: any) {
+    const index = areas.value.findIndex((a) => a.id === areaId);
+    if (index !== -1) {
+      areas.value[index] = { ...areas.value[index], ...updates };
+    }
+  }
+
+  function deleteArea(areaId: string) {
+    const index = areas.value.findIndex((a) => a.id === areaId);
+    if (index !== -1) {
+      areas.value.splice(index, 1);
+    }
+  }
+
+  function getAreaById(areaId: string) {
+    return areas.value.find((a) => a.id === areaId);
+  }
+
   return {
     workflow,
     categories,
@@ -383,6 +432,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     componentProperties,
     selectedNode,
     parameters,
+    areas, // NEW: Export areas
     loading,
     loadWorkflow,
     loadComponents,
@@ -396,5 +446,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
     updateNodeData,
     deleteNodeProperties,
     resetWorkflow,
+    // NEW: Export area management functions
+    addArea,
+    updateArea,
+    deleteArea,
+    getAreaById,
   };
 });

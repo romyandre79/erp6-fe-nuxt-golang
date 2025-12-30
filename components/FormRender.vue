@@ -759,7 +759,6 @@ function renderComponent(component: any) {
             : null
           : '',
         h('textarea', {
-          type: component.type,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
@@ -767,7 +766,7 @@ function renderComponent(component: any) {
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
-          onInput: (e: Event) => (e.target as HTMLTextAreaElement).value,
+          onInput: (e: any) => (modelInputArea.value = e.target.value),
           value: modelInputArea.value,
         }),
         validationErrors[component.props.key]
