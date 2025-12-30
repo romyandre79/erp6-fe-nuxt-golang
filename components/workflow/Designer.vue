@@ -52,6 +52,8 @@
         </div>
       </div>
     </div>
+
+
 <div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
       <button 
         @click="handleUndo" 
@@ -108,9 +110,28 @@
         <span v-else>Test Flow</span>
       </button>
       <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
+      <div class="w-px bg-gray-300 mx-1"></div>
+      <button @click="createNewArea" class="p-2 rounded shadow bg-white text-black flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <path d="M12 8v8M8 12h8"/>
+        </svg>
+        Add Area
+      </button>
 
     </div>
-    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent></div>
+    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent>
+      <!-- Canvas Areas -->
+      <WorkflowArea
+        v-for="area in store.areas"
+        :key="area.id"
+        :area="area"
+        @start-drag="startAreaDrag"
+        @start-resize="startAreaResize"
+        @delete="deleteAreaFromStore"
+      />
+    </div>
+
 
     <!-- Zoom Control -->
     
@@ -122,6 +143,8 @@ import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 import { useWorkflowStore } from '~/store/workflow';
 import { toPng } from 'html-to-image';
 import { useToast, useNuxtApp, useApi, useRoute } from '#imports';
+import WorkflowArea from './WorkflowArea.vue';
+
 
 const store = useWorkflowStore();
 const toast = useToast();
@@ -146,6 +169,8 @@ const uploadProgress = ref(-1);
 const uploadStatus = ref('');
 const uploadError = ref('');
 const isUploading = ref(false);
+
+// Area Management State (DBObject Style)
 
 let editor: any = null;
 let saveTimeout: any = null;
@@ -788,6 +813,195 @@ function updateAllConnections() {
   });
   
 }
+
+/* ======================================================
+   Area Management Functions
+   ======================================================*/
+function createNewArea() {
+  const newArea = store.addArea({
+    name: `Area ${store.areas.length + 1}`,
+    color: '#3b82f6',
+    x: 100 + (store.areas.length * 30),
+    y: 100 + (store.areas.length * 30),
+    width: 400,
+    height: 300,
+  });
+  toast.add({
+    title: 'Area Created',
+    description: `Created new area: ${newArea.name}`,
+  });
+}
+
+function updateAreaInStore(area: any) {
+  store.updateArea(area.id, area);
+}
+
+function deleteAreaFromStore(areaId: string) {
+  const area = store.getAreaById(areaId);
+  if (area && confirm(`Delete area "${area.name}"?`)) {
+    store.deleteArea(areaId);
+    toast.add({
+      title: 'Area Deleted',
+      description: `Deleted area: ${area.name}`,
+    });
+  }
+}
+
+/* ======================================================
+   Area Management Functions (DBObject Style)
+   ======================================================*/
+const activeArea = ref<any>(null);
+const areaMode = ref<'move' | 'resize' | null>(null);
+const areaOffset = ref({ x: 0, y: 0 });
+const activeAreaNodes = ref<any[]>([]);
+
+function startAreaDrag(area: any, ev: MouseEvent) {
+  activeArea.value = area;
+  areaMode.value = 'move';
+  
+  const canvas = document.getElementById('drawflow');
+  if (!canvas) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  areaOffset.value = {
+    x: ev.clientX - rect.left - area.x,
+    y: ev.clientY - rect.top - area.y,
+  };
+
+  // Find all nodes within this area
+  activeAreaNodes.value = getNodesInArea(area);
+
+  window.addEventListener('mousemove', onAreaMouseMove);
+  window.addEventListener('mouseup', stopAreaInteraction);
+}
+
+function startAreaResize(area: any, ev: MouseEvent) {
+  activeArea.value = area;
+  areaMode.value = 'resize';
+  areaOffset.value = {
+    x: ev.clientX,
+    y: ev.clientY,
+  };
+
+  window.addEventListener('mousemove', onAreaMouseMove);
+  window.addEventListener('mouseup', stopAreaInteraction);
+}
+
+function onAreaMouseMove(ev: MouseEvent) {
+  if (!activeArea.value) return;
+  const area = activeArea.value;
+
+  if (areaMode.value === 'move') {
+    const canvas = document.getElementById('drawflow');
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = ev.clientX - rect.left;
+    const mouseY = ev.clientY - rect.top;
+    
+    const newX = mouseX - areaOffset.value.x;
+    const newY = mouseY - areaOffset.value.y;
+    const dx = newX - area.x;
+    const dy = newY - area.y;
+
+    area.x = newX;
+    area.y = newY;
+
+    // Move nodes inside the area
+    activeAreaNodes.value.forEach(({ nodeId, initialX, initialY }) => {
+      const nodeEl = document.getElementById(`node-${nodeId}`);
+      if (nodeEl && editor) {
+        const newNodeX = initialX + dx;
+        const newNodeY = initialY + dy;
+        
+        // Update node position in DOM
+        nodeEl.style.left = `${newNodeX}px`;
+        nodeEl.style.top = `${newNodeY}px`;
+        
+        // Update node position in editor data
+        const nodeData = editor.drawflow.drawflow?.Home?.data?.[nodeId];
+        if (nodeData) {
+          nodeData.pos_x = newNodeX;
+          nodeData.pos_y = newNodeY;
+        }
+        
+        // Update initial positions for continued dragging
+        const nodeInfo = activeAreaNodes.value.find(n => n.nodeId === nodeId);
+        if (nodeInfo) {
+          nodeInfo.initialX = newNodeX;
+          nodeInfo.initialY = newNodeY;
+        }
+      }
+    });
+    
+    // Update connections
+    if (editor) {
+      activeAreaNodes.value.forEach(({ nodeId }) => {
+        try {
+          editor.updateConnectionNodes(`node-${nodeId}`);
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+    }
+  } else if (areaMode.value === 'resize') {
+    const canvas = document.getElementById('drawflow');
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = ev.clientX - rect.left;
+    const mouseY = ev.clientY - rect.top;
+    
+    area.width = Math.max(100, mouseX - area.x);
+    area.height = Math.max(100, mouseY - area.y);
+  }
+}
+
+function stopAreaInteraction() {
+  if (activeArea.value) {
+    store.updateArea(activeArea.value.id, activeArea.value);
+  }
+  activeArea.value = null;
+  activeAreaNodes.value = [];
+  areaMode.value = null;
+  window.removeEventListener('mousemove', onAreaMouseMove);
+  window.removeEventListener('mouseup', stopAreaInteraction);
+}
+
+// Helper function to get all nodes within an area's boundaries
+function getNodesInArea(area: any): { nodeId: string; initialX: number; initialY: number }[] {
+  const nodesInArea: { nodeId: string; initialX: number; initialY: number }[] = [];
+  
+  if (!editor || !editor.drawflow?.drawflow?.Home?.data) return nodesInArea;
+  
+  const nodes = editor.drawflow.drawflow.Home.data;
+  
+  Object.keys(nodes).forEach((nodeId) => {
+    const node = nodes[nodeId];
+    const nodeX = node.pos_x;
+    const nodeY = node.pos_y;
+    
+    // Check if node is within area boundaries
+    if (
+      nodeX >= area.x &&
+      nodeX <= area.x + area.width &&
+      nodeY >= area.y &&
+      nodeY <= area.y + area.height
+    ) {
+      nodesInArea.push({
+        nodeId: nodeId,
+        initialX: nodeX,
+        initialY: nodeY,
+      });
+    }
+  });
+  
+  return nodesInArea;
+}
+
+
+
+
 
 /* ======================================================
    Destroy
