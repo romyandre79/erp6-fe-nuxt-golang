@@ -166,7 +166,7 @@
   "PRODUCTION OUTPUT LIST": "Production Output List",
   "PRODUCTION PLANNING": "Production Planning",
   "PRODUCTION PLANNING MASTER": "Production Planning Master",
-  "PRODUCTION PLANNING REPORT": "Production Planning Report",
+  "PRODUCTION PLANNING LIST": "Production Planning List",
   "PRODUCTION PROCESS": "Production Process",
   "PRODUCTION REPORT": "Production Report",
   "PROFIT LOSS": "Profit / Loss",
@@ -229,7 +229,8 @@
   "TIME MANAGEMENT REPORT": "Time Management Report",
   "TITLE": "Title",
   "TRANSFER STOCK IN": "Transfer Stock In",
-  "TRANSFER STOCK LIST": "Transfer Stock List",
+  "TRANSFER STOCK LIST": "Transstock List",
+  "TRANSFER STOCK FG LIST": "Transstock FG List",
   "TRANSFER STOCK OUT": "Transfer Stock Out",
   "TRANSACTION LOG": "Transaction Log",
   "TYPE OF SERVICE": "Type of Service",
@@ -508,6 +509,8 @@
     "SLOC ACCOUNTING": "Sloc Accounting",
     "SLOC": "Storage Location",
 	"PROJECT": "Project",
-	"KANBAN": "Kanban"
+	"KANBAN": "Kanban",
+  "TIME SCHEDULE": "Time Schedule",
+  "ONLEAVE QUOTA": "Onleave Quota"
   }
 }

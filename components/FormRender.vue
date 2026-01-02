@@ -32,6 +32,7 @@ const modalTitle = ref('');
 const modalDescription = ref('');
 const modalRefs = shallowReactive<Record<string, any>>({});
 const tableRef = ref();
+const orgChartRefs: Record<string, any> = {};
 const Api = useApi();
 const route = useRoute();
 const toast = useToast();
@@ -56,8 +57,9 @@ function findNode(node: any, type: any): any {
   if (node.type === type) result.push(node);
 
   // scan children
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  const kids = node.children || node.components;
+  if (Array.isArray(kids)) {
+    for (const child of kids) {
       result.push(...findNode(child, type));
     }
   }
@@ -244,10 +246,10 @@ async function refreshMasterData(recId: any) {
 async function edit(key: string) {
   // Check if this is a detail modal by looking for the modal in the schema
   const modal = modals.value.find((m: any) => m.props.key === key);
-  
+  console.log('modal ',modal)
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-    
+    console.log('isDetailModal ',isDetailModal)
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
@@ -313,6 +315,8 @@ async function edit(key: string) {
     // Check if locking is enabled in props
     const lockEnabled = master?.props?.lock === true;
     const flow = getAction('get');
+
+    console.log('flow ',flow)
 
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
@@ -572,40 +576,12 @@ async function downReport(reportId: any, format: string = 'pdf') {
 }
 
 
-function navigate(key: any) {
-  if (key.includes('form-designer') && selectedRows.value.length === 0) {
+function navigate(key: any, field:any) {
+  if (selectedRows.value.length === 0) {
     toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
     return;
-  } else if (key.includes('widget-designer') && selectedRows.value.length === 0) {
-    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
-    return;
-  } else if (key.includes('workflow-designer') && selectedRows.value.length === 0) {
-    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
-    return;
-  } else if (key.includes('theme-editor') && selectedRows.value.length === 0) {
-    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
-    return;
-  } else if (key.includes('db-designer') && selectedRows.value.length === 0) {
-    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
-    return;
-  } else if (key.includes('report-designer') && selectedRows.value.length === 0) {
-    toast.add({ title: 'Error', description: 'Please select one row', color: 'error' });
-    return;
-  } else if (key.includes('form-designer') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['menuname']);
-  } else if (key.includes('widget-designer') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['widgetname']);
-  } else if (key.includes('workflow-designer') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['wfname']);
-  } else if (key.includes('theme-editor') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['themename']);
-  } else if (key.includes('report-designer') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['reportid']);
-  } else if (key.includes('db-designer') && selectedRows.value.length > 0) {
-    navigateTo(key + '/' + selectedRows.value[0]['objectname']);
-  } else {
-    navigateTo(key);
   }
+  navigateTo(key + '/' + selectedRows.value[0][field]);
 }
 
 const uploadProgress = ref(0);
@@ -691,8 +667,9 @@ const { validateField } = useFormValidation();
 
 function formatDate(value: any, type: string) {
   if (!value) return '';
+  const lowerType = type.toLowerCase();
   // Check if it looks like an ISO string or contains date parts
-  if (['date', 'datetime', 'datetime-local', 'time'].includes(type) && typeof value === 'string') {
+  if (['date', 'datetime', 'datetime-local', 'time'].includes(lowerType) && typeof value === 'string') {
       // If valid date
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
@@ -702,9 +679,9 @@ function formatDate(value: any, type: string) {
           const hours = String(date.getHours()).padStart(2, '0');
           const minutes = String(date.getMinutes()).padStart(2, '0');
 
-          if (type === 'date') return `${year}-${month}-${day}`;
-          if (type === 'datetime' || type === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
-          if (type === 'time') return `${hours}:${minutes}`; 
+          if (lowerType === 'date') return `${year}-${month}-${day}`;
+          if (lowerType === 'datetime' || lowerType === 'datetime-local') return `${year}-${month}-${day}T${hours}:${minutes}`;
+          if (lowerType === 'time') return `${hours}:${minutes}`; 
       }
   }
   return value;
@@ -856,11 +833,12 @@ function renderComponent(component: any) {
     case 'password':
     case 'number': {
       if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
+      const lowerType = (component.type || '').toLowerCase();
       const modelInput = computed({
         get: () => {
           // Only format dates, not numbers
-          if (['date', 'datetime', 'datetime-local', 'time'].includes(component.type)) {
-            return formatDate(formData.value[component.props.key], component.type);
+          if (['date', 'datetime', 'datetime-local', 'time'].includes(lowerType)) {
+            return formatDate(formData.value[component.props.key], lowerType);
           }
           return formData.value[component.props.key];
         },
@@ -875,7 +853,7 @@ function renderComponent(component: any) {
             : null
           : '',
         h('input', {
-          type: component.type === 'datetime' ? 'datetime-local' : component.type,
+          type: lowerType === 'datetime' ? 'datetime-local' : lowerType,
           class:
             'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none' +
             (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300') +
@@ -965,7 +943,8 @@ function renderComponent(component: any) {
             return;
           } else if (eventName.startsWith('navigate')) {
             const key = eventName.replace('navigate:', '');
-            navigate(key);
+            const fields = key.split(':')
+            navigate(fields[0],fields[1]);
             return;
           } else if (eventName.startsWith('downform')) {
             const key = eventName.replace('downform:', '');
@@ -1157,16 +1136,22 @@ function renderChart(container: any) {
 
 function renderOrgChart(container: any) {
   if (!container) return null;
-  const FormOrgChart = resolveComponent('FormOrgChart');
+  // Use the imported component directly instead of resolving it
   return h(FormOrgChart, {
       source: container.props.source,
       config: container.props.config,
       onCreate: container.props.onCreate,
       onUpdate: container.props.onUpdate,
       onDelete: container.props.onDelete,
+      onEdit: container.props.onEdit,
       modalKey: container.props.modalKey,
       class: container.props.class,
-      'onOpen:modal': (key: string, data: any, isNew: boolean) => {
+      ref: (el: any) => {
+        if (el) {
+           orgChartRefs[container.props.key || 'default_org_chart'] = el;
+        }
+      },
+      'onOpenModal': (key: string, data: any, isNew: boolean) => {
           // Open modal logic
           if(modalRefs[key]) {
              modalRefs[key].value = true;
@@ -1183,11 +1168,11 @@ function renderOrgChart(container: any) {
                  formData.value[parentKey] = pid;
              }
           } else {
-              console.warn(`Modal ${key} not found`);
+              console.warn(`Modal ${key} not found`, modalRefs);
           }
       },
-      'onEdit:node': (node: any) => {
-          // Additional logic if needed, but open:modal handles it usually
+      'onEditNode': (node: any) => {
+          // Additional logic if needed, but openModal handles it usually
       }
   });
 }
@@ -1581,9 +1566,16 @@ function renderTable(component: any) {
   return null;
 }
 
+function getComponentsList() {
+  if (Array.isArray(parsedSchema.value)) return parsedSchema.value;
+  if (parsedSchema.value?.components && Array.isArray(parsedSchema.value.components)) return parsedSchema.value.components;
+  return [];
+}
+
 function getMaster() {
   let node: any;
-  parsedSchema.value.forEach((element) => {
+  const list = getComponentsList();
+  list.forEach((element: any) => {
     if (element.type == 'master') {
       node = element;
     }
@@ -1593,13 +1585,16 @@ function getMaster() {
 
 function getAction(action: string) {
   let node: any;
-  parsedSchema.value.forEach((element) => {
+  const list = getComponentsList();
+  list.forEach((element: any) => {
     if (element.type == 'action') {
       node = element;
     }
   });
+  if (!node) return null;
+  
   const formatted = 'on' + action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
-  return node.props[formatted] || null;
+  return node.props?.[formatted] || null;
 }
 
 const ReadHandler = async () => {
@@ -1621,11 +1616,47 @@ const ReadHandler = async () => {
 
 const isLoading = ref(false);
 
+
+function cleanPayload(payload: any, schema: any[]) {
+  const cleaned = { ...payload };
+  
+  function traverse(nodes: any[]) {
+    if (!nodes || !Array.isArray(nodes)) return;
+    nodes.forEach((node) => {
+      const key = node.props?.key;
+      const type = (node.type || '').toLowerCase();
+      
+      if (key && cleaned[key] !== undefined && cleaned[key] !== null) {
+         // Sanitize Date/Time types
+         if (['date', 'datetime', 'datetime-local'].includes(type) && typeof cleaned[key] === 'string') {
+             let val = cleaned[key];
+             // Remove Z and replace T with space for SQL compatibility
+             val = val.replace(/Z/g, '').replace(/T/g, ' ');
+             cleaned[key] = val;
+         }
+      }
+      
+      if (node.children) traverse(node.children);
+    });
+  }
+  
+  traverse(schema);
+  return cleaned;
+}
+
 const CreateHandler = async () => {
   const flow = getAction('create');
   if (flow) {
     isLoading.value = true;
-    const payload = { ...toRaw(formData.value) };
+    let payload = { ...toRaw(formData.value) };
+    
+    // Clean Payload
+    if (parsedSchema.value && parsedSchema.value.length) {
+        payload = cleanPayload(payload, parsedSchema.value);
+    } else if (parsedSchema.value && parsedSchema.value.components) {
+        payload = cleanPayload(payload, parsedSchema.value.components);
+    }
+
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', route.params.slug);
@@ -1670,7 +1701,15 @@ const UpdateHandler = async () => {
   const flow = getAction('update');
   if (flow) {
     isLoading.value = true;
-    const payload = { ...toRaw(formData.value) };
+    let payload = { ...toRaw(formData.value) };
+    
+    // Clean Payload
+   if (parsedSchema.value && parsedSchema.value.length) {
+        payload = cleanPayload(payload, parsedSchema.value);
+    } else if (parsedSchema.value && parsedSchema.value.components) {
+        payload = cleanPayload(payload, parsedSchema.value.components);
+    }
+
     const dataForm = new FormData();
     dataForm.append('flowname', flow);
     dataForm.append('menu', route.params.slug);
@@ -1809,7 +1848,12 @@ async function saveData(key: any) {
     dataForm.append('menu', route.params.slug);
     dataForm.append('search', 'true');
     
-    const payload = { ...toRaw(formData.value) };
+    let payload = { ...toRaw(formData.value) };
+
+    // Clean payload for the specific modal scope or entire schema usually suffices
+    if (parsedSchema.value && parsedSchema.value.length) {
+        payload = cleanPayload(payload, parsedSchema.value);
+    }
     
     // If detail modal, filter payload to only include modal fields + master ID
     if (isDetailModal && modal) {
@@ -1874,6 +1918,13 @@ async function saveData(key: any) {
           tableRef.value.refreshTable();
       }
       
+      // Refresh Org Charts
+      Object.values(orgChartRefs).forEach((chart: any) => {
+          if (chart && typeof chart.refresh === 'function') {
+              chart.refresh();
+          }
+      });
+      
       modalRefs[key].value = false;
     } else if (res.code == 401 && res.error == 'INVALID_TOKEN') {
       navigateTo('/login');
@@ -1881,14 +1932,14 @@ async function saveData(key: any) {
        toast.add({
         title: $t('TITLE ERROR'),
         description: res.details,
-        color: 'error',
+        color: 'red',
       });
     }
   } catch (err) {
     toast.add({
         title: $t('TITLE ERROR'),
         description: err,
-        color: 'error',
+        color: 'red',
       });
     console.error('Gagal simpan data:', err);
   } finally {
@@ -2153,8 +2204,8 @@ function initModalRefs(schema: any) {
       </template>
       <template #footer>
         <div class="flex gap-2">
-          <UButton class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
-          <UButton class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
+          <UButton v-if="value.props.isclose !== false" class="btnSecondary" :label="$t('CLOSE')" @click="close(value.props.key)" />
+          <UButton v-if="value.props.issave !== false" class="btnPrimary" :label="$t('SAVE')" @click="saveData(value.props.key)" />
         </div>
       </template>
     </UModal>
