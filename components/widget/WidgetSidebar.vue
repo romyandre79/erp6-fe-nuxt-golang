@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-row bg-white text-gray-900 shadow-sm border-r">
     <!-- Activity Bar -->
-    <div class="panel w-12 flex flex-col items-center py-2 border-r border-gray-700 z-20">
+    <div class="panel w-12 flex flex-col items-center py-2 bg-gray-800 text-gray-400 border-r border-gray-700 z-20">
       <button
         v-for="item in activities"
         :key="item.id"
@@ -33,26 +33,49 @@
       <div class="flex-1 overflow-auto p-3">
         <!-- Elements Content -->
         <div v-if="activeActivity === 'elements'">
-          <h2 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Components</h2>
-          <div
-            v-for="(comp, idx) in availableComponents"
-            :key="idx"
-            class="p-2 bg-white border rounded mb-1 cursor-grab flex items-center gap-2 hover:border-blue-400 hover:shadow-sm transition-all text-sm"
-            draggable="true"
-            @dragstart="onDragStart($event, comp)"
-          >
-            <span class="truncate">{{ comp.label }}</span>
+          <div class="mb-4">
+             <input
+               v-model="searchQuery"
+               type="text"
+               placeholder="Search components..."
+               class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+             />
           </div>
 
-          <h3 class="font-bold text-sm text-gray-700 mt-4 mb-3 uppercase tracking-wider">Containers</h3>
-          <div
-            v-for="(group, idx) in layoutContainers"
-            :key="'grp-' + idx"
-            class="p-2 bg-white border rounded mb-1 cursor-grab flex items-center gap-2 hover:border-blue-400 hover:shadow-sm transition-all text-sm"
-            draggable="true"
-            @dragstart="onDragStart($event, group)"
-          >
-            <span class="truncate">{{ group.label }}</span>
+          <div v-if="filteredComponents.length > 0">
+            <h2 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Components</h2>
+            <div class="grid grid-cols-3 gap-2">
+              <div
+                v-for="(comp, idx) in filteredComponents"
+                :key="idx"
+                class="flex flex-col items-center justify-center p-3 bg-white border rounded cursor-grab hover:border-blue-400 hover:shadow-md transition-all text-center aspect-square"
+                draggable="true"
+                @dragstart="onDragStart($event, comp)"
+              >
+                <UIcon :name="comp.icon || 'heroicons:cube'" class="w-8 h-8 mb-2 text-gray-500" />
+                <span class="text-xs font-medium text-gray-700 leading-tight">{{ comp.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="filteredContainers.length > 0">
+            <h3 class="font-bold text-sm text-gray-700 mt-6 mb-3 uppercase tracking-wider">Containers</h3>
+            <div class="grid grid-cols-3 gap-2">
+              <div
+                v-for="(group, idx) in filteredContainers"
+                :key="'grp-' + idx"
+                class="flex flex-col items-center justify-center p-3 bg-white border rounded cursor-grab hover:border-blue-400 hover:shadow-md transition-all text-center aspect-square"
+                draggable="true"
+                @dragstart="onDragStart($event, group)"
+              >
+                <UIcon :name="group.icon || 'heroicons:square-3-stack-3d'" class="w-8 h-8 mb-2 text-gray-500" />
+                <span class="text-xs font-medium text-gray-700 leading-tight">{{ group.label }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="filteredComponents.length === 0 && filteredContainers.length === 0" class="text-center text-gray-500 mt-4 text-sm">
+             No components found.
           </div>
         </div>
 
@@ -73,6 +96,7 @@ import { availableComponents, layoutContainers } from '~/types/components';
 
 const activeActivity = ref('elements');
 const isPanelOpen = ref(true);
+const searchQuery = ref('');
 
 const activities = [
   { id: 'elements', label: 'Elements', icon: 'heroicons:squares-plus' },
@@ -81,6 +105,18 @@ const activities = [
 
 const activeLabel = computed(() => {
   return activities.find((a) => a.id === activeActivity.value)?.label || '';
+});
+
+const filteredComponents = computed(() => {
+  if (!searchQuery.value) return availableComponents;
+  const lowerQuery = searchQuery.value.toLowerCase();
+  return availableComponents.filter(c => c.label.toLowerCase().includes(lowerQuery));
+});
+
+const filteredContainers = computed(() => {
+  if (!searchQuery.value) return layoutContainers;
+  const lowerQuery = searchQuery.value.toLowerCase();
+  return layoutContainers.filter(c => c.label.toLowerCase().includes(lowerQuery));
 });
 
 function toggleActivity(id: string) {

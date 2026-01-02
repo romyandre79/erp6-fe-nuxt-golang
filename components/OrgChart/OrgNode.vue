@@ -68,6 +68,21 @@
       <!-- Action Toolbar (Visible on Hover) -->
       <div class="absolute bottom-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1">
          <button 
+            class="p-1 rounded bg-white shadow text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            @click.stop="$emit('reorder', { node, direction: 'left' })"
+            title="Move Left"
+         >
+             <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
+         </button>
+         <button 
+            class="p-1 rounded bg-white shadow text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            @click.stop="$emit('reorder', { node, direction: 'right' })"
+            title="Move Right"
+         >
+             <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
+         </button>
+         <div class="w-px h-4 bg-gray-200 mx-1"></div>
+         <button 
             class="p-1 rounded bg-white shadow text-gray-500 hover:text-green-600 hover:bg-green-50"
             @click.stop="$emit('add', node)"
             title="Add Child"
@@ -126,7 +141,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['click', 'add', 'edit', 'delete', 'dragstart', 'drop']);
+const emit = defineEmits(['click', 'add', 'edit', 'delete', 'dragstart', 'drop', 'reorder']);
 
 const isDragging = ref(false);
 const isDragOver = ref(false);

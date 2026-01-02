@@ -12,9 +12,10 @@
         @click="$emit('node-click', $event)"
         @add="$emit('node-add', $event)"
         @edit="$emit('node-edit', $event)"
-        @delete="$emit('node-delete', $event)"
-        @dragstart="$emit('node-dragstart', $event)"
-        @drop="$emit('node-drop', $event)"
+        @node-delete="$emit('node-delete', $event)"
+        @node-dragstart="$emit('node-dragstart', $event)"
+        @node-drop="$emit('node-drop', $event)"
+        @node-reorder="$emit('node-reorder', $event)"
     />
 
     <!-- Children Container -->
@@ -32,6 +33,7 @@
          @node-delete="$emit('node-delete', $event)"
          @node-dragstart="$emit('node-dragstart', $event)"
          @node-drop="$emit('node-drop', $event)"
+         @node-reorder="$emit('node-reorder', $event)"
       />
     </div>
   </div>
@@ -49,7 +51,7 @@ const props = defineProps({
 
 const emit = defineEmits([
     'node-click', 'node-add', 'node-edit', 'node-delete', 
-    'node-dragstart', 'node-drop'
+    'node-dragstart', 'node-drop', 'node-reorder'
 ]);
 
 const hasChildren = computed(() => props.node.children && props.node.children.length > 0);

@@ -8,6 +8,9 @@
         <UButton icon="i-heroicons-arrow-path" color="white" variant="ghost" size="sm" @click="resetZoom" title="Reset" />
         <div class="h-px bg-gray-200 my-1"></div>
         <UButton :icon="isFullscreen ? 'i-heroicons-arrows-pointing-in' : 'i-heroicons-arrows-pointing-out'" color="white" variant="ghost" size="sm" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'" />
+        <div class="h-px bg-gray-200 my-1"></div>
+        <UButton icon="i-heroicons-photo" color="white" variant="ghost" size="sm" @click="exportOrgChart('png')" title="Export PNG" />
+        <UButton icon="i-heroicons-document-text" color="white" variant="ghost" size="sm" @click="exportOrgChart('pdf')" title="Export PDF" />
     </div>
 
     <div v-if="loading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/80">
@@ -53,6 +56,7 @@
                         @node-edit="handleNodeEdit"
                         @node-delete="handleNodeDelete"
                         @node-drop="handleNodeDrop"
+                        @node-reorder="handleNodeReorder"
                       />
                  </div>
              </div>
@@ -63,7 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import { useApi, useToast } from '#imports';
+import { useApi, useToast, useRoute } from '#imports';
 import RecursiveNode from './OrgChart/RecursiveNode.vue'; // We need a recursive wrapper or component
 
 const props = defineProps({
@@ -75,16 +79,18 @@ const props = defineProps({
        parentKey: 'parent_id',
        labelKey: 'name',
        titleKey: 'title',
-       imageKey: 'avatar' 
+       imageKey: 'avatar',
+       orderKey: 'order' 
     })
   },
   onCreate: { type: String, default: '' },
   onUpdate: { type: String, default: '' },
   onDelete: { type: String, default: '' },
+  onEdit: { type: String, default: '' },
   modalKey: { type: String, default: '' }
 });
 
-const emit = defineEmits(['open:modal', 'edit:node']);
+const emit = defineEmits(['openModal', 'editNode']);
 
 const api = useApi();
 const toast = useToast();
@@ -111,33 +117,120 @@ async function fetchData() {
     if (!props.source) return;
     loading.value = true;
     try {
-        // Simplified fetch, assuming generic response structure
-        const res = await api.get(props.source); 
-        // Need to adapt based on actual API return signature for 'source' dataflow
-        // Usually execute-flow pattern returns { data: [...] }
+        const route = useRoute();
+        let res;
+        
+        // Check if source is a URL or a Flow Name
+        if (props.source.startsWith('/') || props.source.startsWith('http')) {
+            // It's likely a direct URL
+            res = await api.get(props.source); 
+        } else {
+            // It's a Flow Name - use execute-flow
+            const form = new FormData();
+            form.append('flowname', props.source);
+            form.append('menu', 'admin');
+            form.append('search', 'false');
+            
+            // Append route params
+            if (route.params.id) {
+                form.append('companyid', Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+                form.append('id', Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+            }
+            
+            for (const key in route.params) {
+                if (key !== 'id') {
+                     const val = route.params[key];
+                     form.append(key, Array.isArray(val) ? val[0] : val);
+                }
+            }
+
+            res = await api.post('api/admin/execute-flow', form);
+        }
+
         if(res.data) {
              rawData.value = Array.isArray(res.data) ? res.data : (res.data.data || []);
+             if (!Array.isArray(rawData.value) && rawData.value.data && Array.isArray(rawData.value.data)) {
+                 rawData.value = rawData.value.data;
+             }
         } else {
              rawData.value = [];
         }
+
+        // Auto-create root if empty and we have a company ID
+        if (rawData.value.length === 0 && route.params.id && props.onCreate) {
+             await initializeDefaultRoot(route.params.id);
+        }
+
     } catch (e) {
         console.error("Failed to fetch OrgChart data", e);
-        // Mock data for dev if fetch fails or empty (optional)
-        if(rawData.value.length === 0) {
-             console.warn("Using mock data for OrgChart");
-             rawData.value = [
-                 { id: 1, parent_id: null, name: 'CEO', title: 'Chief Executive Officer', status: 'active' },
-                 { id: 2, parent_id: 1, name: 'CTO', title: 'Chief Technology Officer', status: 'active' },
-                 { id: 3, parent_id: 1, name: 'CFO', title: 'Chief Financial Officer', status: 'active' },
-                 { id: 4, parent_id: 2, name: 'Eng Manager', title: 'Engineering Manager', status: 'active' },
-                 { id: 5, parent_id: 2, name: 'Product Owner', title: 'Product', status: 'vacant' },
-                 { id: 6, parent_id: 3, name: 'Accountant', title: 'Senior Accountant', status: 'active' },
-             ];
-        }
+        rawData.value = [];
     } finally {
         loading.value = false;
         await nextTick();
         updateConnections();
+    }
+}
+
+async function initializeDefaultRoot(companyId) {
+    try {
+        const route = useRoute();
+        // 1. Fetch Company Info
+        const companyForm = new FormData();
+        companyForm.append('flowname', 'searchcompanyauth');
+        companyForm.append('menu', 'admin');
+        companyForm.append('search', 'true');
+        // Retrieve specific company if possible, or filter client side
+        companyForm.append('companyid', Array.isArray(companyId) ? companyId[0] : companyId); 
+
+        const res = await api.post('api/admin/execute-flow', companyForm);
+        let companyName = `Company ${companyId}`; // Fallback
+
+        if (res.data) {
+            const companies = Array.isArray(res.data) ? res.data : (res.data.data || []);
+            // Assuming the API might return a list or single object. 
+            // If it returns a list, find the matching ID.
+            let found = null;
+            if (Array.isArray(companies)) {
+                found = companies.find(c => String(c.companyid) === String(companyId));
+            } else if (companies.companyid) {
+                found = companies;
+            }
+            
+            if (found && found.companyname) {
+                companyName = found.companyname;
+            }
+        }
+
+        // 2. Create Root Node
+        const createForm = new FormData();
+        createForm.append('flowname', props.onCreate);
+        createForm.append('companyid', Array.isArray(companyId) ? companyId[0] : companyId);
+        createForm.append(props.config.labelKey, companyName); // e.g. 'structurename'
+        createForm.append(props.config.titleKey, 'Head Office'); // Generic title
+        // parent_id is omitted or null for root
+        
+        await api.post('api/admin/execute-flow', createForm);
+        
+        // 3. Refresh (recursion avoided by check above? No, need to be careful)
+        
+        const form = new FormData();
+        form.append('flowname', props.source);
+        form.append('menu', 'admin');
+        form.append('search', 'false');
+        if (route.params.id) {
+            form.append('companyid', Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+            form.append('id', Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+        }
+        const refreshRes = await api.post('api/admin/execute-flow', form);
+        if(refreshRes.data) {
+             rawData.value = Array.isArray(refreshRes.data) ? refreshRes.data : (refreshRes.data.data || []);
+             if (!Array.isArray(rawData.value) && rawData.value.data && Array.isArray(rawData.value.data)) {
+                 rawData.value = rawData.value.data;
+             }
+        }
+
+    } catch (e) {
+        console.error("Failed to auto-create root node", e);
     }
 }
 
@@ -150,6 +243,8 @@ function buildTree(items) {
         itemMap[item[nodeKey]] = { ...item, children: [] };
     });
 
+    const orderKey = props.config.orderKey || 'order';
+
     let root = null;
     items.forEach(item => {
         const node = itemMap[item[nodeKey]];
@@ -157,6 +252,13 @@ function buildTree(items) {
             itemMap[item[parentKey]].children.push(node);
         } else {
             root = node; // Accessing the first root found
+        }
+    });
+    
+    // Sort children by order
+    Object.values(itemMap).forEach(node => {
+        if (node.children && node.children.length > 0) {
+            node.children.sort((a, b) => (a[orderKey] || 0) - (b[orderKey] || 0));
         }
     });
     
@@ -169,11 +271,48 @@ function handleNodeClick(node) {
     // Select node?
 }
 
-function handleNodeEdit(node) {
-    emit('edit:node', node);
+async function handleNodeEdit(node) {
     if(props.modalKey) {
-        // Trigger modal open in parent FormRender
-        emit('open:modal', props.modalKey, node); 
+        // Fetch Details (could be Node Details or Employee List depending on flow)
+        try {
+            const formData = new FormData();
+            formData.append('flowname', props.onEdit || 'getemployeeorgbyorgstruc'); // Fallback to previous default
+            formData.append('menu', 'admin');
+            formData.append('search', 'true');
+            // ID might be passed as orgstructureid or simple id
+            formData.append('orgstructureid', node[props.config.nodeKey]); 
+            formData.append('id', node[props.config.nodeKey]); 
+            
+            const res = await api.post('api/admin/execute-flow', formData);
+            
+            let nodeData = { ...node };
+
+            if(res.data) {
+                 const result = Array.isArray(res.data) ? res.data : (res.data.data || null);
+                 
+                 if (Array.isArray(result)) {
+                     // It's a list (e.g. employees)
+                     nodeData.members = result;
+                 } else if (result && typeof result === 'object') {
+                     // It's a single record (Node details)
+                     nodeData = { ...nodeData, ...result };
+                     
+                     // If the object contains a specific list key (like 'members' or 'employees'), keep it?
+                     // Usually standard response is just flat fields.
+                 }
+            }
+            
+            emit('editNode', nodeData);
+            emit('openModal', props.modalKey, nodeData); 
+            
+        } catch(e) {
+            console.error("Failed to fetch edit details", e);
+            // Open modal anyway just with local node data
+            emit('editNode', node);
+            emit('openModal', props.modalKey, node);
+        }
+    } else {
+        emit('editNode', node);
     }
 }
 
@@ -184,11 +323,10 @@ async function handleNodeAdd(parentNode) {
         return;
     }
     
-    // Add logic: typically open a modal to create a new record, pre-filling parent_id
-    // OR create directly with defaults. 
-    // Here we assume we want to open a modal with parent_id set.
     if(props.modalKey) {
-        emit('open:modal', props.modalKey, { [props.config.parentKey]: parentNode[props.config.nodeKey] }, true); // true for 'isNew'
+        emit('openModal', props.modalKey, { [props.config.parentKey]: parentNode[props.config.nodeKey] }, true); // true for 'isNew'
+    } else {
+        console.warn("No modalKey provided");
     }
 }
 
@@ -204,6 +342,8 @@ async function handleNodeDelete(node) {
     // Execute generic flow
     const form = new FormData();
     form.append('flowname', flow);
+    form.append('menu', 'admin');
+    form.append('search', 'false');
     form.append(props.config.nodeKey, node[props.config.nodeKey]);
     
     try {
@@ -228,6 +368,8 @@ async function handleNodeDrop({ target, source }) {
     // Execute update flow
     const form = new FormData();
     form.append('flowname', flow);
+    form.append('menu', 'admin');
+    form.append('search', 'false');
     form.append(props.config.nodeKey, source[props.config.nodeKey]);
     form.append(props.config.parentKey, target[props.config.nodeKey]);
 
@@ -237,6 +379,89 @@ async function handleNodeDrop({ target, source }) {
         toast.add({ title: 'Success', description: 'Node moved successfully' });
     } catch(e) {
         toast.add({ title: 'Error', description: 'Failed to move node', color: 'red' });
+    }
+}
+
+async function handleNodeReorder({ node, direction }) {
+    // direction: 'left' (order - 1) or 'right' (order + 1)
+    // We need to find the sibling to swap with.
+    // Easier: Just re-assign orders for all siblings?
+    // Or just swap with adjacent?
+    
+    if (!node) return;
+    const parentId = node[props.config.parentKey];
+    if (!parentId) return; // Can't reorder root easily without queue
+    
+    // Find parent in rawData (tree is built every time, but rawData is flat list)
+    // We need the *children* list of the parent. 
+    // Let's use the `flattened` data or traverse? 
+    // Actually `buildTree` mutates objects by adding `children`.
+    // But `rawData` is ref.
+    
+    // Let's find siblings from rawData
+    const nodeKey = props.config.nodeKey;
+    const parentKey = props.config.parentKey;
+    const orderKey = props.config.orderKey || 'order';
+    
+    const siblings = rawData.value.filter(n => String(n[parentKey]) === String(parentId));
+    siblings.sort((a, b) => (a[orderKey] || 0) - (b[orderKey] || 0));
+    
+    const index = siblings.findIndex(n => String(n[nodeKey]) === String(node[nodeKey]));
+    if (index === -1) return;
+    
+    let swapIndex = -1;
+    if (direction === 'left' && index > 0) swapIndex = index - 1;
+    if (direction === 'right' && index < siblings.length - 1) swapIndex = index + 1;
+    
+    if (swapIndex !== -1) {
+        const sibling = siblings[swapIndex];
+        
+        // Swap orders. If orders are missing/same, we might need to re-index all.
+        // Robust way: Re-index all siblings
+        let currentOrder = siblings[index][orderKey] || index;
+        let siblingOrder = sibling[orderKey] || swapIndex;
+        
+        // If they are equal (e.g. both 0), simple swap won't work.
+        // Let's just assign new indices based on current position (force rewrite)
+        // But that triggers N calls.
+        
+        // Let's try simple swap first. If equal, shift one.
+         const tempOrder = currentOrder;
+         currentOrder = siblingOrder;
+         siblingOrder = tempOrder;
+         
+         // If equal, force differentiation
+         if(currentOrder === siblingOrder) {
+             currentOrder = swapIndex; // the new position
+             siblingOrder = index;
+         }
+
+        // Update Node
+        const form1 = new FormData();
+        form1.append('flowname', props.onUpdate);
+        form1.append('menu', 'admin');
+        form1.append('search', 'false');
+        form1.append(nodeKey, node[nodeKey]);
+        form1.append(orderKey, siblingOrder); // New order for node (swapped)
+        
+        // Update Sibling
+        const form2 = new FormData();
+        form2.append('flowname', props.onUpdate);
+        form2.append('menu', 'admin');
+        form2.append('search', 'false');
+        form2.append(nodeKey, sibling[nodeKey]);
+        form2.append(orderKey, currentOrder); // New order for sibling
+        
+        try {
+            await Promise.all([
+                 api.post('api/admin/execute-flow', form1),
+                 api.post('api/admin/execute-flow', form2)
+            ]);
+            await fetchData();
+        } catch(e) {
+            console.error(e);
+            toast.add({ title: 'Error', description: 'Reorder failed', color: 'red' });
+        }
     }
 }
 
@@ -386,17 +611,114 @@ function calculateConnections() {
             const endX = (childRect.left + childRect.width / 2 - pRect.left) / scale;
             const endY = (childRect.top - pRect.top) / scale; // Top of child
 
-            // Draw generic elbow connector or Bezier
-            // Simple cubic bezier from top-down
-             const path = `M ${startX} ${startY - 10} 
-                          C ${startX} ${startY + 20}, ${endX} ${endY - 20}, ${endX} ${endY}`;
-             // Subtracting/Adding small offsets to connect to the "dots" we made in OrgNode
-             
+            // Draw Orthogonal (Elbow) connector
+            // Start (Parent Bottom) -> Down -> Across -> Down -> End (Child Top)
+            const midY = startY + (endY - startY) / 2;
+            
+            const path = `M ${startX} ${startY} 
+                          L ${startX} ${midY} 
+                          L ${endX} ${midY} 
+                          L ${endX} ${endY}`;
+
              lines.push({ id: `${pid}-${id}`, path });
         }
-    });
+    }); // End nodes.forEach
     
     connections.value = lines;
 }
+
+// --- Export ---
+async function exportOrgChart(format = 'png') {
+    const element = nodesContainerRef.value; // Prefer exporting the nodes container specifically or the whole canvas?
+    // If we export containerRef, we get the current viewport (clipped).
+    // If we export nodesContainerRef, we get the full chart but maybe without background/connections if they are outside?
+    // The connections are in a separate SVG layer at the same level as nodesContainerRef parent.
+    // Better to export the 'transform' wrapper div found in template (we don't have a ref for it yet, let's add one or query it)
+    
+    // Let's rely on containerRef but temporary disable overflow:hidden and reset scale to get full image?
+    // Or just export nodesContainerRef and accept no lines (lines are SVG sibling).
+    
+    // Best approach: Export the scrolling content layer.
+    // In template: 
+    // <div ref="transformLayer" ... :style="transform...">
+    //    <svg>...</svg>
+    //    <div ref="nodesContainerRef">...</div>
+    // </div>
+    
+    // I need to add ref="transformLayer" to the div wrapping SVG and nodes.
+    // But for now, let's try exporting the 'containerRef' but we might need to expand it.
+    
+    // Actually, `html-to-image` handles hidden elements if configured, but `overflow:hidden` on parent will clip it.
+    // Let's simply target the nodesContainerRef for now, as lines are difficult to capture if they are siblings.
+    // WAIT, lines ARE siblings. If I export `nodesContainerRef`, I miss lines.
+    
+    // I'll grab the parent of `nodesContainerRef`.
+    const contentInfo = nodesContainerRef.value?.parentElement; // The div with transform
+    if (!contentInfo) return;
+
+    toast.add({ title: 'Exporting...', description: 'Generating ' + format.toUpperCase(), color: 'blue', timeout: 0 });
+
+    try {
+        const { toPng } = await import('html-to-image');
+        const jsPDFModule = await import('jspdf');
+        const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
+
+        // Save current transform
+        const originalTransform = transform.value;
+        
+        // Reset scale and position to ensure high quality and full visibility
+        // We might want to scale UP for better resolution
+        transform.value = { x: 50, y: 50, scale: 1 }; 
+        await nextTick();
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for render/transition
+
+        const dataUrl = await toPng(contentInfo, { 
+            cacheBust: true, 
+             backgroundColor: '#f9fafb', // gray-50
+             quality: 1.0,
+             pixelRatio: 2 // Higher res
+        });
+
+        const filename = `org-chart-${props.source || 'export'}`;
+
+        if (format === 'png') {
+            const link = document.createElement('a');
+            link.download = `${filename}.png`;
+            link.href = dataUrl;
+            link.click();
+        } else {
+            // PDF
+             const imgProps = new Image();
+             imgProps.src = dataUrl;
+             await new Promise(resolve => imgProps.onload = resolve);
+             
+             const pdfWidth = imgProps.width;
+             const pdfHeight = imgProps.height;
+             
+             const pdf = new jsPDF({
+                orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [pdfWidth, pdfHeight]
+             });
+             
+             pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+             pdf.save(`${filename}.pdf`);
+        }
+
+        toast.add({ title: 'Success', description: 'Export completed!', color: 'green', timeout: 3000 });
+
+    } catch (e) {
+        console.error('Export failed', e);
+        toast.add({ title: 'Error', description: 'Export failed', color: 'red' });
+    } finally {
+        // Restore transform
+        // transform.value = originalTransform; // Actually let's just leave it reset or restore. Restoring might jump.
+    }
+}
+
+// Expose refresh method to parent
+defineExpose({
+    refresh: fetchData
+});
 
 </script>

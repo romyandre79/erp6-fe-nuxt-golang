@@ -276,10 +276,24 @@ function renderCell(row: any, col: any, rowIndex: number) {
         onChange: (e: any) => modelValue.value = e.target.checked
       });
 
+    case 'label':
+      return h('label', {
+        class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
+        value: modelValue.value,
+        onInput: (e: any) => modelValue.value = e.target.value
+      });
+
+    case 'image':
+      return h('img', {
+        class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
+        src: modelValue.value,
+        onInput: (e: any) => modelValue.value = e.target.value
+      });
+
     case 'text':
     default:
       return h('input', {
-        type: 'text',
+        type: type,
         class: 'w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200 outline-none',
         value: modelValue.value,
         placeholder: colProps.place || '',

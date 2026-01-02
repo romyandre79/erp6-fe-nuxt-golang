@@ -547,6 +547,8 @@ export const layoutContainers = [
     props: {
       key: '',
       text: '',
+      issave: true,
+      isclose: true,
       class: 'flex flex-wrap gap-2 mb-3',
     },
     children: [],
@@ -792,6 +794,7 @@ export const layoutContainers = [
       onCreate: '', // Flow to create node
       onUpdate: '', // Flow to update node (move/reparent)
       onDelete: '', // Flow to delete node
+      onEdit: '', // Flow to get node
       modalKey: '', // Modal to open for editing/creating
       config: {
         nodeKey: 'id',
