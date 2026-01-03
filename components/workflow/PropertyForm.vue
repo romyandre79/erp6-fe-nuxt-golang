@@ -16,6 +16,24 @@
       <p class="text-xs text-gray-400">Custom name to display on the workflow canvas</p>
     </div>
 
+    <!-- Node Appearance -->
+    <div class="space-y-1 border-b pb-4">
+      <h4 class="text-sm font-medium text-gray-700">Appearance</h4>
+      <div class="flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" v-model="flipHorizontal" @change="updateNodeResult" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+          <span class="text-sm text-gray-600">Flip Horizontal</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" v-model="flipVertical" @change="updateNodeResult" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+          <span class="text-sm text-gray-600">Flip Vertical</span>
+        </label>
+        <button @click="debugFlip" class="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300" title="Debug Flip Issue">
+            Debug
+        </button>
+      </div>
+    </div>
+
     <div v-if="fields.length === 0" class="text-sm text-gray-500">No specific properties available for this component.</div>
 
     <form v-else class="space-y-3 pb-4" @submit.prevent>
@@ -84,6 +102,8 @@ const store = useWorkflowStore();
 // local reactive form
 const form = reactive<Record<string, any>>({});
 const nodeDescription = ref('');
+const flipHorizontal = ref(false);
+const flipVertical = ref(false);
 
 // fields array (normalized from store.componentProperties or from store.loadComponentProperties result)
 const fields = ref<any[]>([]);
@@ -138,6 +158,8 @@ function initFormFromFields() {
 
   // Init Node Description
   nodeDescription.value = nodeData.description || nodeData.label || '';
+  flipHorizontal.value = !!nodeData.flip_h;
+  flipVertical.value = !!nodeData.flip_v;
 
   // isi form
   const updates: Record<string, any> = {};
@@ -182,6 +204,33 @@ function initFormFromFields() {
 function updateNodeDescription() {
     if (!props.nodeId) return;
     store.updateNodeData(props.nodeId, { description: nodeDescription.value });
+}
+
+// Update Flip State & DOM
+function updateNodeResult() {
+    if (!props.nodeId) return;
+    // Update Store
+    store.updateNodeData(props.nodeId, {
+        flip_h: flipHorizontal.value,
+        flip_v: flipVertical.value
+    });
+    
+    // Update DOM immediately
+    const nodeEl = document.getElementById(`node-${props.nodeId}`);
+    if (nodeEl) {
+        if (flipHorizontal.value) nodeEl.classList.add('flipped-horizontal');
+        else nodeEl.classList.remove('flipped-horizontal');
+        
+        if (flipVertical.value) nodeEl.classList.add('flipped-vertical');
+        else nodeEl.classList.remove('flipped-vertical');
+        
+        // Update connections (since ports moved)
+        const editor = (window as any).editor;
+        if (editor) {
+            // Force update connections for this node
+            editor.updateConnectionNodes(`node-${props.nodeId}`);
+        }
+    }
 }
 
 // UPDATE specific node data (immediate)

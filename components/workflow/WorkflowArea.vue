@@ -9,13 +9,14 @@
       backgroundColor: area.color + '20',
       borderColor: area.color,
       zIndex: 0,
+      pointerEvents: 'none'
     }"
-    @mousedown="$emit('start-drag', area, $event)"
   >
     <!-- header -->
     <div 
       class="text-white text-xs px-2 py-1 rounded-t-md flex items-center justify-between"
-      :style="{ backgroundColor: area.color }"
+      :style="{ backgroundColor: area.color, pointerEvents: 'auto' }"
+      @mousedown="$emit('start-drag', area, $event)"
     >
       <div class="flex items-center gap-2 flex-1">
         <!-- Drag Handle Icon -->
@@ -63,7 +64,7 @@
     <!-- resize handle -->
     <div
       class="absolute bottom-0 right-0 w-4 h-4 rounded cursor-se-resize"
-      :style="{ backgroundColor: area.color }"
+      :style="{ backgroundColor: area.color, pointerEvents: 'auto' }"
       @mousedown.stop="$emit('start-resize', area, $event)"
     ></div>
   </div>

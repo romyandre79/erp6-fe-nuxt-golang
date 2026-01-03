@@ -506,8 +506,8 @@
       "HR": "Human Resource",
       "PROJECT": "Project Mgmt"
     },
-    "SLOC ACCOUNTING": "Sloc Accounting",
-    "SLOC": "Storage Location",
+  "SLOC ACCOUNTING": "Sloc Accounting",
+  "SLOC": "Storage Location",
 	"PROJECT": "Project",
 	"KANBAN": "Kanban",
   "TIME SCHEDULE": "Time Schedule",
