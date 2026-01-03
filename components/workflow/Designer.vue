@@ -122,15 +122,18 @@
     </div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent>
       <!-- Canvas Areas -->
-      <WorkflowArea
-        v-for="area in store.areas"
-        :key="area.id"
-        :area="area"
-        @start-drag="startAreaDrag"
-        @start-resize="startAreaResize"
-        @delete="deleteAreaFromStore"
-      />
-    </div>
+      <div :style="{ transform: transformString, transformOrigin: '0 0', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }">
+        <WorkflowArea
+          v-for="area in store.areas"
+          :key="area.id"
+          :area="area"
+          @start-drag="startAreaDrag"
+          @start-resize="startAreaResize"
+          @delete="deleteAreaFromStore"
+        />
+      </div>
+     </div>
+
 
 
     <!-- Zoom Control -->
@@ -152,6 +155,9 @@ const emit = defineEmits(['saved']); // Added emit definition
 const testResult = ref('');
 const payload = ref('');
 const showPayload = ref(false);
+
+// Transform Sync for Areas
+const transformString = ref('translate(0px, 0px) scale(1)');
 
 // Step Results State
 const stepResults = ref<any[]>([]);
@@ -199,7 +205,7 @@ function initEditor(container: HTMLElement) {
   ed.reroute_fix_curvature = true;
   ed.force_first_input = false;
   ed.start();
-
+  
   /* -------- Register events --------*/
   ed.on('nodeRemoved', (id: string) => {
     // When node removed, cleanup its properties from DB
@@ -214,6 +220,24 @@ function initEditor(container: HTMLElement) {
     // Record state for undo/redo
     recordEditorState();
   });
+
+  // Sync Areas with Canvas Transform (DOM Mirroring)
+  function updateTransform() {
+    // We read directly from the Drawflow DOM element to ensure 100% sync
+    const drawflowInternal = container.querySelector('.drawflow') as HTMLElement;
+    if (drawflowInternal) {
+      transformString.value = drawflowInternal.style.transform;
+    } else {
+      transformString.value = `translate(${ed.canvas_x}px, ${ed.canvas_y}px) scale(${ed.zoom})`;
+    }
+  }
+
+  ed.on('translate', updateTransform);
+  ed.on('zoom', updateTransform);
+  ed.on('import', updateTransform); 
+  
+  // Initial sync attempt
+  setTimeout(updateTransform, 50); 
 
   ed.on('nodeSelected', async (id: string) => {
     const cleanId = id.replace('node-', '');
@@ -248,6 +272,8 @@ function initEditor(container: HTMLElement) {
   ed.on('connectionRemoved', () => {
     recordEditorState();
   });
+
+
 
   return ed;
 }
@@ -739,6 +765,13 @@ function convertOldNodesToIcons() {
     const data = nodeData.data || {};
     const title = data.description || data.label || data.name || nodeData.name || 'Unknown';
     
+    // Apply Flip Classes
+    if (data.flip_h) nodeEl.classList.add('flipped-horizontal');
+    else nodeEl.classList.remove('flipped-horizontal');
+    
+    if (data.flip_v) nodeEl.classList.add('flipped-vertical');
+    else nodeEl.classList.remove('flipped-vertical');
+    
     // Find component to get icon
     const component = store.components.find(
       (c: any) => (c.componentname || c.name)?.toLowerCase() === nodeData.name?.toLowerCase()
@@ -852,20 +885,20 @@ function deleteAreaFromStore(areaId: string) {
    ======================================================*/
 const activeArea = ref<any>(null);
 const areaMode = ref<'move' | 'resize' | null>(null);
-const areaOffset = ref({ x: 0, y: 0 });
-const activeAreaNodes = ref<any[]>([]);
+// Store initial drag state
+const dragStart = ref({ mouseX: 0, mouseY: 0, areaX: 0, areaY: 0, areaW: 0, areaH: 0 });
 
 function startAreaDrag(area: any, ev: MouseEvent) {
   activeArea.value = area;
   areaMode.value = 'move';
   
-  const canvas = document.getElementById('drawflow');
-  if (!canvas) return;
-  
-  const rect = canvas.getBoundingClientRect();
-  areaOffset.value = {
-    x: ev.clientX - rect.left - area.x,
-    y: ev.clientY - rect.top - area.y,
+  dragStart.value = {
+    mouseX: ev.clientX,
+    mouseY: ev.clientY,
+    areaX: area.x,
+    areaY: area.y,
+    areaW: area.width,
+    areaH: area.height
   };
 
   // Find all nodes within this area
@@ -878,9 +911,14 @@ function startAreaDrag(area: any, ev: MouseEvent) {
 function startAreaResize(area: any, ev: MouseEvent) {
   activeArea.value = area;
   areaMode.value = 'resize';
-  areaOffset.value = {
-    x: ev.clientX,
-    y: ev.clientY,
+  
+  dragStart.value = {
+    mouseX: ev.clientX,
+    mouseY: ev.clientY,
+    areaX: area.x,
+    areaY: area.y,
+    areaW: area.width,
+    areaH: area.height
   };
 
   window.addEventListener('mousemove', onAreaMouseMove);
@@ -888,19 +926,18 @@ function startAreaResize(area: any, ev: MouseEvent) {
 }
 
 function onAreaMouseMove(ev: MouseEvent) {
-  if (!activeArea.value) return;
+  if (!activeArea.value || !editor) return;
   const area = activeArea.value;
+  const zoom = editor.zoom; // Drawflow zoom level
+
+  const deltaX = (ev.clientX - dragStart.value.mouseX) / zoom;
+  const deltaY = (ev.clientY - dragStart.value.mouseY) / zoom;
 
   if (areaMode.value === 'move') {
-    const canvas = document.getElementById('drawflow');
-    if (!canvas) return;
+    const newX = dragStart.value.areaX + deltaX;
+    const newY = dragStart.value.areaY + deltaY;
     
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = ev.clientX - rect.left;
-    const mouseY = ev.clientY - rect.top;
-    
-    const newX = mouseX - areaOffset.value.x;
-    const newY = mouseY - areaOffset.value.y;
+    // Calculate actual change for nodes (to avoid floating point drift accumulation)
     const dx = newX - area.x;
     const dy = newY - area.y;
 
@@ -911,8 +948,17 @@ function onAreaMouseMove(ev: MouseEvent) {
     activeAreaNodes.value.forEach(({ nodeId, initialX, initialY }) => {
       const nodeEl = document.getElementById(`node-${nodeId}`);
       if (nodeEl && editor) {
-        const newNodeX = initialX + dx;
-        const newNodeY = initialY + dy;
+        // We recalculate node position based on total delta to avoid drift
+        // But here we rely on the previous logic which updated based on dx. 
+        // Let's stick to the dx approach but correctly calculated.
+        
+        // Actually, easier: Update node position = initialNodePos + totalDelta
+        // We need to store initial node positions in startAreaDrag too.
+        // But activeAreaNodes already stores initialX/initialY from getNodesInArea?
+        // Let's assume getNodesInArea captures CURRENT position as initial.
+        
+        const newNodeX = initialX + (newX - dragStart.value.areaX); // Total delta
+        const newNodeY = initialY + (newY - dragStart.value.areaY);
         
         // Update node position in DOM
         nodeEl.style.left = `${newNodeX}px`;
@@ -923,13 +969,6 @@ function onAreaMouseMove(ev: MouseEvent) {
         if (nodeData) {
           nodeData.pos_x = newNodeX;
           nodeData.pos_y = newNodeY;
-        }
-        
-        // Update initial positions for continued dragging
-        const nodeInfo = activeAreaNodes.value.find(n => n.nodeId === nodeId);
-        if (nodeInfo) {
-          nodeInfo.initialX = newNodeX;
-          nodeInfo.initialY = newNodeY;
         }
       }
     });
@@ -945,15 +984,8 @@ function onAreaMouseMove(ev: MouseEvent) {
       });
     }
   } else if (areaMode.value === 'resize') {
-    const canvas = document.getElementById('drawflow');
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = ev.clientX - rect.left;
-    const mouseY = ev.clientY - rect.top;
-    
-    area.width = Math.max(100, mouseX - area.x);
-    area.height = Math.max(100, mouseY - area.y);
+    area.width = Math.max(100, dragStart.value.areaW + deltaX);
+    area.height = Math.max(100, dragStart.value.areaH + deltaY);
   }
 }
 
@@ -1089,17 +1121,100 @@ async function exportImage() {
   const container = document.getElementById('drawflow');
   if (!container) return;
 
-  fixColors(container);
+  // 1. Calculate Bounding Box of all nodes
+  const nodes = container.querySelectorAll('.drawflow-node');
+  if (nodes.length === 0) {
+    toast.add({ title: 'Export Failed', description: 'No nodes to export', color: 'orange' });
+    return;
+  }
 
-  const canvas = await toPng(container, {
-    cacheBust: true, // optional: mencegah cache gambar lama
-    pixelRatio: 2, // optional: resolusi lebih tinggi
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  nodes.forEach((node: any) => {
+    // offsetLeft/Top are relative to the .drawflow container (which is what we will capture)
+    // providing the transform is effectively reset or ignored by calculating in this space
+    const x = node.offsetLeft;
+    const y = node.offsetTop;
+    const w = node.offsetWidth;
+    const h = node.offsetHeight;
+
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x + w > maxX) maxX = x + w;
+    if (y + h > maxY) maxY = y + h;
+  });
+  
+  // Also include Areas in the bounding box calculation
+  // The areas are in a separate wrapper but share the same coordinate space (thanks to our fix)
+  // However, for export, we want to capture the .drawflow container.
+  // We can try to capture the PARENT #drawflow, but then we have to handle the viewport.
+  // BETTER STRATEGY: Capture the .drawflow layer, but force it to be large enough.
+  
+  // Add padding
+  const padding = 50;
+  minX -= padding;
+  minY -= padding;
+  maxX += padding;
+  maxY += padding;
+
+  const totalWidth = maxX - minX;
+  const totalHeight = maxY - minY;
+
+  // 2. Prepare Export
+  const contentLayer = container.querySelector('.drawflow') as HTMLElement;
+  if (!contentLayer) return;
+  
+  fixColors(contentLayer);
+
+  // TEMPORARY: Thicken lines for export to prevent faintest
+  const connections = contentLayer.querySelectorAll('.connection .main-path');
+  const originalWidths = new Map();
+  connections.forEach((path: any, index) => {
+     originalWidths.set(index, path.style.strokeWidth);
+     path.style.strokeWidth = '6px'; // Thick lines for high-res export
+     path.style.stroke = '#4682b4'; // Ensure solid color (SteelBlue)
   });
 
-  const link = document.createElement('a');
-  link.download = 'workflow.png';
-  link.href = canvas;
-  link.click();
+  try {
+      const canvas = await toPng(contentLayer, {
+        cacheBust: true,
+        pixelRatio: 2.5, // slightly lower than 3 to avoid excessive memory, but 2.5 is sharp
+        backgroundColor: '#ffffff',
+        width: totalWidth,
+        height: totalHeight,
+        style: {
+          transform: `translate(${-minX}px, ${-minY}px) scale(1)`,
+          transformOrigin: 'top left',
+          width: `${totalWidth}px`,
+          height: `${totalHeight}px`,
+        }
+      });
+      
+      // RESTORE line widths
+      connections.forEach((path: any, index) => {
+         path.style.strokeWidth = originalWidths.get(index);
+         path.style.stroke = ''; // removing inline stroke to revert to css class
+      });
+
+      const link = document.createElement('a');
+      link.download = `workflow-${new Date().toISOString().slice(0,10)}.png`;
+      link.href = canvas;
+      link.click();
+      
+      toast.add({ title: 'Export Success', description: 'Image downloaded', color: 'green' });
+  } catch (err) {
+      // Restore on error too
+      connections.forEach((path: any, index) => {
+         path.style.strokeWidth = originalWidths.get(index);
+         path.style.stroke = '';
+      });
+      
+      console.error('Export failed', err);
+      toast.add({ title: 'Export Failed', description: String(err), color: 'red' });
+  }
 }
 
 const copySchema = async () => {

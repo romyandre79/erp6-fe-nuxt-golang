@@ -191,3 +191,140 @@ button * {
     box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2), 0 4px 16px rgba(239, 68, 68, 0.6);
   }
 }
+
+/* ===== NODE FLIP STYLES ===== */
+
+/* 
+   Generic Flip Reset 
+   Force containers to fill the edge and use flexbox for dot placement.
+*/
+
+/* --- Horizontal Flip (Inputs RIGHT, Outputs LEFT) --- */
+.drawflow-node.flipped-horizontal .inputs {
+  position: absolute !important;
+  left: auto !important;
+  right: -10px !important; /* Move outside right edge */
+  
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important; /* Fill full height */
+  width: 20px !important; /* Fixed width for container */
+  
+  transform: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important; /* Center dots vertically */
+  align-items: center !important;
+  z-index: 10;
+}
+
+.drawflow-node.flipped-horizontal .inputs .input {
+  position: relative !important;
+  left: auto !important; 
+  right: auto !important;
+  top: auto !important; 
+  bottom: auto !important;
+  margin: 4px 0 !important; /* Spacing between multiple inputs */
+  background: #fbbf24;
+}
+
+.drawflow-node.flipped-horizontal .outputs {
+  position: absolute !important;
+  right: auto !important;
+  left: -10px !important; /* Move outside left edge */
+  
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important; /* Fill full height */
+  width: 20px !important;
+  
+  transform: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important; /* Center dots vertically */
+  align-items: center !important;
+  z-index: 10;
+}
+
+.drawflow-node.flipped-horizontal .outputs .output {
+  position: relative !important;
+  left: auto !important; 
+  right: auto !important;
+  top: auto !important; 
+  bottom: auto !important;
+  margin: 4px 0 !important;
+  background: #fff;
+}
+
+
+
+
+/* --- Vertical Flip (Inputs TOP, Outputs BOTTOM) --- */
+.drawflow-node.flipped-vertical .inputs {
+  position: absolute !important;
+  top: -10px !important; /* Move outside top edge */
+  bottom: auto !important;
+  
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important; /* Fill full width */
+  height: 20px !important;
+  
+  transform: none !important;
+  display: flex !important;
+  flex-direction: row !important; /* Stack horizontally */
+  justify-content: center !important; /* Center dots horizontally */
+  align-items: center !important;
+  z-index: 10;
+}
+
+.drawflow-node.flipped-vertical .inputs .input {
+  position: relative !important;
+  left: auto !important; 
+  right: auto !important;
+  top: auto !important; 
+  bottom: auto !important;
+  margin: 0 4px !important;
+  background: #fbbf24;
+}
+
+.drawflow-node.flipped-vertical .outputs {
+  position: absolute !important;
+  top: auto !important;
+  bottom: -10px !important; /* Move outside bottom edge */
+  
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important; /* Fill full width */
+  height: 20px !important;
+  
+  transform: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important; /* Center dots horizontally */
+  align-items: center !important;
+  z-index: 10;
+}
+
+.drawflow-node.flipped-vertical .outputs .output {
+  position: relative !important;
+  left: auto !important; 
+  right: auto !important;
+  top: auto !important; 
+  bottom: auto !important;
+  margin: 0 4px !important;
+  background: #fff;
+}
+
+/* ===== HIDE SCROLLBARS & FIX PANNING ===== */
+/* 
+   1. We hide native scrollbars because Drawflow requires Panning.
+   2. we set touch-action: none to prevent browser from hijacking drags for scrolling.
+   3. This fixes the "Can't drag" issue on 125% zoom screens.
+*/
+#drawflow,
+.parent-drawflow {
+  overflow: hidden !important;
+  touch-action: none !important;
+  outline: none !important;
+}
