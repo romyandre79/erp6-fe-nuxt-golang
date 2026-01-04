@@ -11,6 +11,7 @@ interface Props {
     source?: string;
     place?: string;
     valueField?: string;
+    dependency?: { key: string; param: string }[];
   };
   formData: Ref<Record<string, any>>;
   validationErrors: Record<string, string>;
@@ -29,8 +30,8 @@ if (!(component.key in formData.value)) formData.value[component.key] = '';
 const options = ref<SelectMenuItem[]>([]);
 const loading = ref(false);
 
-// 🔹 Ambil data dari API
-onMounted(async () => {
+// 🔹 Function to fetch data
+async function fetchData() {
   if (!component.source) return;
   loading.value = true;
 
@@ -41,6 +42,15 @@ onMounted(async () => {
       dataForm.append('flowname', component.source);
       dataForm.append('menu', 'admin');
       dataForm.append('search', 'true');
+
+      // 🔹 Append dependencies params
+      if (component.dependency && Array.isArray(component.dependency)) {
+        component.dependency.forEach((dep: any) => {
+          if (formData.value[dep.key]) {
+            dataForm.append(dep.param, formData.value[dep.key]);
+          }
+        });
+      }
 
       const res = await Api.post('api/admin/execute-flow', dataForm);
 
@@ -54,8 +64,10 @@ onMounted(async () => {
         }));
       } else {
         console.error('Gagal ambil data untuk select:', res?.message);
+        options.value = []; // Clear options on error or empty
       }
     } else {
+      options.value = []; // Reset first
       for (let index = 0; index < arr.length; index++) {
         const element = arr[index];
         options.value.push({
@@ -69,7 +81,28 @@ onMounted(async () => {
   }
 
   loading.value = false;
+}
+
+// 🔹 Ambil data dari API saat mount
+onMounted(() => {
+  fetchData();
 });
+
+// 🔹 Watch dependencies
+if (component.dependency && Array.isArray(component.dependency)) {
+  watch(
+    () => component.dependency!.map((dep: any) => formData.value[dep.key]),
+    async (newVal, oldVal) => {
+      // Check if values actually changed
+      const isChanged = newVal.some((val, i) => val !== oldVal[i]);
+      if (isChanged) {
+        // Reset current value
+        formData.value[component.key] = null; 
+        await fetchData();
+      }
+    }
+  );
+}
 
 // 🔹 Computed dua arah
 const modelSelect = computed({
@@ -90,7 +123,11 @@ watch(
     if (val != null && val !== '') {
       const exists = newOptions.some((o) => o.id == val);
       if (!exists) {
-        console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
+        // console.warn(`⚠️ Value '${val}' tidak ditemukan di options untuk ${component.key}`);
+         // Reset if selected value is no longer valid in new options (important for dependencies)
+         if (component.dependency && Array.isArray(component.dependency)) {
+             formData.value[component.key] = null;
+         }
       } else {
         // force reactivity update agar USelect sinkron
         formData.value[component.key] = val;
@@ -107,7 +144,7 @@ watch(
     if (options.value.length > 0 && val != null && val !== '') {
       const exists = options.value.some((o) => o.id == val);
       if (!exists) {
-        console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${component.key}`);
+        // console.warn(`⚠️ Value '${val}' belum ada di options saat ini untuk ${component.key}`);
       }
     }
   },

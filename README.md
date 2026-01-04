@@ -522,3 +522,33 @@ How to add Kanban Board in Form Designer
 All required backend workflows
 Database schema suggestions
 Customization options
+
+
+Form Select
+[
+  {
+    "type": "select",
+    "key": "country_id",
+    "label": "Country",
+    "source": "get_countries",
+    "props": {
+      "key": "country_id",
+      "text": "Country",
+      "source": "get_countries"
+    }
+  },
+  {
+    "type": "select",
+    "key": "state_id",
+    "label": "State",
+    "source": "get_states",
+    "props": {
+      "key": "state_id",
+      "text": "State",
+      "source": "get_states",
+      "dependency": [
+        { "key": "country_id", "param": "country_id" }
+      ]
+    }
+  }
+]
