@@ -92,13 +92,13 @@ export const useNotificationStore = defineStore('notification', {
 
             // Also Show Toast for chat? User said "Chat show to chat", but maybe a notification is nice if not open?
             // "notification different" implies keep them separate.
-            const toast = useToast()
+            /*const toast = useToast()
             toast.add({ 
               title: `Message from ${senderName}`, 
               description: payload.data.message,
               icon: 'i-heroicons-chat-bubble-left-right',
               color: 'primary'
-            })
+            })*/
           }
         } catch (e) {
           console.error('WS Parse error', e)

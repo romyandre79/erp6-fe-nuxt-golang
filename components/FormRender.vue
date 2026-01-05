@@ -317,6 +317,7 @@ async function edit(key: string) {
     const flow = getAction('get');
 
     console.log('flow ',flow)
+    console.log('selectedRows.value ',selectedRows.value)
 
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
