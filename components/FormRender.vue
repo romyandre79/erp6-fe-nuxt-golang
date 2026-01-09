@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt } from '#components';
+import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt, FormHtmlEditor } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -321,6 +321,7 @@ async function edit(key: string) {
 
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
+       console.log('primary ',primary)
       
       // 🔒 Try to lock record if locking is enabled
       if (lockEnabled) {
@@ -818,6 +819,111 @@ function renderComponent(component: any) {
               })
             : null,
       ]);
+
+    case 'file':
+      const modelInputFile = computed({
+        get: () => formData.value[component.props.key] || component.props.src,
+        set: (val) => {
+          formData.value[component.props.key] = val;
+          //validateField(component, val)
+        },
+      });
+      
+      // Store filename separately
+      const fileNameKey = component.props.key + '_filename';
+      if (!(fileNameKey in formData.value)) formData.value[fileNameKey] = '';
+      
+      return h('div', { class: [component.props.class, 'flex flex-col mb-3'] }, [
+        // ============================
+        // MODE INPUT (ada label + input)
+        // ============================
+        component.props.isinput
+          ? [
+              // Label
+              component.type != 'hidden' && component.props.text
+                ? h(
+                    'label',
+                    { class: 'text-sm mb-1 font-medium text-gray-400' },
+                    $t(component.props.text.toUpperCase()),
+                  )
+                : null,
+
+              // Input file
+              h('input', {
+                type: 'file',
+                accept: '.pdf,.docx,.doc',
+                class:
+                  'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
+                  (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
+
+                onChange: (e: any) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  // Store filename
+                  formData.value[fileNameKey] = file.name;
+
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    modelInputFile.value = reader.result; // base64 file
+                  };
+                  reader.readAsDataURL(file);
+                },
+              }),
+
+              // File preview - show download link instead of image
+              modelInputFile.value
+                ? h('div', { class: 'mt-2 flex items-center gap-2 p-2 border rounded bg-gray-50' }, [
+                    h('i', { class: 'i-heroicons-document text-blue-500 text-xl' }),
+                    h('a', {
+                      href: modelInputFile.value,
+                      download: formData.value[fileNameKey] || 'document',
+                      class: 'text-blue-600 hover:underline text-sm',
+                    }, formData.value[fileNameKey] || 'Download File'),
+                  ])
+                : null,
+
+              // Error message
+              validationErrors[component.props.key]
+                ? h('span', { class: 'text-xs text-red-500 mt-1' }, validationErrors[component.props.key])
+                : null,
+            ]
+          : // ============================
+            // MODE VIEW (show download link)
+            // ============================
+            modelInputFile.value
+            ? h('div', { class: 'flex items-center gap-2 p-2 border rounded bg-gray-50' }, [
+                h('i', { class: 'i-heroicons-document text-blue-500 text-xl' }),
+                h('a', {
+                  href: modelInputFile.value,
+                  download: formData.value[fileNameKey] || 'document',
+                  class: 'text-blue-600 hover:underline text-sm',
+                }, formData.value[fileNameKey] || 'Download File'),
+              ])
+            : null,
+      ]);
+
+    case 'html': {
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = '';
+      const modelHtml = computed({
+        get: () => formData.value[component.props.key] || '',
+        set: (val) => {
+          formData.value[component.props.key] = val;
+          //validateField(component, val)
+        },
+      });
+      
+      return h(FormHtmlEditor, {
+        modelValue: modelHtml.value,
+        'onUpdate:modelValue': (val: string) => {
+          modelHtml.value = val;
+        },
+        label: component.props.text ? $t(component.props.text.toUpperCase()) : '',
+        placeholder: component.props.place ? $t(component.props.place.toUpperCase()) : 'Enter HTML content...',
+        componentClass: component.props.class || '',
+        error: validationErrors[component.props.key] || '',
+      });
+    }
 
     case 'text':
     case 'hidden':
