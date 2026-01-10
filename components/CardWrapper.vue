@@ -28,6 +28,7 @@ export default defineComponent({
           const res = await Api.post('api/admin/execute-flow', dataForm);
           if (res.code === 200) {
             data.value = res.data.data;
+            console.log(data.value);
           }
         } catch (err) {
           console.error(err);
@@ -51,11 +52,10 @@ export default defineComponent({
         {
           default: () =>
             children.map((child: any) => {
-              if (child.props?.key === 'data') {
+              const vtext = child.props.text ? h('div', data.value?.[child.props.key]+ ' ' + child.props.text) : null
                 return h('div', { class: child.props.class }, [
-                  child.props.text ? h('div', data.value + ' ' + child.props.text) : null,
+                  vtext,
                 ]);
-              }
               return props.renderChild(child);
             }),
         },
