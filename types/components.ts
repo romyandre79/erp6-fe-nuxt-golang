@@ -132,6 +132,7 @@ export const availableComponents = [
       text: 'File',
       place: 'Enter a file',
       class: '',
+      isinput: false,
       primary: false,
       enabled: true,
       required: false,
@@ -305,6 +306,7 @@ export const availableComponents = [
       primary: false,
       enabled: true,
       required: false,
+      dependency: [],
     },
   },
   {
@@ -361,6 +363,21 @@ export const availableComponents = [
     label: 'Text',
     icon: 'heroicons:pencil-square',
     component: 'input',
+    props: {
+      key: '',
+      text: 'Text',
+      place: 'Enter a text',
+      class: '',
+      primary: false,
+      enabled: true,
+      required: false,
+    },
+  },
+  {
+    type: 'html',
+    label: 'Html',
+    icon: 'heroicons:pencil-square',
+    component: 'texteditor',
     props: {
       key: '',
       text: 'Text',

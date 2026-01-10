@@ -711,7 +711,7 @@
              <!-- Left Panel (Sticky) -->
              <div class="sticky left-0 flex z-30" style="background: var(--panel-background);">
              <!-- Task List (Sticky Left) -->
-             <div class="w-64 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
+             <div class="w-80 flex-shrink-0 border-r" style="background: var(--panel-background); border-color: var(--border-color);">
                 <div class="h-10 border-b px-4 flex items-center text-sm font-semibold sticky top-0 z-20" style="background: var(--table-head-background); border-color: var(--border-color); color: var(--table-head-color);">
                     Task
                 </div>
@@ -729,7 +729,7 @@
                         :style="{ opacity: draggedGanttIndex === taskIndex ? 0.5 : 1 }"
                     >
                         <UIcon name="i-heroicons-bars-3" class="w-4 h-4 mr-2 text-gray-400" />
-                        {{ task.title - (formatDate(task.startdate) - formatDate(task.enddate)) }} 
+                        {{ task.title }} 
                     </div>
                 </div>
              </div>
@@ -741,7 +741,7 @@
                     <div 
                         v-for="(task, index) in ganttTasks" 
                         :key="task.id" 
-                        class="h-10 px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
+                        class="h-10 text-right px-4 border-b border-gray-100 dark:border-gray-700 flex items-center text-sm truncate hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-opacity"
                         :style="{ opacity: draggedGanttIndex === index ? 0.5 : 1 }"
                     >
                         {{ task.ganttDuration }}

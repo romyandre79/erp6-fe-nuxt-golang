@@ -122,7 +122,7 @@
     </div>
     <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent>
       <!-- Canvas Areas -->
-      <div :style="{ transform: transformString, transformOrigin: '0 0', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }">
+      <div :style="{ transform: transformString, transformOrigin: '0 0', position: 'absolute', top: 0, left: 0, width: '0px', height: '0px', pointerEvents: 'none', overflow: 'visible' }">
         <WorkflowArea
           v-for="area in store.areas"
           :key="area.id"
