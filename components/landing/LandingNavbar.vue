@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { useUserStore } from '~/store/user';
 
-const { locale, setLocale } = useI18n();
 const userStore = useUserStore();
 
 onMounted(async () => {
   await userStore.loadAuth();
 });
-
-const switchLanguage = () => {
-  setLocale(locale.value === 'en' ? 'id' : 'en');
-};
 </script>
 
 <template>
@@ -23,7 +18,7 @@ const switchLanguage = () => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                     </div>
-                    <span class="text-xl font-bold text-white">Capella ERP</span>
+                    <span class="text-xl font-bold text-white">Capella</span>
                     <span class="px-2 py-1 text-xs font-semibold bg-red-500 text-white rounded">v6</span>
                 </NuxtLink>
                 <div class="hidden md:flex space-x-8">
@@ -33,12 +28,7 @@ const switchLanguage = () => {
                     <NuxtLink to="/#contact" class="text-gray-300 hover:text-white transition">{{ $t('LANDING.NAV.CONTACT') }}</NuxtLink>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button @click="switchLanguage" class="text-sm text-gray-300 hover:text-white font-medium transition flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-                        </svg>
-                        {{ locale === 'en' ? 'EN' : 'ID' }}
-                    </button>
+                    <LandingLanguageSelector />
                     
                     <NuxtLink v-if="!userStore.token" to="/login" class="text-gray-300 hover:text-white font-medium transition">{{ $t('LANDING.NAV.LOGIN') }}</NuxtLink>
                     <NuxtLink v-else to="/admin/dashboard" class="text-gray-300 hover:text-white font-medium transition">Admin</NuxtLink>

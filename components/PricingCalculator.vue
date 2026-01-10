@@ -29,23 +29,46 @@
 
             <!-- Cloud Billing Type Selection -->
             <div v-if="deploymentMode === 'cloud'" class="mb-8">
-               <label :class="`block text-sm font-bold mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`">Billing Model</label>
+               <label :class="`block text-sm font-bold mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`">{{ $t('ERP.PRICING.BILLING_MODEL') }}</label>
                <div :class="`inline-flex p-1 rounded-xl ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100 border border-slate-200'}`">
                  <button 
                    @click="cloudBillingType = 'subscription'"
                    :class="`px-5 py-2 rounded-lg text-sm font-bold transition-all ${cloudBillingType === 'subscription' ? (theme === 'dark' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-blue-600 shadow-md') : (theme === 'dark' ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`"
                  >
-                   Subscription
+                   {{ $t('ERP.PRICING.SUBSCRIPTION') }}
                  </button>
                  <button 
                    @click="cloudBillingType = 'payg'"
                    :class="`px-5 py-2 rounded-lg text-sm font-bold transition-all ${cloudBillingType === 'payg' ? (theme === 'dark' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-blue-600 shadow-md') : (theme === 'dark' ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`"
                  >
-                   Pay As You Go
+                   {{ $t('ERP.PRICING.PAY_AS_YOU_GO') }}
                  </button>
                </div>
                <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">
-                 {{ cloudBillingType === 'subscription' ? 'Fixed monthly fee per user + storage.' : 'Pay based on transaction volume. Minimum Rp 500.000/mo includes 5.000 transactions.' }}
+                 {{ cloudBillingType === 'subscription' ? $t('ERP.PRICING.BILLING_SUBSCRIPTION_NOTE') : $t('ERP.PRICING.BILLING_PAYG_NOTE') }}
+               </p>
+            </div>
+
+            <!-- Billing Period (Monthly/Yearly) for Subscription -->
+            <div v-if="deploymentMode === 'cloud' && cloudBillingType === 'subscription'" class="mb-8">
+               <label :class="`block text-sm font-bold mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`">{{ $t('ERP.PRICING.BILLING_PERIOD') }}</label>
+               <div :class="`inline-flex p-1 rounded-xl ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100 border border-slate-200'}`">
+                 <button 
+                   @click="billingPeriod = 'monthly'"
+                   :class="`px-5 py-2 rounded-lg text-sm font-bold transition-all ${billingPeriod === 'monthly' ? (theme === 'dark' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-blue-600 shadow-md') : (theme === 'dark' ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`"
+                 >
+                   {{ $t('ERP.PRICING.MONTHLY') }}
+                 </button>
+                 <button 
+                   @click="billingPeriod = 'yearly'"
+                   :class="`px-5 py-2 rounded-lg text-sm font-bold transition-all ${billingPeriod === 'yearly' ? (theme === 'dark' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-blue-600 shadow-md') : (theme === 'dark' ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`"
+                 >
+                   {{ $t('ERP.PRICING.YEARLY') }}
+                   <span :class="`ml-2 px-2 py-0.5 rounded-full text-xs ${billingPeriod === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-500/20 text-green-400'}`">{{ $t('ERP.PRICING.SAVE') }} {{yearlyDiscount * 100}}%</span>
+                 </button>
+               </div>
+               <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">
+                 {{ billingPeriod === 'monthly' ? $t('ERP.PRICING.BILLING_MONTHLY_NOTE') : $t('ERP.PRICING.BILLING_YEARLY_NOTE', { percentage: yearlyDiscount * 100 }) }}
                </p>
             </div>
 
@@ -66,7 +89,7 @@
 
                   <div class="text-3xl mb-3">{{ app.icon }}</div>
                   <h4 :class="`font-medium text-sm h-10 flex items-center justify-center ${getModuleTextClass(app.id)}`">{{ app.name }}</h4>
-                  <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">Rp {{ formatNumber(app.price) }}</p>
+                  <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">{{ formatCurrency(app.price) }}</p>
                 </div>
               </div>
             </div>
@@ -196,7 +219,7 @@
                        <input type="number" v-model.number="consultationHours" :class="getServiceInputClass()" min="0">
                        <span :class="`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">Hours</span>
                      </div>
-                     <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`">Rate: Rp {{ formatNumber(CONSULTATION_RATE) }} / hr / module</p>
+                     <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`">Rate: {{ formatCurrency(CONSULTATION_RATE) }} / hr / module</p>
                   </div>
                   <div class="p-6 rounded-2xl border" :class="theme === 'dark' ? 'bg-slate-900 border-white/10' : 'bg-slate-50 border-slate-100'">
                      <label :class="`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`">{{ $t('ERP.PRICING.TRANSPORT') }}</label>
@@ -204,7 +227,7 @@
                        <input type="number" v-model.number="transportDays" :class="getServiceInputClass()" min="0">
                        <span :class="`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">Days</span>
                      </div>
-                     <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`">Rate: Rp {{ formatNumber(TRANSPORT_RATE) }} / day</p>
+                     <p :class="`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`">Rate: {{ formatCurrency(TRANSPORT_RATE) }} / day</p>
                   </div>
                </div>
             </div>
@@ -225,7 +248,7 @@
                          <div class="text-2xl">{{ wf.icon }}</div>
                          <div class="flex-1">
                            <div :class="`font-medium text-sm ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`">{{ wf.name }}</div>
-                           <div class="text-xs text-slate-500">Rp {{ formatNumber(wf.price) }} / mo</div>
+                           <div class="text-xs text-slate-500">{{ formatCurrency(wf.price) }} / mo</div>
                          </div>
                          <div v-if="selectedWorkflows.includes(wf.id)" :class="`font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-blue-600'}`">✓</div>
                       </div>
@@ -273,12 +296,16 @@
                    </div>
                     <div :class="`flex justify-between text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`">
                      <span>Overage Rate (Avg)</span>
-                     <span>Rp {{ totalTransactions > 5000 ? formatNumber(Math.round(avgTxRate)) : 0 }}</span>
+                     <span>{{ formatCurrency(totalTransactions > 5000 ? Math.round(avgTxRate) : 0) }}</span>
                    </div>
                  </template>
                  <div v-if="deploymentMode === 'cloud'" :class="`flex justify-between text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`">
                   <span>Storage ({{ storageSize }} GB)</span>
-                  <span>Rp {{ formatNumber(extraStorageCost) }}</span>
+                  <span>{{ formatCurrency(extraStorageCost) }}</span>
+                </div>
+                <div v-if="discountPercentage > 0" :class="`flex justify-between text-sm font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`">
+                  <span>Discount ({{ discountPercentage }}%)</span>
+                  <span>- {{ formatCurrency(discountAmount) }}</span>
                 </div>
               </div>
 
@@ -286,30 +313,31 @@
                <div v-if="oneTimeFee > 0" :class="`pt-4 border-t mb-4 ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`">
                   <div :class="`flex justify-between text-sm mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`">
                     <span>Implementation Services</span>
-                    <span>Rp {{ formatNumber(implementationFee) }}</span>
+                    <span>{{ formatCurrency(implementationFee) }}</span>
                   </div>
                   <div :class="`flex justify-between text-sm mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`">
                     <span>Transport & Accom.</span>
-                    <span>Rp {{ formatNumber(transportFee) }}</span>
+                    <span>{{ formatCurrency(transportFee) }}</span>
                   </div>
                   <div v-if="deploymentMode !== 'cloud'" :class="`flex justify-between text-sm font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`">
                     <span>One-Time License/Source</span>
-                    <span>Rp {{ formatNumber(oneTimeFee - implementationFee - transportFee) }}</span>
+                    <span>{{ formatCurrency(oneTimeFee - implementationFee - transportFee) }}</span>
                   </div>
                    <div :class="`flex justify-between text-lg font-bold mt-2 pt-2 border-t border-dashed ${theme === 'dark' ? 'text-indigo-400 border-white/10' : 'text-slate-800 border-slate-200'}`">
                     <span>{{ $t('ERP.PRICING.TOTAL_ONE_TIME') }}</span>
-                    <span>Rp {{ formatNumber(oneTimeFee) }}</span>
+                    <span>{{ formatCurrency(oneTimeFee) }}</span>
                   </div>
                </div>
               
               <div :class="`pt-6 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`">
-                 <p :class="`text-xs mb-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">{{ $t('ERP.PRICING.TOTAL_MONTHLY') }}</p>
+                 <p :class="`text-xs mb-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`">{{ billingPeriod === 'yearly' ? $t('ERP.PRICING.TOTAL_YEARLY_COST') : $t('ERP.PRICING.TOTAL_MONTHLY') }}</p>
                  <div :class="`text-3xl font-extrabold mb-2 ${theme === 'dark' ? 'text-white' : 'text-blue-600'}`">
-                   Rp {{ formatNumber(monthlyRecurring) }}
+                   {{ formatCurrency(finalRecurringCost) }}
                  </div>
-                 <p v-if="deploymentMode === 'cloud' && cloudBillingType === 'subscription'" class="text-xs text-slate-500">Billed Annually. Calcualted based on Weighted Users.</p>
-                 <p v-else-if="deploymentMode === 'cloud' && cloudBillingType === 'payg'" class="text-xs text-slate-500">Includes 5.000 transactions. Excess billed per module rate.</p>
-                 <p v-else class="text-xs text-slate-500">No monthly fee (excluding support).</p>
+                 <p v-if="deploymentMode === 'cloud' && cloudBillingType === 'subscription' && billingPeriod === 'monthly'" class="text-xs text-slate-500">{{ $t('ERP.PRICING.BILLED_MONTHLY') }}</p>
+                 <p v-else-if="deploymentMode === 'cloud' && cloudBillingType === 'subscription' && billingPeriod === 'yearly'" class="text-xs text-slate-500">{{ $t('ERP.PRICING.BILLED_YEARLY', { percentage: yearlyDiscount * 100, amount: formatNumber(convertCurrency(Math.round(finalRecurringCost / 12))) }) }}</p>
+                 <p v-else-if="deploymentMode === 'cloud' && cloudBillingType === 'payg'" class="text-xs text-slate-500">{{ $t('ERP.PRICING.PAYG_NOTE') }}</p>
+                 <p v-else class="text-xs text-slate-500">{{ $t('ERP.PRICING.NO_MONTHLY_FEE') }}</p>
               </div>
 
               <div class="mt-8 pt-6 border-t" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-100'">
@@ -394,9 +422,9 @@ const LICENSE_MULTIPLIER = 12
 const SOURCE_CODE_MULTIPLIER = 100
 
 const USER_WEIGHTS = {
-  admin: 1.0,
-  operational: 0.5,
-  viewer: 0.05
+  admin: 0.1,
+  operational: 0.05,
+  viewer: 0.03
 }
 
 // PAYG Rates
@@ -408,18 +436,22 @@ const TX_RATES = {
   inventory: 3000,
   other: 3000
 }
+const yearlyDiscount = 0.10 // 10% discount for yearly billing
+
 
 // State
 const selectedApps = ref([...props.initialSelectedApps])
 const selectedWorkflows = ref([...props.initialSelectedWorkflows])
 const usersAdmin = ref(1)
-const usersOperational = ref(5)
-const usersViewer = ref(5)
+const usersOperational = ref(10)
+const usersViewer = ref(10)
 const storageSize = ref(10)
 const deploymentMode = ref('cloud')
 const consultationHours = ref(0)
 const transportDays = ref(0)
 const cloudBillingType = ref('subscription') // 'subscription' | 'payg'
+const billingPeriod = ref('monthly') // 'monthly' | 'yearly'
+const discountPercentage = ref(0) // 0-100
 
 // PAYG Inputs
 const txAccounting = ref(1000)
@@ -542,12 +574,63 @@ const monthlyRecurring = computed(() => {
   return 0
 })
 
+const discountAmount = computed(() => {
+  if (discountPercentage.value <= 0 || discountPercentage.value > 100) return 0
+  return Math.round((monthlyRecurring.value * discountPercentage.value) / 100)
+})
+
+const monthlyAfterDiscount = computed(() => {
+  return monthlyRecurring.value - discountAmount.value
+})
+
+const finalRecurringCost = computed(() => {
+  if (deploymentMode.value !== 'cloud' || cloudBillingType.value === 'payg') {
+    return monthlyAfterDiscount.value
+  }
+  
+  if (billingPeriod.value === 'yearly') {
+    // Apply yearly discount on top of custom discount
+    const yearlyBase = monthlyAfterDiscount.value * 12
+    return Math.round(yearlyBase * (1 - yearlyDiscount))
+  }
+  
+  return monthlyAfterDiscount.value
+})
+
 const deploymentModeTitle = computed(() => {
   if (deploymentMode.value === 'cloud') return 'Cloud'
   if (deploymentMode.value === 'onprem_license') return 'On-Premise'
   if (deploymentMode.value === 'onprem_source') return 'Full Source'
   return ''
 })
+
+// Currency based on locale
+const { locale } = useI18n()
+
+// Exchange rates (base currency: IDR/Rupiah)
+const exchangeRates = {
+  'id': 1,        // Rupiah (base currency)
+  'en': 15000,    // 1 USD = 15,000 IDR
+  'zh': 2100      // 1 CNY = 2,100 IDR
+}
+
+const currencySymbol = computed(() => {
+  switch (locale.value) {
+    case 'id':
+      return 'Rp'
+    case 'zh':
+      return '¥'
+    case 'en':
+    default:
+      return '$'
+  }
+})
+
+// Convert price from IDR to selected currency
+const convertCurrency = (amountInIDR) => {
+  const rate = exchangeRates[locale.value] || 1
+  return Math.round(amountInIDR / rate)
+}
 
 // Methods
 const toggleApp = (app) => {
@@ -561,6 +644,11 @@ const toggleWorkflow = (wf) => {
 }
 
 const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num)
+
+const formatCurrency = (num) => {
+  const converted = convertCurrency(num)
+  return `${currencySymbol.value} ${formatNumber(converted)}`
+}
 
 const scrollToDemo = () => {
   if (demoSection.value) {

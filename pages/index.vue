@@ -5,19 +5,19 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
   { id: 'engine', name: 'Capella', price: 2000000, icon: '📊' },
-  { id: 'accounting', name: 'Accounting', price: 250000, icon: '📊' },
-  { id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📊' },
-  { id: 'erp_prod', name: 'ERP Production', price: 250000, icon: '📊' },
-  { id: 'erp_proj', name: 'ERP Project', price: 250000, icon: '📊' },
-  { id: 'hris_ess', name: 'HRIS', price: 150000, icon: '👥' },
-  { id: 'ess', name: 'ESS', price: 100000, icon: '👥' },
-  { id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },
-  { id: 'career', name: 'Career', price: 100000, icon: '👥' },
-  { id: 'customer_pro', name: 'Customer Professional', price: 50000, icon: '🤝' },
-  { id: 'eproc_adv', name: 'E-Procurement Advanced', price: 100000, icon: '🛒' },
-  { id: 'pos_retail', name: 'POS Retail', price: 100000, icon: '🏪' },
+  //{ id: 'accounting', name: 'Accounting', price: 250000, icon: '💰' },
+  //{ id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📦' },
+  //{ id: 'order', name: 'Order Management', price: 50000, icon: '🛒' },
+  //{ id: 'erp_proj', name: 'Project', price: 250000, icon: '🛠️' },
+  //{ id: 'erp_prod', name: 'Production', price: 250000, icon: '📊' },
+  //{ id: 'ess', name: 'ESS', price: 100000, icon: '🙋' },
+  //{ id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },
+  //{ id: 'career', name: 'Career', price: 100000, icon: '👥' },
+  //{ id: 'customer_pro', name: 'Customer Professional', price: 50000, icon: '🤝' },
+  //{ id: 'pos_retail', name: 'POS Retail', price: 100000, icon: '🏪' },
   { id: 'pentest', name: 'Security Scanner', price: 2000000, icon: '🛡️' },
   { id: 'remindax', name: 'Remindax', price: 50000, icon: '🔔' },
+  { id: 'umkm', name: 'UMKM', price: 200000, icon: '🏪' },
 ]
 
 definePageMeta({
@@ -148,9 +148,9 @@ useHead({
                 {{ $t('LANDING.HERO.SUBTITLE') }}
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-lg transition glow">
+                <a href="#demo" class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-lg transition glow">
                     {{ $t('LANDING.HERO.START_TRIAL') }}
-                </button>
+                </a>
                 <a href="#demo-video" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold text-lg transition border border-gray-700 inline-block text-center">
                     {{ $t('LANDING.HERO.WATCH_DEMO') }}
                 </a>
