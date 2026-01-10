@@ -29,7 +29,7 @@ const closeMobileMenu = () => {
           <i class="fa-solid fa-cube text-white text-sm"></i>
         </div>
         <span class="font-bold text-lg text-gray-800 dark:text-white tracking-tight">
-          ERP<span class="text-indigo-500">6</span>
+          <span class="text-indigo-500">6</span>
         </span>
       </NuxtLink>
     </div>

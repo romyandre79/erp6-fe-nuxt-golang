@@ -69,6 +69,7 @@ export default defineNuxtConfig({
     locales: [
       { code: 'en', name: 'English', file: 'en.json' },
       { code: 'id', name: 'Indonesian', file: 'id.json' },
+      { code: 'zh', name: '中文', file: 'zh.json' },
     ],
     strategy: 'prefix_except_default',
     detectBrowserLanguage: false,
