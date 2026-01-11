@@ -14,8 +14,8 @@
         style="background: var(--panel-background); border-color: var(--border-color);"
     >
       <!-- Sidebar Header -->
-      <div class="p-4 border-b" style="border-color: var(--border-color);">
-        <h2 class="text-lg font-semibold mb-3">Projects</h2>
+      <div class="flex p-4 border-b" style="border-color: var(--border-color);">
+        <h3 class="text-lg font-semibold">Projects</h3>
         <UButton 
           block 
           color="primary" 
@@ -23,14 +23,10 @@
           size="sm"
           @click="isTemplateModalOpen = true"
         >
-          New Project
         </UButton>
         
         <!-- Archive Toggle -->
-        <div class="mt-3 flex items-center justify-between">
-          <label class="text-sm  cursor-pointer" @click="showArchived = !showArchived">
-            Show Archived
-          </label>
+        <div class="flex items-center justify-between">
           <input 
             type="checkbox" 
             v-model="showArchived"
@@ -108,7 +104,7 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden" ref="mainContentRef">
       <!-- Header -->
-      <div class="p-6 border-b" style="background: var(--panel-background); border-color: var(--border-color);">
+      <div class="p-3 border-b" style="background: var(--panel-background); border-color: var(--border-color);">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
              <UButton 
@@ -121,14 +117,15 @@
              <h1 class="text-3xl font-bold ">
                {{ activeProject?.name || 'Select a Project' }}
              </h1>
+             <div v-if="activeProject && activeProject.members?.length > 0" class="ml-4 flex items-center">
+                <MemberAvatarList :members="activeProject.members" :maxVisible="5" size="md" />
+             </div>
           </div>          
         </div>
         <p class="">
           {{ activeProject?.description || 'Choose a project from the sidebar to view its kanban board' }}
-        </p>
-        <p class="">
-          {{ formatDate(activeProject?.startdate)   || formatDate(activeProject?.enddate) }} - 
-          {{ formatDate(activeProject?.enddate) }}
+          ({{ formatDate(activeProject?.startdate)   || formatDate(activeProject?.enddate) }} - 
+          {{ formatDate(activeProject?.enddate) }})
         </p>
       </div>
 
@@ -136,7 +133,7 @@
       <!-- Views Wrapper -->
       <div v-if="activeProject" class="flex flex-col flex-1 overflow-hidden">
       <!-- Tab Navigation -->
-      <div class="px-6 py-4 border-b flex items-center justify-between" style="background: var(--panel-background); border-color: var(--border-color);">
+      <div class="px-2 py-4 border-b flex items-center justify-between" style="background: var(--panel-background); border-color: var(--border-color);">
         <div class="flex items-center gap-1 rounded-lg p-1" style="background: var(--button-background); border: 1px solid var(--border-color);">
            <UButton 
             v-for="view in ['kanban', 'list', 'calendar', 'gantt']"
@@ -214,7 +211,7 @@
         <!-- Kanban Board View -->
         <div class="h-full">
           <div class="kanban-board w-full overflow-x-auto h-full" style="display: block;">
-            <div class="flex flex-row gap-4 pb-4" style="display: flex; flex-direction: row; min-height: 100%; flex-wrap: nowrap;">
+            <div class="flex flex-row gap-3 pb-4" style="display: flex; flex-direction: row; min-height: 100%; flex-wrap: nowrap;">
               
               <!-- Dynamic Columns -->
               <div 
@@ -226,10 +223,10 @@
                 @dragover.prevent
                 @dragenter.prevent
               >
-                <UCard :ui="{ body: { padding: 'p-3' }, header: { padding: 'p-0' }, background: 'bg-transparent', ring: 'ring-0', shadow: 'shadow-none' }" class="h-full flex flex-col" style="background: var(--panel-background); border: 1px solid var(--border-color);">
+                <UCard :ui="{ body: { padding: 'p-2' }, header: { padding: 'p-0' }, background: 'bg-transparent', ring: 'ring-0', shadow: 'shadow-none' }" class="h-full flex flex-col" style="background: var(--panel-background); border: 1px solid var(--border-color);">
                   <template #header>
                     <div 
-                      class="flex items-center justify-between px-4 py-3 rounded-t-lg cursor-move"
+                      class="flex items-center justify-between px-3 py-3 rounded-t-lg cursor-move"
                       :style="{ backgroundColor: getColumnHeaderColor(column.color) }"
                       draggable="true"
                       @dragstart="onColumnDragStart($event, index)"
@@ -275,24 +272,28 @@
                 @dragend="onDragEnd"
                 @dragover.stop="onCardDragOver($event, cardIndex, column.status)"
                 @click.stop="openEditModal(card)"
-                style="background: var(--panel-background); border: 1px solid var(--border-color); color: var(--body-color);"
+                :style="{
+                  background: `${column.color}`,
+                  borderLeft: `3px solid ${column.color}`,
+                  borderTop: `1px solid var(--border-color)`,
+                  borderRight: `1px solid var(--border-color)`,
+                  borderBottom: `1px solid var(--border-color)`,
+                  color: 'var(--body-color)'
+                }"
               >
-                <div v-if="card.priority" class="mb-2">
-                  <UBadge :color="getPriorityColor(card.priority)" variant="solid" size="sm">
+                  <UBadge v-if="card.priority" :color="getPriorityColor(card.priority)" variant="solid" size="sm" class="text-left">
                     {{ card.priority }}
                   </UBadge>
-                </div>
-                <h4 class="font-semibold mb-2" style="color: var(--h2-color);">{{ card.title }}</h4>
-                <p class="text-sm mb-3 line-clamp-2" style="color: var(--p-color);">{{ card.description }}</p>
+                <h3 class="font-semibold mb-2" style="color: var(--h2-color);">{{ card.title }}</h3>
+                <h4 class="text-sm mb-3 line-clamp-2">{{ card.description }}</h4>
                 <div v-if="card.tags?.length" class="flex flex-wrap gap-1 mb-3">
                   <UBadge v-for="(tag, idx) in card.tags" :key="idx" color="blue" variant="soft" size="sm">
                     {{ tag }}
                   </UBadge>
                 </div>
                 <div class="flex items-center justify-between text-xs  pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <div v-if="card.assignee" class="flex items-center gap-1">
-                    <UIcon name="i-heroicons-user-circle" class="w-4 h-4" />
-                    <span>{{ activeProject?.members?.find((m: any) => m.userid == card.assignee || m.email == card.assignee)?.username || card.assignee }}</span>
+                  <div class="flex items-center gap-1">
+                    <MemberAvatarList :members="getCardMembers(card)" :maxVisible="3" size="xs" />
                   </div>
                   <div v-if="card.enddate" class="flex items-center gap-1">
                     <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
@@ -313,7 +314,7 @@
     <!-- LIST VIEW -->
     <div v-if="currentView === 'list'" ref="listViewRef" class="h-full flex flex-col rounded-lg shadow-sm border overflow-hidden" style="background: var(--panel-background); border-color: var(--border-color);">
         <!-- List Header -->
-        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+        <div class="px-6 py-2 border-b flex items-center justify-between" style="border-color: var(--border-color);">
             <h3 class="text-xl font-bold ">Task List</h3>
             <div class="flex items-center gap-3">
                 <!-- Group By Dropdown -->
@@ -334,33 +335,42 @@
         <!-- List Content -->
         <div class="flex-1 overflow-auto p-4 space-y-6">
             <div v-for="(groupTasks, groupName) in groupedTasks" :key="groupName" class="space-y-2">
-                 <!-- Group Header -->
-                <div class="flex items-center gap-2 group cursor-pointer" @click="groupTasks._collapsed = !groupTasks._collapsed">
+                 <!-- Group Header with Column Color -->
+                <div 
+                    class="flex items-center gap-2 px-4 py-3 rounded-lg cursor-pointer"
+                    :style="{ 
+                        background: getColumnColorByName(groupName),
+                        color: 'white'
+                    }"
+                    @click="groupTasks._collapsed = !groupTasks._collapsed"
+                >
                     <UIcon 
                         name="i-heroicons-chevron-down" 
-                        class="w-4 h-4  transition-transform" 
+                        class="w-4 h-4 text-white transition-transform" 
                         :class="{ '-rotate-90': groupTasks._collapsed }" 
                     />
-                    <h4 class="font-bold ">{{ groupName }}</h4>
-                    <span class="text-xs  px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">{{ groupTasks.length }}</span>
+                    <h4 class="font-bold text-white">{{ groupName }}</h4>
+                    <UBadge color="white" variant="solid" class="bg-white/20 text-white border-0">
+                        {{ groupTasks.length }}
+                    </UBadge>
                 </div>
 
                 <!-- Task Table -->
                  <div v-if="!groupTasks._collapsed" class="border rounded-lg shadow-sm overflow-x-auto" style="background: var(--panel-background); border-color: var(--border-color);">
-                    <!-- Table Header (Optional, mostly implied) -->
-                    <div class="grid grid-cols-12 gap-4 px-4 py-2 border-b text-xs font-semibold text-gray-500 min-w-[700px]" style="border-color: var(--border-color);">
-                        <div class="col-span-4">Task</div>
-                        <div class="col-span-2">Status</div>
-                        <div class="col-span-2">Due Date</div>
-                        <div class="col-span-2">Priority</div>
-                        <div class="col-span-2 text-right pr-2">Responsible</div>
+                    <!-- Table Header with Column Colors -->
+                    <div class="grid grid-cols-12 gap-4 px-4 py-1 border-b min-w-[700px]" style="border-color: var(--border-color);">
+                        <div class="col-span-4 text-sm font-bold">Task</div>
+                        <div class="col-span-2 text-sm font-bold">Status</div>
+                        <div class="col-span-2 text-sm font-bold">Due Date</div>
+                        <div class="col-span-2 text-sm font-bold">Priority</div>
+                        <div class="col-span-2 text-sm font-bold text-right pr-2">Responsible</div>
                     </div>
 
                     <!-- Task Rows -->
                     <div 
                         v-for="task in groupTasks" 
                         :key="task.cardid" 
-                        class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 items-center transition-colors cursor-pointer group/row min-w-[700px]"
+                        class="grid grid-cols-12 gap-4 px-4 py-1 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 items-center transition-colors cursor-pointer group/row min-w-[700px]"
                         @click="openEditModal(task)"
                     >
                          <!-- Title Column -->
@@ -401,8 +411,7 @@
                         <div class="col-span-2">
                              <UBadge 
                                 :color="columns.find(c => c.status === task.status)?.color || 'gray'" 
-                                variant="soft" 
-                                size="sm"
+                                variant="soft"                         
                                 class="capitalize"
                              >
                                 {{ getColumnName(task.status) }}
@@ -428,21 +437,9 @@
                             </div>
                         </div>
 
-                        <!-- Responsible Column -->
+                         <!-- Responsible Column -->
                          <div class="col-span-2 flex items-center justify-end pr-2">
-                             <div 
-                                v-if="task.assignee" 
-                                class="flex items-center gap-2 px-2 py-1 rounded-full bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600"
-                             >
-                                 <UAvatar 
-                                    :alt="activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || task.assignee" 
-                                    size="sm" 
-                                />
-                                <span class="text-sm truncate max-w-[80px]">
-                                    {{ activeProject?.members?.find((m:any) => m.userid == task.assignee || m.email == task.assignee)?.username || 'Unknown' }}
-                                </span>
-                             </div>
-                             <div v-else class="text-sm  italic">Unassigned</div>
+                             <MemberAvatarList :members="getCardMembers(task)" :maxVisible="2" size="sm" />
                          </div>
                     </div>
                     
@@ -3399,13 +3396,6 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
   // Persist to backend
   const res = await projectStore.saveCard(draggedCard.value,activeProject.value)
   if (res?.code == 200) {
-	  toast.add({
-		title: 'Card Moved',
-		description: `Moved to ${getColumnName(newStatus)}`,
-		color: 'green',
-		icon: 'i-heroicons-check-circle',
-	  });
-
 	  draggedCard.value = null;
   } else {
 	  toast.add({
@@ -3838,7 +3828,52 @@ const getCardColorClass = (status: string, enddate: string) => {
   return '!bg-white dark:!bg-gray-800'; // More than 5 days away
 };
 
+// Get column color by group name (for list view)
+const getColumnColorByName = (groupName: string): string => {
+  // If grouping by status, find the column with matching title
+  const column = columns.value.find(c => c.title === groupName || c.status === groupName);
+  return column?.color || '#6b7280'; // Default to gray if not found
+};
+
+// Get members assigned to a card
+const getCardMembers = (card: any): any[] => {
+  // Use project members if available, otherwise fallback to all users
+  const pool = (activeProject.value?.members && activeProject.value.members.length > 0) 
+      ? activeProject.value.members 
+      : users.value;
+      
+  if (!pool || pool.length === 0) {
+      // If we have no pool but have an assignee, return placeholder
+      if (card.assignee) return [{ name: card.assignee }];
+      return [];
+  }
+
+  // Handle new multi-assignee format
+  if (card.assignees && Array.isArray(card.assignees) && card.assignees.length > 0) {
+    return card.assignees
+      .map((userId: any) => pool.find((m: any) => m.userid == userId || m.useraccessid == userId || m.id == userId))
+      .filter(Boolean);
+  }
+  
+  // Handle legacy single assignee
+  if (card.assignee) {
+      // Use loose equality (==) to match string '5' with number 5
+      const member = pool.find((m: any) => m.userid == card.assignee || m.useraccessid == card.assignee || m.id == card.assignee);
+      
+      // Verification log if member not found (temporary for debugging)
+      if (!member && card.assignee) {
+          // console.log(`Member lookup failed for attributes: ${card.assignee}. Pool size: ${pool.length}`);
+      }
+      
+      // Return member if found, otherwise create a placeholder
+      return member ? [member] : [{ name: card.assignee }];
+  }
+  
+  return [];
+};
+
 // ========== ADVANCED FEATURES FUNCTIONS ==========
+
 
 // Project Modal Functions
 const openProjectModal = (project: any) => {
