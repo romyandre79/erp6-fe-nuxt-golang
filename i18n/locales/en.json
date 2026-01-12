@@ -525,12 +525,15 @@
       "EPROCUREMENT": "E-Procurement",
       "HR": "Human Resource",
       "PROJECT": "Project Mgmt"
-    },
-  "SLOC ACCOUNTING": "Sloc Accounting",
+    }
+  },
+    "SLOC ACCOUNTING": "Sloc Accounting",
   "SLOC": "Storage Location",
 	"PROJECT": "Project",
 	"KANBAN": "Kanban",
   "TIME SCHEDULE": "Time Schedule",
-  "ONLEAVE QUOTA": "Onleave Quota"
-  }
+  "ONLEAVE QUOTA": "Onleave Quota",
+  "DOCUMENT": "Document",
+  "AI COMMAND": "AI Command",
+  "TEMPLATE": "Template"
 }

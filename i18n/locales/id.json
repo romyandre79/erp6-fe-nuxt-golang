@@ -380,5 +380,14 @@
       "HR": "Sumber Daya Manusia",
       "PROJECT": "Manajemen Proyek"
     }
-  }
+  },
+    "SLOC ACCOUNTING": "Akuntansi Gudang",
+  "SLOC": "Gudang/Departemen",
+	"PROJECT": "Project",
+	"KANBAN": "Kanban",
+  "TIME SCHEDULE": "Jadwal",
+  "ONLEAVE QUOTA": "Cuti Kuota",
+  "DOCUMENT": "Dokumen",
+  "AI COMMAND": "AI Command",
+  "TEMPLATE": "Template"
 }
