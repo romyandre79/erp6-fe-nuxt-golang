@@ -389,5 +389,8 @@
   "ONLEAVE QUOTA": "Cuti Kuota",
   "DOCUMENT": "Dokumen",
   "AI COMMAND": "AI Command",
-  "TEMPLATE": "Template"
+  "TEMPLATE": "Template",
+  "AI Document": "Dokumen AI",
+  "ORDER": "Penjualan",
+  "MARKETING": "Pemasaran"
 }

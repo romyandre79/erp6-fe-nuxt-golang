@@ -531,6 +531,9 @@
 	"PROJECT": "项目",
 	"KANBAN": "看板",
   "TIME SCHEDULE": "时间表",
-  "ONLEAVE QUOTA": "请假配额"
+  "ONLEAVE QUOTA": "请假配额",
+  "AI Document": "人工智慧文檔",
+  "ORDER": "預訂",
+  "MARKETING": "行銷"
   }
 }

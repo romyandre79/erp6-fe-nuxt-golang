@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormCalendar, FormGantt, FormHtmlEditor } from '#components';
+import { UModal, UButton, USwitch, USeparator,TablePagination, FormSelect, FormSelectGroup, FormWizard, DetailTableInline, KanbanBoard, FormOrgChart, FormSchedule, FormCalendar, FormGantt, FormHtmlEditor } from '#components';
 import { useToast, useApi, useI18n, toRaw, onMounted } from '#imports';
 import { navigateTo } from '#app';
 import {
@@ -987,6 +987,26 @@ function renderComponent(component: any) {
       });
 
 
+
+    case 'schedule':
+      if (!(component.props.key in formData.value)) formData.value[component.props.key] = 'now';
+      
+      const modelSchedule = computed({
+        get: () => formData.value[component.props.key],
+        set: (val) => {
+          formData.value[component.props.key] = val;
+        },
+      });
+
+      return h(FormSchedule, {
+        modelValue: modelSchedule.value,
+        'onUpdate:modelValue': (val: string) => {
+          modelSchedule.value = val;
+        },
+        label: component.props.text ? $t(component.props.text.toUpperCase()) : 'Schedule',
+        class: component.props.class || '',
+      });
+
     case 'selectgroup':
       return renderSelectGroup(component)
 
@@ -1496,6 +1516,24 @@ function renderKanban(container: any) {
   });
 }
 
+function renderMegaBox(component: any) {
+    // Import FormMegaBox component dynamically
+    const FormMegaBox = resolveComponent('FormMegaBox');
+    
+    // Ensure key exists in formData
+    if (!(component.props.key in formData.value)) {
+        formData.value[component.props.key] = null;
+    }
+
+    // We pass renderContainer as the renderChild prop so MegaBox can render its children
+    return h(FormMegaBox, {
+        component: component,
+        formData: formData.value,
+        renderChild: renderContainer,
+        validationErrors: validationErrors
+    });
+}
+
 
 function renderContainer(container: any) {
   if (!container) return null;
@@ -1594,6 +1632,8 @@ function renderContainer(container: any) {
           return renderContainer(component);
         case 'kanban':
           return renderKanban(component);
+        case 'megabox':
+          return renderMegaBox(component);
         case 'action':
           break;
 

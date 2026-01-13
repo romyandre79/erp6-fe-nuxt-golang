@@ -535,5 +535,8 @@
   "ONLEAVE QUOTA": "Onleave Quota",
   "DOCUMENT": "Document",
   "AI COMMAND": "AI Command",
-  "TEMPLATE": "Template"
+  "TEMPLATE": "Template",
+  "AI Document": "AI Document",
+  "ORDER": "Order",
+  "MARKETING": "Marketing"
 }
