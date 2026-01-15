@@ -1,5 +1,5 @@
 <template>
-  <header class="flex items-center justify-between px-6 py-3 transition-colors duration-300 overflow-visible">
+  <header class="flex items-center justify-between px-6 py-1 transition-colors duration-300 overflow-visible">
     <!-- LEFT: Breadcrumb or empty -->
     <div class="flex items-center gap-3">
       <!-- Can add breadcrumbs here if needed -->

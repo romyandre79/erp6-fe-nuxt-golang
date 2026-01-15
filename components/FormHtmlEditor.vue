@@ -146,6 +146,52 @@
 
         <div class="w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
+        <!-- Media -->
+        <button
+          @click="addImage"
+          :class="{ 'bg-gray-200 dark:bg-gray-700': editor.isActive('image') }"
+          class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          type="button"
+          title="Add Image"
+        >
+          <UIcon name="i-heroicons-photo" class="w-4 h-4" />
+        </button>
+        <button
+          @click="addVideo"
+          :class="{ 'bg-gray-200 dark:bg-gray-700': editor.isActive('youtube') }"
+          class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          type="button"
+          title="Add Video (YouTube)"
+        >
+          <UIcon name="i-heroicons-video-camera" class="w-4 h-4" />
+        </button>
+
+        <UPopover :popper="{ placement: 'bottom-start' }">
+          <button
+            class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            type="button"
+            title="Add Emoji"
+          >
+            <UIcon name="i-heroicons-face-smile" class="w-4 h-4" />
+          </button>
+
+          <template #panel>
+            <div class="p-2 w-64 grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+              <button
+                v-for="emoji in emojis"
+                :key="emoji"
+                @click="editor.chain().focus().insertContent(emoji).run()"
+                class="hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 text-lg leading-none"
+                type="button"
+              >
+                {{ emoji }}
+              </button>
+            </div>
+          </template>
+        </UPopover>
+
+        <div class="w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
         <!-- Clear Formatting -->
         <button
           @click="editor.chain().focus().clearNodes().unsetAllMarks().run()"
@@ -160,7 +206,7 @@
       <!-- Editor Content -->
       <EditorContent 
         :editor="editor" 
-        class="prose max-w-none p-3 min-h-[200px] focus:outline-none"
+        class="prose dark:prose-invert max-w-none p-3 min-h-[200px] focus:outline-none [&_.is-editor-empty]:before:content-[attr(data-placeholder)] [&_.is-editor-empty]:before:text-gray-400 [&_.is-editor-empty]:before:float-left [&_.is-editor-empty]:before:pointer-events-none"
       />
     </div>
 
@@ -175,6 +221,8 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
+import Youtube from '@tiptap/extension-youtube'
 
 const props = defineProps({
   modelValue: {
@@ -205,13 +253,31 @@ const errorClass = computed(() => {
   return props.error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
 })
 
+// Common emojis
+const emojis = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+  '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+  '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+  '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+  '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
+  '👆', '👇', '✋', '👋', '👏', '🙌', '👐', '🤲', '🤝', '🙏',
+  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+  '🔥', '✨', '🌟', '💫', '💥', '💢', '💦', '💧', '💤', '👋'
+]
+
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
     StarterKit,
     Underline,
+    Image,
+    Youtube.configure({
+      controls: false,
+      nocookie: true,
+    }),
     TextAlign.configure({
-      types: ['heading', 'paragraph'],
+      types: ['heading', 'paragraph', 'image'],
     }),
     Link.configure({
       openOnClick: false,
@@ -222,7 +288,7 @@ const editor = useEditor({
   ],
   editorProps: {
     attributes: {
-      class: 'prose dark:prose-invert max-w-none focus:outline-none',
+      class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[200px]',
     },
   },
   onUpdate: ({ editor }) => {
@@ -251,6 +317,22 @@ const setLink = () => {
   }
 
   editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+}
+
+const addImage = () => {
+  const url = window.prompt('Enter image URL:')
+
+  if (url) {
+    editor.value?.chain().focus().setImage({ src: url }).run()
+  }
+}
+
+const addVideo = () => {
+  const url = window.prompt('Enter YouTube URL:')
+
+  if (url) {
+    editor.value?.chain().focus().setYoutubeVideo({ src: url }).run()
+  }
 }
 
 onBeforeUnmount(() => {

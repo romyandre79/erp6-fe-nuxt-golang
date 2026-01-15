@@ -437,6 +437,33 @@ export const availableComponents = [
       enabled: true,
       required: false,
     },
+  },
+  {
+    type: 'schedule',
+    label: 'Schedule',
+    icon: 'heroicons:clock',
+    component: 'FormSchedule',
+    props: {
+      key: '',
+      label: 'Schedule',
+	  text: 'Schedule',
+      class: '',
+      required: false,
+    },
+  },
+  {
+    type: 'megabox',
+    label: 'Mega Box',
+    icon: 'heroicons:square-3-stack-3d',
+    component: 'input',
+    props: {
+        key: '',
+        text: 'Mega Box',
+        place: 'Select...',
+        class: '',
+        searchable: true,
+    },
+    children: []
   }
 ];
 
