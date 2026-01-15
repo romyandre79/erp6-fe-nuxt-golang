@@ -77,6 +77,7 @@
                 @select="selectComponent"
                 @drop-child="onDropChild"
                 @delete="deleteNode"
+                @duplicate="handleDuplicate"
               />
             </div>
           </template>
@@ -218,6 +219,35 @@ const deleteNode = (target: NodeSchema) => {
 
   removeFrom(canvasComponents.value);
   selected.value = null;
+};
+
+const handleDuplicate = (node: NodeSchema) => {
+  const newComp = cloneComponentWithNewIds(node);
+  
+  const findParentAndInsert = (nodes: NodeSchema[], targetId: string): boolean => {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === targetId) {
+        nodes.splice(i + 1, 0, newComp);
+        return true;
+      }
+      if (nodes[i].children && findParentAndInsert(nodes[i].children!, targetId)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (!findParentAndInsert(canvasComponents.value, node.id)) {
+      // Fallback if not found (unexpected)
+      canvasComponents.value.push(newComp);
+  }
+  
+  toast.add({ 
+    title: 'Component Duplicated', 
+    description: `"${newComp.label}" duplicated successfully`, 
+    color: 'success',
+    timeout: 2000
+  });
 };
 
 const selectComponent = (node: NodeSchema) => {

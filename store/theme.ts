@@ -67,7 +67,7 @@ export const useThemeStore = defineStore('theme', () => {
   };
 
   // Apply theme
-  const applyTheme = async (key: string) => {
+  const applyTheme = async (key: string, shouldBroadcast = true) => {
     // Guard: prevent duplicate calls if theme is already applied and themes are loaded
     if (theme.value === key && themeList.value.length > 0) {
       return;
@@ -93,6 +93,13 @@ export const useThemeStore = defineStore('theme', () => {
     }
     themeCookie.value = key;
     document.documentElement.setAttribute('data-theme', key);
+
+    if (shouldBroadcast) {
+      const { $broadcast } = useNuxtApp();
+      if ($broadcast) {
+        $broadcast.postMessage({ type: 'theme_change', payload: { theme: key } });
+      }
+    }
   };
 
   // initialize

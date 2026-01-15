@@ -75,7 +75,14 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async logout() {
+    async logout(shouldBroadcast = true) {
+      if (shouldBroadcast) {
+        const { $broadcast } = useNuxtApp();
+        if ($broadcast) {
+           $broadcast.postMessage({ type: 'logout' });
+        }
+      }
+
       const tokenCookie = useCookie('token');
       const userCookie = useCookie('user');
       tokenCookie.value = null;
