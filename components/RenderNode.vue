@@ -5,8 +5,17 @@
       v-if="!preview"
       class="absolute top-1 right-1 text-xs bg-red-500 cursor-pointer text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10"
       @click.stop="confirmDelete"
+      title="Delete"
     >
       ✖
+    </button>
+    <button
+      v-if="!preview"
+      class="absolute top-1 right-7 text-xs bg-blue-500 cursor-pointer text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10"
+      @click.stop="emitDuplicate"
+      title="Duplicate"
+    >
+      ❐
     </button>
 
     <!-- 🔹 Container node -->
@@ -48,6 +57,7 @@
             @select="emit('select', $event)"
             @drop-child="emit('drop-child', $event)"
             @delete="emit('delete', $event)"
+            @duplicate="emit('duplicate', $event)"
           />
         </template>
 
@@ -92,7 +102,7 @@ const props = defineProps({
   preview: { type: Boolean, default: false },
   showJson: { type: Boolean, default: false },
 });
-const emit = defineEmits(['select', 'drop-child', 'delete']);
+const emit = defineEmits(['select', 'drop-child', 'delete', 'duplicate']);
 
 const isDragOver = ref(false);
 const containerTypes = layoutContainers.map((c) => c.type);
@@ -140,6 +150,7 @@ const onDrop = (event: DragEvent) => {
 
 // 🔹 Delete confirmation
 const confirmDelete = () => emit('delete', props.node);
+const emitDuplicate = () => emit('duplicate', props.node);
 
 const onChildChange = () => emit('select', props.node);
 

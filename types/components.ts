@@ -306,6 +306,7 @@ export const availableComponents = [
       primary: false,
       enabled: true,
       required: false,
+      multiple: false,
       dependency: [],
     },
   },

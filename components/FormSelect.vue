@@ -11,6 +11,10 @@ interface Props {
     source?: string;
     place?: string;
     valueField?: string;
+    primary?: bool,
+    enabled?: bool,
+    required?: bool,
+    multiple?: bool,
     dependency?: { key: string; param: string }[];
   };
   formData: Ref<Record<string, any>>;

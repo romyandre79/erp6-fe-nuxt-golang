@@ -802,12 +802,12 @@ const initWebSocket = () => {
     
     const wsUrl = `${wsBase}/api/ws/notifications?token=${token.value}`;
 
-    console.log("[AiAssistant] Connecting to Chat WS:", wsUrl);
+    //console.log("[AiAssistant] Connecting to Chat WS:", wsUrl);
     
     socket = new WebSocket(wsUrl);
     
     socket.onopen = () => {
-        console.log("[AiAssistant] Chat WS Connected");
+        //console.log("[AiAssistant] Chat WS Connected");
     };
 
     socket.onmessage = async (event) => {
@@ -848,7 +848,7 @@ onMounted(() => {
 
 
 const handleWsMessage = async (payload: any) => {
-    console.log("WS Msg:", payload);
+    //console.log("WS Msg:", payload);
     
     // AI Chat Message (from backend workflow)
     if (payload.type === 'chat' && payload.message) {

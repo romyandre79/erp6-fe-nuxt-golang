@@ -77,6 +77,7 @@
                 @select="selectComponent"
                 @drop-child="onDropChild"
                 @delete="deleteNode"
+                @duplicate="handleDuplicate"
               />
             </div>
           </template>
@@ -204,6 +205,55 @@ const deleteNode = (target: NodeSchema) => {
 
   removeFrom(canvasComponents.value);
   selected.value = null;
+};
+
+
+
+const generateNewId = (): string => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
+const cloneComponentWithNewIds = (component: NodeSchema): NodeSchema => {
+  const cloned: NodeSchema = {
+    ...component,
+    id: generateNewId(),
+    props: { ...component.props }
+  };
+  
+  if (component.children && component.children.length > 0) {
+    cloned.children = component.children.map(child => cloneComponentWithNewIds(child));
+  }
+  
+  return cloned;
+};
+
+const handleDuplicate = (node: NodeSchema) => {
+  const newComp = cloneComponentWithNewIds(node);
+  
+  const findParentAndInsert = (nodes: NodeSchema[], targetId: string): boolean => {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === targetId) {
+        nodes.splice(i + 1, 0, newComp);
+        return true;
+      }
+      if (nodes[i].children && findParentAndInsert(nodes[i].children!, targetId)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (!findParentAndInsert(canvasComponents.value, node.id)) {
+      // Fallback if not found
+      canvasComponents.value.push(newComp);
+  }
+  
+  toast.add({ 
+    title: 'Component Duplicated', 
+    description: `"${newComp.label}" duplicated successfully`, 
+    color: 'success',
+    timeout: 2000
+  });
 };
 
 const selectComponent = (node: NodeSchema) => {
