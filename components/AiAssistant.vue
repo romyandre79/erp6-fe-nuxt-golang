@@ -820,11 +820,11 @@ const initWebSocket = () => {
     };
 
     socket.onclose = (e) => {
-        console.log("[AiAssistant] Chat WS Closed", e.code, e.reason);
+        //console.log("[AiAssistant] Chat WS Closed", e.code, e.reason);
         socket = null;
         // Auto Reconnect after 3s
         setTimeout(() => {
-            console.log("[AiAssistant] Attempting Reconnect...");
+            //console.log("[AiAssistant] Attempting Reconnect...");
             initWebSocket();
         }, 3000);
     };
@@ -914,7 +914,7 @@ const handleWsMessage = async (payload: any) => {
             // New user coming online (or previously filtered out?) -> Refetch list
             // Only refetch if we are on the tab or list is populated (to avoid random fetches)
             if (activeTab.value === 'people' || users.value.length > 0) {
-                 console.log("New user status detected, refreshing list...");
+                 //console.log("New user status detected, refreshing list...");
                  fetchUsers();
             }
         }
@@ -997,7 +997,7 @@ const sendChatMessage = () => {
     const targetId = selectedUser.value.useraccessid;
     const timestamp = new Date().toISOString();
 
-    console.log("Attempting to send chat to", targetId, "via socket state:", socket?.readyState);
+    //console.log("Attempting to send chat to", targetId, "via socket state:", socket?.readyState);
 
     // Send via WS
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -1007,7 +1007,7 @@ const sendChatMessage = () => {
             data: { text, attachment: att, filesize: attSize, timestamp }
         });
         socket.send(payload);
-        console.log("Sent payload:", payload);
+        //console.log("Sent payload:", payload);
     } else {
         console.error("Socket not open!");
     }

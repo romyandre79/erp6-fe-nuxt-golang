@@ -666,20 +666,20 @@ function handleWorkflowEvent(payload: any) {
     case 'node_start':
       nodeEl.classList.add('node-running');
       nodeStates.value.set(nodeId, 'running');
-      console.log(`Node ${nodeId} (${payload.componentName}) started`);
+      //console.log(`Node ${nodeId} (${payload.componentName}) started`);
       break;
       
     case 'node_complete':
       nodeEl.classList.add('node-success');
       nodeStates.value.set(nodeId, 'success');
-      console.log(`Node ${nodeId} (${payload.componentName}) completed in ${payload.executionTime}ms`);
+      //console.log(`Node ${nodeId} (${payload.componentName}) completed in ${payload.executionTime}ms`);
       break;
       
     case 'node_error':
       nodeEl.classList.add('node-error');
       nodeStates.value.set(nodeId, 'error');
       nodeErrors.value.set(nodeId, payload.error || 'Unknown error');
-      console.log(`Node ${nodeId} (${payload.componentName}) failed:`, payload.error);
+      //console.log(`Node ${nodeId} (${payload.componentName}) failed:`, payload.error);
       break;
   }
 }
@@ -1219,7 +1219,7 @@ async function exportImage() {
 
 const copySchema = async () => {
   const name = window.prompt('Copy Schema From ? ');
-  console.log(name)
+  //console.log(name)
   if (name) {
     try {
       await store.copyFlow(name);

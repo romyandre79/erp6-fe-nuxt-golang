@@ -406,6 +406,7 @@ import { title } from 'process'
 
 const props = defineProps({
   availableApps: { type: Array, required: true },
+  availableComponent: { type: Array, required: true },
   availableWorkflows: { type: Array, default: () => [] },
   theme: { type: String, default: 'light' },
   moduleName: { type: String, default: 'ERP' },
@@ -682,9 +683,9 @@ const getDeploymentTitle = (mode) => {
 }
 
 const getDeploymentDesc = (mode) => {
-  if (mode === 'cloud') return 'Monthly Subscription. Managed Infrastructure.'
-  if (mode === 'onprem_license') return 'One-time License. No Source Code.'
-  return 'One-time Purchase. With Source Code.'
+  if (mode === 'cloud') return $t('ERP.PRICING.MONTHLY_SUBSCRIPTION')
+  if (mode === 'onprem_license') return $t('ERP.PRICING.ONETIME_NOCODE')
+  return $t('ERP.PRICING.ONETIME_CODE')
 }
 
 const getModuleClass = (id) => {

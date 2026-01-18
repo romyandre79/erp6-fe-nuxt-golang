@@ -87,7 +87,7 @@ onMounted(async () => {
         if (res.code === 200 && Array.isArray(res?.data?.data)) {
            const selectedValues = res.data.data.map((item: Record<string, any>) => item[valueField] ?? item['id']);
            formData.value[component.key] = selectedValues;
-           console.log(formData)
+           //console.log(formData)
         }
       } else {
          formData.value[component.key] = arr;

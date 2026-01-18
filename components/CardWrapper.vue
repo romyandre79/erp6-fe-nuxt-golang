@@ -28,7 +28,7 @@ export default defineComponent({
           const res = await Api.post('api/admin/execute-flow', dataForm);
           if (res.code === 200) {
             data.value = res.data.data;
-            console.log(data.value);
+            //console.log(data.value);
           }
         } catch (err) {
           console.error(err);
