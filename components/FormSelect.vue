@@ -101,7 +101,7 @@ if (component.dependency && Array.isArray(component.dependency)) {
       const isChanged = newVal.some((val, i) => val !== oldVal[i]);
       if (isChanged) {
         // Reset current value
-        formData.value[component.key] = null; 
+        //formData.value[component.key] = null; 
         await fetchData();
       }
     }
