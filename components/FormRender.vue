@@ -246,10 +246,10 @@ async function refreshMasterData(recId: any) {
 async function edit(key: string) {
   // Check if this is a detail modal by looking for the modal in the schema
   const modal = modals.value.find((m: any) => m.props.key === key);
-  console.log('modal ',modal)
+  //console.log('modal ',modal)
   // Determine if this is a detail modal by checking if the key contains "detail"
   const isDetailModal = modal && key.toLowerCase().includes('detail');
-    console.log('isDetailModal ',isDetailModal)
+    //console.log('isDetailModal ',isDetailModal)
   if (isDetailModal) {
     // Handle detail modal edit
     // Get the detail table that this modal is associated with
@@ -316,12 +316,12 @@ async function edit(key: string) {
     const lockEnabled = master?.props?.lock === true;
     const flow = getAction('get');
 
-    console.log('flow ',flow)
-    console.log('selectedRows.value ',selectedRows.value)
+    //console.log('flow ',flow)
+    //console.log('selectedRows.value ',selectedRows.value)
 
     if (flow && selectedRows.value.length > 0) {
       const primary = getPrimary();
-       console.log('primary ',primary)
+      //console.log('primary ',primary)
       
       // 🔒 Try to lock record if locking is enabled
       if (lockEnabled) {

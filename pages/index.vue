@@ -4,20 +4,34 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
-  { id: 'engine', name: 'Capella', price: 2000000, icon: '📊' },
-  //{ id: 'accounting', name: 'Accounting', price: 250000, icon: '💰' },
-  //{ id: 'warehouse', name: 'Warehouse / Inventory', price: 150000, icon: '📦' },
-  //{ id: 'order', name: 'Order Management', price: 50000, icon: '🛒' },
+  { id: 'engine6', name: 'Capella Engine v6', price: 2000000, icon: '🖥️' },
+  { id: 'accounting6', name: 'Accounting v6', price: 250000, icon: '💰' },
+  { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 200000, icon: '📦' },
+  { id: 'order6', name: 'Order Management v6', price: 100000, icon: '🛒' },
+  { id: 'purchasing6', name: 'Purchasing v6', price: 100000, icon: '🛒' },
+  { id: 'production6', name: 'Production v6', price: 200000, icon: '📊' },
   //{ id: 'erp_proj', name: 'Project', price: 250000, icon: '🛠️' },
-  //{ id: 'erp_prod', name: 'Production', price: 250000, icon: '📊' },
   //{ id: 'ess', name: 'ESS', price: 100000, icon: '🙋' },
   //{ id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },
   //{ id: 'career', name: 'Career', price: 100000, icon: '👥' },
   //{ id: 'customer_pro', name: 'Customer Professional', price: 50000, icon: '🤝' },
   //{ id: 'pos_retail', name: 'POS Retail', price: 100000, icon: '🏪' },
+  { id: 'engine5-std', name: 'Capella Engine v5', price: 1500000, icon: '🖥️' },
+  { id: 'engine5-cms-std', name: 'Capella CMS Engine v5', price: 1500000, icon: '🖥️' },
+  { id: 'accounting5', name: 'Capella Accounting v5', price: 200000, icon: '💰️' },
+  { id: 'warehouse5', name: 'Capella Warehouse v5', price: 100000, icon: '📦' },
+  { id: 'purchasing5', name: 'Capella Purchasing v5', price: 100000, icon: '🖥️' },
+  { id: 'order5', name: 'Capella Order v5', price: 100000, icon: '🖥️' },
+  { id: 'production5', name: 'Capella Production v5', price: 200000, icon: '🖥️' },
   { id: 'pentest', name: 'Security Scanner', price: 2000000, icon: '🛡️' },
   { id: 'remindax', name: 'Remindax', price: 50000, icon: '🔔' },
-  { id: 'umkm', name: 'UMKM', price: 200000, icon: '🏪' },
+  { id: 'umkm', name: 'UMKM Transactions', price: 200000, icon: '🏪' },
+]
+
+const allComponent = [
+  { id: 'amazon', name: 'Amazon SES', price: 5000, icon: '🅰️' },
+  { id: 'telegram', name: 'Accounting', price: 5000, icon: '📢' },
+  { id: 'wabot', name: 'WA Bot', price: 5000, icon: '🟢️' },
 ]
 
 definePageMeta({
@@ -988,6 +1002,7 @@ useHead({
             
             <PricingCalculator 
               :available-apps="allApps"
+              :available-components="allComponent"
               theme="dark"
               module-name="Enterprise Bundle"
               :initial-selected-apps="['erp_core']"

@@ -2099,7 +2099,7 @@ const loadProjectMembers = async () => {
     
     // Fallback if members is empty but data exists in unexpected format
     if (members.length === 0 && res.data && typeof res.data === 'object') {
-       console.log('Checking alternative data locations', res.data);
+       //console.log('Checking alternative data locations', res.data);
     }
 
     if (activeProject.value) {
@@ -2388,7 +2388,7 @@ const selectTemplate = (template: any) => {
   };
   
   isProjectModalOpen.value = true;
-  console.log('📋 Selected template:', template.name, 'with', columns.value.length, 'columns');
+  //console.log('📋 Selected template:', template.name, 'with', columns.value.length, 'columns');
 };
 
 const getCurrentUserRole = async() => {

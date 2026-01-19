@@ -503,7 +503,10 @@
       "BILLED_YEARLY": "Billed Annually. Save {percentage}% + discount. Monthly equivalent: $ {amount}",
       "PAYG_NOTE": "Includes 5.000 transactions. Excess billed per module rate.",
       "NO_MONTHLY_FEE": "No monthly fee (excluding support).",
-      "TOTAL_YEARLY_COST": "Total Yearly Cost"
+      "TOTAL_YEARLY_COST": "Total Yearly Cost",
+	  "MONTHLY_SUBSCRIPTION": "Monthly Subscription. Managed Infrastructure.",
+	  "ONETIME_NOCODE": "License Per Year. No Source Code.",
+	  "ONETIME_CODE": "One-time Purchase. With Source Code."
     },
     "DEMO": {
       "TITLE": "Request a Demo",
@@ -539,5 +542,6 @@
   "AI Document": "AI Document",
   "ORDER": "Order",
   "MARKETING": "Marketing",
-  "WHATSAPP DEVICE": "Whatsapp Device"
+  "WHATSAPP DEVICE": "Whatsapp Device",
+  "MAN POWER PLANNING": "Man Power Planning"
 }
