@@ -230,6 +230,7 @@
   "TITLE": "Title",
   "TRANSFER STOCK IN": "Transfer Stock In",
   "TRANSFER STOCK LIST": "Transstock List",
+  "TRANSFER STOCK FG": "Transstock FG",
   "TRANSFER STOCK FG LIST": "Transstock FG List",
   "TRANSFER STOCK OUT": "Transfer Stock Out",
   "TRANSACTION LOG": "Transaction Log",
@@ -532,6 +533,8 @@
   },
     "SLOC ACCOUNTING": "Sloc Accounting",
   "SLOC": "Storage Location",
+  "STORAGE LOCATION": "Storage Location",
+  "STORAGE BIN": "Storage Bin",
 	"PROJECT": "Project",
 	"KANBAN": "Kanban",
   "TIME SCHEDULE": "Time Schedule",
@@ -539,9 +542,10 @@
   "DOCUMENT": "Document",
   "AI COMMAND": "AI Command",
   "TEMPLATE": "Template",
-  "AI Document": "AI Document",
+  "AI DOCUMENT": "AI Document",
   "ORDER": "Order",
   "MARKETING": "Marketing",
   "WHATSAPP DEVICE": "Whatsapp Device",
-  "MAN POWER PLANNING": "Man Power Planning"
+  "MAN POWER PLANNING": "Man Power Planning",
+  "ARTICLE SHOWCASE": "Article Showcase"
 }

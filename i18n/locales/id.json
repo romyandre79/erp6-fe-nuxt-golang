@@ -299,11 +299,14 @@
   "DOCUMENT": "Dokumen",
   "AI COMMAND": "Perintah AI",
   "TEMPLATE": "Template",
-  "AI Document": "Dokumen AI",
+  "AI DOCUMENT": "Dokumen AI",
   "ORDER": "Pesanan",
   "MARKETING": "Pemasaran",
   "WHATSAPP DEVICE": "Perangkat WhatsApp",
   "MAN POWER PLANNING": "Perencanaan Tenaga Kerja",
+  "ARTICLE SHOWCASE": "Stok Artikel",
+  "STORAGE LOCATION": "Departemen/Gudang",
+  "STORAGE BIN": "Rak/Area",
   "ERP": {
     "HERO": {
       "TITLE_PREFIX": "Tingkatkan Bisnis Anda",

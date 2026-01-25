@@ -293,11 +293,35 @@
                 </div>
              </div>
              <!-- Input -->
-             <div class="p-3 border-t border-gray-200 dark:border-gray-700">
-                <form @submit.prevent="sendAiMessage" class="flex gap-2">
-                    <input v-model="aiInput" type="text" placeholder="Type a command..." class="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <button type="submit" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700">
-                        <i class="fa-solid fa-paper-plane px-1"></i>
+             <div class="p-3 border-t border-gray-200 dark:border-gray-700 relative">
+                <!-- Attachment Preview -->
+                <div v-if="aiAttachmentName" class="absolute bottom-16 left-4 right-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-2 flex items-center justify-between shadow-lg animate-slide-up border border-indigo-200 dark:border-indigo-900">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                            <div class="w-8 h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-file"></i>
+                            </div>
+                            <span class="text-sm truncate font-medium text-gray-700 dark:text-gray-200">{{ aiAttachmentName }}</span>
+                    </div>
+                    <button @click="removeAiAttachment" class="text-gray-500 hover:text-red-500 transition-colors p-1">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="sendAiMessage" class="flex gap-2 items-center">
+                    <input type="file" ref="aiFileInput" hidden @change="handleAiFileUpload" />
+                    
+                    <button type="button" @click="triggerAiFileUpload" class="p-2 text-gray-500 hover:text-indigo-600 transition-colors" title="Attach Document for AI Context">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </button>
+
+                    <input v-model="aiInput" 
+                        type="text" 
+                        placeholder="Type a command or ask about the document..." 
+                        class="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                        @keydown.enter.prevent="sendAiMessage"
+                    />
+                    <button type="submit" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 w-10 h-10 flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
                     </button>
                 </form>
              </div>
@@ -586,6 +610,13 @@ const formatBytes = (bytes: number) => {
 const chatHistory = ref<Record<number, {text: string, senderId: number, timestamp: string, attachment?: string}[]>>({});
 const unreadCounts = ref<Record<number, number>>({});
 const isAiProcessing = ref(false);
+const aiAttachment = ref<string|null>(null);
+const aiAttachmentName = ref<string|null>(null);
+const aiAttachmentId = ref<string|null>(null);
+const aiAttachmentPath = ref<string|null>(null);
+const aiFileInput = ref<HTMLInputElement|null>(null);
+const aiSyncChannel = ref<BroadcastChannel | null>(null);
+
 const isBusy = computed(() => 
     isAiProcessing.value || 
     loadingUsers.value || 
@@ -595,7 +626,90 @@ const isBusy = computed(() =>
     reportLoading.value
 );
 
+const triggerAiFileUpload = () => {
+    aiFileInput.value?.click();
+};
 
+const handleAiFileUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const config = useRuntimeConfig();
+    const maxSize = Number(config.public.chatMaxFileSize) || 10485760; // Default 10MB
+
+    // Validate Size
+    if (file.size > maxSize) {
+        alert(`File too large. Max size is ${maxSize / 1024 / 1024}MB.`);
+        input.value = '';
+        return;
+    }
+
+    // Validate Type (PDF, Doc, Excel, Images)
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    // Always use generic upload as requested ("not just use for AI purpose")
+    let component = 'upload';
+
+    // Upload
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('component', component);
+        
+        isAiProcessing.value = true;
+        
+        // Capture raw response to debug
+        const rawResponse: any = await post('/api/admin/ai/upload', formData);
+        console.log("AI Upload Raw Response:", rawResponse);
+
+        // Handle different response structures (Axios vs Fetch vs Custom)
+        let responseData = rawResponse;
+        if (rawResponse && rawResponse.data) {
+            responseData = rawResponse.data;
+        }
+
+        // Extract the actual payload (often nested in 'data' property of backend response)
+        const result = responseData?.data || responseData;
+        console.log("AI Upload Extracted Result:", result);
+        
+        if (result) {
+             if (result.path) {
+                // Upload Component Result
+                aiAttachmentPath.value = result.path;
+                aiAttachmentName.value = result.filename;
+                aiAttachment.value = result.filename;
+                // Clear doc ID as we are using raw upload
+                aiAttachmentId.value = null;
+             } else if (result.document_id) {
+                // Fallback
+                aiAttachmentId.value = String(result.document_id);
+                aiAttachmentName.value = result.filename;
+                aiAttachment.value = result.filename;
+                aiAttachmentPath.value = null;
+             } else {
+                throw new Error("Response missing 'path' or 'document_id'. Got keys: " + Object.keys(result).join(", "));
+             }
+        } else {
+             throw new Error("Invalid response structure. Raw: " + JSON.stringify(rawResponse));
+        }
+
+        
+    } catch (e: any) {
+        console.error("AI Upload failed", e);
+        alert("Upload failed: " + (e.message || e));
+    } finally {
+        isAiProcessing.value = false;
+        input.value = '';
+    }
+};
+
+const removeAiAttachment = () => {
+    aiAttachment.value = null;
+    aiAttachmentName.value = null;
+    aiAttachmentId.value = null;
+    aiAttachmentPath.value = null;
+};
 
 const isHovered = ref(false);
 
@@ -663,9 +777,29 @@ const scrollToBottom = async (container: HTMLElement|null) => {
 
 // --- AI Chat ---
 const sendAiMessage = async () => {
-    if(!aiInput.value.trim()) return;
-    const text = aiInput.value;
-    aiMessages.value.push({ text, sender: 'user' });
+    // Allow send if text is present OR if there is an attachment
+    const hasAttachment = !!(aiAttachmentPath.value || aiAttachmentId.value);
+    const hasText = !!aiInput.value.trim();
+    
+    if (!hasText && !hasAttachment) return;
+    
+    const text = aiInput.value; // Send empty string if just attachment
+    
+    // UI Feedback
+    let displayText = text;
+    if (!text && hasAttachment) displayText = "Sent an attachment";
+    
+    aiMessages.value.push({ text: displayText, sender: 'user' });
+    
+    // Sync to other tabs
+    if (aiSyncChannel.value) {
+        aiSyncChannel.value.postMessage({
+            type: 'user_message',
+            text: displayText,
+            timestamp: new Date().toISOString()
+        });
+    }
+
     aiInput.value = '';
     await scrollToBottom(aiMessagesContainer.value);
 
@@ -680,8 +814,19 @@ const sendAiMessage = async () => {
         formData.append('user_id', String(myUserId.value || ''));
         formData.append('conversation_state', aiConversationState.value); // Send conversation state
         
+        if (aiAttachmentId.value) {
+            formData.append('document_ids', aiAttachmentId.value);
+        }
+        if (aiAttachmentPath.value) {
+            formData.append('file_paths', aiAttachmentPath.value);
+        }
+        
         isAiProcessing.value = true;
         await post('/api/admin/execute-flow', formData);
+        
+        // Clear attachment after sending
+        removeAiAttachment();
+        
         // Don't add response here - it will come via WebSocket
     } catch(e) {
         aiMessages.value.push({ text: "Error connecting to AI.", sender: 'ai' });
@@ -834,6 +979,41 @@ const initWebSocket = () => {
     };
 };
 
+const fetchAiHistory = async () => {
+    try {
+        const formData = new FormData();
+        formData.append('flowname', 'aicommand');
+        formData.append('menu', 'admin');
+        formData.append('search', 'false');
+        formData.append('command', 'get_history');
+        formData.append('user_id', String(myUserId.value || ''));
+        
+        const { data }: any = await post('/api/admin/execute-flow', formData);
+        
+        // extract history
+        const result = data?.result || data?.data || data;
+        const history = result?.history;
+        
+        if (Array.isArray(history)) {
+            aiMessages.value = history.map((h: any) => ({
+                text: h.text,
+                sender: h.sender
+            }));
+            
+            // Scroll to bottom after loading
+            nextTick(() => scrollToBottom(aiMessagesContainer.value));
+        }
+        
+        // Also capture state if available (backend might need to send it in get_history)
+        if (result?.conversation_state) {
+             aiConversationState.value = result.conversation_state;
+        }
+
+    } catch (e) {
+        console.error("Failed to fetch AI history", e);
+    }
+};
+
 onMounted(() => {
     // Watch token changes only after hydration
     watch(() => token.value, (newVal) => {
@@ -844,6 +1024,30 @@ onMounted(() => {
             socket = null;
         }
     }, { immediate: true });
+    
+    // Fetch AI History
+    if (activeTab.value === 'ai') {
+        fetchAiHistory();
+    }
+    
+    // Init Broadcast Channel for Sync
+    aiSyncChannel.value = new BroadcastChannel('ai_chat_sync');
+    aiSyncChannel.value.onmessage = (event) => {
+        if (event.data && event.data.type === 'user_message') {
+            aiMessages.value.push({
+                text: event.data.text,
+                sender: 'user'
+            });
+            nextTick(() => scrollToBottom(aiMessagesContainer.value));
+        }
+    };
+});
+
+onBeforeUnmount(() => {
+    if (aiSyncChannel.value) {
+        aiSyncChannel.value.close();
+        aiSyncChannel.value = null;
+    }
 });
 
 
