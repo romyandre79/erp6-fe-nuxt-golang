@@ -8,7 +8,7 @@
     <!-- Editor Container -->
     <div class="border rounded-lg overflow-hidden" :class="errorClass">
       <!-- Toolbar -->
-      <div v-if="editor" class="bg-gray-50 dark:bg-gray-800 border-b p-2 flex flex-wrap gap-1">
+      <div v-if="editor" class="bg-gray-50 dark:bg-gray-800 border-b p-2 flex flex-wrap gap-1" :class="{ 'opacity-50 pointer-events-none': disabled }">
         <!-- Text Formatting -->
         <button
           @click="editor.chain().focus().toggleBold().run()"
@@ -244,6 +244,10 @@ const props = defineProps({
   error: {
     type: String,
     default: ''
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -268,6 +272,7 @@ const emojis = [
 
 const editor = useEditor({
   content: props.modelValue,
+  editable: !props.disabled,
   extensions: [
     StarterKit,
     Underline,
@@ -301,6 +306,11 @@ watch(() => props.modelValue, (newValue) => {
   if (editor.value && editor.value.getHTML() !== newValue) {
     editor.value.commands.setContent(newValue, false)
   }
+})
+
+// Watch for disabled prop
+watch(() => props.disabled, (val) => {
+  editor.value?.setEditable(!val)
 })
 
 const setLink = () => {

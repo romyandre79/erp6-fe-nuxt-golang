@@ -5,6 +5,8 @@ import { useUserStore } from '../store/user';
 import { useDevice } from '~/composables/useDevice';
 import { SpeedInsights } from "@vercel/speed-insights/nuxt"
 import { useAppStore } from '~/store/app';
+import AiAssistant from '~/components/AiAssistant.vue';
+
 
 const config = useRuntimeConfig();
 const themeStore = useThemeStore();
@@ -61,7 +63,7 @@ onMounted(async () => {
           </div>
         </footer>
       </div>
-      <AiAssistant v-if="userStore.token" />
+      <AiAssistant />
 
       
       <!-- Connection Error Overlay -->

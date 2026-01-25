@@ -745,6 +745,7 @@ function renderComponent(component: any) {
             (component.type === 'number' ? 'text-right' : ''),
           placeholder: $t(component.props.place?.toUpperCase()) || '',
           maxlength: component.length,
+          readonly: component.props.enabled === false,
           onInput: (e: any) => (modelInputArea.value = e.target.value),
           value: modelInputArea.value,
         }),
@@ -780,6 +781,7 @@ function renderComponent(component: any) {
               h('input', {
                 type: 'file',
                 accept: 'image/*',
+                disabled: component.props.enabled === false,
                 class:
                   'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
                   (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
@@ -852,6 +854,7 @@ function renderComponent(component: any) {
               h('input', {
                 type: 'file',
                 accept: '.pdf,.docx,.doc',
+                disabled: component.props.enabled === false,
                 class:
                   'border rounded px-3 py-2 focus:ring focus:ring-blue-200 outline-none ' +
                   (validationErrors[component.props.key] ? 'border-red-500' : 'border-gray-300'),
@@ -922,6 +925,7 @@ function renderComponent(component: any) {
         placeholder: component.props.place ? $t(component.props.place.toUpperCase()) : 'Enter HTML content...',
         componentClass: component.props.class || '',
         error: validationErrors[component.props.key] || '',
+        disabled: component.props.enabled === false,
       });
     }
 
@@ -969,6 +973,7 @@ function renderComponent(component: any) {
           placeholder: component.props.place ? $t(component.props.place?.toUpperCase()) : '',
           maxlength: component.length,
           value: modelInput.value,
+          readonly: component.props.enabled === false,
           onInput: (e: any) => (modelInput.value = e.target.value),
         }),
         validationErrors[component.props.key]
@@ -1023,12 +1028,15 @@ function renderComponent(component: any) {
       return h('div', { class: [component.props.class, 'flex items-center mb-3 space-x-2'] }, [
         h(USwitch, {
           modelValue: modelCheckbox.value,
+          disabled: component.props.enabled === false,
           'onUpdate:modelValue': (val: boolean) => (modelCheckbox.value = val)
         }),
         h('label', { 
-            class: 'cursor-pointer',
+            class: 'cursor-pointer' + (component.props.enabled === false ? ' opacity-50 cursor-not-allowed' : ''),
             onClick: () => {
-               modelCheckbox.value = !modelCheckbox.value;
+               if (component.props.enabled !== false) {
+                   modelCheckbox.value = !modelCheckbox.value;
+               }
             }
         }, $t(component.props.text.toUpperCase()) || ''),
       ]);
