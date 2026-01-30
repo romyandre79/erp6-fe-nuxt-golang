@@ -111,6 +111,22 @@ const selectFlight = (flightId: string) => {
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
 };
+
+// Get unique airlines from all flights
+const availableAirlines = computed(() => {
+  const airlines = new Set(allFlights.value.map(f => f.airline));
+  return Array.from(airlines).sort();
+});
+
+// Toggle airline in filter
+const toggleAirline = (airline: string) => {
+  const index = filters.airlines.indexOf(airline);
+  if (index >= 0) {
+    filters.airlines.splice(index, 1);
+  } else {
+    filters.airlines.push(airline);
+  }
+};
 </script>
 
 <template>
@@ -245,17 +261,15 @@ const formatPrice = (price: number) => {
               <div class="mb-6">
                 <h4 class="text-sm font-medium text-slate-700 mb-3">Airlines</h4>
                 <div class="space-y-2">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked class="rounded text-coral-500" />
-                    <span class="text-sm text-slate-600">Garuda Indonesia</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked class="rounded text-coral-500" />
-                    <span class="text-sm text-slate-600">Lion Air</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked class="rounded text-coral-500" />
-                    <span class="text-sm text-slate-600">Batik Air</span>
+                  <label v-for="airline in availableAirlines" :key="airline" class="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      :checked="filters.airlines.includes(airline)" 
+                      @change="toggleAirline(airline)"
+                      class="rounded" 
+                      style="accent-color: #FF5A5F;" 
+                    />
+                    <span class="text-sm text-slate-600">{{ airline }}</span>
                   </label>
                 </div>
               </div>

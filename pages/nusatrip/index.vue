@@ -38,6 +38,20 @@ useHead({
 
 const store = useNusaTripStore();
 const activeTab = ref<'flights' | 'hotels' | 'experiences'>('flights');
+const isSearching = ref(false);
+
+const handleSearch = async () => {
+  isSearching.value = true;
+  await new Promise(resolve => setTimeout(resolve, 800));
+  isSearching.value = false;
+  if (activeTab.value === 'flights') {
+    navigateTo('/nusatrip/flights');
+  } else if (activeTab.value === 'hotels') {
+    navigateTo('/nusatrip/hotels');
+  } else {
+    navigateTo('/nusatrip/experiences');
+  }
+};
 
 // Demo data for destinations
 const destinations = ref([
@@ -159,9 +173,9 @@ const formatPrice = (price: number) => {
                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 outline-none transition-all"
               />
             </div>
-            <button class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              Search
+            <button @click="handleSearch" :disabled="isSearching" class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5 disabled:opacity-70" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
+              <i :class="isSearching ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-magnifying-glass'"></i>
+              {{ isSearching ? 'Searching...' : 'Search' }}
             </button>
           </div>
 
@@ -184,9 +198,9 @@ const formatPrice = (price: number) => {
                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 outline-none transition-all"
               />
             </div>
-            <button class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              Search
+            <button @click="handleSearch" :disabled="isSearching" class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5 disabled:opacity-70" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
+              <i :class="isSearching ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-magnifying-glass'"></i>
+              {{ isSearching ? 'Searching...' : 'Search' }}
             </button>
           </div>
 
@@ -210,9 +224,9 @@ const formatPrice = (price: number) => {
                 <option>Wellness</option>
               </select>
             </div>
-            <button class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              Explore
+            <button @click="handleSearch" :disabled="isSearching" class="text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 mt-5 disabled:opacity-70" style="background: linear-gradient(90deg, #FF5A5F, #e04e52);">
+              <i :class="isSearching ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-magnifying-glass'"></i>
+              {{ isSearching ? 'Searching...' : 'Explore' }}
             </button>
           </div>
         </div>
