@@ -287,8 +287,7 @@
              <!-- Messages -->
              <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="aiMessagesContainer">
                 <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['flex', msg.sender === 'user' ? 'justify-end' : 'justify-start']">
-                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap', msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']">
-                    {{ msg.text }}
+                    <div :class="['max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ai-message-content', msg.sender === 'user' ? 'bg-white text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-gray-600']" v-html="renderMarkdown(msg.text)">
                     </div>
                 </div>
              </div>
@@ -564,6 +563,34 @@
   </div>
 </template>
 
+<style>
+.ai-message-content img {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.ai-message-content p {
+    margin-bottom: 0.5rem;
+}
+.ai-message-content p:last-child {
+    margin-bottom: 0;
+}
+.ai-message-content ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.ai-message-content ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.ai-message-content strong {
+    font-weight: 600;
+}
+</style>
+
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
@@ -584,6 +611,17 @@ const { isChatOpen, isLoading: appIsLoading } = storeToRefs(appStore);
 const { loading: workflowLoading } = storeToRefs(workflowStore);
 const { loading: dbobjectLoading } = storeToRefs(dbobjectStore);
 const { loading: reportLoading } = storeToRefs(reportStore);
+
+import { marked } from 'marked';
+
+const renderMarkdown = (text: string) => {
+    if (!text) return '';
+    try {
+        return marked.parse(text);
+    } catch (e) {
+        return text;
+    }
+};
 
 // const isOpen = ref(false); // Removed local ref
 const activeTab = ref<'ai' | 'people' | 'settings'>('ai');
