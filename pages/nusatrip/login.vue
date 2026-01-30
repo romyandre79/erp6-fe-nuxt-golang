@@ -46,7 +46,9 @@ const handleSubmit = async () => {
     
     if (res?.code === 200 && res.data) {
       store.setUser(res.data.user);
-      router.push('/nusatrip');
+      // Redirect to saved URL or default to home
+      const redirectTo = store.getAndClearRedirectUrl() || '/nusatrip';
+      router.push(redirectTo);
     } else {
       error.value = res?.message || 'Invalid email or password';
     }

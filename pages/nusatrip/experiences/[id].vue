@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useNusaTripStore } from '~/store/nusatrip';
 
 definePageMeta({ layout: 'nusatrip' });
 
 const route = useRoute();
 const router = useRouter();
+const store = useNusaTripStore();
 const expId = route.params.id as string;
 
 const allExperiences = [
@@ -25,10 +27,34 @@ const bookingRef = ref('');
 
 useHead({ title: computed(() => `${experience.value.title} | NusaTrip`) });
 
+// Prefill user data if logged in
+const prefillUserData = () => {
+  if (store.isAuthenticated && store.user) {
+    booking.value.fullName = store.user.fullname || '';
+    booking.value.email = store.user.email || '';
+    booking.value.phone = store.user.phone || '';
+  }
+};
+
+onMounted(() => {
+  prefillUserData();
+});
+
+watch(() => store.isAuthenticated, (newVal) => {
+  if (newVal) prefillUserData();
+});
+
 const totalPrice = computed(() => experience.value.price * booking.value.participants);
 const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
 
 const confirmBooking = async () => {
+  // Check if user is logged in
+  if (!store.isAuthenticated) {
+    store.setRedirectUrl(route.fullPath);
+    router.push('/nusatrip/login');
+    return;
+  }
+
   if (!booking.value.fullName || !booking.value.email || !booking.value.date) { alert('Please fill in all fields'); return; }
   isBooking.value = true;
   await new Promise(r => setTimeout(r, 1500));

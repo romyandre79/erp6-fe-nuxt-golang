@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useNusaTripStore } from '~/store/nusatrip';
 
 definePageMeta({
   layout: 'nusatrip',
@@ -7,6 +8,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
+const store = useNusaTripStore();
 const flightId = route.params.id as string;
 
 // Demo flights data (would come from API/store in production)
@@ -40,6 +42,24 @@ useHead({
   title: computed(() => `${flight.value.airline} Flight to ${flight.value.destination} | NusaTrip`),
 });
 
+// Prefill user data if logged in
+const prefillUserData = () => {
+  if (store.isAuthenticated && store.user) {
+    contactInfo.value.fullName = store.user.fullname || '';
+    contactInfo.value.email = store.user.email || '';
+    contactInfo.value.phone = store.user.phone || '';
+  }
+};
+
+onMounted(() => {
+  prefillUserData();
+});
+
+// Watch for auth changes (e.g., after returning from login)
+watch(() => store.isAuthenticated, (newVal) => {
+  if (newVal) prefillUserData();
+});
+
 const totalPassengers = computed(() => passengers.value.adults + passengers.value.children);
 const totalPrice = computed(() => {
   const adultPrice = flight.value.price * passengers.value.adults;
@@ -52,6 +72,13 @@ const formatPrice = (price: number) => {
 };
 
 const confirmBooking = async () => {
+  // Check if user is logged in
+  if (!store.isAuthenticated) {
+    store.setRedirectUrl(route.fullPath);
+    router.push('/nusatrip/login');
+    return;
+  }
+
   if (!contactInfo.value.fullName || !contactInfo.value.email || !contactInfo.value.phone) {
     alert('Please fill in all contact information');
     return;

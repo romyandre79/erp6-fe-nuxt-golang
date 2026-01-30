@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useNusaTripStore } from '~/store/nusatrip';
 
 definePageMeta({
   layout: 'nusatrip',
@@ -7,6 +8,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
+const store = useNusaTripStore();
 const hotelId = route.params.id as string;
 
 // Demo hotels data
@@ -40,6 +42,23 @@ useHead({
   title: computed(() => `${hotel.value.name} | NusaTrip Hotels`),
 });
 
+// Prefill user data if logged in
+const prefillUserData = () => {
+  if (store.isAuthenticated && store.user) {
+    booking.value.fullName = store.user.fullname || '';
+    booking.value.email = store.user.email || '';
+    booking.value.phone = store.user.phone || '';
+  }
+};
+
+onMounted(() => {
+  prefillUserData();
+});
+
+watch(() => store.isAuthenticated, (newVal) => {
+  if (newVal) prefillUserData();
+});
+
 const nights = computed(() => {
   if (!booking.value.checkIn || !booking.value.checkOut) return 1;
   const diff = new Date(booking.value.checkOut).getTime() - new Date(booking.value.checkIn).getTime();
@@ -53,6 +72,13 @@ const formatPrice = (price: number) => {
 };
 
 const confirmBooking = async () => {
+  // Check if user is logged in
+  if (!store.isAuthenticated) {
+    store.setRedirectUrl(route.fullPath);
+    router.push('/nusatrip/login');
+    return;
+  }
+
   if (!booking.value.fullName || !booking.value.email || !booking.value.checkIn || !booking.value.checkOut) {
     alert('Please fill in all required fields');
     return;

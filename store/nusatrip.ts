@@ -72,6 +72,7 @@ interface NusaTripState {
   // UI State
   isLoading: boolean;
   searchTab: 'flights' | 'hotels' | 'experiences' | 'rentals' | 'packages';
+  redirectUrl: string | null;
 }
 
 export const useNusaTripStore = defineStore('nusatrip', {
@@ -89,6 +90,7 @@ export const useNusaTripStore = defineStore('nusatrip', {
     cart: [],
     isLoading: false,
     searchTab: 'flights',
+    redirectUrl: null,
   }),
 
   getters: {
@@ -110,6 +112,17 @@ export const useNusaTripStore = defineStore('nusatrip', {
       this.isAuthenticated = false;
       this.bookings = [];
       this.cart = [];
+      this.redirectUrl = null;
+    },
+
+    setRedirectUrl(url: string | null) {
+      this.redirectUrl = url;
+    },
+
+    getAndClearRedirectUrl(): string | null {
+      const url = this.redirectUrl;
+      this.redirectUrl = null;
+      return url;
     },
 
     // Data Actions

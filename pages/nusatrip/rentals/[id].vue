@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useNusaTripStore } from '~/store/nusatrip';
 
 definePageMeta({ layout: 'nusatrip' });
 
 const route = useRoute();
 const router = useRouter();
+const store = useNusaTripStore();
 const rentalId = route.params.id as string;
 
 const allRentals = [
@@ -25,6 +27,23 @@ const bookingRef = ref('');
 
 useHead({ title: computed(() => `${rental.value.name} Rental | NusaTrip`) });
 
+// Prefill user data if logged in
+const prefillUserData = () => {
+  if (store.isAuthenticated && store.user) {
+    booking.value.fullName = store.user.fullname || '';
+    booking.value.email = store.user.email || '';
+    booking.value.phone = store.user.phone || '';
+  }
+};
+
+onMounted(() => {
+  prefillUserData();
+});
+
+watch(() => store.isAuthenticated, (newVal) => {
+  if (newVal) prefillUserData();
+});
+
 const days = computed(() => {
   if (!booking.value.pickupDate || !booking.value.dropoffDate) return 1;
   const diff = new Date(booking.value.dropoffDate).getTime() - new Date(booking.value.pickupDate).getTime();
@@ -36,6 +55,13 @@ const totalPrice = computed(() => (rental.value.price * days.value) + driverFee.
 const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
 
 const confirmBooking = async () => {
+  // Check if user is logged in
+  if (!store.isAuthenticated) {
+    store.setRedirectUrl(route.fullPath);
+    router.push('/nusatrip/login');
+    return;
+  }
+
   if (!booking.value.fullName || !booking.value.email || !booking.value.pickupDate || !booking.value.dropoffDate) { alert('Please fill in all fields'); return; }
   isBooking.value = true;
   await new Promise(r => setTimeout(r, 1500));
