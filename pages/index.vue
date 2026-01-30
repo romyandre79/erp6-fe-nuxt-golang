@@ -964,6 +964,50 @@ useHead({
                         </div>
                     </div>
                 </article>
+
+                <!-- NusaTrip Travel Platform Card -->
+                <article class="card-hover bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-rose-500/20 to-orange-600/10 flex items-center justify-center relative overflow-hidden">
+                        <svg
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-full h-auto max-h-48 mx-auto text-rose-300"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <!-- Airplane -->
+                          <path d="M256 96L320 160H448L400 256L448 352H320L256 416L192 352H64L112 256L64 160H192L256 96Z" />
+                          <circle cx="256" cy="256" r="48" />
+                          
+                          <!-- Globe/World hint -->
+                          <ellipse cx="256" cy="256" rx="160" ry="80" />
+                          <path d="M96 256H416" />
+                          <path d="M256 176V336" />
+                        </svg>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-3">
+                            <span class="px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-xs font-semibold">Travel & Tourism</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white">NusaTrip</h3>
+                        <p class="text-gray-400 mb-4">Complete travel booking platform for flights, hotels, experiences, and vacation packages across Indonesia.</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Flights</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Hotels</span>
+                            <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">Experiences</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-500">500+ Destinations</span>
+                            <NuxtLink class="text-rose-400 hover:text-rose-300 text-sm font-semibold" to="/nusatrip">View Details →</NuxtLink>
+                        </div>
+                    </div>
+                </article>
             </div>
 
             <!-- Stats Banner -->
