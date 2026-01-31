@@ -54,73 +54,122 @@
     </div>
 
 
-<div class="absolute left-6 top-6 flex flex-row gap-2 z-50">
-      <button 
-        @click="handleUndo" 
-        :disabled="!canUndo"
-        :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
-        class="p-2 rounded shadow bg-white text-black" 
-        title="Undo (Ctrl+Z)"
-      >
-        ↶ Undo
-      </button>
-      <button 
-        @click="handleRedo" 
-        :disabled="!canRedo"
-        :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
-        class="p-2 rounded shadow bg-white text-black" 
-        title="Redo (Ctrl+Y)"
-      >
-        ↷ Redo
-      </button>
-      <div class="w-px bg-gray-300 mx-1"></div>
-      <button @click="zoomOut" class="p-2 rounded shadow bg-white text-black" title="Zoom Out">-</button>
-      <button @click="zoomReset" class="p-2 rounded shadow bg-white text-black" title="Reset Zoom">Reset</button>
-      <button @click="zoomIn" class="p-2 rounded shadow bg-white text-black" title="Zoom In">+</button>
-      <div class="w-px bg-gray-300 mx-1"></div>
-      <button @click="showUploadModal = true" class="p-2 rounded shadow bg-white text-black flex items-center gap-1">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        Upload Plugin
-      </button>
-      <button @click="Save" class="p-2 rounded shadow bg-white text-black">Save</button>
-                      <button @click="exportImage" class="p-2 rounded shadow bg-white text-black">Export PNG</button>
-      <button @click="copySchema" class="p-2 rounded shadow bg-white text-black">Copy From</button>
-      <button @click="testFlow" :disabled="isTestingFlow" class="p-2 rounded shadow bg-white text-black disabled:opacity-50 disabled:cursor-not-allowed">
-        <span v-if="isTestingFlow" class="inline-flex items-center gap-2">
-          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Testing...
-        </span>
-        <span v-else>Test Flow</span>
-      </button>
-      <button v-if="hasTestResults" @click="clearTestResults" class="p-2 rounded shadow bg-red-100 text-red-600 hover:bg-red-200">Clear Results</button>
-      <div class="w-px bg-gray-300 mx-1"></div>
-      <button @click="createNewArea" class="p-2 rounded shadow bg-white text-black flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <path d="M12 8v8M8 12h8"/>
-        </svg>
-        Add Area
-      </button>
+<!-- Workflow Toolbar (BlockToolbar Style) -->
+<div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-1 bg-gray-900 text-white rounded-xl shadow-2xl shadow-gray-900/50 py-1.5 px-2">
+  
+  <!-- Undo/Redo Group -->
+  <button 
+    @click="handleUndo" 
+    :disabled="!canUndo"
+    class="toolbar-btn"
+    title="Undo (Ctrl+Z)"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <path d="M3 7v6h6M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+    </svg>
+  </button>
+  <button 
+    @click="handleRedo" 
+    :disabled="!canRedo"
+    class="toolbar-btn"
+    title="Redo (Ctrl+Y)"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <path d="M21 7v6h-6M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+    </svg>
+  </button>
 
-    </div>
-    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent>
+  <div class="w-px h-6 bg-gray-700"></div>
+
+  <!-- Zoom Group -->
+  <button @click="zoomOut" class="toolbar-btn" title="Zoom Out">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+    </svg>
+  </button>
+  <button @click="zoomReset" class="toolbar-btn" title="Reset Zoom (100%)">
+    <span class="text-xs font-medium px-1">100%</span>
+  </button>
+  <button @click="zoomIn" class="toolbar-btn" title="Zoom In">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+    </svg>
+  </button>
+
+  <div class="w-px h-6 bg-gray-700"></div>
+
+  <!-- Area Button -->
+  <button @click="createNewArea" class="toolbar-btn" title="Add Area">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M12 8v8M8 12h8"/>
+    </svg>
+  </button>
+
+  <div class="w-px h-6 bg-gray-700"></div>
+
+  <!-- Upload Plugin -->
+  <button @click="showUploadModal = true" class="toolbar-btn" title="Upload Plugin">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+  </button>
+
+  <!-- Copy From -->
+  <button @click="copySchema" class="toolbar-btn" title="Copy From">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  </button>
+
+  <!-- Export PNG -->
+  <button @click="exportImage" class="toolbar-btn" title="Export PNG">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  </button>
+
+  <div class="w-px h-6 bg-gray-700"></div>
+
+  <!-- Test Flow -->
+  <button 
+    @click="testFlow" 
+    :disabled="isTestingFlow" 
+    class="toolbar-btn hover:!bg-green-600"
+    title="Test Flow"
+  >
+    <svg v-if="!isTestingFlow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <polygon points="5 3 19 12 5 21 5 3"/>
+    </svg>
+    <svg v-else class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </button>
+
+  <!-- Clear Test Results -->
+  <button 
+    v-if="hasTestResults" 
+    @click="clearTestResults" 
+    class="toolbar-btn hover:!bg-red-600"
+    title="Clear Test Results"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+  </button>
+
+  <div class="w-px h-6 bg-gray-700"></div>
+
+  <!-- Save Button (Primary Action) -->
+  <button @click="Save" class="toolbar-btn-primary" title="Save (Ctrl+S)">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+    </svg>
+    <span class="text-xs font-medium">Save</span>
+  </button>
+
+</div>
+    <div id="drawflow" class="absolute inset-0" @drop="drop" @dragover.prevent @dragenter="onDragEnter" @dragleave="onDragLeave">
       <!-- Canvas Areas -->
       <div :style="{ transform: transformString, transformOrigin: '0 0', position: 'absolute', top: 0, left: 0, width: '0px', height: '0px', pointerEvents: 'none', overflow: 'visible' }">
         <WorkflowArea
@@ -1063,6 +1112,11 @@ function zoomReset() {
 
 function drop(ev: DragEvent) {
   ev.preventDefault();
+  
+  // Remove drag-over visual feedback
+  const drawflowEl = document.getElementById('drawflow');
+  drawflowEl?.classList.remove('drag-over');
+  
   if (!editor) return;
 
   const data = ev.dataTransfer?.getData('node');
@@ -1103,6 +1157,23 @@ function drop(ev: DragEvent) {
     nodeHtml,
   );
 
+}
+
+/* ======================================================
+   Drag Enter/Leave Visual Feedback
+   ======================================================*/
+function onDragEnter(ev: DragEvent) {
+  ev.preventDefault();
+  const drawflowEl = document.getElementById('drawflow');
+  drawflowEl?.classList.add('drag-over');
+}
+
+function onDragLeave(ev: DragEvent) {
+  // Only remove if actually leaving the drawflow area (not entering a child)
+  const drawflowEl = document.getElementById('drawflow');
+  if (ev.relatedTarget && !drawflowEl?.contains(ev.relatedTarget as Node)) {
+    drawflowEl?.classList.remove('drag-over');
+  }
 }
 
 function fixColors(container: HTMLElement) {
@@ -1469,3 +1540,60 @@ async function testFlow() {
   }
 }
 </script>
+
+<style scoped>
+/* Workflow Toolbar Buttons */
+.toolbar-btn {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn:hover {
+  background-color: #374151;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-btn:disabled:hover {
+  background-color: transparent;
+}
+
+/* Primary Button (Save) */
+.toolbar-btn-primary {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: #2563eb;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.toolbar-btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+/* Toolbar Animations */
+@keyframes toolbar-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Apply entrance animation */
+.fixed.top-4 {
+  animation: toolbar-slide-in 0.2s ease-out;
+}
+</style>

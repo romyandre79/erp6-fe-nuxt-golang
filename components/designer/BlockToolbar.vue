@@ -5,7 +5,7 @@
       class="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-xl shadow-2xl shadow-gray-900/50 py-1.5 px-2"
       :style="{ 
         left: '50%', 
-        top: '70px',
+        top: '20px',
         transform: 'translateX(-50%)'
       }"
     >
