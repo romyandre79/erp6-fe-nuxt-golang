@@ -4,8 +4,8 @@
       v-if="visible"
       class="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-xl shadow-2xl shadow-gray-900/50 py-1.5 px-2"
       :style="{ 
-        left: position.x + 'px', 
-        top: position.y + 'px',
+        left: '50%', 
+        top: '70px',
         transform: 'translateX(-50%)'
       }"
     >
