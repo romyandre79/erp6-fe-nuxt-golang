@@ -328,3 +328,166 @@ button * {
   touch-action: none !important;
   outline: none !important;
 }
+
+/* ===== WORKFLOW CANVAS GRID BACKGROUND ===== */
+/* Creates a professional dotted grid pattern for visual orientation */
+#drawflow {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  position: relative;
+}
+
+/* Dark mode grid */
+.dark #drawflow,
+#drawflow.dark-mode {
+  background-color: #1e293b;
+  background-image: 
+    radial-gradient(circle, #475569 1px, transparent 1px);
+}
+
+/* Cursor changes when panning (dragging canvas) */
+#drawflow:active {
+  cursor: grabbing;
+}
+
+/* Drawflow internal layer - let Drawflow control its own sizing */
+#drawflow .drawflow {
+  cursor: inherit;
+  /* Do NOT override position/width/height - Drawflow manages these */
+}
+
+/* ===== CANVAS VIEWPORT INDICATOR ===== */
+/* Shows panning hints and zoom level */
+#drawflow::before {
+  content: '⊞ Pan: Drag empty area | Zoom: Scroll';
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 5;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark #drawflow::before,
+#drawflow.dark-mode::before {
+  background: rgba(30, 41, 59, 0.9);
+  color: #64748b;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== CANVAS ORIGIN INDICATOR ===== */
+/* Removed - was causing interaction issues with Drawflow panning */
+
+/* ===== EMPTY STATE PLACEHOLDER ===== */
+/* Shows when no nodes are present */
+#drawflow:has(.drawflow:not(:has(.drawflow-node)))::after {
+  content: '🎯 Drag components here to start building your workflow';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 30px 40px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 90%;
+}
+
+.dark #drawflow:has(.drawflow:not(:has(.drawflow-node)))::after {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+  border-color: #475569;
+  color: #64748b;
+}
+
+/* Fallback for browsers without :has() support - always show a subtle hint */
+@supports not selector(:has(*)) {
+  #drawflow::after {
+    content: 'Drag components to add nodes';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: #cbd5e1;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* ===== DRAG OVER VISUAL FEEDBACK ===== */
+/* Shows when dragging a component over the canvas */
+#drawflow.drag-over {
+  background-color: #eff6ff;
+  background-image: 
+    radial-gradient(circle, #93c5fd 1.5px, transparent 1.5px);
+  box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.1);
+  transition: all 0.2s ease;
+}
+
+.dark #drawflow.drag-over {
+  background-color: #1e3a5f;
+  background-image: 
+    radial-gradient(circle, #3b82f6 1.5px, transparent 1.5px);
+}
+
+/* ===== MINIMAP STYLE BORDER ===== */
+/* Subtle gradient border to indicate interactive area */
+#drawflow {
+  border-radius: 0;
+  box-shadow: 
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
+    inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.dark #drawflow {
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== SMOOTH TRANSITIONS ===== */
+#drawflow .drawflow {
+  transition: transform 0.1s ease-out;
+}
+
+/* ===== CONNECTION TOOLTIP ===== */
+/* Shows tooltip when hovering connections (if Drawflow supports) */
+.drawflow .connection:hover {
+  filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.6));
+}
+
+/* ===== IMPROVED NODE DROP ZONE ===== */
+/* Highlight potential drop areas */
+#drawflow[data-dragging="true"] {
+  background-image: 
+    radial-gradient(circle, #60a5fa 1.5px, transparent 1.5px);
+  animation: pulse-grid 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-grid {
+  0%, 100% {
+    background-size: 20px 20px;
+  }
+  50% {
+    background-size: 22px 22px;
+  }
+}

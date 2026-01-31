@@ -1,19 +1,5 @@
 <template>
   <div class="h-full flex flex-col bg-white dark:bg-gray-900">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 to-indigo-600">
-      <h3 class="font-bold text-white flex items-center gap-2">
-        <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
-        Properties
-      </h3>
-      <button 
-        @click="$emit('close')"
-        class="p-1 hover:bg-white/20 rounded-lg transition-colors"
-      >
-        <UIcon name="heroicons:x-mark" class="w-5 h-5 text-white" />
-      </button>
-    </div>
-
     <!-- No Selection State -->
     <div v-if="!modelValue" class="flex-1 flex items-center justify-center p-6">
       <div class="text-center">
@@ -38,7 +24,6 @@
           </div>
           <div>
             <h4 class="font-semibold text-gray-800 dark:text-gray-100 text-sm">{{ modelValue.label || modelValue.type }}</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ modelValue.type }}</p>
           </div>
         </div>
       </div>
@@ -270,7 +255,7 @@ const props = defineProps<{
   modelValue: NodeSchema | null;
 }>();
 
-const emit = defineEmits(['update:modelValue', 'close']);
+const emit = defineEmits(['update:modelValue']);
 
 const expandedSections = ref(['general', 'behavior']);
 const localProps = ref<NodeProps>({});

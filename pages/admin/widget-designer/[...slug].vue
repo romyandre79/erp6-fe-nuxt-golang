@@ -8,8 +8,7 @@
           <UIcon name="heroicons:puzzle-piece" class="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 class="font-bold text-gray-800 dark:text-white text-sm">Widget Designer</h1>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ dataMenu.description || 'Untitled Widget' }}</p>
+          <h1 class="font-bold text-gray-800 dark:text-white text-sm">Widget Designer - {{ dataMenu.description || 'Untitled Widget' }}</h1>
         </div>
       </div>
     </div>
@@ -32,7 +31,7 @@
         :class="{ 'opacity-40 cursor-not-allowed': !canRedo }"
         title="Redo (Ctrl+Y)"
       >
-        <UIcon name="heroicons:arrow-uturn-right" class="w-4 h-4" />
+        <UIcon name="heroicons:arrow-uturn-right" class="w-4 h-4" />@
       </button>
       <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
       <button 
