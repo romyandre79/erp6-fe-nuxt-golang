@@ -31,7 +31,7 @@
         :class="{ 'opacity-40 cursor-not-allowed': !canRedo }"
         title="Redo (Ctrl+Y)"
       >
-        <UIcon name="heroicons:arrow-uturn-right" class="w-4 h-4" />
+        <UIcon name="heroicons:arrow-uturn-right" class="w-4 h-4" />@
       </button>
       <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
       <button 
