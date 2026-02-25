@@ -4,6 +4,18 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/image', '@nuxt/ui', '@nuxtjs/i18n'],
   ssr: false,
+  routeRules: {
+    '/': { prerender: true },
+    '/hijra': { prerender: true },
+    '/pusatgadai': { prerender: true },
+    '/koperasi': { prerender: true },
+    '/e-procurement': { prerender: true },
+    '/order': { prerender: true },
+    '/ess': { prerender: true },
+    '/applicant': { prerender: true },
+    '/hris': { prerender: true },
+    '/project': { prerender: true }
+  },
   nitro: {
     preset: 'static',
     output: {
