@@ -27,6 +27,7 @@ export default defineNuxtConfig({
     '@fortawesome/fontawesome-free/css/all.min.css',
     'drawflow/dist/drawflow.min.css',
     'assets/css/drawflow.css',
+    'assets/css/main.css',
   ],
   vite: {
     build: {

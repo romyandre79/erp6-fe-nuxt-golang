@@ -439,7 +439,7 @@ async function handleCopy() {
         // Try writing to system clipboard
         try {
           await navigator.clipboard.writeText(nodeStr);
-          toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
+          //toast.add({ title: 'Copied', description: 'Node copied to clipboard' });
         } catch (sysErr) {
           console.warn('System clipboard write failed', sysErr);
           toast.add({ title: 'Copied', description: 'Node copied to internal clipboard only' });
@@ -549,7 +549,7 @@ async function handlePaste() {
             false 
         );
         
-        toast.add({ title: 'Pasted', description: 'Node pasted successfully' });
+        //toast.add({ title: 'Pasted', description: 'Node pasted successfully' });
         
         // Record state check
         recordEditorState();
