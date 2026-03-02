@@ -80,11 +80,11 @@
       @click.stop="emitSelect"
       draggable="false"
     >
-      <label v-if="!['button','label','title','subtitle'].includes(node.type) && node.props?.text" class="block text-xs font-bold text-gray-500 mb-1">
-        {{ node.props.text }}
+      <label v-if="!['button','label','title','subtitle'].includes(node.type) && (node.props?.text || node.props?.label)" class="block text-xs font-bold text-gray-500 mb-1">
+        {{ node.props.text || node.props.label }}
       </label>
       <component :is="resolveComponent(node.type)" v-bind="getComponentProps(node)" :disabled="preview">
-        {{ node.type + ':' + (node.props?.text || node.label) }}
+        {{ node.type + ':' + (node.props?.text || node.props?.label || node.label) }}
       </component>
     </div>
   </div>

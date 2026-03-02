@@ -1093,7 +1093,10 @@ const handleWsMessage = async (payload: any) => {
     //console.log("WS Msg:", payload);
     
     // AI Chat Message (from backend workflow)
-    if (payload.type === 'chat' && payload.message) {
+    if (payload.type === 'chat' && payload.message && !payload.senderid) {
+        // Ignore buggy backend placeholder for empty AI message
+        if (payload.message === '$message') return;
+
         // This is an AI response from the backend
         aiMessages.value.push({ 
             text: payload.message, 
