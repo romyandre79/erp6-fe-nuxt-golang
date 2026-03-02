@@ -48,9 +48,19 @@
               />
             </PropertyField>
 
-            <PropertyField v-if="hasText" label="Label" hint="Display text">
+            <PropertyField v-if="hasText" label="Text" hint="Display text">
               <input 
                 v-model="localProps.text" 
+                type="text"
+                class="prop-input"
+                placeholder="Component text"
+                @input="emitUpdate"
+              />
+            </PropertyField>
+
+            <PropertyField v-if="hasLabelProp" label="Label" hint="Display label">
+              <input 
+                v-model="localProps.label" 
                 type="text"
                 class="prop-input"
                 placeholder="Field Label"
@@ -298,6 +308,7 @@ const typeIcon = computed(() => {
 // Property availability checks
 const hasKey = computed(() => 'key' in (localProps.value || {}));
 const hasText = computed(() => 'text' in (localProps.value || {}));
+const hasLabelProp = computed(() => 'label' in (localProps.value || {}));
 const hasPlace = computed(() => 'place' in (localProps.value || {}));
 const hasSource = computed(() => 'source' in (localProps.value || {}));
 const hasIcon = computed(() => 'icon' in (localProps.value || {}));

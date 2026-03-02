@@ -1004,7 +1004,7 @@ useHead({
                         </div>
                         <div class="flex items-center justify-between pt-4 border-t border-gray-700">
                             <span class="text-sm text-gray-500">500+ Destinations</span>
-                            <NuxtLink class="text-rose-400 hover:text-rose-300 text-sm font-semibold" to="/nusatrip">View Details →</NuxtLink>
+                            <NuxtLink class="text-rose-400 hover:text-rose-300 text-sm font-semibold" to="https://safarmu.vercel.app/">View Details →</NuxtLink>
                         </div>
                     </div>
                 </article>

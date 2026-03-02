@@ -209,7 +209,7 @@
       <!-- Properties Tab -->
       <div v-if="activeRightTab === 'properties'" class="flex-1 overflow-y-auto">
         <PropertyPanel 
-          v-model="selected" 
+          :modelValue="selected" 
           @update:modelValue="updateSelectedProps"
         />
       </div>
@@ -598,7 +598,7 @@ const saveSchema = async () => {
   try {
     const res = await Api.post('api/admin/execute-flow', dataForm);
     if (res?.code == 200) {
-      toast.add({ title: 'Saved', description: 'Form saved successfully', color: 'success' });
+      //toast.add({ title: 'Saved', description: 'Form saved successfully', color: 'success' });
     } else {
       toast.add({ title: 'Error', description: res.message, color: 'error' });
     }
@@ -649,9 +649,9 @@ const acquireLock = async (menuId: number) => {
     });
     
     if (res.code === 200) {
-      toast.add({ title: 'Editing', description: 'Form locked for editing', color: 'success', timeout: 2000 });
+      //toast.add({ title: 'Editing', description: 'Form locked for editing', color: 'success', timeout: 2000 });
     } else {
-      toast.add({ title: 'Lock Failed', description: res.message || 'Could not acquire lock', color: 'error' });
+      //toast.add({ title: 'Lock Failed', description: res.message || 'Could not acquire lock', color: 'error' });
     }
   } catch (err) {
     console.error('Lock error:', err);
