@@ -420,12 +420,12 @@ const { t } = useI18n()
 const CONSULTATION_RATE = 200000 
 const TRANSPORT_RATE = 1000000 
 const LICENSE_MULTIPLIER = 12 
-const SOURCE_CODE_MULTIPLIER = 100
+const SOURCE_CODE_MULTIPLIER = 30
 
 const USER_WEIGHTS = {
-  admin: 1,
-  operational: 0.5,
-  viewer: 0.1
+  admin: 10,
+  operational: 5,
+  viewer: 3
 }
 
 // PAYG Rates
