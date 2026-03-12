@@ -5,12 +5,12 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
   { id: 'server', name: 'New Server', price: 200000, icon: '🖥️' },
-  { id: 'engine6', name: 'Capella Engine v6', price: 20000, icon: '🖥️' },
-  { id: 'accounting6', name: 'Accounting v6', price: 25000, icon: '💰' },
-  { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 18000, icon: '📦' },
+  { id: 'engine6', name: 'Capella Engine v6', price: 30000, icon: '🖥️' },
+  { id: 'accounting6', name: 'Accounting v6', price: 30000, icon: '💰' },
+  { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 20000, icon: '📦' },
   { id: 'order6', name: 'Order Management v6', price: 20000, icon: '🛒' },
-  { id: 'purchasing6', name: 'Purchasing v6', price: 15000, icon: '🛒' },
-  { id: 'production6', name: 'Production v6', price: 25000, icon: '📊' },
+  { id: 'purchasing6', name: 'Purchasing v6', price: 20000, icon: '🛒' },
+  { id: 'production6', name: 'Production v6', price: 30000, icon: '📊' },
   //{ id: 'erp_proj', name: 'Project', price: 250000, icon: '🛠️' },
   //{ id: 'ess', name: 'ESS', price: 100000, icon: '🙋' },
   //{ id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },
