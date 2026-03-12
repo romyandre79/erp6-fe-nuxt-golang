@@ -5,7 +5,7 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
   { id: 'server', name: 'New Server', price: 200000, icon: '🖥️' },
-  { id: 'engine6', name: 'Capella Engine v6', price: 30000, icon: '🖥️' },
+  { id: 'engine6', name: 'Capella Engine v6', price: 30000, icon: '🖥️' }, 
   { id: 'accounting6', name: 'Accounting v6', price: 30000, icon: '💰' },
   { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 20000, icon: '📦' },
   { id: 'order6', name: 'Order Management v6', price: 20000, icon: '🛒' },
