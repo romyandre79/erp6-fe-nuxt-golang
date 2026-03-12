@@ -4,7 +4,8 @@ import PricingCalculator from '~/components/PricingCalculator.vue'
 
 // Consolidated list of popular apps from various modules for the main landing page
 const allApps = [
-  { id: 'engine6', name: 'Capella Engine v6', price: 10000, icon: '🖥️' },
+  { id: 'server', name: 'New Server', price: 200000, icon: '🖥️' },
+  { id: 'engine6', name: 'Capella Engine v6', price: 20000, icon: '🖥️' },
   { id: 'accounting6', name: 'Accounting v6', price: 15000, icon: '💰' },
   { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 15000, icon: '📦' },
   { id: 'order6', name: 'Order Management v6', price: 15000, icon: '🛒' },
@@ -16,7 +17,7 @@ const allApps = [
   //{ id: 'career', name: 'Career', price: 100000, icon: '👥' },
   //{ id: 'customer_pro', name: 'Customer Professional', price: 50000, icon: '🤝' },
   //{ id: 'pos_retail', name: 'POS Retail', price: 100000, icon: '🏪' },
-  { id: 'engine5-std', name: 'Capella Engine v5', price: 10000, icon: '🖥️' },
+  { id: 'engine5-std', name: 'Capella Engine v5', price: 20000, icon: '🖥️' },
   { id: 'engine5-cms-std', name: 'Capella CMS Engine v5', price: 10000, icon: '🖥️' },
   { id: 'accounting5', name: 'Capella Accounting v5', price: 20000, icon: '💰️' },
   { id: 'warehouse5', name: 'Capella Warehouse v5', price: 15000, icon: '📦' },
