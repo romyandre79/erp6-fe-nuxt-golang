@@ -419,8 +419,8 @@ const { t } = useI18n()
 // Config vars
 const CONSULTATION_RATE = 200000 
 const TRANSPORT_RATE = 1000000 
-const LICENSE_MULTIPLIER = 12 
-const SOURCE_CODE_MULTIPLIER = 30
+const LICENSE_MULTIPLIER = 80
+const SOURCE_CODE_MULTIPLIER = 120
 
 const USER_WEIGHTS = {
   admin: 1,
