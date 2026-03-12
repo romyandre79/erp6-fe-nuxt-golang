@@ -423,9 +423,9 @@ const LICENSE_MULTIPLIER = 12
 const SOURCE_CODE_MULTIPLIER = 30
 
 const USER_WEIGHTS = {
-  admin: 3,
-  operational: 2,
-  viewer: 1
+  admin: 0.5,
+  operational: 0.2,
+  viewer: 0.05
 }
 
 // PAYG Rates
