@@ -10,7 +10,7 @@ const allApps = [
   { id: 'warehouse6', name: 'Warehouse / Inventory v6', price: 30000, icon: '📦' },
   { id: 'order6', name: 'Order Management v6', price: 25000, icon: '🛒' },
   { id: 'purchasing6', name: 'Purchasing v6', price: 25000, icon: '🛒' },
-  { id: 'production6', name: 'Production v6', price: 30000, icon: '📊' },
+  { id: 'production6', name: 'Production v6', price: 50000, icon: '📊' },
   //{ id: 'erp_proj', name: 'Project', price: 250000, icon: '🛠️' },
   //{ id: 'ess', name: 'ESS', price: 100000, icon: '🙋' },
   //{ id: 'e-proc', name: 'E-Procurement', price: 100000, icon: '👥' },

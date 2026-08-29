@@ -419,13 +419,13 @@ const { t } = useI18n()
 // Config vars
 const CONSULTATION_RATE = 200000 
 const TRANSPORT_RATE = 1000000 
-const LICENSE_MULTIPLIER = 80
-const SOURCE_CODE_MULTIPLIER = 120
+const LICENSE_MULTIPLIER = 100
+const SOURCE_CODE_MULTIPLIER = 1200
 
 const USER_WEIGHTS = {
-  admin: 1,
-  operational: 0.5,
-  viewer: 0.25
+  admin: 1.5,
+  operational: 0.85,
+  viewer: 0.5
 }
 
 // PAYG Rates
@@ -444,8 +444,8 @@ const yearlyDiscount = 0.10 // 10% discount for yearly billing
 const selectedApps = ref([...props.initialSelectedApps])
 const selectedWorkflows = ref([...props.initialSelectedWorkflows])
 const usersAdmin = ref(1)
-const usersOperational = ref(10)
-const usersViewer = ref(10)
+const usersOperational = ref(1)
+const usersViewer = ref(1)
 const storageSize = ref(10)
 const deploymentMode = ref('cloud')
 const consultationHours = ref(0)
@@ -455,10 +455,10 @@ const billingPeriod = ref('monthly') // 'monthly' | 'yearly'
 const discountPercentage = ref(0) // 0-100
 
 // PAYG Inputs
-const txAccounting = ref(1000)
-const txProduction = ref(500)
-const txInventory = ref(2000)
-const txOther = ref(500)
+const txAccounting = ref(100)
+const txProduction = ref(50)
+const txInventory = ref(50)
+const txOther = ref(50)
 
 const demoSection = ref(null)
 
